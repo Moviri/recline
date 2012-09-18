@@ -29,13 +29,19 @@ jQuery(function($) {
   } else {
     var dataset = new recline.Model.Dataset({
       records: [
-        {id: 0, date: '2011-01-01', x: 1, y: 2, z: 3, country: 'DE', title: 'first', lat:52.56, lon:13.40},
-        {id: 1, date: '2011-02-02', x: 2, y: 4, z: 24, country: 'UK', title: 'second', lat:54.97, lon:-1.60},
-        {id: 2, date: '2011-03-03', x: 3, y: 6, z: 9, country: 'US', title: 'third', lat:40.00, lon:-75.5},
-        {id: 3, date: '2011-04-04', x: 4, y: 8, z: 6, country: 'UK', title: 'fourth', lat:57.27, lon:-6.20},
-        {id: 4, date: '2011-05-04', x: 5, y: 10, z: 15, country: 'UK', title: 'fifth', lat:51.58, lon:0},
-        {id: 5, date: '2011-06-02', x: 6, y: 12, z: 18, country: 'DE', title: 'sixth', lat:51.04, lon:7.9}
-      ],
+        {id: 0, date: '2011-02-02', x: 1, y: 12, z: 13, country: 'DE', title: 'pippo', lat:53.56, lon:12.40},
+        {id: 1, date: '2011-03-02', x: 2, y: 10, z: 4, country: 'UK', title: 'pluto', lat:55.97, lon:-2.60},
+        {id: 2, date: '2011-04-03', x: 3, y: 8, z: 19, country: 'US', title: 'paperino', lat:41.00, lon:-76.5},
+        {id: 3, date: '2011-05-04', x: 4, y: 6, z: 26, country: 'UK', title: 'tizio', lat:58.27, lon:-7.20},
+        {id: 4, date: '2011-06-04', x: 5, y: 4, z: 5, country: 'UK', title: 'caio', lat:53.58, lon:1},
+        {id: 5, date: '2011-07-02', x: 6, y: 2, z: 18, country: 'DE', title: 'sempronio', lat:52.04, lon:8.9},
+        {id: 6, date: '2012-01-01', x: 7, y: 2, z: 3, country: 'DE', title: 'first', lat:52.56, lon:13.40},
+        {id: 7, date: '2012-02-02', x: 8, y: 4, z: 24, country: 'UK', title: 'second', lat:54.97, lon:-1.60},
+        {id: 8, date: '2012-03-03', x: 9, y: 6, z: 9, country: 'US', title: 'third', lat:40.00, lon:-75.5},
+        {id: 9, date: '2012-04-04', x: 10, y: 8, z: 6, country: 'UK', title: 'fourth', lat:57.27, lon:-6.20},
+        {id: 10, date: '2012-05-04', x: 11, y: 10, z: 15, country: 'UK', title: 'fifth', lat:51.58, lon:0},
+        {id: 11, date: '2012-06-02', x: 12, y: 12, z: 18, country: 'DE', title: 'sixth', lat:51.04, lon:7.9}
+       ],
       // let's be really explicit about fields
       // Plus take opportunity to set date to be a date field and set some labels
       fields: [
