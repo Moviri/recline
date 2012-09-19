@@ -73,10 +73,16 @@ my.Fields = Backbone.View.extend({
         field.facets.unbind('all', self.render);
         field.facets.bind('all', self.render);
       });
+
+
       // fields can get reset or changed in which case we need to recalculate
       self.model.getFieldsSummary();
       self.render();
     });
+
+
+
+
     this.render();
   },
   render: function() {

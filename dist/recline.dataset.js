@@ -766,6 +766,7 @@ this.recline.Backend.Memory = this.recline.Backend.Memory || {};
         // TODO: remove dependency on recline.Model
         facetResults[facetId] = new recline.Model.Facet({id: facetId}).toJSON();
         facetResults[facetId].termsall = {};
+        facetResults[facetId].termsall_sum = {};
       });
       // faceting
       _.each(records, function(doc) {
@@ -775,6 +776,7 @@ this.recline.Backend.Memory = this.recline.Backend.Memory || {};
           var tmp = facetResults[facetId];
           if (val) {
             tmp.termsall[val] = tmp.termsall[val] ? tmp.termsall[val] + 1 : 1;
+            tmp.termsall_sum[val] = tmp.termsall_sum[val] ? tmp.termsall_sum[val] + 1 : 1;
           } else {
             tmp.missing = tmp.missing + 1;
           }
@@ -789,7 +791,7 @@ this.recline.Backend.Memory = this.recline.Backend.Memory || {};
           // want descending order
           return -item.count;
         });
-        tmp.terms = tmp.terms.slice(0, 10);
+        tmp.terms = tmp.terms.slice(0, 10);                        facetResults
       });
       return facetResults;
     };
