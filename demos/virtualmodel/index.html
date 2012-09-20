@@ -126,24 +126,22 @@ root: ../../
     graph_g.redraw();
 
 
-/*
+
 var graph = new recline.View.NVD3Graph({
   model: dataset,
   state: {
-      group: "x",
-      seriesValue: ["y", "z"],
-
-
-    colors: ["#cb4b4b", "#4da74d", "#9440ed"],
-    graphType: "stackedAreaChart",
-    id: "1"
+      group: "y",
+      seriesValues: ["y", "z"],
+      colors: ["#cb4b4b", "#4da74d", "#9440ed"],
+      graphType: "lineChart",
+      id: "22"
   }
 });
 $('#mygraph').append(graph.el);
 graph.render();
 graph.redraw();
 
-
+    /*
 
 var graph2 = new recline.View.NVD3Graph({
     model: dataset,

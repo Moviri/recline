@@ -193,6 +193,9 @@ this.recline.View = this.recline.View || {};
       var colors = this.state.get("colors") ;
       var seriesNameField = self.model.fields.get(this.state.attributes.seriesNameField) ;
       var seriesValues = self.model.fields.get(this.state.attributes.seriesValues);
+      if(seriesValues == null)
+          seriesValues = this.state.get("seriesValues") ;
+
       var xAxisIsDate = false;
 
       var records = self.model.records.models;
@@ -200,8 +203,10 @@ this.recline.View = this.recline.View || {};
 
       var seriesTmp = {};
 
+      var color = 0;
+
      if(seriesNameField != null) {
-         var color = 0;
+
          _.each(records, function(doc, index) {
              //console.log(doc);
 
@@ -232,8 +237,9 @@ this.recline.View = this.recline.View || {};
 
      }
       else {
+         console.log(seriesValues);
        _.each(seriesValues, function(field) {
-
+           color=color+1;
 
           var points = [];
 
@@ -253,10 +259,11 @@ this.recline.View = this.recline.View || {};
 
               points.push({x: x, y: y});
 
+              console.log("x: " +x + " y: " + y + " doc: " + doc);
 
           });
 
-          series.push({values: points, key: field, color:  colors[series.length]});
+          series.push({values: points, key: field, color:  colors[color]});
        });
      }
 

@@ -3811,15 +3811,6 @@ this.recline.View = this.recline.View || {};
     this.state = new recline.Model.ObjectState(stateData);
 
 
-    this.editor = new my.GraphControls({
-      model: this.model,
-      state: this.state.toJSON()
-    });
-    this.editor.state.bind('change', function() {
-      self.state.set(self.editor.state.toJSON());
-      self.redraw();
-    });
-    this.elSidebar = this.editor.el;
   },
 
 
@@ -3964,8 +3955,10 @@ this.recline.View = this.recline.View || {};
 
       var seriesTmp = {};
 
+      var color = 0;
+
      if(seriesNameField != null) {
-         var color = 0;
+
          _.each(records, function(doc, index) {
              //console.log(doc);
 
@@ -3997,7 +3990,7 @@ this.recline.View = this.recline.View || {};
      }
       else {
        _.each(seriesValues, function(field) {
-
+           color=color+1;
 
           var points = [];
 
@@ -4020,7 +4013,7 @@ this.recline.View = this.recline.View || {};
 
           });
 
-          series.push({values: points, key: field, color:  colors[series.length]});
+          series.push({values: points, key: field, color:  colors[color]});
        });
      }
 
