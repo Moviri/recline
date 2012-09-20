@@ -17,6 +17,7 @@ my.Grid = Backbone.View.extend({
     var self = this;
     this.el = $(this.el);
     _.bindAll(this, 'render', 'onHorizontalScroll');
+
     this.model.records.bind('add', this.render);
     this.model.records.bind('reset', this.render);
     this.model.records.bind('remove', this.render);

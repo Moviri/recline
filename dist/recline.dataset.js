@@ -12,6 +12,8 @@ my.Dataset = Backbone.Model.extend({
 
   // ### initialize
   initialize: function() {
+
+
     _.bindAll(this, 'query');
     this.backend = null;
     if (this.get('backend')) {
@@ -29,6 +31,7 @@ my.Dataset = Backbone.Model.extend({
       creates: []
     };
     this.facets = new my.FacetList();
+
     this.recordCount = null;
     this.queryState = new my.Query();
     this.queryState.bind('change', this.query);
@@ -67,6 +70,7 @@ my.Dataset = Backbone.Model.extend({
     function handleResults(results) {
       var out = self._normalizeRecordsAndFields(results.records, results.fields);
       if (results.useMemoryStore) {
+
         self._store = new recline.Backend.Memory.Store(out.records, out.fields);
       }
 
@@ -83,6 +87,8 @@ my.Dataset = Backbone.Model.extend({
 
     return dfd.promise();
   },
+
+
 
   // ### _normalizeRecordsAndFields
   // 
@@ -567,6 +573,12 @@ my.FacetList = Backbone.Collection.extend({
   model: my.Facet
 });
 
+
+
+
+
+
+
 // ## Object State
 //
 // Convenience Backbone model for storing (configuration) state of objects like Views.
@@ -804,6 +816,8 @@ this.recline.Backend.Memory = this.recline.Backend.Memory || {};
       });
       return this.save(toUpdate);
     };
+
+
   };
 
 }(jQuery, this.recline.Backend.Memory));
