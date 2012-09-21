@@ -45,8 +45,10 @@ my.SlickGrid = Backbone.View.extend({
       enableColumnReorder: true,
       explicitInitialization: true,
       syncColumnCellResize: true,
-      forceFitColumns: this.state.get('fitColumns')
-    };
+      forceFitColumns: this.state.get('fitColumns'),
+      useInnerChart: this.state.get('useInnerChart'),
+      innerChartMax: this.state.get('useInnerChart'),    
+	};
 
     // We need all columns, even the hidden ones, to show on the column picker
     var columns = [];
@@ -78,7 +80,19 @@ my.SlickGrid = Backbone.View.extend({
 
       columns.push(column);
     });
-
+	if (self.state.get('useInnerChart') == true)
+	{
+		columns.push({
+        name: self.state.get('innerChartHeader'),
+        id: 'innerChart',
+        field:'innerChart',
+        sortable: false,
+		alignLeft: true,
+        minWidth: 150,
+        formatter: Slick.Formatters.TwinBarFormatter
+      })
+	}
+	
     // Restrict the visible columns
     var visibleColumns = columns.filter(function(column) {
       return _.indexOf(self.state.get('hiddenColumns'), column.id) == -1;
@@ -104,6 +118,40 @@ my.SlickGrid = Backbone.View.extend({
     }
     columns = columns.concat(tempHiddenColumns);
 
+	var max = 0;
+	var adjustMax = function(val) {
+		// adjust max in order to return the highest comfortable number
+		var valStr = ""+parseInt(val);
+		var totDigits = valStr.length;
+		if (totDigits <= 1)
+			return 10;
+		else
+		{
+			var firstChar = parseInt(valStr.charAt(0));
+			var secondChar = parseInt(valStr.charAt(1));
+			if (secondChar < 5)
+				return (firstChar+0.5)*Math.pow(10, totDigits-1)
+			else return (firstChar+1)*Math.pow(10, totDigits-1)
+		}
+	}
+	
+	if (self.state.get('useInnerChart') == true && self.state.get('innerChartSerie1') != null && self.state.get('innerChartSerie2') != null)
+	{
+		this.model.records.each(function(doc){
+		  var row = {};
+		  self.model.fields.each(function(field){
+			row[field.id] = doc.getFieldValueUnrendered(field);
+			if (field.id == self.state.get('innerChartSerie1') || field.id == self.state.get('innerChartSerie2'))
+			{
+				var currVal = Math.abs(parseFloat(row[field.id]));
+				if (currVal > max)
+					max = currVal;
+			}
+		  });
+		});
+		max = adjustMax(max);
+		options.innerChartMax = max;
+	}
     var data = [];
 
     this.model.records.each(function(doc){
@@ -111,6 +159,9 @@ my.SlickGrid = Backbone.View.extend({
       self.model.fields.each(function(field){
         row[field.id] = doc.getFieldValueUnrendered(field);
       });
+	  if (self.state.get('useInnerChart') == true && self.state.get('innerChartSerie1') != null && self.state.get('innerChartSerie2') != null)
+		row['innerChart'] = [ row[self.state.get('innerChartSerie1')], row[self.state.get('innerChartSerie2')], max ];
+
       data.push(row);
     });
 
