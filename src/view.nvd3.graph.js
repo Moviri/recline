@@ -257,9 +257,9 @@ this.recline.View = this.recline.View || {};
                   xAxisIsDate = true;
               }
 
-              points.push({x: x, y: y});
-
-              console.log("x: " +x + " y: " + y + " doc: " + doc);
+              //points.push({x: x, y: y});
+              points.push([x,y]);
+              //console.log("x: " +x + " y: " + y + " doc: " + doc);
 
           });
 

@@ -3948,6 +3948,9 @@ this.recline.View = this.recline.View || {};
       var colors = this.state.get("colors") ;
       var seriesNameField = self.model.fields.get(this.state.attributes.seriesNameField) ;
       var seriesValues = self.model.fields.get(this.state.attributes.seriesValues);
+      if(seriesValues == null)
+          seriesValues = this.state.get("seriesValues") ;
+
       var xAxisIsDate = false;
 
       var records = self.model.records.models;
@@ -3989,6 +3992,7 @@ this.recline.View = this.recline.View || {};
 
      }
       else {
+         console.log(seriesValues);
        _.each(seriesValues, function(field) {
            color=color+1;
 
@@ -4010,6 +4014,7 @@ this.recline.View = this.recline.View || {};
 
               points.push({x: x, y: y});
 
+              console.log("x: " +x + " y: " + y + " doc: " + doc);
 
           });
 
@@ -4645,7 +4650,7 @@ this.recline.Model = this.recline.Model || {};
 
 (function($, my) {
 
-// ## <a id="dataset">Dataset</a>
+// ## <a id="dataset">VirtualDataset</a>
 my.VirtualDataset = Backbone.Model.extend({
   constructor: function VirtualDataset() {
       Backbone.Model.prototype.constructor.apply(this, arguments);
@@ -4663,12 +4668,14 @@ my.VirtualDataset = Backbone.Model.extend({
 
         this.updateGroupedDataset();
 
-        // TODO gestione eventi di cambio del modello "padre"
+        // TODO manage of change event of parent dataset
     },
 
 
 
     updateGroupedDataset: function() {
+
+        // TODO optimization has to be done in order to limit the number of cycles on data
 
         var dimensions = this.attributes.aggregation.dimensions;
         var aggregatedFields = this.attributes.aggregation.aggregatedFields;
@@ -4777,12 +4784,12 @@ my.VirtualDataset = Backbone.Model.extend({
   // 
   // @return null as this is async function. Provides deferred/promise interface.
   getFieldsSummary: function() {
+    // TODO update function in order to manage facets/filter and selection
+
     var self = this;
     var query = new my.Query();
     query.set({size: 0});
-    this.fields.each(function(field) {
-      query.addFacet(field.id);
-    });
+
     var dfd = $.Deferred();
     this._store.query(query.toJSON(), this.toJSON()).done(function(queryResult) {
       if (queryResult.facets) {

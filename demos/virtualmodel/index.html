@@ -70,7 +70,7 @@ root: ../../
     var dataset =   new recline.Model.Dataset({
         records: [
             {id:0, date: '2011-01-01', gender: "M", y: 1, z: 3, country: 'DE', title: 'first', lat:52.56, lon:13.40},
-            {id:1, date: '2011-01-01', gender: "F", y: 2, z: 24, country: 'DE', title: 'second', lat:54.97, lon:-1.60},
+            {id:1, date: '2011-01-01', gender: "F", y: 1, z: 24, country: 'DE', title: 'second', lat:54.97, lon:-1.60},
             {id:2, date: '2011-01-01', gender: "M", y: 1, z: 3, country: 'UK', title: 'first', lat:52.56, lon:13.40},
             {id:3, date: '2011-01-01', gender: "M", y: 2, z: 5, country: 'UK', title: 'first', lat:52.56, lon:13.40},
             {id:4, date: '2011-01-01', gender: "M", y: 3, z: 3, country: 'DE', title: 'first', lat:52.56, lon:13.40},
@@ -113,7 +113,7 @@ root: ../../
     var graph_g = new recline.View.NVD3Graph({
         model: virtual,
         state: {
-            group: "y",
+            group: "y",   // x axis
             seriesNameField: ["country"],
             seriesValues: ["z_sum"],
             graphType: "multiBarHorizontalChart",
