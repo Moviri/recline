@@ -3948,6 +3948,9 @@ this.recline.View = this.recline.View || {};
       var colors = this.state.get("colors") ;
       var seriesNameField = self.model.fields.get(this.state.attributes.seriesNameField) ;
       var seriesValues = self.model.fields.get(this.state.attributes.seriesValues);
+      if(seriesValues == null)
+          seriesValues = this.state.get("seriesValues") ;
+
       var xAxisIsDate = false;
 
       var records = self.model.records.models;
@@ -3989,6 +3992,7 @@ this.recline.View = this.recline.View || {};
 
      }
       else {
+         console.log(seriesValues);
        _.each(seriesValues, function(field) {
            color=color+1;
 
@@ -4010,6 +4014,7 @@ this.recline.View = this.recline.View || {};
 
               points.push({x: x, y: y});
 
+              console.log("x: " +x + " y: " + y + " doc: " + doc);
 
           });
 
@@ -4075,8 +4080,10 @@ my.SlickGrid = Backbone.View.extend({
       enableColumnReorder: true,
       explicitInitialization: true,
       syncColumnCellResize: true,
-      forceFitColumns: this.state.get('fitColumns')
-    };
+      forceFitColumns: this.state.get('fitColumns'),
+      useInnerChart: this.state.get('useInnerChart'),
+      innerChartMax: this.state.get('useInnerChart'),    
+	};
 
     // We need all columns, even the hidden ones, to show on the column picker
     var columns = [];
@@ -4108,7 +4115,19 @@ my.SlickGrid = Backbone.View.extend({
 
       columns.push(column);
     });
-
+	if (self.state.get('useInnerChart') == true)
+	{
+		columns.push({
+        name: self.state.get('innerChartHeader'),
+        id: 'innerChart',
+        field:'innerChart',
+        sortable: false,
+		alignLeft: true,
+        minWidth: 150,
+        formatter: Slick.Formatters.TwinBarFormatter
+      })
+	}
+	
     // Restrict the visible columns
     var visibleColumns = columns.filter(function(column) {
       return _.indexOf(self.state.get('hiddenColumns'), column.id) == -1;
@@ -4134,6 +4153,40 @@ my.SlickGrid = Backbone.View.extend({
     }
     columns = columns.concat(tempHiddenColumns);
 
+	var max = 0;
+	var adjustMax = function(val) {
+		// adjust max in order to return the highest comfortable number
+		var valStr = ""+parseInt(val);
+		var totDigits = valStr.length;
+		if (totDigits <= 1)
+			return 10;
+		else
+		{
+			var firstChar = parseInt(valStr.charAt(0));
+			var secondChar = parseInt(valStr.charAt(1));
+			if (secondChar < 5)
+				return (firstChar+0.5)*Math.pow(10, totDigits-1)
+			else return (firstChar+1)*Math.pow(10, totDigits-1)
+		}
+	}
+	
+	if (self.state.get('useInnerChart') == true && self.state.get('innerChartSerie1') != null && self.state.get('innerChartSerie2') != null)
+	{
+		this.model.records.each(function(doc){
+		  var row = {};
+		  self.model.fields.each(function(field){
+			row[field.id] = doc.getFieldValueUnrendered(field);
+			if (field.id == self.state.get('innerChartSerie1') || field.id == self.state.get('innerChartSerie2'))
+			{
+				var currVal = Math.abs(parseFloat(row[field.id]));
+				if (currVal > max)
+					max = currVal;
+			}
+		  });
+		});
+		max = adjustMax(max);
+		options.innerChartMax = max;
+	}
     var data = [];
 
     this.model.records.each(function(doc){
@@ -4141,6 +4194,9 @@ my.SlickGrid = Backbone.View.extend({
       self.model.fields.each(function(field){
         row[field.id] = doc.getFieldValueUnrendered(field);
       });
+	  if (self.state.get('useInnerChart') == true && self.state.get('innerChartSerie1') != null && self.state.get('innerChartSerie2') != null)
+		row['innerChart'] = [ row[self.state.get('innerChartSerie1')], row[self.state.get('innerChartSerie2')], max ];
+
       data.push(row);
     });
 
@@ -4645,7 +4701,7 @@ this.recline.Model = this.recline.Model || {};
 
 (function($, my) {
 
-// ## <a id="dataset">Dataset</a>
+// ## <a id="dataset">VirtualDataset</a>
 my.VirtualDataset = Backbone.Model.extend({
   constructor: function VirtualDataset() {
       Backbone.Model.prototype.constructor.apply(this, arguments);
@@ -4663,12 +4719,14 @@ my.VirtualDataset = Backbone.Model.extend({
 
         this.updateGroupedDataset();
 
-        // TODO gestione eventi di cambio del modello "padre"
+        // TODO manage of change event of parent dataset
     },
 
 
 
     updateGroupedDataset: function() {
+
+        // TODO optimization has to be done in order to limit the number of cycles on data
 
         var dimensions = this.attributes.aggregation.dimensions;
         var aggregatedFields = this.attributes.aggregation.aggregatedFields;
@@ -4777,12 +4835,12 @@ my.VirtualDataset = Backbone.Model.extend({
   // 
   // @return null as this is async function. Provides deferred/promise interface.
   getFieldsSummary: function() {
+    // TODO update function in order to manage facets/filter and selection
+
     var self = this;
     var query = new my.Query();
     query.set({size: 0});
-    this.fields.each(function(field) {
-      query.addFacet(field.id);
-    });
+
     var dfd = $.Deferred();
     this._store.query(query.toJSON(), this.toJSON()).done(function(queryResult) {
       if (queryResult.facets) {
