@@ -91,7 +91,7 @@ var graph = new recline.View.NVD3Graph({
   model: dataset,
   state: {
     group: ["x"],
-      series: ["y", "z"],
+      seriesValues: ["y", "z"],
     colors: ["#cb4b4b", "#4da74d", "#9440ed"],
     graphType: "stackedAreaChart",
     id: "1"
@@ -107,7 +107,7 @@ var graph2 = new recline.View.NVD3Graph({
     model: dataset,
     state: {
         group: "x",
-        series: ["y", "z"],
+        seriesValues: ["y", "z"],
         colors: ["#cb4b4b", "#4da74d", "#9440ed"],
         graphType: "lineChart",
         id: "2"
@@ -122,7 +122,7 @@ var graph3 = new recline.View.NVD3Graph({
     model: dataset,
     state: {
         group: "x",
-        series: ["z", "y"],
+        seriesValues: ["z", "y"],
         colors: ["#cb4b4b", "#4da74d", "#9440ed"],
         graphType: "discreteBarChart",
         id: "3"
@@ -137,7 +137,7 @@ var graph4 = new recline.View.NVD3Graph({
     model: dataset,
     state: {
         group: "x",
-        series: ["y", "z"],
+        seriesValues: ["y", "z"],
         colors: ["#cb4b4b", "#4da74d", "#9440ed"],
         graphType: "multiBarChart",
         id: "4"
@@ -152,7 +152,7 @@ var graph7 = new recline.View.NVD3Graph({
     model: dataset,
     state: {
         group: "x",
-        series: ["y", "z"],
+        seriesValues: ["y", "z"],
         colors: ["#cb4b4b", "#4da74d", "#9440ed"],
         graphType: "cumulativeLineChart",
         id: "5"
