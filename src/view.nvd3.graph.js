@@ -237,7 +237,8 @@ this.recline.View = this.recline.View || {};
 
      }
       else {
-         console.log(seriesValues);
+         // todo this has to be merged with above, only one branch has to be present
+         //console.log(seriesValues);
        _.each(seriesValues, function(field) {
            color=color+1;
 
@@ -267,7 +268,7 @@ this.recline.View = this.recline.View || {};
        });
      }
 
-      console.log(JSON.stringify(series));
+      //console.log(JSON.stringify(series));
       return series;
 }
 

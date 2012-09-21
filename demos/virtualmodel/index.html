@@ -102,6 +102,17 @@ root: ../../
         }
     });
 
+/*    var virtual = new recline.Model.VirtualDataset({
+        dataset: dataset,
+        aggregation: {
+            // no aggregation dimensions means all data are evaluated for aggregation
+            aggregatedFields: ["z"]
+            // TODO AGGREGATION FUNCTION
+        }
+    });
+*/
+
+
     var grid=  new recline.View.Grid({
         id: 'grid',
         label: 'Grid',
@@ -110,7 +121,7 @@ root: ../../
     $('#grouped_grid').append(grid.el);
     grid.render();
 
-    var graph_g = new recline.View.NVD3Graph({
+    /*var graph_g = new recline.View.NVD3Graph({
         model: virtual,
         state: {
             group: "y",   // x axis
@@ -125,7 +136,7 @@ root: ../../
     graph_g.render();
     graph_g.redraw();
 
-
+              */
 
 var graph = new recline.View.NVD3Graph({
   model: dataset,
