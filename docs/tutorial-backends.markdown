@@ -79,8 +79,8 @@ much more limited if you are just using a Backend. Specifically:
 {% highlight html %}
 <!-- 3rd party dependencies -->
 <script type="text/javascript" src="vendor/jquery/1.7.1/jquery.js"></script>
-<script type="text/javascript" src="vendor/underscore/1.1.6/underscore.js"></script>
-<script type="text/javascript" src="vendor/backbone/0.5.1/backbone.js"></script>
+<script type="text/javascript" src="vendor/underscore/1.3.3/underscore.js"></script>
+<script type="text/javascript" src="vendor/backbone/0.9.2/backbone.js"></script>
 <!-- include the backend code you need e.g. here for gdocs -->
 <script type="text/javascript" src="src/backend/gdocs.js"></script>
 

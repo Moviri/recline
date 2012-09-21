@@ -5,6 +5,13 @@ No built-in (selected, editable, highlight, flashing, invalid, loading, :focus) 
 classes should alter those!
 */
 
+.percent-complete-bar {
+  display: inline-block;
+  height: 15px;
+  -moz-border-radius: 3px;
+  -webkit-border-radius: 3px;
+}
+
 .slick-header.ui-state-default, .slick-headerrow.ui-state-default {
   width: 100%;
   overflow: hidden;
@@ -12,7 +19,6 @@ classes should alter those!
 }
 
 .slick-header-columns, .slick-headerrow-columns {
-  width: 999999px;
   position: relative;
   white-space: nowrap;
   cursor: default;
