@@ -8,29 +8,61 @@ this.recline.Model = this.recline.Model || {};
 my.VirtualDataset = Backbone.Model.extend({
   constructor: function VirtualDataset() {
       Backbone.Model.prototype.constructor.apply(this, arguments);
-
   },
 
 
     initialize: function() {
-
-
+        var self = this;
+        this.backend = recline.Backend.Memory;
         this.fields = new my.FieldList();
         this.records = new my.RecordList();
         this.recordCount = null;
         this.queryState = new my.Query();
 
-        this.updateGroupedDataset();
 
-        // TODO manage of change event of parent dataset
-        // TODO manage of filtering on data
+        // this.updateGroupedDataset();
+
+        this.attributes.dataset.records.bind('reset', function() {
+            console.log(self);
+            self.updateGroupedDataset();
+        });
+
+        // TODO manage filtering on data
+    },
+
+    // ### fetch
+    //
+    // Retrieve dataset and (some) records from the backend.
+    fetch: function() {
+        this.attributes.dataset.fetch();
+
+    },
+
+    modifyGrouping: function(dimensions, aggregationField)
+    {
+        this.attributes.aggregation.aggregatedFields = aggregationField;
+        this.attributes.aggregation.dimensions = dimensions;
+        updateGroupedDataset(this);
+    },
+    addDimension: function(dimension)
+    {
+        this.attributes.aggregation.dimensions.push = dimension;
+        updateGroupedDataset(this);
+    },
+    addAggregationField: function(field) {
+        this.attributes.aggregation.aggregatedFields.push(field);
+        updateGroupedDataset(this);
     },
 
 
-
     updateGroupedDataset: function() {
+        console.log("Starting grouping");
+        var start = new Date().getTime();
+
 
         // TODO optimization has to be done in order to limit the number of cycles on data
+        // TODO use crossfilter to save grouped data in order to add/remove dimensions
+
 
         var dimensions = this.attributes.aggregation.dimensions;
         var aggregatedFields = this.attributes.aggregation.aggregatedFields;
@@ -188,9 +220,10 @@ my.VirtualDataset = Backbone.Model.extend({
         this.recordCount = result.length;
         this.records.reset(result);
 
-        console.log("Records"); console.log(result);
-        console.log("Fields"); console.log(fields);
+        var end = new Date().getTime();
+        var time = end - start;
 
+        console.log("Grouping - exec time: " + time);
     },
 
 
@@ -229,6 +262,104 @@ my.VirtualDataset = Backbone.Model.extend({
     return dfd.promise();
   }
 });
+
+    // ## <a id="query">Query</a>
+    my.Grouping = Backbone.Model.extend({
+        constructor: function Grouping() {
+            Backbone.Model.prototype.constructor.apply(this, arguments);
+        },
+
+        _groupingTemplates: {
+            groupAll: {
+                type: 'groupAll'
+            },
+            groupByDimension: {
+                type: "groupByDimension",
+                dimensions: [],
+                aggregatedFields: []
+            }
+        },
+
+        addDimension: function(dimension) {
+
+            var ourfilter = JSON.parse(JSON.stringify(dimension));
+            var group = this.get('filters');
+            filters.push(ourfilter);
+            this.trigger('change:grouping');
+        },
+        updateFilter: function(index, value) {
+        },
+        // ### removeFilter
+        //
+        // Remove a filter from filters at index filterIndex
+        removeFilter: function(filterIndex) {
+            var filters = this.get('filters');
+            filters.splice(filterIndex, 1);
+            this.set({filters: filters});
+            this.trigger('change:grouping');
+        },
+
+        // ### addSelection
+        //
+        // Add a new selection (appended to the list of selections)
+        //
+        // @param selection an object specifying the filter - see _filterTemplates for examples. If only type is provided will generate a filter by cloning _filterTemplates
+        addSelection: function(selection) {
+            // crude deep copy
+            var myselection = JSON.parse(JSON.stringify(selection));
+            // not full specified so use template and over-write
+            // 3 as for 'type', 'field' and 'fieldType'
+            if (_.keys(selection).length <= 3) {
+                myselection = _.extend(this._selectionTemplates[selection.type], myselection);
+            }
+            var filters = this.get('selections');
+            filters.push(myselection);
+            this.trigger('change:grouping');
+        },
+        // ### removeSelection
+        //
+        // Remove a selection at index selectionIndex
+        removeSelection: function(selectionIndex) {
+            var selections = this.get('selections');
+            selections.splice(selectionIndex, 1);
+            this.set({selections: selections});
+            this.trigger('change:grouping');
+        },
+        isFieldSelected: function(fieldName, fieldVale) {
+            // todo check if field is selected
+            return false;
+        },
+
+
+        // ### addFacet
+        //
+        // Add a Facet to this query
+        //
+        // See <http://www.elasticsearch.org/guide/reference/api/search/facets/>
+        addFacet: function(fieldId) {
+            var facets = this.get('facets');
+            // Assume id and fieldId should be the same (TODO: this need not be true if we want to add two different type of facets on same field)
+            if (_.contains(_.keys(facets), fieldId)) {
+                return;
+            }
+            facets[fieldId] = {
+                terms: { field: fieldId }
+            };
+            this.set({facets: facets}, {silent: true});
+            this.trigger('facet:add', this);
+        },
+        addHistogramFacet: function(fieldId) {
+            var facets = this.get('facets');
+            facets[fieldId] = {
+                date_histogram: {
+                    field: fieldId,
+                    interval: 'day'
+                }
+            };
+            this.set({facets: facets}, {silent: true});
+            this.trigger('facet:add', this);
+        }
+    });
 
 }(jQuery, this.recline.Model));
 

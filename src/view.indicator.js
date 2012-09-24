@@ -65,16 +65,10 @@ this.recline.View = this.recline.View || {};
     var tmplData = this.model.toTemplateJSON();
     tmplData["viewId"] = this.state.get("id");
 
-    var series = this.state.get('series')[0];
-        switch(this.state.get("aggregationType")) {
-            case 'sum':
-                tmplData["indicator_value"] = this.model.records.reduce(function(memo, value) { return memo + value.get(series) }, 0);
-                break;
-            case 'average':
-                tmp = this.model.records.reduce(function(memo, value) { return memo + value.get(series) }, 0);
-                tmplData["indicator_value"] = tmp / this.model.records.count;
-                break;
-        }
+        if(this.model.records.length > 0)
+            tmplData["indicator_value"] = this.model.records[0][this.state.get("value")];
+        else
+            tmplData["indicator_value"] = "N.A.";
 
     var htmls = Mustache.render(this.template, tmplData);
     $(this.el).html(htmls);
