@@ -83,6 +83,7 @@ my.Dataset = Backbone.Model.extend({
         .fail(function(arguments) {
           dfd.reject(arguments);
         });
+
     }
 
     return dfd.promise();
@@ -461,11 +462,11 @@ my.Query = Backbone.Model.extend({
   },
   defaults: function() {
     return {
-      size: 100,
       from: 0,
       q: '',
       facets: {},
-      filters: []
+      filters: [],
+      selections: []
     };
   },
   _filterTemplates: {
@@ -489,7 +490,20 @@ my.Query = Backbone.Model.extend({
         lat: 0
       }
     }
-  },  
+  },
+      _selectionTemplates: {
+          term: {
+              type: 'term',
+              // TODO do we need this attribute here?
+              field: '',
+              term: ''
+          },
+          range: {
+              type: 'range',
+              start: '',
+              stop: ''
+          }
+      },
   // ### addFilter
   //
   // Add a new filter (appended to the list of filters)
@@ -518,7 +532,40 @@ my.Query = Backbone.Model.extend({
     this.set({filters: filters});
     this.trigger('change');
   },
-  // ### addFacet
+
+      // ### addSelection
+      //
+      // Add a new selection (appended to the list of selections)
+      //
+      // @param selection an object specifying the filter - see _filterTemplates for examples. If only type is provided will generate a filter by cloning _filterTemplates
+      addSelection: function(selection) {
+          // crude deep copy
+          var myselection = JSON.parse(JSON.stringify(selection));
+          // not full specified so use template and over-write
+          // 3 as for 'type', 'field' and 'fieldType'
+          if (_.keys(selection).length <= 3) {
+              myselection = _.extend(this._selectionTemplates[selection.type], myselection);
+          }
+          var selections = this.get('selections');
+          selections.push(myselection);
+          this.trigger('change:selections');
+      },
+      // ### removeSelection
+      //
+      // Remove a selection at index selectionIndex
+      removeSelection: function(selectionIndex) {
+          var selections = this.get('selections');
+          selections.splice(selectionIndex, 1);
+          this.set({selections: selections});
+          this.trigger('change:selections');
+      },
+      isFieldSelected: function(fieldName, fieldVale) {
+          // todo check if field is selected
+          return false;
+      },
+
+
+    // ### addFacet
   //
   // Add a Facet to this query
   //

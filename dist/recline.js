@@ -896,7 +896,7 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
   my.__type__ = 'Jsonp';
   // Timeout for request (after this time if no response we error)
   // Needed because use JSONP so do not receive e.g. 500 errors 
-  my.timeout = 5000;
+  my.timeout = 30000;
 
   // ## load
   //
@@ -908,17 +908,18 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
     var jqxhr = $.ajax({
       url: dataset.url,
       dataType: 'jsonp',
+      cache: 'true'
+
     });
     var dfd = $.Deferred();
     _wrapInTimeout(jqxhr).done(function(results) {
       if (results.error) {
         dfd.reject(results.error);
       }
-      console.log(results.results);
 
       dfd.resolve({
-        records: results.data,
-        fields: results.fields,
+        records: results.result.data,
+        fields:_handleFieldDescription(results.result.description),
         useMemoryStore: true
       });
     })
@@ -927,6 +928,7 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
     });
     return dfd.promise();
   };
+
 
   // ## _wrapInTimeout
   // 
@@ -951,6 +953,21 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
       ;
     return dfd.promise();
   }
+
+  function _handleFieldDescription(description) {
+      var res = [];
+      for (var k in description) {
+          // use hasOwnProperty to filter out keys from the Object.prototype
+          if (description.hasOwnProperty(k)) {
+              res.push({id: k, type: description[k]});
+
+          }
+      }
+      return res;
+    }
+
+
+
 
 }(jQuery, this.recline.Backend.Jsonp));
 this.recline = this.recline || {};
@@ -1331,6 +1348,7 @@ my.Dataset = Backbone.Model.extend({
         .fail(function(arguments) {
           dfd.reject(arguments);
         });
+
     }
 
     return dfd.promise();
@@ -1709,11 +1727,11 @@ my.Query = Backbone.Model.extend({
   },
   defaults: function() {
     return {
-      size: 100,
       from: 0,
       q: '',
       facets: {},
-      filters: []
+      filters: [],
+      selections: []
     };
   },
   _filterTemplates: {
@@ -1737,7 +1755,20 @@ my.Query = Backbone.Model.extend({
         lat: 0
       }
     }
-  },  
+  },
+      _selectionTemplates: {
+          term: {
+              type: 'term',
+              // TODO do we need this attribute here?
+              field: '',
+              term: ''
+          },
+          range: {
+              type: 'range',
+              start: '',
+              stop: ''
+          }
+      },
   // ### addFilter
   //
   // Add a new filter (appended to the list of filters)
@@ -1766,7 +1797,40 @@ my.Query = Backbone.Model.extend({
     this.set({filters: filters});
     this.trigger('change');
   },
-  // ### addFacet
+
+      // ### addSelection
+      //
+      // Add a new selection (appended to the list of selections)
+      //
+      // @param selection an object specifying the filter - see _filterTemplates for examples. If only type is provided will generate a filter by cloning _filterTemplates
+      addSelection: function(selection) {
+          // crude deep copy
+          var myselection = JSON.parse(JSON.stringify(selection));
+          // not full specified so use template and over-write
+          // 3 as for 'type', 'field' and 'fieldType'
+          if (_.keys(selection).length <= 3) {
+              myselection = _.extend(this._selectionTemplates[selection.type], myselection);
+          }
+          var selections = this.get('selections');
+          selections.push(myselection);
+          this.trigger('change:selections');
+      },
+      // ### removeSelection
+      //
+      // Remove a selection at index selectionIndex
+      removeSelection: function(selectionIndex) {
+          var selections = this.get('selections');
+          selections.splice(selectionIndex, 1);
+          this.set({selections: selections});
+          this.trigger('change:selections');
+      },
+      isFieldSelected: function(fieldName, fieldVale) {
+          // todo check if field is selected
+          return false;
+      },
+
+
+    // ### addFacet
   //
   // Add a Facet to this query
   //
@@ -2629,16 +2693,10 @@ this.recline.View = this.recline.View || {};
     var tmplData = this.model.toTemplateJSON();
     tmplData["viewId"] = this.state.get("id");
 
-    var series = this.state.get('series')[0];
-        switch(this.state.get("aggregationType")) {
-            case 'sum':
-                tmplData["indicator_value"] = this.model.records.reduce(function(memo, value) { return memo + value.get(series) }, 0);
-                break;
-            case 'average':
-                tmp = this.model.records.reduce(function(memo, value) { return memo + value.get(series) }, 0);
-                tmplData["indicator_value"] = tmp / this.model.records.count;
-                break;
-        }
+        if(this.model.records.length > 0)
+            tmplData["indicator_value"] = this.model.records[0][this.state.get("value")];
+        else
+            tmplData["indicator_value"] = "N.A.";
 
     var htmls = Mustache.render(this.template, tmplData);
     $(this.el).html(htmls);
@@ -3852,8 +3910,10 @@ this.recline.View = this.recline.View || {};
         var seriesNVD3 = this.createSeriesNVD3();
         var graphType = this.state.get("graphType") ;
         var viewId = this.state.get("id");
-        var xLabel = this.state.get("xLabel");
         var model = this.model;
+		var state = this.state;
+        var xLabel = this.state.get("xLabel");
+        var yLabel = this.state.get("yLabel");
 
         nv.addGraph(function() {
 
@@ -3909,13 +3969,33 @@ this.recline.View = this.recline.View || {};
             chart.x(function(d) { return d[0] })
                 .y(function(d) { return d[1] });
 
-            chart.xAxis
-                .axisLabel('test')
-                .tickFormat(d3.format(',r'));
+			var xfield =  model.fields.get(state.attributes.group);
+			if (xLabel == null || xLabel == "" || typeof xLabel == 'undefined')
+				xLabel = xfield.get('label')
+
+			if (yLabel == null || yLabel == "" || typeof yLabel == 'undefined')
+				yLabel = state.attributes.seriesValues.join("/");
 
             chart.yAxis
-                .axisLabel('test')
+                .axisLabel(yLabel)
+
                 .tickFormat(d3.format('.02f'));
+
+			if (xfield.get('type') == 'DATE' || 
+				(xfield.get('type') == 'STRING' && xLabel.indexOf('date') >= 0 && model.recordCount > 0 && new Date(model.records.get(0).get(xLabel)) instanceof Date))
+			{
+				chart.xAxis
+					.axisLabel(xLabel)
+					.tickFormat(function(d) {
+             			return d3.time.format('%x')(new Date(d))
+		           })
+			}
+			else
+			{
+				chart.xAxis
+					.axisLabel(xLabel)
+					.tickFormat(d3.format(',r'));
+			}
 
 
   		d3.select('#nvd3chart_' +viewId + '  svg')
@@ -3992,7 +4072,8 @@ this.recline.View = this.recline.View || {};
 
      }
       else {
-         console.log(seriesValues);
+         // todo this has to be merged with above, only one branch has to be present
+         //console.log(seriesValues);
        _.each(seriesValues, function(field) {
            color=color+1;
 
@@ -4022,7 +4103,7 @@ this.recline.View = this.recline.View || {};
        });
      }
 
-      console.log(JSON.stringify(series));
+      //console.log(JSON.stringify(series));
       return series;
 }
 
@@ -4705,46 +4786,88 @@ this.recline.Model = this.recline.Model || {};
 my.VirtualDataset = Backbone.Model.extend({
   constructor: function VirtualDataset() {
       Backbone.Model.prototype.constructor.apply(this, arguments);
-
   },
 
 
     initialize: function() {
-
-
+        var self = this;
+        this.backend = recline.Backend.Memory;
         this.fields = new my.FieldList();
         this.records = new my.RecordList();
         this.recordCount = null;
         this.queryState = new my.Query();
 
-        this.updateGroupedDataset();
 
-        // TODO manage of change event of parent dataset
+        // this.updateGroupedDataset();
+
+        this.attributes.dataset.records.bind('reset', function() {
+            console.log(self);
+            self.updateGroupedDataset();
+        });
+
+        // TODO manage filtering on data
+    },
+
+    // ### fetch
+    //
+    // Retrieve dataset and (some) records from the backend.
+    fetch: function() {
+        this.attributes.dataset.fetch();
+
+    },
+
+    modifyGrouping: function(dimensions, aggregationField)
+    {
+        this.attributes.aggregation.aggregatedFields = aggregationField;
+        this.attributes.aggregation.dimensions = dimensions;
+        updateGroupedDataset(this);
+    },
+    addDimension: function(dimension)
+    {
+        this.attributes.aggregation.dimensions.push = dimension;
+        updateGroupedDataset(this);
+    },
+    addAggregationField: function(field) {
+        this.attributes.aggregation.aggregatedFields.push(field);
+        updateGroupedDataset(this);
     },
 
 
-
     updateGroupedDataset: function() {
+        console.log("Starting grouping");
+        var start = new Date().getTime();
+
 
         // TODO optimization has to be done in order to limit the number of cycles on data
+        // TODO use crossfilter to save grouped data in order to add/remove dimensions
+
 
         var dimensions = this.attributes.aggregation.dimensions;
         var aggregatedFields = this.attributes.aggregation.aggregatedFields;
 
         var tmpDataset = crossfilter(this.attributes.dataset.records.toJSON());
+        var group;
 
-        var by_dimension = tmpDataset.dimension(function(d) {
-            var tmp = "";
-            for(i=0;i<dimensions.length;i++){
-                if(i>0) { tmp = tmp + "_"; }
+         if(dimensions == null ){
+             // need to evaluate aggregation function on all records
+             group =  tmpDataset.groupAll();
+         }
+        else {
+            var by_dimension = tmpDataset.dimension(function(d) {
+                var tmp = "";
+                for(i=0;i<dimensions.length;i++){
+                    if(i>0) { tmp = tmp + "_"; }
 
-                tmp = tmp + d[dimensions[i]];
-            }
-            return tmp;
-        });
+                    tmp = tmp + d[dimensions[i]];
+                }
+                return tmp;
+            });
+            group = by_dimension.group();
+
+         }
 
 
-        var group = by_dimension.group();
+
 
         function sumAdd(p, v) {
             p.count = p.count +1;
@@ -4771,32 +4894,65 @@ my.VirtualDataset = Backbone.Model.extend({
                 tmp.sum[aggregatedFields[i] + "_sum"] = 0;
             }
 
+            tmp.avg = function(aggr){
+               return function(){
+                    var map = {};
+                    for(var o=0;o<aggr.length;o++){
+                        map[aggr[o] + "_avg"] = this.sum[aggr[o] + "_sum"] / this.count;
+                    }
+
+                    return map;
+                }
+            }(aggregatedFields);
+
             return tmp;
         }
 
-        var tmpResult =  group.reduce(sumAdd,sumRemove,sumInitialize).all();
+        var tmpResult;
+        var reducedGroup  =  group.reduce(sumAdd,sumRemove,sumInitialize);
+          if(dimensions == null)
+            tmpResult = reducedGroup.value();
+        else
+              tmpResult = reducedGroup.all();
+
+        console.log(tmpResult);
+
         var result = [];
         var fields = [];
 
-        if(tmpResult.length > 0) {
-            fields.push( {id: "dimension"});
+        var tmpField;
+        if(dimensions == null)
+            tmpField =  tmpResult;
+        else
+            tmpField = tmpResult[0].value;
+
+        // set of fields array
+
+
             fields.push( {id: "count"});
 
-            for (var j in tmpResult[0].value.sum) {
+            for (var j in tmpField.sum) {
                 fields.push( {id: j});
             }
 
-            for(i=0;i<dimensions.length;i++){
-                fields.push( {id: dimensions[i]});
+            var tempAvg =   tmpField.avg() ;
+            for (var j in tempAvg) {
+                fields.push( {id: j});
             }
-        }
 
+            if(dimensions != null) {
+                fields.push( {id: "dimension"});
+                for(i=0;i<dimensions.length;i++){
+                    fields.push( {id: dimensions[i]});
+                }
+            }
 
+        if(dimensions != null) {
+        // set of results dataset
         for(i=0;i<tmpResult.length;i++){
 
 
             var keyField = tmpResult[i].key.split("_");
-
 
             var tmp = {dimension: tmpResult[i].key, count: tmpResult[i].value.count};
 
@@ -4810,14 +4966,42 @@ my.VirtualDataset = Backbone.Model.extend({
             for (var j in tmpResult[i].value.sum) {
                tmp[j] = tmpResult[i].value.sum[j];
             }
+
+            var tempAvg =   tmpResult[i].value.avg();
+
+            for (var j in tempAvg) {
+                tmp[j] = tempAvg[j];
+            }
             result.push(tmp);
         }
+        }
+        else
+        {
+            var tmp = { count: tmpField.count};
+
+            for (var j in tmpField.sum) {
+                tmp[j] = tmpField.sum[j];
+            }
+
+            var tempAvg =   tmpField.avg();
+
+            for (var j in tempAvg) {
+                tmp[j] = tempAvg[j];
+            }
+            result.push(tmp);
+
+        }
+
 
         self._store = new recline.Backend.Memory.Store(result, fields);
         this.fields.reset(fields);
         this.recordCount = result.length;
         this.records.reset(result);
 
+        var end = new Date().getTime();
+        var time = end - start;
+
+        console.log("Grouping - exec time: " + time);
     },
 
 
@@ -4856,6 +5040,104 @@ my.VirtualDataset = Backbone.Model.extend({
     return dfd.promise();
   }
 });
+
+    // ## <a id="query">Query</a>
+    my.Grouping = Backbone.Model.extend({
+        constructor: function Grouping() {
+            Backbone.Model.prototype.constructor.apply(this, arguments);
+        },
+
+        _groupingTemplates: {
+            groupAll: {
+                type: 'groupAll'
+            },
+            groupByDimension: {
+                type: "groupByDimension",
+                dimensions: [],
+                aggregatedFields: []
+            }
+        },
+
+        addDimension: function(dimension) {
+
+            var ourfilter = JSON.parse(JSON.stringify(dimension));
+            var group = this.get('filters');
+            filters.push(ourfilter);
+            this.trigger('change:grouping');
+        },
+        updateFilter: function(index, value) {
+        },
+        // ### removeFilter
+        //
+        // Remove a filter from filters at index filterIndex
+        removeFilter: function(filterIndex) {
+            var filters = this.get('filters');
+            filters.splice(filterIndex, 1);
+            this.set({filters: filters});
+            this.trigger('change:grouping');
+        },
+
+        // ### addSelection
+        //
+        // Add a new selection (appended to the list of selections)
+        //
+        // @param selection an object specifying the filter - see _filterTemplates for examples. If only type is provided will generate a filter by cloning _filterTemplates
+        addSelection: function(selection) {
+            // crude deep copy
+            var myselection = JSON.parse(JSON.stringify(selection));
+            // not full specified so use template and over-write
+            // 3 as for 'type', 'field' and 'fieldType'
+            if (_.keys(selection).length <= 3) {
+                myselection = _.extend(this._selectionTemplates[selection.type], myselection);
+            }
+            var filters = this.get('selections');
+            filters.push(myselection);
+            this.trigger('change:grouping');
+        },
+        // ### removeSelection
+        //
+        // Remove a selection at index selectionIndex
+        removeSelection: function(selectionIndex) {
+            var selections = this.get('selections');
+            selections.splice(selectionIndex, 1);
+            this.set({selections: selections});
+            this.trigger('change:grouping');
+        },
+        isFieldSelected: function(fieldName, fieldVale) {
+            // todo check if field is selected
+            return false;
+        },
+
+
+        // ### addFacet
+        //
+        // Add a Facet to this query
+        //
+        // See <http://www.elasticsearch.org/guide/reference/api/search/facets/>
+        addFacet: function(fieldId) {
+            var facets = this.get('facets');
+            // Assume id and fieldId should be the same (TODO: this need not be true if we want to add two different type of facets on same field)
+            if (_.contains(_.keys(facets), fieldId)) {
+                return;
+            }
+            facets[fieldId] = {
+                terms: { field: fieldId }
+            };
+            this.set({facets: facets}, {silent: true});
+            this.trigger('facet:add', this);
+        },
+        addHistogramFacet: function(fieldId) {
+            var facets = this.get('facets');
+            facets[fieldId] = {
+                date_histogram: {
+                    field: fieldId,
+                    interval: 'day'
+                }
+            };
+            this.set({facets: facets}, {silent: true});
+            this.trigger('facet:add', this);
+        }
+    });
 
 }(jQuery, this.recline.Model));
 
