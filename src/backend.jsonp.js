@@ -26,11 +26,10 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
       if (results.error) {
         dfd.reject(results.error);
       }
-      console.log(results);
 
       dfd.resolve({
         records: results.result.data,
-        fields: results.result.description,
+        fields:_handleFieldDescription(results.result.description),
         useMemoryStore: true
       });
     })
@@ -39,6 +38,7 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
     });
     return dfd.promise();
   };
+
 
   // ## _wrapInTimeout
   // 
@@ -63,5 +63,20 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
       ;
     return dfd.promise();
   }
+
+  function _handleFieldDescription(description) {
+      var res = [];
+      for (var k in description) {
+          // use hasOwnProperty to filter out keys from the Object.prototype
+          if (description.hasOwnProperty(k)) {
+              res.push({id: k, type: description[k]});
+
+          }
+      }
+      return res;
+    }
+
+
+
 
 }(jQuery, this.recline.Backend.Jsonp));
