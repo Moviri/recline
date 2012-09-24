@@ -24,7 +24,7 @@ this.recline.View = this.recline.View || {};
 
   template: '<div class="recline-graph"> \
       <div class="panel indicator_{{viewId}}"style="display: block;"> \
-        <div id="indicator_{{viewId}}">{{indicator_value}}</div>\
+        <div id="indicator_{{viewId}}">N.D.</div>\
       </div> \
     </div> ',
 
@@ -34,47 +34,46 @@ this.recline.View = this.recline.View || {};
     this.el = $(this.el);
     _.bindAll(this, 'render');
 
-    this.model.bind('change', this.render);
-    this.model.fields.bind('reset', this.render);
-    this.model.fields.bind('add', this.render);
+    this.model.records.bind('add',      function() {self.redraw();});
+    this.model.records.bind('reset',    function() {self.redraw();});
+
     var stateData = _.extend({
-        series: [],
-        aggregationType: "sum",
         id: 0
       },
       options.state
     );
     this.state = new recline.Model.ObjectState(stateData);
 
-
-    this.editor = new my.GraphControls({
-      model: this.model,
-      state: this.state.toJSON()
-    });
-    this.editor.state.bind('change', function() {
-      self.state.set(self.editor.state.toJSON());
-      self.render();
-    });
-    this.elSidebar = this.editor.el;
   },
 
 
     render: function() {
-    var self = this;
+        var self = this;
+        var tmplData = this.model.toTemplateJSON();
+        tmplData["viewId"] = this.state.attributes["id"];
 
-    var tmplData = this.model.toTemplateJSON();
-    tmplData["viewId"] = this.state.get("id");
 
-        if(this.model.records.length > 0)
-            tmplData["indicator_value"] = this.model.records[0][this.state.get("value")];
-        else
-            tmplData["indicator_value"] = "N.A.";
 
-    var htmls = Mustache.render(this.template, tmplData);
-    $(this.el).html(htmls);
-    this.$graph = this.el.find('.panel.indicator_' + tmplData["viewId"]);
-    return this;
-  },
+        var htmls = Mustache.render(this.template, tmplData);
+         $(this.el).html(htmls);
+        this.$graph = this.el.find('.panel.indicator_' + tmplData["viewId"]);
+        return this;
+    },
+
+    redraw: function() {
+
+        var viewId = this.state.attributes["id"];
+
+        var result = "x/A";
+
+        if(this.model.records.length > 0)               {
+            result = this.model.records.models[0].attributes[this.state.get("value")];
+         }
+
+        $('#indicator_' + viewId).html(result);
+
+
+    },
 
     show: function() {
   }
