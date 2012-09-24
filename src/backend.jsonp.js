@@ -6,7 +6,7 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
   my.__type__ = 'Jsonp';
   // Timeout for request (after this time if no response we error)
   // Needed because use JSONP so do not receive e.g. 500 errors 
-  my.timeout = 5000;
+  my.timeout = 30000;
 
   // ## load
   //
@@ -18,17 +18,19 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
     var jqxhr = $.ajax({
       url: dataset.url,
       dataType: 'jsonp',
+      cache: 'true'
+
     });
     var dfd = $.Deferred();
     _wrapInTimeout(jqxhr).done(function(results) {
       if (results.error) {
         dfd.reject(results.error);
       }
-      console.log(results.results);
+      console.log(results);
 
       dfd.resolve({
-        records: results.data,
-        fields: results.fields,
+        records: results.result.data,
+        fields: results.result.description,
         useMemoryStore: true
       });
     })
