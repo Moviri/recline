@@ -133,6 +133,10 @@ my.VirtualDataset = Backbone.Model.extend({
         }
 
         function sumInitialize() {
+            // structure is { count: x, sum: {field_1_sum: x, field_2_sum: x}, avg: {field_1_avg: x, field_2_avg: x},
+            // { count: x, sum: {field_1_sum: x, field_2_sum: x}, avg: {field_1_avg: x, field_2_avg: x} , partition_sum: { field1_sum_by_partitionfield1: x .... }
+
+
             tmp = {count: 0, sum: {}};
 
             for(i=0;i<aggregatedFields.length;i++){
