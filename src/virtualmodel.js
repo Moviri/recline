@@ -22,12 +22,15 @@ my.VirtualDataset = Backbone.Model.extend({
 
         // this.updateGroupedDataset();
 
-        this.attributes.dataset.records.bind('reset', function() {
-            console.log(self);
-            self.updateGroupedDataset();
-        });
+        this.attributes.dataset.records.bind('reset',       function() { self.initializeCrossfilter(); });
+        this.queryState.bind('change',                      function() { self.updateCrossfilter(); });
+
+        this.queryState.bind('change',                      function() { self.query(); });
+        this.queryState.bind('change:filters:new-blank',    function() { self.query(); });
 
         // TODO manage filtering on data
+        // TODO manage selections on data
+        // TODO verify if is better to use a new backend (crossfilter) to manage grouping and filtering instead of using it inside the model
     },
 
     // ### fetch
@@ -42,40 +45,41 @@ my.VirtualDataset = Backbone.Model.extend({
     {
         this.attributes.aggregation.aggregatedFields = aggregationField;
         this.attributes.aggregation.dimensions = dimensions;
-        updateGroupedDataset(this);
+        updateCrossfilter(this);
     },
     addDimension: function(dimension)
     {
         this.attributes.aggregation.dimensions.push = dimension;
-        updateGroupedDataset(this);
+        updateCrossfilter(this);
     },
     addAggregationField: function(field) {
         this.attributes.aggregation.aggregatedFields.push(field);
-        updateGroupedDataset(this);
+        updateCrossfilter(this);
     },
 
-
-    updateGroupedDataset: function() {
-        console.log("Starting grouping");
+    initializeCrossfilter: function() {
+        console.log("Initialize crossfilter");
         var start = new Date().getTime();
 
+        this.crossfilterData = crossfilter(this.attributes.dataset.records.toJSON());
 
-        // TODO optimization has to be done in order to limit the number of cycles on data
-        // TODO use crossfilter to save grouped data in order to add/remove dimensions
+        var end = new Date().getTime();
+        var time = end - start;
 
+        console.log("Initialize - exec time: " + time);
 
+        this.updateCrossfilter();
+    },
+
+    createDimensions: function() {
         var dimensions = this.attributes.aggregation.dimensions;
-        var aggregatedFields = this.attributes.aggregation.aggregatedFields;
 
-        var tmpDataset = crossfilter(this.attributes.dataset.records.toJSON());
-        var group;
-
-         if(dimensions == null ){
-             // need to evaluate aggregation function on all records
-             group =  tmpDataset.groupAll();
-         }
+        if(dimensions == null ){
+            // need to evaluate aggregation function on all records
+            this.group =  this.crossfilterData.groupAll();
+        }
         else {
-            var by_dimension = tmpDataset.dimension(function(d) {
+            var by_dimension = this.crossfilterData.dimension(function(d) {
                 var tmp = "";
                 for(i=0;i<dimensions.length;i++){
                     if(i>0) { tmp = tmp + "_"; }
@@ -84,12 +88,31 @@ my.VirtualDataset = Backbone.Model.extend({
                 }
                 return tmp;
             });
-            group = by_dimension.group();
+          this.group = by_dimension.group();
+        }
+    },
 
-         }
+    updateCrossfilter: function() {
+        // TODO optimization has to be done in order to limit the number of cycles on data
+        // TODO has sense to recreate dimension if nothing is changed?, and in general, is better to use a new dimension if added instead of recreate all
+        // TODO verify if saving crossfilter data is useful (perhaps no unless we use crossfilterstore to make aggregaation and filtering)
+
+        console.log("Starting update crossfilter");
+        var start = new Date().getTime();
 
 
+        this.createDimensions();
+        this.reduce();
+        this.updateStore();
 
+        var end = new Date().getTime();
+        var time = end - start;
+
+        console.log("Grouping - exec time: " + time);
+    },
+
+    reduce: function() {
+        var aggregatedFields = this.attributes.aggregation.aggregatedFields;
 
         function sumAdd(p, v) {
             p.count = p.count +1;
@@ -112,12 +135,12 @@ my.VirtualDataset = Backbone.Model.extend({
         function sumInitialize() {
             tmp = {count: 0, sum: {}};
 
-              for(i=0;i<aggregatedFields.length;i++){
+            for(i=0;i<aggregatedFields.length;i++){
                 tmp.sum[aggregatedFields[i] + "_sum"] = 0;
             }
 
             tmp.avg = function(aggr){
-               return function(){
+                return function(){
                     var map = {};
                     for(var o=0;o<aggr.length;o++){
                         map[aggr[o] + "_avg"] = this.sum[aggr[o] + "_sum"] / this.count;
@@ -130,14 +153,20 @@ my.VirtualDataset = Backbone.Model.extend({
             return tmp;
         }
 
-        var tmpResult;
-        var reducedGroup  =  group.reduce(sumAdd,sumRemove,sumInitialize);
-          if(dimensions == null)
-            tmpResult = reducedGroup.value();
-        else
-              tmpResult = reducedGroup.all();
 
-        console.log(tmpResult);
+        this.reducedGroup  =  this.group.reduce(sumAdd,sumRemove,sumInitialize);
+    },
+
+    updateStore: function() {
+        var dimensions = this.attributes.aggregation.dimensions;
+
+        var tmpResult;
+
+        if(dimensions == null)
+            tmpResult =  this.reducedGroup.value();
+        else
+            tmpResult =  this.reducedGroup.all();
+
 
         var result = [];
         var fields = [];
@@ -151,51 +180,51 @@ my.VirtualDataset = Backbone.Model.extend({
         // set of fields array
 
 
-            fields.push( {id: "count"});
+        fields.push( {id: "count"});
 
-            for (var j in tmpField.sum) {
-                fields.push( {id: j});
-            }
+        for (var j in tmpField.sum) {
+            fields.push( {id: j});
+        }
 
-            var tempAvg =   tmpField.avg() ;
-            for (var j in tempAvg) {
-                fields.push( {id: j});
-            }
-
-            if(dimensions != null) {
-                fields.push( {id: "dimension"});
-                for(i=0;i<dimensions.length;i++){
-                    fields.push( {id: dimensions[i]});
-                }
-            }
+        var tempAvg =   tmpField.avg() ;
+        for (var j in tempAvg) {
+            fields.push( {id: j});
+        }
 
         if(dimensions != null) {
-        // set of results dataset
-        for(i=0;i<tmpResult.length;i++){
-
-
-            var keyField = tmpResult[i].key.split("_");
-
-            var tmp = {dimension: tmpResult[i].key, count: tmpResult[i].value.count};
-
-
-            for(j=0;j<keyField.length;j++){
-                tmp[dimensions[j]] = keyField[j];
-
+            fields.push( {id: "dimension"});
+            for(i=0;i<dimensions.length;i++){
+                fields.push( {id: dimensions[i]});
             }
-
-
-            for (var j in tmpResult[i].value.sum) {
-               tmp[j] = tmpResult[i].value.sum[j];
-            }
-
-            var tempAvg =   tmpResult[i].value.avg();
-
-            for (var j in tempAvg) {
-                tmp[j] = tempAvg[j];
-            }
-            result.push(tmp);
         }
+
+        if(dimensions != null) {
+            // set of results dataset
+            for(i=0;i<tmpResult.length;i++){
+
+
+                var keyField = tmpResult[i].key.split("_");
+
+                var tmp = {dimension: tmpResult[i].key, count: tmpResult[i].value.count};
+
+
+                for(j=0;j<keyField.length;j++){
+                    tmp[dimensions[j]] = keyField[j];
+
+                }
+
+
+                for (var j in tmpResult[i].value.sum) {
+                    tmp[j] = tmpResult[i].value.sum[j];
+                }
+
+                var tempAvg =   tmpResult[i].value.avg();
+
+                for (var j in tempAvg) {
+                    tmp[j] = tempAvg[j];
+                }
+                result.push(tmp);
+            }
         }
         else
         {
@@ -215,21 +244,55 @@ my.VirtualDataset = Backbone.Model.extend({
         }
 
 
-        self._store = new recline.Backend.Memory.Store(result, fields);
+        this._store = new recline.Backend.Memory.Store(result, fields);
         this.fields.reset(fields);
         this.recordCount = result.length;
         this.records.reset(result);
 
-        var end = new Date().getTime();
-        var time = end - start;
-
-        console.log("Grouping - exec time: " + time);
     },
 
+    query: function(queryObj) {
+        /*console.log("query start");
+        console.log(this.attributes.dataset.toJSON());
+        console.log(self.records.toJSON() );
+        */
 
+        var self = this;
+        var dfd = $.Deferred();
+        this.trigger('query:start');
+
+        if (queryObj) {
+            this.queryState.set(queryObj, {silent: true});
+        }
+        var actualQuery = this.queryState.toJSON();
+
+        this._store.query(actualQuery, this.toJSON())
+            .done(function(queryResult) {
+                self._handleQueryResult(queryResult);
+                self.trigger('query:done');
+                dfd.resolve(self.records);
+            })
+            .fail(function(arguments) {
+                self.trigger('query:fail', arguments);
+                dfd.reject(arguments);
+            });
+        return dfd.promise();
+    },
+
+    _handleQueryResult: function(queryResult) {
+        console.log("handlequeryresult");
+        var self = this;
+        self.recordCount = queryResult.total;
+        var docs = _.map(queryResult.hits, function(hit) {
+            var _doc = new my.Record(hit);
+            _doc.fields = self.fields;
+            return _doc;
+        });
+        self.records.reset(docs);
+    },
 
   toTemplateJSON: function() {
-    var data = this.toJSON();
+    var data = this.records.toJSON();
     data.recordCount = this.recordCount;
     data.fields = this.fields.toJSON();
     return data;
@@ -263,103 +326,7 @@ my.VirtualDataset = Backbone.Model.extend({
   }
 });
 
-    // ## <a id="query">Query</a>
-    my.Grouping = Backbone.Model.extend({
-        constructor: function Grouping() {
-            Backbone.Model.prototype.constructor.apply(this, arguments);
-        },
 
-        _groupingTemplates: {
-            groupAll: {
-                type: 'groupAll'
-            },
-            groupByDimension: {
-                type: "groupByDimension",
-                dimensions: [],
-                aggregatedFields: []
-            }
-        },
-
-        addDimension: function(dimension) {
-
-            var ourfilter = JSON.parse(JSON.stringify(dimension));
-            var group = this.get('filters');
-            filters.push(ourfilter);
-            this.trigger('change:grouping');
-        },
-        updateFilter: function(index, value) {
-        },
-        // ### removeFilter
-        //
-        // Remove a filter from filters at index filterIndex
-        removeFilter: function(filterIndex) {
-            var filters = this.get('filters');
-            filters.splice(filterIndex, 1);
-            this.set({filters: filters});
-            this.trigger('change:grouping');
-        },
-
-        // ### addSelection
-        //
-        // Add a new selection (appended to the list of selections)
-        //
-        // @param selection an object specifying the filter - see _filterTemplates for examples. If only type is provided will generate a filter by cloning _filterTemplates
-        addSelection: function(selection) {
-            // crude deep copy
-            var myselection = JSON.parse(JSON.stringify(selection));
-            // not full specified so use template and over-write
-            // 3 as for 'type', 'field' and 'fieldType'
-            if (_.keys(selection).length <= 3) {
-                myselection = _.extend(this._selectionTemplates[selection.type], myselection);
-            }
-            var filters = this.get('selections');
-            filters.push(myselection);
-            this.trigger('change:grouping');
-        },
-        // ### removeSelection
-        //
-        // Remove a selection at index selectionIndex
-        removeSelection: function(selectionIndex) {
-            var selections = this.get('selections');
-            selections.splice(selectionIndex, 1);
-            this.set({selections: selections});
-            this.trigger('change:grouping');
-        },
-        isFieldSelected: function(fieldName, fieldVale) {
-            // todo check if field is selected
-            return false;
-        },
-
-
-        // ### addFacet
-        //
-        // Add a Facet to this query
-        //
-        // See <http://www.elasticsearch.org/guide/reference/api/search/facets/>
-        addFacet: function(fieldId) {
-            var facets = this.get('facets');
-            // Assume id and fieldId should be the same (TODO: this need not be true if we want to add two different type of facets on same field)
-            if (_.contains(_.keys(facets), fieldId)) {
-                return;
-            }
-            facets[fieldId] = {
-                terms: { field: fieldId }
-            };
-            this.set({facets: facets}, {silent: true});
-            this.trigger('facet:add', this);
-        },
-        addHistogramFacet: function(fieldId) {
-            var facets = this.get('facets');
-            facets[fieldId] = {
-                date_histogram: {
-                    field: fieldId,
-                    interval: 'day'
-                }
-            };
-            this.set({facets: facets}, {silent: true});
-            this.trigger('facet:add', this);
-        }
-    });
 
 }(jQuery, this.recline.Model));
 

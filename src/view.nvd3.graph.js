@@ -58,9 +58,6 @@ this.recline.View = this.recline.View || {};
 
   },
 
-
-
-
     render: function() {
     var self = this;
 
@@ -92,11 +89,13 @@ this.recline.View = this.recline.View || {};
       this.$graph.width(this.el.width() - 20);
 
       // nvd3
+        var state = this.state;
         var seriesNVD3 = this.createSeriesNVD3();
-        var graphType = this.state.get("graphType") ;
-        var viewId = this.state.get("id");
-        var xLabel = this.state.get("xLabel");
+        var graphType = state.get("graphType") ;
+        var viewId = state.get("id");
+        var xLabel = state.get("xLabel");
         var model = this.model;
+
 
         nv.addGraph(function() {
 
@@ -143,15 +142,30 @@ this.recline.View = this.recline.View || {};
 
 
                     // test di gestione evento di click per filtro
+                    // we can make selection in the same way
                     chart.discretebar.dispatch.on('elementClick', function(e) {
-                        //console.log(e);
-                        var filters = model.queryState.get('filters');
 
 
-                        filters.push({field: "x", fieldType: "string", type: "term", term: e.pointIndex});
+                        var filter;
 
-                        model.queryState.set({filters: filters});
-                        model.queryState.trigger('change');
+
+                         if(state.attributes.seriesNameField != null) {
+                           // we use a field to define series
+                             // todo fieldtype must be evaluated on fields structure
+                           filter = {field: state.attributes.seriesNameField, type: "term", term:e.series.key, fieldType: "string"}   ;
+
+
+                         } else
+                         {
+                             // todo to be verified
+                             filter = {field: state.attributes.seriesNameField, type: "term", term:e.point.series.key, fieldType: "string"}       ;
+                         }
+
+
+                        var filters = model.queryState.addFilter(filter);
+
+
+
                })
 
 

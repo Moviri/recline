@@ -63,7 +63,7 @@ this.recline.Backend.Memory = this.recline.Backend.Memory || {};
       var numRows = queryObj.size || this.data.length;
       var start = queryObj.from || 0;
       var results = this.data;
-      
+
       results = this._applyFilters(results, queryObj);
       results = this._applyFreeTextQuery(results, queryObj);
 
@@ -92,6 +92,7 @@ this.recline.Backend.Memory = this.recline.Backend.Memory || {};
     // in place filtering
     this._applyFilters = function(results, queryObj) {
       var filters = queryObj.filters;
+
       // register filters
       var filterFunctions = {
         term         : term,
@@ -106,7 +107,7 @@ this.recline.Backend.Memory = this.recline.Backend.Memory || {};
 
       // filter records
       return _.filter(results, function (record) {
-        var passes = _.map(filters, function (filter) {
+          var passes = _.map(filters, function (filter) {
           return filterFunctions[filter.type](record, filter);
         });
 
