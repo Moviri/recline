@@ -59,7 +59,7 @@ this.recline.View = this.recline.View || {};
   },
 
     render: function() {
-    var self = this;
+        var self = this;
 
     var tmplData = this.model.toTemplateJSON();
     tmplData["viewId"] = this.state.get("id");
@@ -73,6 +73,7 @@ this.recline.View = this.recline.View || {};
   },
 
   redraw: function() {
+    var self=this;
     // There appear to be issues generating a Flot graph if either:
 
     // * The relevant div that graph attaches to his hidden at the moment of creating the plot -- Flot will complain with
@@ -103,65 +104,38 @@ this.recline.View = this.recline.View || {};
 
 
         nv.addGraph(function() {
-
-
+            var chart;
             // todo per gli stacked è necessario ciclare sulla serie per inserire dati null o zero dove non siano presenti
 
             switch(graphType) {
                 case 'lineChart':
-                    var chart = nv.models.lineChart();
+                    chart = nv.models.lineChart();
                     break;
                 case "stackedAreaChart":
-                    var chart = nv.models.stackedAreaChart()
+                    chart = nv.models.stackedAreaChart()
                         .clipEdge(true);
                     break;
                 case "multiBarHorizontalChart":
-                    var chart = nv.models.multiBarHorizontalChart()
+                    chart = nv.models.multiBarHorizontalChart()
                     break;
                 case "bulletChart" :
-                    var chart = nv.models.bulletChart();
+                    chart = nv.models.bulletChart();
                      break;
                 case "cumulativeLineChart":
-                    var chart = nv.models.cumulativeLineChart()
+                    chart = nv.models.cumulativeLineChart()
                     break;
                 case "discreteBarChart":
-                    var chart = nv.models.discreteBarChart()
-                   .staggerLabels(true)
-                   .tooltips(false)
-                   .showValues(true) ;
+                    chart = nv.models.discreteBarChart()
+                        .staggerLabels(true)
+                        .tooltips(false)
+                        .showValues(true);
 
-                     chart.discretebar.dispatch.on('elementClick', function(e) {
-
-
-                        var filter;
-
-
-                         if(state.attributes.seriesNameField != null) {
-                           // we use a field to define series
-                             // todo fieldtype must be evaluated on fields structure
-                           filter = {field: state.attributes.seriesNameField, type: "term", term:e.series.key, fieldType: "string"}   ;
-
-
-                         } else
-                         {
-                             // todo to be verified
-                             filter = {field: state.attributes.seriesNameField, type: "term", term:e.point.series.key, fieldType: "string"}       ;
-                         }
-
-
-                        var filters = model.queryState.addFilter(filter);
-
-
-
-                    })
-
-
-
-
-                    break;
+                        chart.discretebar.dispatch.on('elementClick', function(e) {
+                            self.applyFiltersAndSelections(e.series);
+                        });
+                break;
                 case "multiBarChart":
-                    var chart = nv.models.multiBarChart();
-
+                    chart = nv.models.multiBarChart();
                     break;
             }
 
@@ -218,7 +192,39 @@ this.recline.View = this.recline.View || {};
     }
   },
 
+  applyFiltersAndSelections: function(series) {
 
+
+      var selection ;
+      if(this.state.attributes.FiltersTargetDataset != null
+          || this.state.attributes.SelectionsTargetDataset != null) {
+
+
+
+      if(this.state.attributes.seriesNameField != null) {
+          // we use a field to define series
+          // todo fieldtype must be evaluated on fields structure
+          selection = {field: this.state.attributes.seriesNameField, type: "term", term:series.key, fieldType: "string"}   ;
+      } else
+      {
+          // todo to be verified
+          selection = {field: this.state.attributes.series[series.id], type: "term", term:series.key, fieldType: "string"}       ;
+      }
+
+          if(this.state.attributes.FiltersTargetDataset != null) {
+              for (var i = 0; i < this.state.attributes.FiltersTargetDataset.length; i++) {
+                  this.state.attributes.FiltersTargetDataset[i].queryState.addFilter(selection);
+              }
+          }
+
+          if(this.state.attributes.SelectionsTargetDataset != null) {
+              for (var i = 0; i < this.state.attributes.SelectionsTargetDataset.length; i++) {
+                  this.state.attributes.SelectionsTargetDataset[i].queryState.addSelection(selection);
+              }
+          }
+
+      }
+  },
   
   createSeriesNVD3: function() {
 

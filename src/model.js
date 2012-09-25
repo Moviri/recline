@@ -68,6 +68,7 @@ my.Dataset = Backbone.Model.extend({
     }
 
     function handleResults(results) {
+
       var out = self._normalizeRecordsAndFields(results.records, results.fields);
       if (results.useMemoryStore) {
 
@@ -519,7 +520,10 @@ my.Query = Backbone.Model.extend({
     }
     var filters = this.get('filters');
     filters.push(ourfilter);
-    this.trigger('change:filters:new-blank');
+    //this.trigger('change:filters:new-blank');
+      // todo evaluate impact on master recline, we need this cause when we add a filter we want to notify all attached views
+      // do we need to add another function for that?
+      this.trigger('change');
   },
   updateFilter: function(index, value) {
   },

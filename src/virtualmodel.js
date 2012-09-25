@@ -12,6 +12,9 @@ my.VirtualDataset = Backbone.Model.extend({
 
 
     initialize: function() {
+        _.bindAll(this, 'query');
+
+
         var self = this;
         this.backend = recline.Backend.Memory;
         this.fields = new my.FieldList();
@@ -23,10 +26,13 @@ my.VirtualDataset = Backbone.Model.extend({
         // this.updateGroupedDataset();
 
         this.attributes.dataset.records.bind('reset',       function() { self.initializeCrossfilter(); });
+        this.attributes.dataset.records.bind('change',       function() { self.initializeCrossfilter(); });
         this.queryState.bind('change',                      function() { self.updateCrossfilter(); });
 
         this.queryState.bind('change',                      function() { self.query(); });
-        this.queryState.bind('change:filters:new-blank',    function() { self.query(); });
+        this.queryState.bind('change:filters:new-blank',    function() {
+            console.log("change:filters:new-blank");
+            self.query(); });
 
         // TODO manage filtering on data
         // TODO manage selections on data
@@ -284,7 +290,8 @@ my.VirtualDataset = Backbone.Model.extend({
     },
 
     _handleQueryResult: function(queryResult) {
-        console.log("handlequeryresult");
+        console.log("handlequeryresult virtual");
+
         var self = this;
         self.recordCount = queryResult.total;
         var docs = _.map(queryResult.hits, function(hit) {
