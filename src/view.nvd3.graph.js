@@ -194,32 +194,34 @@ this.recline.View = this.recline.View || {};
 
   applyFiltersAndSelections: function(series) {
 
+      var actions = this.options.actions;
+      var state = this.options.state;
 
       var selection ;
-      if(this.state.attributes.FiltersTargetDataset != null
-          || this.state.attributes.SelectionsTargetDataset != null) {
+      if(actions.FiltersTargetDataset != null
+          || actions.SelectionsTargetDataset != null) {
 
 
 
-      if(this.state.attributes.seriesNameField != null) {
+      if(state.seriesNameField != null) {
           // we use a field to define series
           // todo fieldtype must be evaluated on fields structure
-          selection = {field: this.state.attributes.seriesNameField, type: "term", term:series.key, fieldType: "string"}   ;
+          selection = {field: state.seriesNameField, type: "term", term:series.key, fieldType: "string"}   ;
       } else
       {
-          // todo to be verified
-          selection = {field: this.state.attributes.series[series.id], type: "term", term:series.key, fieldType: "string"}       ;
+          // todo to be verified, series index must be used
+          selection = {field: state.series[series.id], type: "term", term:series.key, fieldType: "string"}       ;
       }
 
-          if(this.state.attributes.FiltersTargetDataset != null) {
-              for (var i = 0; i < this.state.attributes.FiltersTargetDataset.length; i++) {
-                  this.state.attributes.FiltersTargetDataset[i].queryState.addFilter(selection);
+          if(actions.FiltersTargetDataset != null) {
+              for (var i = 0; i < actions.FiltersTargetDataset.length; i++) {
+                  actions.FiltersTargetDataset[i].queryState.addFilter(selection);
               }
           }
 
-          if(this.state.attributes.SelectionsTargetDataset != null) {
-              for (var i = 0; i < this.state.attributes.SelectionsTargetDataset.length; i++) {
-                  this.state.attributes.SelectionsTargetDataset[i].queryState.addSelection(selection);
+          if(actions.SelectionsTargetDataset != null) {
+              for (var i = 0; i < actions.SelectionsTargetDataset.length; i++) {
+                  actions.SelectionsTargetDataset[i].queryState.addSelection(selection);
               }
           }
 
