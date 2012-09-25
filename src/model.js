@@ -56,6 +56,7 @@ my.Dataset = Backbone.Model.extend({
       this.backend.fetch(this.toJSON())
         .done(handleResults)
         .fail(function(arguments) {
+          console.log("Fail in fetch data");
           dfd.reject(arguments);
         });
     } else {
@@ -68,11 +69,13 @@ my.Dataset = Backbone.Model.extend({
     }
 
     function handleResults(results) {
+        console.log("handleResults") ;
+      console.log(results);
+
 
       var out = self._normalizeRecordsAndFields(results.records, results.fields);
       if (results.useMemoryStore) {
-
-        self._store = new recline.Backend.Memory.Store(out.records, out.fields);
+          self._store = new recline.Backend.Memory.Store(out.records, out.fields);
       }
 
       self.set(results.metadata);
@@ -206,7 +209,14 @@ my.Dataset = Backbone.Model.extend({
   },
 
   _handleQueryResult: function(queryResult) {
+
+
+
     var self = this;
+
+      console.log(self);
+      console.log(queryResult);
+
     self.recordCount = queryResult.total;
     var docs = _.map(queryResult.hits, function(hit) {
       var _doc = new my.Record(hit);
@@ -219,7 +229,10 @@ my.Dataset = Backbone.Model.extend({
       });
       return _doc;
     });
+      console.log("a");
+      console.log(docs);
     self.records.reset(docs);
+      console.log("b");
     if (queryResult.facets) {
       var facets = _.map(queryResult.facets, function(facetResult, facetId) {
         facetResult.id = facetId;

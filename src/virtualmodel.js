@@ -22,29 +22,20 @@ my.VirtualDataset = Backbone.Model.extend({
         this.recordCount = null;
         this.queryState = new my.Query();
 
-
-        // this.updateGroupedDataset();
-
-        this.attributes.dataset.records.bind('reset',       function() { self.initializeCrossfilter(); });
+        this.attributes.dataset.records.bind('reset',       function() {
+            console.log("dataset.records.reset");
+            console.log(self);
+            self.initializeCrossfilter(); });
         this.attributes.dataset.records.bind('change',       function() { self.initializeCrossfilter(); });
-        this.queryState.bind('change',                      function() { self.updateCrossfilter(); });
+        //this.queryState.bind('change',                      function() { self.updateCrossfilter(); });
 
-        this.queryState.bind('change',                      function() { self.query(); });
+        //this.queryState.bind('change',                      function() { self.query(); });
         this.queryState.bind('change:filters:new-blank',    function() {
             console.log("change:filters:new-blank");
             self.query(); });
 
         // TODO manage filtering on data
-        // TODO manage selections on data
         // TODO verify if is better to use a new backend (crossfilter) to manage grouping and filtering instead of using it inside the model
-    },
-
-    // ### fetch
-    //
-    // Retrieve dataset and (some) records from the backend.
-    fetch: function() {
-        this.attributes.dataset.fetch();
-
     },
 
     modifyGrouping: function(dimensions, aggregationField)
@@ -66,7 +57,7 @@ my.VirtualDataset = Backbone.Model.extend({
     initializeCrossfilter: function() {
         console.log("Initialize crossfilter");
         var start = new Date().getTime();
-
+        console.log(this);
         this.crossfilterData = crossfilter(this.attributes.dataset.records.toJSON());
 
         var end = new Date().getTime();
@@ -193,22 +184,19 @@ my.VirtualDataset = Backbone.Model.extend({
         var dimensions = this.attributes.aggregation.dimensions;
 
         var tmpResult;
-
-        if(dimensions == null)
-            tmpResult =  this.reducedGroup.value();
-        else
-            tmpResult =  this.reducedGroup.all();
-
-        console.log(tmpResult);
-
         var result = [];
         var fields = [];
 
         var tmpField;
-        if(dimensions == null)
-            tmpField =  tmpResult;
-        else
+
+        if(dimensions == null)  {
+            tmpResult =  this.reducedGroup.value();
+            tmpField = tmpResult;
+        }
+        else {
+            tmpResult =  this.reducedGroup.all();
             tmpField = tmpResult[0].value;
+        }
 
         // set of fields array
 
@@ -283,7 +271,6 @@ my.VirtualDataset = Backbone.Model.extend({
         this.recordCount = result.length;
         this.records.reset(result);
 
-        console.log(result);
 
     },
 
