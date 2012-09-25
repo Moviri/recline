@@ -520,9 +520,25 @@ my.Query = Backbone.Model.extend({
     }
     var filters = this.get('filters');
     filters.push(ourfilter);
-    //this.trigger('change:filters:new-blank');
-      // todo evaluate impact on master recline, we need this cause when we add a filter we want to notify all attached views
+    this.trigger('change:filters:new-blank');
+  },
+
+  setFilter: function(filter) {
+      // todo refactor, non useful cycle
       // do we need to add another function for that?
+      var filters = this.get('filters');
+
+      var index = -1;
+      for(x=0;x<filters.length;x++){
+        if(filters[x].field == filter.field)
+            filters[x] = filter;
+      }
+
+      if(index == -1) {
+         filters.push(filter);
+      }
+
+
       this.trigger('change');
   },
   updateFilter: function(index, value) {

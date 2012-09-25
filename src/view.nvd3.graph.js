@@ -215,13 +215,13 @@ this.recline.View = this.recline.View || {};
 
           if(actions.FiltersTargetDataset != null) {
               for (var i = 0; i < actions.FiltersTargetDataset.length; i++) {
-                  actions.FiltersTargetDataset[i].queryState.addFilter(selection);
+                  actions.FiltersTargetDataset[i].queryState.setFilter(selection);
               }
           }
 
           if(actions.SelectionsTargetDataset != null) {
               for (var i = 0; i < actions.SelectionsTargetDataset.length; i++) {
-                  actions.SelectionsTargetDataset[i].queryState.addSelection(selection);
+                  actions.SelectionsTargetDataset[i].queryState.setFilter(selection);
               }
           }
 
