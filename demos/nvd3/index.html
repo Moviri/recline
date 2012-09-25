@@ -84,16 +84,22 @@ root: ../../
         ]
     });
 
-
+    // selection test
+    dataset.queryState.addSelection({type: "term", field: "x", term: "1"});
 
 
 var graph = new recline.View.NVD3Graph({
   model: dataset,
   state: {
-    group: ["x"],
+      group: ["x"],
       seriesValues: ["y", "z"],
-    colors: ["#cb4b4b", "#4da74d", "#9440ed"],
-    graphType: "stackedAreaChart",
+      colors: ["#cb4b4b", "#4da74d", "#9440ed"],
+      graphType: "stackedAreaChart",
+      respondToSelection: true,
+      selectionMode: "ColorChange", //SeriesHiding
+      selectedColor: ["#FF0000"],
+      unselectedColor: ["#000000"],
+      action: "selection", //filter
     id: "1"
   }
 });

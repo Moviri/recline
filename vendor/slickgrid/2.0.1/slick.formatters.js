@@ -13,7 +13,8 @@
         "PercentCompleteBar": PercentCompleteBarFormatter,
         "YesNo": YesNoFormatter,
         "Checkmark": CheckmarkFormatter,
-        "TwinBarFormatter": TwinBarFormatter
+        "TwinBarFormatter": TwinBarFormatter,
+        "DateFormatter": DateFormatter
       }
     }
   });
@@ -62,6 +63,9 @@
     return bar0+bar1+bar2;
   }
 
+  function DateFormatter(row, cell, value, columnDef, dataContext) {
+    return new Date(value);
+  }
   
   function YesNoFormatter(row, cell, value, columnDef, dataContext) {
     return value ? "Yes" : "No";

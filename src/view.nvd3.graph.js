@@ -64,6 +64,8 @@ this.recline.View = this.recline.View || {};
     var tmplData = this.model.toTemplateJSON();
     tmplData["viewId"] = this.state.get("id");
 
+
+
     var htmls = Mustache.render(this.template, tmplData);
     $(this.el).html(htmls);
     this.$graph = this.el.find('.panel.nvd3graph_' + tmplData["viewId"]);
@@ -91,27 +93,23 @@ this.recline.View = this.recline.View || {};
       // nvd3
         var state = this.state;
         var seriesNVD3 = this.createSeriesNVD3();
-        var graphType = state.get("graphType") ;
-        var viewId = state.get("id");
-        var xLabel = state.get("xLabel");
+
+        var graphType = this.state.get("graphType") ;
+        var viewId = this.state.get("id");
         var model = this.model;
+		var state = this.state;
+        var xLabel = this.state.get("xLabel");
+        var yLabel = this.state.get("yLabel");
 
 
         nv.addGraph(function() {
 
 
-            // TODO per gli stacked è necessario ciclare sulla serie per inserire dati null o zero dove non siano presenti
+            // todo per gli stacked è necessario ciclare sulla serie per inserire dati null o zero dove non siano presenti
 
             switch(graphType) {
                 case 'lineChart':
                     var chart = nv.models.lineChart();
-                    //console.log(chart);
-                    chart.legend.dispatch.on("legendClick", function(e) {console.log(e);});
-
-                    break;
-                case 'lineWithFocusChart':
-                    var chart = nv.models.lineWithFocusChart();
-
                     break;
                 case "stackedAreaChart":
                     var chart = nv.models.stackedAreaChart()
@@ -132,18 +130,7 @@ this.recline.View = this.recline.View || {};
                    .tooltips(false)
                    .showValues(true) ;
 
-
-
-                    // test on events
-                    chart.discretebar.dispatch.on("chartClick", function(e)  {console.log(e);});
-                 //    chart.discretebar.dispatch.on("legendClick", function(e) {console.log(e);});
-                // dispatch = d3.dispatch('chartClick', 'elementClick', 'elementDblClick', 'elementMouseover', 'elementMouseout')
-
-
-
-                    // test di gestione evento di click per filtro
-                    // we can make selection in the same way
-                    chart.discretebar.dispatch.on('elementClick', function(e) {
+                     chart.discretebar.dispatch.on('elementClick', function(e) {
 
 
                         var filter;
@@ -166,7 +153,7 @@ this.recline.View = this.recline.View || {};
 
 
 
-               })
+                    })
 
 
 
@@ -176,18 +163,38 @@ this.recline.View = this.recline.View || {};
                     var chart = nv.models.multiBarChart();
 
                     break;
-       }
+            }
 
             chart.x(function(d) { return d[0] })
                 .y(function(d) { return d[1] });
 
-            chart.xAxis
-                .axisLabel('test')
-                .tickFormat(d3.format(',r'));
+			var     xfield =  model.fields.get(state.attributes.group);
+			if (xLabel == null || xLabel == "" || typeof xLabel == 'undefined')
+				xLabel = xfield.get('label')
+
+			if (yLabel == null || yLabel == "" || typeof yLabel == 'undefined')
+				yLabel = state.attributes.seriesValues.join("/");
 
             chart.yAxis
-                .axisLabel('test')
+                .axisLabel(yLabel)
+
                 .tickFormat(d3.format('.02f'));
+
+			if (xfield.get('type') == 'DATE' || 
+				(xfield.get('type') == 'STRING' && xLabel.indexOf('date') >= 0 && model.recordCount > 0 && new Date(model.records.get(0).get(xLabel)) instanceof Date))
+			{
+				chart.xAxis
+					.axisLabel(xLabel)
+					.tickFormat(function(d) {
+             			return d3.time.format('%x')(new Date(d))
+		           })
+			}
+			else
+			{
+				chart.xAxis
+					.axisLabel(xLabel)
+					.tickFormat(d3.format(',r'));
+			}
 
 
   		d3.select('#nvd3chart_' +viewId + '  svg')
@@ -214,22 +221,12 @@ this.recline.View = this.recline.View || {};
 
   
   createSeriesNVD3: function() {
+
       var self = this;
-
       var series = [];
-      var colors = self.state.get("colors") ;
+      var colors = this.state.get("colors") ;
       var seriesNameField = self.model.fields.get(this.state.attributes.seriesNameField) ;
-      var seriesValues = self.model.fields.get(self.state.attributes.seriesValues);
-
-      var respondToSelection = this.state.get("respondToSelection") ;
-      var selectedColor = this.state.get("selectedColor") ;
-      var unSelectedColor = this.state.get("unSelectedColor") ;
-
-      var checkSelection = false;
-      if(respondToSelection != null && respondToSelection && self.model.queryState.get('selections').lenght > 0) {
-        checkSelection = true;
-      }
-
+      var seriesValues = self.model.fields.get(this.state.attributes.seriesValues);
       if(seriesValues == null)
           seriesValues = this.state.get("seriesValues") ;
 
@@ -242,7 +239,6 @@ this.recline.View = this.recline.View || {};
 
       var color = 0;
 
-     // use the seriesNameField to calculate the series
      if(seriesNameField != null) {
 
          _.each(records, function(doc, index) {
@@ -253,37 +249,14 @@ this.recline.View = this.recline.View || {};
 
              if(seriesTmp[key] != null ) { tmpS = seriesTmp[key]  }
              else {
-                 // todo
-                 // if checkselection must use selectedcolor only when xfield in selections or yfield in selections and corresponding value are equals to selections term
-                 // otherwise color is unselectedcolor
-
-                 if(checkSelection) {
-                     if(self.model.queryState.isFieldSelected(seriesNameField, key)) {
-                         tmpS = {key: key, values: [], color:  selectedColor}
-                     }
-                     else
-                         tmpS = {key: key, values: [], color:  unSelectedColor}
-                 }
-                 else
-                 {
-                    tmpS = {key: key, values: [], color:  colors[color]}
-                    color=color+1;
-                 }
+                 tmpS = {key: key, values: [], color:  colors[color]}
+                 color=color+1;
              };
 
 
              var points = [];
              var x = parseFloat(doc.getFieldValue(xfield));
              var y = parseFloat(doc.getFieldValue(seriesValues));
-
-
-             if(checkSelection) {
-                 if(self.model.queryState.isFieldSelected(seriesValues,y) || self.model.queryState.isFieldSelected(xfield, x) )
-                    tmpS.color = selectedColor;
-                 else
-                    tmpS.color = unSelectedColor;
-             }
-
              tmpS["values"].push([x, y]);
 
              //console.log("xfield: " + xfield + " seriesvalue: " + seriesValues + " seriesNameField: " + seriesNameField + " key: " + key + " x: "+ x + " y: "+ y);
@@ -298,7 +271,7 @@ this.recline.View = this.recline.View || {};
 
      }
       else {
-         // todo this has to be merged with above functin, no branch has to be present
+         // todo this has to be merged with above, only one branch has to be present
          //console.log(seriesValues);
        _.each(seriesValues, function(field) {
            color=color+1;
@@ -311,18 +284,17 @@ this.recline.View = this.recline.View || {};
               var x = doc.getFieldValue(xfield);
 
               var yfield = self.model.fields.get(field);
-
               var y = doc.getFieldValue(yfield);
-
-
 
               var isDateTime = xfield.get('type') === 'date';
 
               if (isDateTime) {
                   xAxisIsDate = true;
               }
-              points.push([x,y]);
 
+              //points.push({x: x, y: y});
+              points.push([x,y]);
+              //console.log("x: " +x + " y: " + y + " doc: " + doc);
 
           });
 
