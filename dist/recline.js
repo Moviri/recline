@@ -918,8 +918,8 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
       }
 
       dfd.resolve({
-        records: results.result.data,
-        fields:_handleFieldDescription(results.result.description),
+        records: _performFieldCreation(dataset.fieldCreation, results.result.data),
+        fields: _handleFieldDescription(dataset.fieldCreation, results.result.description),
         useMemoryStore: true
       });
     })
@@ -954,7 +954,22 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
     return dfd.promise();
   }
 
-  function _handleFieldDescription(description) {
+  function _performFieldCreation(fieldCreation, result)
+  {
+	if (fieldCreation)
+	{
+		// for each desired added field
+		for (var f in fieldCreation)
+		{
+			var currFieldId = fieldCreation[f].id;
+			// apply calculation formula for each record
+			for (var i = 0; i < result.length; i++)
+				result[i][currFieldId] = fieldCreation[f].formula(result[i]);
+		}
+	}
+	return result;
+  }
+  function _handleFieldDescription(fieldCreation, description) {
       var res = [];
       for (var k in description) {
           // use hasOwnProperty to filter out keys from the Object.prototype
@@ -963,14 +978,17 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
 
           }
       }
-      return res;
+		if (fieldCreation)
+			for (var f in fieldCreation)
+				res.push({id: fieldCreation[f].id, type: fieldCreation[f].type});
+
+	  return res;
     }
 
 
 
 
-}(jQuery, this.recline.Backend.Jsonp));
-this.recline = this.recline || {};
+}(jQuery, this.recline.Backend.Jsonp));this.recline = this.recline || {};
 this.recline.Backend = this.recline.Backend || {};
 this.recline.Backend.Memory = this.recline.Backend.Memory || {};
 
@@ -1069,6 +1087,8 @@ this.recline.Backend.Memory = this.recline.Backend.Memory || {};
       var filterFunctions = {
         term         : term,
         range        : range,
+        drop_down        : drop_down,
+        listbox        : listbox,
         geo_distance : geo_distance
       };
       var dataParsers = {
@@ -1105,7 +1125,10 @@ this.recline.Backend.Memory = this.recline.Backend.Memory || {};
 
         return (value >= start && value <= stop);
       }
-
+	  function drop_down() {
+	  }
+      function listbox() {
+	  }
       function geo_distance() {
         // TODO code here
       }
@@ -1334,6 +1357,7 @@ my.Dataset = Backbone.Model.extend({
     }
 
     function handleResults(results) {
+
       var out = self._normalizeRecordsAndFields(results.records, results.fields);
       if (results.useMemoryStore) {
 
@@ -1742,6 +1766,18 @@ my.Query = Backbone.Model.extend({
       field: '',
       term: ''
     },
+    drop_down: {
+      type: 'term',
+      // TODO do we need this attribute here?
+      field: '',
+      term: ''
+    },
+    listbox: {
+      type: 'term',
+      // TODO do we need this attribute here?
+      field: '',
+      term: ''
+    },
     range: {
       type: 'range',
       start: '',
@@ -1786,6 +1822,24 @@ my.Query = Backbone.Model.extend({
     var filters = this.get('filters');
     filters.push(ourfilter);
     this.trigger('change:filters:new-blank');
+  },
+  setFilter: function(filter) {
+      // todo refactor, non useful cycle
+      // do we need to add another function for that?
+      var filters = this.get('filters');
+
+      var index = -1;
+      for(x=0;x<filters.length;x++){
+        if(filters[x].field == filter.field)
+            filters[x] = filter;
+      }
+
+      if(index == -1) {
+         filters.push(filter);
+      }
+
+
+      this.trigger('change');
   },
   updateFilter: function(index, value) {
   },
@@ -1907,7 +1961,6 @@ Backbone.sync = function(method, model, options) {
 };
 
 }(jQuery, this.recline.Model));
-
 /*jshint multistr:true */
 
 this.recline = this.recline || {};
@@ -2634,26 +2687,28 @@ this.recline.View = this.recline.View || {};
 
 (function($, my) {
 
-// ## Linegraph view for a Dataset using nvd3 graphing library.
+// ## Indicator view for a Dataset 
 //
 // Initialization arguments (in a hash in first parameter):
 //
-// * model: recline.Model.Dataset
+// * model: recline.Model.Dataset (should be a VirtualDataset that already performs the aggregation
 // * state: (optional) configuration hash of form:
 //
 //        { 
-//          group: {column name for x-axis},
-//          series: [{column name for series A}, {column name series B}, ... ],
-//          colors: ["#edc240", "#afd8f8", ...]
+//          series: [{column name for series A}, {column name series B}, ... ],   // only first record of dataset is used
+//			format: (optional) format to use (see D3.format for reference)
 //        }
 //
 // NB: should *not* provide an el argument to the view but must let the view
 // generate the element itself (you can then append view.el to the DOM.
     my.Indicator = Backbone.View.extend({
+	  defaults: {
+		format: 'd',
+	  },
 
   template: '<div class="recline-graph"> \
       <div class="panel indicator_{{viewId}}"style="display: block;"> \
-        <div id="indicator_{{viewId}}">N.D.</div>\
+        <div id="indicator_{{viewId}}">{{value}}</div>\
       </div> \
     </div> ',
 
@@ -2663,8 +2718,9 @@ this.recline.View = this.recline.View || {};
     this.el = $(this.el);
     _.bindAll(this, 'render');
 
-    this.model.records.bind('add',      function() {self.redraw();});
-    this.model.records.bind('reset',    function() {self.redraw();});
+    this.model.records.bind('add',      function() {self.render();});
+    this.model.records.bind('reset',    function() {self.render();});
+    this.model.records.bind('change',      function() {self.render();});
 
     var stateData = _.extend({
         id: 0
@@ -2675,40 +2731,21 @@ this.recline.View = this.recline.View || {};
 
   },
 
-
     render: function() {
         var self = this;
         var tmplData = this.model.toTemplateJSON();
         tmplData["viewId"] = this.state.attributes["id"];
-
-
-<<<<<<< HEAD
-=======
-        if(this.model.records.length > 0)
-            tmplData["indicator_value"] = this.model.records[0][this.state.get("value")];
-        else
-            tmplData["indicator_value"] = "N.A.";
->>>>>>> 43cad7680652f5281553f029e41091519e836c89
+		var format = this.state.attributes.format || this.defaults.format;
+		var applyFormatFunction = d3.format(format)
+		
+        if (this.model.records && this.model.records.length > 0)
+			tmplData["value"] = applyFormatFunction(this.model.records.models[0].attributes[this.state.attributes["series"]]);
+		else tmplData["value"] = "N/A"
 
         var htmls = Mustache.render(this.template, tmplData);
          $(this.el).html(htmls);
         this.$graph = this.el.find('.panel.indicator_' + tmplData["viewId"]);
         return this;
-    },
-
-    redraw: function() {
-
-        var viewId = this.state.attributes["id"];
-
-        var result = "x/A";
-
-        if(this.model.records.length > 0)               {
-            result = this.model.records.models[0].attributes[this.state.get("value")];
-         }
-
-        $('#indicator_' + viewId).html(result);
-
-
     },
 
     show: function() {
@@ -2722,7 +2759,6 @@ this.recline.View = this.recline.View || {};
 
 
 })(jQuery, recline.View);
-
 /*jshint multistr:true */
 
 this.recline = this.recline || {};
@@ -3879,10 +3915,12 @@ this.recline.View = this.recline.View || {};
   },
 
     render: function() {
-    var self = this;
+        var self = this;
 
     var tmplData = this.model.toTemplateJSON();
     tmplData["viewId"] = this.state.get("id");
+
+
 
     var htmls = Mustache.render(this.template, tmplData);
     $(this.el).html(htmls);
@@ -3891,6 +3929,7 @@ this.recline.View = this.recline.View || {};
   },
 
   redraw: function() {
+    var self=this;
     // There appear to be issues generating a Flot graph if either:
 
     // * The relevant div that graph attaches to his hidden at the moment of creating the plot -- Flot will complain with
@@ -3911,14 +3950,9 @@ this.recline.View = this.recline.View || {};
       // nvd3
         var state = this.state;
         var seriesNVD3 = this.createSeriesNVD3();
-<<<<<<< HEAD
-        var graphType = state.get("graphType") ;
-        var viewId = state.get("id");
-        var xLabel = state.get("xLabel");
-=======
+
         var graphType = this.state.get("graphType") ;
         var viewId = this.state.get("id");
->>>>>>> 43cad7680652f5281553f029e41091519e836c89
         var model = this.model;
 		var state = this.state;
         var xLabel = this.state.get("xLabel");
@@ -3926,90 +3960,45 @@ this.recline.View = this.recline.View || {};
 
 
         nv.addGraph(function() {
-
-
-            // TODO per gli stacked è necessario ciclare sulla serie per inserire dati null o zero dove non siano presenti
+            var chart;
+            // todo per gli stacked è necessario ciclare sulla serie per inserire dati null o zero dove non siano presenti
 
             switch(graphType) {
                 case 'lineChart':
-                    var chart = nv.models.lineChart();
-                    //console.log(chart);
-                    chart.legend.dispatch.on("legendClick", function(e) {console.log(e);});
-
-                    break;
-                case 'lineWithFocusChart':
-                    var chart = nv.models.lineWithFocusChart();
-
+                    chart = nv.models.lineChart();
                     break;
                 case "stackedAreaChart":
-                    var chart = nv.models.stackedAreaChart()
+                    chart = nv.models.stackedAreaChart()
                         .clipEdge(true);
                     break;
                 case "multiBarHorizontalChart":
-                    var chart = nv.models.multiBarHorizontalChart()
+                    chart = nv.models.multiBarHorizontalChart()
                     break;
                 case "bulletChart" :
-                    var chart = nv.models.bulletChart();
+                    chart = nv.models.bulletChart();
                      break;
                 case "cumulativeLineChart":
-                    var chart = nv.models.cumulativeLineChart()
+                    chart = nv.models.cumulativeLineChart()
                     break;
                 case "discreteBarChart":
-                    var chart = nv.models.discreteBarChart()
-                   .staggerLabels(true)
-                   .tooltips(false)
-                   .showValues(true) ;
+                    chart = nv.models.discreteBarChart()
+                        .staggerLabels(true)
+                        .tooltips(false)
+                        .showValues(true);
 
-
-
-                    // test on events
-                    chart.discretebar.dispatch.on("chartClick", function(e)  {console.log(e);});
-                 //    chart.discretebar.dispatch.on("legendClick", function(e) {console.log(e);});
-                // dispatch = d3.dispatch('chartClick', 'elementClick', 'elementDblClick', 'elementMouseover', 'elementMouseout')
-
-
-
-                    // test di gestione evento di click per filtro
-                    // we can make selection in the same way
-                    chart.discretebar.dispatch.on('elementClick', function(e) {
-
-
-                        var filter;
-
-
-                         if(state.attributes.seriesNameField != null) {
-                           // we use a field to define series
-                             // todo fieldtype must be evaluated on fields structure
-                           filter = {field: state.attributes.seriesNameField, type: "term", term:e.series.key, fieldType: "string"}   ;
-
-
-                         } else
-                         {
-                             // todo to be verified
-                             filter = {field: state.attributes.seriesNameField, type: "term", term:e.point.series.key, fieldType: "string"}       ;
-                         }
-
-
-                        var filters = model.queryState.addFilter(filter);
-
-
-
-               })
-
-
-
-
-                    break;
+                        chart.discretebar.dispatch.on('elementClick', function(e) {
+                            self.applyFiltersAndSelections(e.series);
+                        });
+                break;
                 case "multiBarChart":
-                    var chart = nv.models.multiBarChart();
-
+                    chart = nv.models.multiBarChart();
                     break;
-       }
+            }
 
             chart.x(function(d) { return d[0] })
                 .y(function(d) { return d[1] });
 
-			var xfield =  model.fields.get(state.attributes.group);
+			var     xfield =  model.fields.get(state.attributes.group);
 			if (xLabel == null || xLabel == "" || typeof xLabel == 'undefined')
 				xLabel = xfield.get('label')
 
@@ -4059,25 +4048,49 @@ this.recline.View = this.recline.View || {};
     }
   },
 
+  applyFiltersAndSelections: function(series) {
 
-  
-  createSeriesNVD3: function() {
-      var self = this;
+      var actions = this.options.actions;
+      var state = this.options.state;
 
-      var series = [];
-      var colors = self.state.get("colors") ;
-      var seriesNameField = self.model.fields.get(this.state.attributes.seriesNameField) ;
-      var seriesValues = self.model.fields.get(self.state.attributes.seriesValues);
+      var selection ;
+      if(actions.FiltersTargetDataset != null
+          || actions.SelectionsTargetDataset != null) {
 
-      var respondToSelection = this.state.get("respondToSelection") ;
-      var selectedColor = this.state.get("selectedColor") ;
-      var unSelectedColor = this.state.get("unSelectedColor") ;
 
-      var checkSelection = false;
-      if(respondToSelection != null && respondToSelection && self.model.queryState.get('selections').lenght > 0) {
-        checkSelection = true;
+
+      if(state.seriesNameField != null) {
+          // we use a field to define series
+          // todo fieldtype must be evaluated on fields structure
+          selection = {field: state.seriesNameField, type: "term", term:series.key, fieldType: "string"}   ;
+      } else
+      {
+          // todo to be verified, series index must be used
+          selection = {field: state.series[series.id], type: "term", term:series.key, fieldType: "string"}       ;
       }
 
+          if(actions.FiltersTargetDataset != null) {
+              for (var i = 0; i < actions.FiltersTargetDataset.length; i++) {
+                  actions.FiltersTargetDataset[i].queryState.setFilter(selection);
+              }
+          }
+
+          if(actions.SelectionsTargetDataset != null) {
+              for (var i = 0; i < actions.SelectionsTargetDataset.length; i++) {
+                  actions.SelectionsTargetDataset[i].queryState.setFilter(selection);
+              }
+          }
+
+      }
+  },
+  
+  createSeriesNVD3: function() {
+
+      var self = this;
+      var series = [];
+      var colors = this.state.get("colors") ;
+      var seriesNameField = self.model.fields.get(this.state.attributes.seriesNameField) ;
+      var seriesValues = self.model.fields.get(this.state.attributes.seriesValues);
       if(seriesValues == null)
           seriesValues = this.state.get("seriesValues") ;
 
@@ -4090,7 +4103,6 @@ this.recline.View = this.recline.View || {};
 
       var color = 0;
 
-     // use the seriesNameField to calculate the series
      if(seriesNameField != null) {
 
          _.each(records, function(doc, index) {
@@ -4101,37 +4113,14 @@ this.recline.View = this.recline.View || {};
 
              if(seriesTmp[key] != null ) { tmpS = seriesTmp[key]  }
              else {
-                 // todo
-                 // if checkselection must use selectedcolor only when xfield in selections or yfield in selections and corresponding value are equals to selections term
-                 // otherwise color is unselectedcolor
-
-                 if(checkSelection) {
-                     if(self.model.queryState.isFieldSelected(seriesNameField, key)) {
-                         tmpS = {key: key, values: [], color:  selectedColor}
-                     }
-                     else
-                         tmpS = {key: key, values: [], color:  unSelectedColor}
-                 }
-                 else
-                 {
-                    tmpS = {key: key, values: [], color:  colors[color]}
-                    color=color+1;
-                 }
+                 tmpS = {key: key, values: [], color:  colors[color]}
+                 color=color+1;
              };
 
 
              var points = [];
              var x = parseFloat(doc.getFieldValue(xfield));
              var y = parseFloat(doc.getFieldValue(seriesValues));
-
-
-             if(checkSelection) {
-                 if(self.model.queryState.isFieldSelected(seriesValues,y) || self.model.queryState.isFieldSelected(xfield, x) )
-                    tmpS.color = selectedColor;
-                 else
-                    tmpS.color = unSelectedColor;
-             }
-
              tmpS["values"].push([x, y]);
 
              //console.log("xfield: " + xfield + " seriesvalue: " + seriesValues + " seriesNameField: " + seriesNameField + " key: " + key + " x: "+ x + " y: "+ y);
@@ -4146,11 +4135,7 @@ this.recline.View = this.recline.View || {};
 
      }
       else {
-<<<<<<< HEAD
-         // todo this has to be merged with above functin, no branch has to be present
-=======
          // todo this has to be merged with above, only one branch has to be present
->>>>>>> 43cad7680652f5281553f029e41091519e836c89
          //console.log(seriesValues);
        _.each(seriesValues, function(field) {
            color=color+1;
@@ -4163,18 +4148,17 @@ this.recline.View = this.recline.View || {};
               var x = doc.getFieldValue(xfield);
 
               var yfield = self.model.fields.get(field);
-
               var y = doc.getFieldValue(yfield);
-
-
 
               var isDateTime = xfield.get('type') === 'date';
 
               if (isDateTime) {
                   xAxisIsDate = true;
               }
-              points.push([x,y]);
 
+              //points.push({x: x, y: y});
+              points.push([x,y]);
+              //console.log("x: " +x + " y: " + y + " doc: " + doc);
 
           });
 
@@ -4869,6 +4853,9 @@ my.VirtualDataset = Backbone.Model.extend({
 
 
     initialize: function() {
+        _.bindAll(this, 'query');
+
+
         var self = this;
         this.backend = recline.Backend.Memory;
         this.fields = new my.FieldList();
@@ -4879,24 +4866,18 @@ my.VirtualDataset = Backbone.Model.extend({
 
         // this.updateGroupedDataset();
 
-<<<<<<< HEAD
         this.attributes.dataset.records.bind('reset',       function() { self.initializeCrossfilter(); });
+        this.attributes.dataset.records.bind('change',       function() { self.initializeCrossfilter(); });
         this.queryState.bind('change',                      function() { self.updateCrossfilter(); });
 
         this.queryState.bind('change',                      function() { self.query(); });
-        this.queryState.bind('change:filters:new-blank',    function() { self.query(); });
+        this.queryState.bind('change:filters:new-blank',    function() {
+            console.log("change:filters:new-blank");
+            self.query(); });
 
         // TODO manage filtering on data
         // TODO manage selections on data
         // TODO verify if is better to use a new backend (crossfilter) to manage grouping and filtering instead of using it inside the model
-=======
-        this.attributes.dataset.records.bind('reset', function() {
-            console.log(self);
-            self.updateGroupedDataset();
-        });
-
-        // TODO manage filtering on data
->>>>>>> 43cad7680652f5281553f029e41091519e836c89
     },
 
     // ### fetch
@@ -4904,31 +4885,9 @@ my.VirtualDataset = Backbone.Model.extend({
     // Retrieve dataset and (some) records from the backend.
     fetch: function() {
         this.attributes.dataset.fetch();
-<<<<<<< HEAD
-=======
 
     },
 
-    modifyGrouping: function(dimensions, aggregationField)
-    {
-        this.attributes.aggregation.aggregatedFields = aggregationField;
-        this.attributes.aggregation.dimensions = dimensions;
-        updateGroupedDataset(this);
-    },
-    addDimension: function(dimension)
-    {
-        this.attributes.aggregation.dimensions.push = dimension;
-        updateGroupedDataset(this);
-    },
-    addAggregationField: function(field) {
-        this.attributes.aggregation.aggregatedFields.push(field);
-        updateGroupedDataset(this);
-    },
->>>>>>> 43cad7680652f5281553f029e41091519e836c89
-
-    },
-
-<<<<<<< HEAD
     modifyGrouping: function(dimensions, aggregationField)
     {
         this.attributes.aggregation.aggregatedFields = aggregationField;
@@ -4958,21 +4917,10 @@ my.VirtualDataset = Backbone.Model.extend({
 
         this.updateCrossfilter();
     },
-=======
-    updateGroupedDataset: function() {
-        console.log("Starting grouping");
-        var start = new Date().getTime();
-
-
-        // TODO optimization has to be done in order to limit the number of cycles on data
-        // TODO use crossfilter to save grouped data in order to add/remove dimensions
-
->>>>>>> 43cad7680652f5281553f029e41091519e836c89
 
     createDimensions: function() {
         var dimensions = this.attributes.aggregation.dimensions;
 
-<<<<<<< HEAD
         if(dimensions == null ){
             // need to evaluate aggregation function on all records
             this.group =  this.crossfilterData.groupAll();
@@ -5012,36 +4960,31 @@ my.VirtualDataset = Backbone.Model.extend({
 
     reduce: function() {
         var aggregatedFields = this.attributes.aggregation.aggregatedFields;
-=======
-        var tmpDataset = crossfilter(this.attributes.dataset.records.toJSON());
-        var group;
 
-         if(dimensions == null ){
-             // need to evaluate aggregation function on all records
-             group =  tmpDataset.groupAll();
-         }
-        else {
-            var by_dimension = tmpDataset.dimension(function(d) {
-                var tmp = "";
-                for(i=0;i<dimensions.length;i++){
-                    if(i>0) { tmp = tmp + "_"; }
-
-                    tmp = tmp + d[dimensions[i]];
-                }
-                return tmp;
-            });
-            group = by_dimension.group();
-
-         }
-
-
-
->>>>>>> 43cad7680652f5281553f029e41091519e836c89
+        var partitioning = false;
+        var partitions;
+        if(this.attributes.aggregation.partitions != null) {
+            partitions = this.attributes.aggregation.partitions;
+            var partitioning = true;
+        }
 
         function sumAdd(p, v) {
             p.count = p.count +1;
             for(i=0;i<aggregatedFields.length;i++){
-                p.sum[aggregatedFields[i]+"_sum"] = p.sum[aggregatedFields[i]+"_sum"] + v[aggregatedFields[i]];
+                p.sum[aggregatedFields[i]] = p.sum[aggregatedFields[i]] + v[aggregatedFields[i]];
+
+                if(partitioning) {
+                    // for each partition need to verify if exist a value of aggregatefield_by_partition_partitionvalue_sum
+                    for(x=0;x<partitions.length;x++){
+                        var fieldName = aggregatedFields[i] + "_by_" + partitions[x] + "_" + v[partitions[x]];
+
+                        if(p.sum[fieldName] == null)
+                            p.sum[fieldName] = 0;
+
+                        p.sum[fieldName] = p.sum[fieldName] + v[aggregatedFields[i]];
+                    }
+                }
+
             }
             return p;
         }
@@ -5050,32 +4993,30 @@ my.VirtualDataset = Backbone.Model.extend({
             p.count = p.count - 1;
 
             for(i=0;i<aggregatedFields.length;i++){
-                p.sum[aggregatedFields[i]+"_sum"] = p.sum[aggregatedFields[i]+"_sum"] - v[aggregatedFields[i]];
+                p.sum[aggregatedFields[i]] = p.sum[aggregatedFields[i]] - v[aggregatedFields[i]];
+
+
             }
 
             return p;
         }
 
         function sumInitialize() {
-            // structure is { count: x, sum: {field_1_sum: x, field_2_sum: x}, avg: {field_1_avg: x, field_2_avg: x},
-            // { count: x, sum: {field_1_sum: x, field_2_sum: x}, avg: {field_1_avg: x, field_2_avg: x} , partition_sum: { field1_sum_by_partitionfield1: x .... }
 
 
             tmp = {count: 0, sum: {}};
 
             for(i=0;i<aggregatedFields.length;i++){
-                tmp.sum[aggregatedFields[i] + "_sum"] = 0;
+                tmp.sum[aggregatedFields[i]] = 0;
+
+
             }
 
             tmp.avg = function(aggr){
-<<<<<<< HEAD
                 return function(){
-=======
-               return function(){
->>>>>>> 43cad7680652f5281553f029e41091519e836c89
                     var map = {};
                     for(var o=0;o<aggr.length;o++){
-                        map[aggr[o] + "_avg"] = this.sum[aggr[o] + "_sum"] / this.count;
+                        map[aggr[o]] = this.sum[aggr[o]] / this.count;
                     }
 
                     return map;
@@ -5085,7 +5026,6 @@ my.VirtualDataset = Backbone.Model.extend({
             return tmp;
         }
 
-<<<<<<< HEAD
 
         this.reducedGroup  =  this.group.reduce(sumAdd,sumRemove,sumInitialize);
     },
@@ -5100,16 +5040,7 @@ my.VirtualDataset = Backbone.Model.extend({
         else
             tmpResult =  this.reducedGroup.all();
 
-=======
-        var tmpResult;
-        var reducedGroup  =  group.reduce(sumAdd,sumRemove,sumInitialize);
-          if(dimensions == null)
-            tmpResult = reducedGroup.value();
-        else
-              tmpResult = reducedGroup.all();
-
         console.log(tmpResult);
->>>>>>> 43cad7680652f5281553f029e41091519e836c89
 
         var result = [];
         var fields = [];
@@ -5119,7 +5050,6 @@ my.VirtualDataset = Backbone.Model.extend({
             tmpField =  tmpResult;
         else
             tmpField = tmpResult[0].value;
-<<<<<<< HEAD
 
         // set of fields array
 
@@ -5127,76 +5057,45 @@ my.VirtualDataset = Backbone.Model.extend({
         fields.push( {id: "count"});
 
         for (var j in tmpField.sum) {
-            fields.push( {id: j});
+            fields.push( {id: j + "_sum"});
         }
 
         var tempAvg =   tmpField.avg() ;
         for (var j in tempAvg) {
-            fields.push( {id: j});
+            fields.push( {id: j + "_avg"});
         }
 
         if(dimensions != null) {
             fields.push( {id: "dimension"});
             for(i=0;i<dimensions.length;i++){
                 fields.push( {id: dimensions[i]});
-=======
-
-        // set of fields array
-
-
-            fields.push( {id: "count"});
-
-            for (var j in tmpField.sum) {
-                fields.push( {id: j});
             }
+        }
 
-            var tempAvg =   tmpField.avg() ;
-            for (var j in tempAvg) {
-                fields.push( {id: j});
->>>>>>> 43cad7680652f5281553f029e41091519e836c89
-            }
-
-<<<<<<< HEAD
         if(dimensions != null) {
             // set of results dataset
             for(i=0;i<tmpResult.length;i++){
 
-=======
-            if(dimensions != null) {
-                fields.push( {id: "dimension"});
-                for(i=0;i<dimensions.length;i++){
-                    fields.push( {id: dimensions[i]});
-                }
-            }
-
-        if(dimensions != null) {
-        // set of results dataset
-        for(i=0;i<tmpResult.length;i++){
->>>>>>> 43cad7680652f5281553f029e41091519e836c89
 
                 var keyField = tmpResult[i].key.split("_");
 
                 var tmp = {dimension: tmpResult[i].key, count: tmpResult[i].value.count};
 
-<<<<<<< HEAD
 
                 for(j=0;j<keyField.length;j++){
                     tmp[dimensions[j]] = keyField[j];
-=======
-            var tmp = {dimension: tmpResult[i].key, count: tmpResult[i].value.count};
->>>>>>> 43cad7680652f5281553f029e41091519e836c89
 
                 }
 
 
                 for (var j in tmpResult[i].value.sum) {
-                    tmp[j] = tmpResult[i].value.sum[j];
+                    tmp[j + "_sum"] = tmpResult[i].value.sum[j];
                 }
 
                 var tempAvg =   tmpResult[i].value.avg();
 
                 for (var j in tempAvg) {
-                    tmp[j] = tempAvg[j];
+                    tmp[j + "_avg"] = tempAvg[j];
                 }
                 result.push(tmp);
             }
@@ -5206,54 +5105,27 @@ my.VirtualDataset = Backbone.Model.extend({
             var tmp = { count: tmpField.count};
 
             for (var j in tmpField.sum) {
-                tmp[j] = tmpField.sum[j];
+                tmp[j + "_sum"] = tmpField.sum[j];
             }
 
             var tempAvg =   tmpField.avg();
 
             for (var j in tempAvg) {
-                tmp[j] = tempAvg[j];
-            }
+                tmp[j + "_avg"] = tempAvg[j];
 
-            var tempAvg =   tmpResult[i].value.avg();
-
-            for (var j in tempAvg) {
-                tmp[j] = tempAvg[j];
-            }
-            result.push(tmp);
-        }
-        }
-        else
-        {
-            var tmp = { count: tmpField.count};
-
-            for (var j in tmpField.sum) {
-                tmp[j] = tmpField.sum[j];
-            }
-
-            var tempAvg =   tmpField.avg();
-
-            for (var j in tempAvg) {
-                tmp[j] = tempAvg[j];
             }
             result.push(tmp);
 
         }
 
 
-<<<<<<< HEAD
         this._store = new recline.Backend.Memory.Store(result, fields);
-=======
-        self._store = new recline.Backend.Memory.Store(result, fields);
->>>>>>> 43cad7680652f5281553f029e41091519e836c89
         this.fields.reset(fields);
         this.recordCount = result.length;
         this.records.reset(result);
 
-        var end = new Date().getTime();
-        var time = end - start;
+        console.log(result);
 
-        console.log("Grouping - exec time: " + time);
     },
 
     query: function(queryObj) {
@@ -5285,7 +5157,8 @@ my.VirtualDataset = Backbone.Model.extend({
     },
 
     _handleQueryResult: function(queryResult) {
-        console.log("handlequeryresult");
+        console.log("handlequeryresult virtual");
+
         var self = this;
         self.recordCount = queryResult.total;
         var docs = _.map(queryResult.hits, function(hit) {
@@ -5331,107 +5204,7 @@ my.VirtualDataset = Backbone.Model.extend({
   }
 });
 
-<<<<<<< HEAD
 
-=======
-    // ## <a id="query">Query</a>
-    my.Grouping = Backbone.Model.extend({
-        constructor: function Grouping() {
-            Backbone.Model.prototype.constructor.apply(this, arguments);
-        },
-
-        _groupingTemplates: {
-            groupAll: {
-                type: 'groupAll'
-            },
-            groupByDimension: {
-                type: "groupByDimension",
-                dimensions: [],
-                aggregatedFields: []
-            }
-        },
-
-        addDimension: function(dimension) {
-
-            var ourfilter = JSON.parse(JSON.stringify(dimension));
-            var group = this.get('filters');
-            filters.push(ourfilter);
-            this.trigger('change:grouping');
-        },
-        updateFilter: function(index, value) {
-        },
-        // ### removeFilter
-        //
-        // Remove a filter from filters at index filterIndex
-        removeFilter: function(filterIndex) {
-            var filters = this.get('filters');
-            filters.splice(filterIndex, 1);
-            this.set({filters: filters});
-            this.trigger('change:grouping');
-        },
-
-        // ### addSelection
-        //
-        // Add a new selection (appended to the list of selections)
-        //
-        // @param selection an object specifying the filter - see _filterTemplates for examples. If only type is provided will generate a filter by cloning _filterTemplates
-        addSelection: function(selection) {
-            // crude deep copy
-            var myselection = JSON.parse(JSON.stringify(selection));
-            // not full specified so use template and over-write
-            // 3 as for 'type', 'field' and 'fieldType'
-            if (_.keys(selection).length <= 3) {
-                myselection = _.extend(this._selectionTemplates[selection.type], myselection);
-            }
-            var filters = this.get('selections');
-            filters.push(myselection);
-            this.trigger('change:grouping');
-        },
-        // ### removeSelection
-        //
-        // Remove a selection at index selectionIndex
-        removeSelection: function(selectionIndex) {
-            var selections = this.get('selections');
-            selections.splice(selectionIndex, 1);
-            this.set({selections: selections});
-            this.trigger('change:grouping');
-        },
-        isFieldSelected: function(fieldName, fieldVale) {
-            // todo check if field is selected
-            return false;
-        },
-
-
-        // ### addFacet
-        //
-        // Add a Facet to this query
-        //
-        // See <http://www.elasticsearch.org/guide/reference/api/search/facets/>
-        addFacet: function(fieldId) {
-            var facets = this.get('facets');
-            // Assume id and fieldId should be the same (TODO: this need not be true if we want to add two different type of facets on same field)
-            if (_.contains(_.keys(facets), fieldId)) {
-                return;
-            }
-            facets[fieldId] = {
-                terms: { field: fieldId }
-            };
-            this.set({facets: facets}, {silent: true});
-            this.trigger('facet:add', this);
-        },
-        addHistogramFacet: function(fieldId) {
-            var facets = this.get('facets');
-            facets[fieldId] = {
-                date_histogram: {
-                    field: fieldId,
-                    interval: 'day'
-                }
-            };
-            this.set({facets: facets}, {silent: true});
-            this.trigger('facet:add', this);
-        }
-    });
->>>>>>> 43cad7680652f5281553f029e41091519e836c89
 
 }(jQuery, this.recline.Model));
 
@@ -5810,16 +5583,14 @@ my.FilterEditor = Backbone.View.extend({
 })(jQuery, recline.View);
 
 /*jshint multistr:true */
-
 this.recline = this.recline || {};
 this.recline.View = this.recline.View || {};
 
 (function($, my) {
-
+	
 my.GenericFilter = Backbone.View.extend({
   className: 'recline-filter-editor well', 
-
-    template: ' \
+  template: ' \
     <div class="filters"> \
       <h3>Filters</h3> \
       <a href="#" class="js-add-filter">Add filter</a> \
@@ -5830,6 +5601,8 @@ my.GenericFilter = Backbone.View.extend({
             <option value="term">Term (text)</option> \
             <option value="range">Range</option> \
             <option value="geo_distance">Geo distance</option> \
+            <option value="drop_down">Drop down</option> \
+            <option value="listbox">Listbox</option> \
           </select> \
           <label>Field</label> \
           <select class="fields"> \
@@ -5837,6 +5610,13 @@ my.GenericFilter = Backbone.View.extend({
             <option value="{{id}}">{{label}}</option> \
             {{/fields}} \
           </select> \
+
+
+
+
+
+
+
           <button type="submit" class="btn">Add</button> \
         </fieldset> \
       </form> \
@@ -5876,6 +5656,36 @@ my.GenericFilter = Backbone.View.extend({
         </fieldset> \
       </div> \
     ',
+    drop_down: ' \
+      <div class="filter-{{type}} filter"> \
+        <fieldset> \
+          <legend> \
+            {{field}} <small>{{type}}</small> \
+            <a class="js-remove-filter" href="#" title="Remove this filter">&times;</a> \
+          </legend> \
+			<select class="fields" data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}"> \
+            {{#values}} \
+            <option value="{{.}}">{{.}}</option> \
+            {{/values}} \
+          </select> \
+        </fieldset> \
+      </div> \
+    ',
+    listbox: ' \
+      <div class="filter-{{type}} filter"> \
+        <fieldset> \
+          <legend> \
+            {{field}} <small>{{type}}</small> \
+            <a class="js-remove-filter" href="#" title="Remove this filter">&times;</a> \
+          </legend> \
+			<select class="fields" data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" multiple> \
+            {{#values}} \
+            <option value="{{.}}">{{.}}</option> \
+            {{/values}} \
+          </select> \
+        </fieldset> \
+      </div> \
+    ',
     geo_distance: ' \
       <div class="filter-{{type}} filter"> \
         <fieldset> \
@@ -5899,20 +5709,19 @@ my.GenericFilter = Backbone.View.extend({
     'submit form.js-edit': 'onTermFiltersUpdate',
     'submit form.js-add': 'onAddFilter'
   },
-  initialize: function() {
-
-     console.log(this);
-
-
-      this.el = $(this.el);
+  initialize: function(args) {
+    this.el = $(this.el);
     _.bindAll(this, 'render');
     this.model.fields.bind('all', this.render);
     this.model.queryState.bind('change', this.render);
     this.model.queryState.bind('change:filters:new-blank', this.render);
-
-
+	this.origRecords = this.model.records.toJSON();
+	this.userFilters = args.userFilters;
+	if (this.userFilters && this.userFilters.length)
+		for (var k in this.userFilters)
+			this.model.queryState.setFilter(this.userFilters[k]);
+	
     this.render();
-
   },
   render: function() {
     var self = this;
@@ -5923,7 +5732,10 @@ my.GenericFilter = Backbone.View.extend({
       return filter;
     });
     tmplData.fields = this.model.fields.toJSON();
+	tmplData.records = this.origRecords;
     tmplData.filterRender = function() {
+	  // add value list to selected filter or templating of record values will not work
+	  this.values = _.uniq(_.pluck(tmplData.records, this.field));
       return Mustache.render(self.filterTemplates[this.type], this);
     };
     var out = Mustache.render(this.template, tmplData);
@@ -5943,6 +5755,10 @@ my.GenericFilter = Backbone.View.extend({
     var field      = $target.find('select.fields').val();
     var fieldType  = this.model.fields.find(function (e) { return e.get('id') === field }).get('type');
     this.model.queryState.addFilter({type: filterType, field: field, fieldType: fieldType});
+	//for(m in this.options.TargetModel) {
+    //    m.queryState.addFilter({type: filterType, field: field, fieldType: fieldType});
+    //}
+
     // trigger render explicitly as queryState change will not be triggered (as blank value for filter)
     this.render();
   },
@@ -5955,41 +5771,63 @@ my.GenericFilter = Backbone.View.extend({
   onTermFiltersUpdate: function(e) {
    var self = this;
     e.preventDefault();
-    var filters = self.model.queryState.get('filters');
+    //var filters = self.model.queryState.get('filters');
+	
     var $form = $(e.target);
-    _.each($form.find('input'), function(input) {
+    _.each($form.find('input,select'), function(input) {
+
+
       var $input = $(input);
       var filterType  = $input.attr('data-filter-type');
       var fieldId     = $input.attr('data-filter-field');
       var filterIndex = parseInt($input.attr('data-filter-id'));
       var name        = $input.attr('name');
       var value       = $input.val();
+	  var values = new Array();
+
+	  if (input.nodeName.toLowerCase() == 'select')
+	  {
+		if (input.multiple)
+		{
+			$input.find("option:selected").each(function() 
+				{
+					values.push(this.text());
+				});
+		}
+		else value = $input.find("option:selected").text();
+	  }
 
       switch (filterType) {
         case 'term':
-          filters[filterIndex].term = value;
+			filter = {field: fieldId, type: filterType, term:value, fieldType: "string"};
           break;
         case 'range':
-          filters[filterIndex][name] = value;
+          //filters[filterIndex][name] = value;
+          break;
+        case 'drop_down':
+			filter = {field: fieldId, type: 'term', term:value, fieldType: "string"};
+          break;
+        case 'listbox':
+			filter = {field: fieldId, type: 'term', term:values[0], fieldType: "string"};
           break;
         case 'geo_distance':
           if(name === 'distance') {
-            filters[filterIndex].distance = parseFloat(value);
+ //           filters[filterIndex].distance = parseFloat(value);
           }
           else {
-            filters[filterIndex].point[name] = parseFloat(value);
+   //         filters[filterIndex].point[name] = parseFloat(value);
           }
           break;
       }
+	      self.model.queryState.setFilter(filter);
+	  
     });
-    self.model.queryState.set({filters: filters});
-    self.model.queryState.trigger('change');
+//    self.model.queryState.set({filters: filters});
+//    self.model.queryState.trigger('change');
   }
 });
 
-
 })(jQuery, recline.View);
-
 /*jshint multistr:true */
 
 this.recline = this.recline || {};

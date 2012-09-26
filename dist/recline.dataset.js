@@ -68,6 +68,7 @@ my.Dataset = Backbone.Model.extend({
     }
 
     function handleResults(results) {
+
       var out = self._normalizeRecordsAndFields(results.records, results.fields);
       if (results.useMemoryStore) {
 
@@ -476,6 +477,18 @@ my.Query = Backbone.Model.extend({
       field: '',
       term: ''
     },
+    drop_down: {
+      type: 'term',
+      // TODO do we need this attribute here?
+      field: '',
+      term: ''
+    },
+    listbox: {
+      type: 'term',
+      // TODO do we need this attribute here?
+      field: '',
+      term: ''
+    },
     range: {
       type: 'range',
       start: '',
@@ -520,6 +533,24 @@ my.Query = Backbone.Model.extend({
     var filters = this.get('filters');
     filters.push(ourfilter);
     this.trigger('change:filters:new-blank');
+  },
+  setFilter: function(filter) {
+      // todo refactor, non useful cycle
+      // do we need to add another function for that?
+      var filters = this.get('filters');
+
+      var index = -1;
+      for(x=0;x<filters.length;x++){
+        if(filters[x].field == filter.field)
+            filters[x] = filter;
+      }
+
+      if(index == -1) {
+         filters.push(filter);
+      }
+
+
+      this.trigger('change');
   },
   updateFilter: function(index, value) {
   },
@@ -641,7 +672,6 @@ Backbone.sync = function(method, model, options) {
 };
 
 }(jQuery, this.recline.Model));
-
 this.recline = this.recline || {};
 this.recline.Backend = this.recline.Backend || {};
 this.recline.Backend.Memory = this.recline.Backend.Memory || {};
@@ -741,6 +771,8 @@ this.recline.Backend.Memory = this.recline.Backend.Memory || {};
       var filterFunctions = {
         term         : term,
         range        : range,
+        drop_down        : drop_down,
+        listbox        : listbox,
         geo_distance : geo_distance
       };
       var dataParsers = {
@@ -777,7 +809,10 @@ this.recline.Backend.Memory = this.recline.Backend.Memory || {};
 
         return (value >= start && value <= stop);
       }
-
+	  function drop_down() {
+	  }
+      function listbox() {
+	  }
       function geo_distance() {
         // TODO code here
       }
