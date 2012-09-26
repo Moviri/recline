@@ -28,8 +28,8 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
       }
 
       dfd.resolve({
-        records: results.result.data,
-        fields:_handleFieldDescription(results.result.description),
+        records: _performFieldCreation(dataset.fieldCreation, results.result.data),
+        fields: _handleFieldDescription(dataset.fieldCreation, results.result.description),
         useMemoryStore: true
       });
     })
@@ -64,7 +64,22 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
     return dfd.promise();
   }
 
-  function _handleFieldDescription(description) {
+  function _performFieldCreation(fieldCreation, result)
+  {
+	if (fieldCreation)
+	{
+		// for each desired added field
+		for (var f in fieldCreation)
+		{
+			var currFieldId = fieldCreation[f].id;
+			// apply calculation formula for each record
+			for (var i = 0; i < result.length; i++)
+				result[i][currFieldId] = fieldCreation[f].formula(result[i]);
+		}
+	}
+	return result;
+  }
+  function _handleFieldDescription(fieldCreation, description) {
       var res = [];
       for (var k in description) {
           // use hasOwnProperty to filter out keys from the Object.prototype
@@ -73,7 +88,11 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
 
           }
       }
-      return res;
+		if (fieldCreation)
+			for (var f in fieldCreation)
+				res.push({id: fieldCreation[f].id, type: fieldCreation[f].type});
+
+	  return res;
     }
 
 

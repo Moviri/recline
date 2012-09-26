@@ -1,14 +1,12 @@
 /*jshint multistr:true */
-
 this.recline = this.recline || {};
 this.recline.View = this.recline.View || {};
 
 (function($, my) {
-
+	
 my.GenericFilter = Backbone.View.extend({
   className: 'recline-filter-editor well', 
-
-    template: ' \
+  template: ' \
     <div class="filters"> \
       <h3>Filters</h3> \
       <a href="#" class="js-add-filter">Add filter</a> \
@@ -19,6 +17,8 @@ my.GenericFilter = Backbone.View.extend({
             <option value="term">Term (text)</option> \
             <option value="range">Range</option> \
             <option value="geo_distance">Geo distance</option> \
+            <option value="drop_down">Drop down</option> \
+            <option value="listbox">Listbox</option> \
           </select> \
           <label>Field</label> \
           <select class="fields"> \
@@ -26,6 +26,13 @@ my.GenericFilter = Backbone.View.extend({
             <option value="{{id}}">{{label}}</option> \
             {{/fields}} \
           </select> \
+
+
+
+
+
+
+
           <button type="submit" class="btn">Add</button> \
         </fieldset> \
       </form> \
@@ -65,6 +72,36 @@ my.GenericFilter = Backbone.View.extend({
         </fieldset> \
       </div> \
     ',
+    drop_down: ' \
+      <div class="filter-{{type}} filter"> \
+        <fieldset> \
+          <legend> \
+            {{field}} <small>{{type}}</small> \
+            <a class="js-remove-filter" href="#" title="Remove this filter">&times;</a> \
+          </legend> \
+			<select class="fields" data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}"> \
+            {{#values}} \
+            <option value="{{.}}">{{.}}</option> \
+            {{/values}} \
+          </select> \
+        </fieldset> \
+      </div> \
+    ',
+    listbox: ' \
+      <div class="filter-{{type}} filter"> \
+        <fieldset> \
+          <legend> \
+            {{field}} <small>{{type}}</small> \
+            <a class="js-remove-filter" href="#" title="Remove this filter">&times;</a> \
+          </legend> \
+			<select class="fields" data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" multiple> \
+            {{#values}} \
+            <option value="{{.}}">{{.}}</option> \
+            {{/values}} \
+          </select> \
+        </fieldset> \
+      </div> \
+    ',
     geo_distance: ' \
       <div class="filter-{{type}} filter"> \
         <fieldset> \
@@ -88,20 +125,19 @@ my.GenericFilter = Backbone.View.extend({
     'submit form.js-edit': 'onTermFiltersUpdate',
     'submit form.js-add': 'onAddFilter'
   },
-  initialize: function() {
-
-     console.log(this);
-
-
-      this.el = $(this.el);
+  initialize: function(args) {
+    this.el = $(this.el);
     _.bindAll(this, 'render');
     this.model.fields.bind('all', this.render);
     this.model.queryState.bind('change', this.render);
     this.model.queryState.bind('change:filters:new-blank', this.render);
-
-
+	this.origRecords = this.model.records.toJSON();
+	this.userFilters = args.userFilters;
+	if (this.userFilters && this.userFilters.length)
+		for (var k in this.userFilters)
+			this.model.queryState.setFilter(this.userFilters[k]);
+	
     this.render();
-
   },
   render: function() {
     var self = this;
@@ -112,7 +148,10 @@ my.GenericFilter = Backbone.View.extend({
       return filter;
     });
     tmplData.fields = this.model.fields.toJSON();
+	tmplData.records = this.origRecords;
     tmplData.filterRender = function() {
+	  // add value list to selected filter or templating of record values will not work
+	  this.values = _.uniq(_.pluck(tmplData.records, this.field));
       return Mustache.render(self.filterTemplates[this.type], this);
     };
     var out = Mustache.render(this.template, tmplData);
@@ -131,11 +170,10 @@ my.GenericFilter = Backbone.View.extend({
     var filterType = $target.find('select.filterType').val();
     var field      = $target.find('select.fields').val();
     var fieldType  = this.model.fields.find(function (e) { return e.get('id') === field }).get('type');
-    //this.model.queryState.addFilter({type: filterType, field: field, fieldType: fieldType});
-
-    for(m in this.options.TargetModel) {
-        m.queryState.addFilter({type: filterType, field: field, fieldType: fieldType});
-    }
+    this.model.queryState.addFilter({type: filterType, field: field, fieldType: fieldType});
+	//for(m in this.options.TargetModel) {
+    //    m.queryState.addFilter({type: filterType, field: field, fieldType: fieldType});
+    //}
 
     // trigger render explicitly as queryState change will not be triggered (as blank value for filter)
     this.render();
@@ -149,38 +187,60 @@ my.GenericFilter = Backbone.View.extend({
   onTermFiltersUpdate: function(e) {
    var self = this;
     e.preventDefault();
-    var filters = self.model.queryState.get('filters');
+    //var filters = self.model.queryState.get('filters');
+	
     var $form = $(e.target);
-    _.each($form.find('input'), function(input) {
+    _.each($form.find('input,select'), function(input) {
+
+
       var $input = $(input);
       var filterType  = $input.attr('data-filter-type');
       var fieldId     = $input.attr('data-filter-field');
       var filterIndex = parseInt($input.attr('data-filter-id'));
       var name        = $input.attr('name');
       var value       = $input.val();
+	  var values = new Array();
+
+	  if (input.nodeName.toLowerCase() == 'select')
+	  {
+		if (input.multiple)
+		{
+			$input.find("option:selected").each(function() 
+				{
+					values.push(this.text());
+				});
+		}
+		else value = $input.find("option:selected").text();
+	  }
 
       switch (filterType) {
         case 'term':
-          filters[filterIndex].term = value;
+			filter = {field: fieldId, type: filterType, term:value, fieldType: "string"};
           break;
         case 'range':
-          filters[filterIndex][name] = value;
+          //filters[filterIndex][name] = value;
+          break;
+        case 'drop_down':
+			filter = {field: fieldId, type: 'term', term:value, fieldType: "string"};
+          break;
+        case 'listbox':
+			filter = {field: fieldId, type: 'term', term:values[0], fieldType: "string"};
           break;
         case 'geo_distance':
           if(name === 'distance') {
-            filters[filterIndex].distance = parseFloat(value);
+ //           filters[filterIndex].distance = parseFloat(value);
           }
           else {
-            filters[filterIndex].point[name] = parseFloat(value);
+   //         filters[filterIndex].point[name] = parseFloat(value);
           }
           break;
       }
+	      self.model.queryState.setFilter(filter);
+	  
     });
-    self.model.queryState.set({filters: filters});
-    self.model.queryState.trigger('change');
+//    self.model.queryState.set({filters: filters});
+//    self.model.queryState.trigger('change');
   }
 });
 
-
 })(jQuery, recline.View);
-

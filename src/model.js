@@ -477,6 +477,18 @@ my.Query = Backbone.Model.extend({
       field: '',
       term: ''
     },
+    drop_down: {
+      type: 'term',
+      // TODO do we need this attribute here?
+      field: '',
+      term: ''
+    },
+    listbox: {
+      type: 'term',
+      // TODO do we need this attribute here?
+      field: '',
+      term: ''
+    },
     range: {
       type: 'range',
       start: '',
@@ -522,7 +534,6 @@ my.Query = Backbone.Model.extend({
     filters.push(ourfilter);
     this.trigger('change:filters:new-blank');
   },
-
   setFilter: function(filter) {
       // todo refactor, non useful cycle
       // do we need to add another function for that?
@@ -661,4 +672,3 @@ Backbone.sync = function(method, model, options) {
 };
 
 }(jQuery, this.recline.Model));
-
