@@ -26,13 +26,6 @@ my.GenericFilter = Backbone.View.extend({
             <option value="{{id}}">{{label}}</option> \
             {{/fields}} \
           </select> \
-
-
-
-
-
-
-
           <button type="submit" class="btn">Add</button> \
         </fieldset> \
       </form> \
