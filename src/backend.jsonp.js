@@ -13,15 +13,17 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
   // Load data from a URL
   //
   // Returns array of field names and array of arrays for records
-  my.fetch = function(dataset) {
 
-      console.log(dataset);
-
+    // todo has to be merged with query (part is in common)
+    my.fetch = function(dataset) {
     console.log("Warning requested full records fetch for " + dataset.url);
+
     var jqxhr = $.ajax({
       url: dataset.url,
       dataType: 'jsonp',
-      cache: 'true'
+      jsonpCallbackString: dataset.id,
+      cache: true
+
     });
     var dfd = $.Deferred();
     _wrapInTimeout(jqxhr).done(function(results) {
@@ -42,15 +44,19 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
   };
 
     my.query = function(queryObj, dataset) {
-        console.log(queryObj);
-        console.log(dataset);
 
-        console.log("Query for " + dataset.url);
+        var data = buildRequestFromQuery(queryObj);
+
+        console.log("Querying dataset " + dataset.id.toString() +  JSON.stringify(data));
+
+
 
         var jqxhr = $.ajax({
             url: dataset.url,
             dataType: 'jsonp',
-            cache: 'true'
+            jsonpCallback: dataset.id,
+            data: data,
+            cache: true
         });
         var dfd = $.Deferred();
         _wrapInTimeout(jqxhr).done(function(results) {
@@ -71,6 +77,85 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
 
     };
 
+  my.wrapper() = function(queryObj, dataset, data) {
+
+  }
+
+  function  buildRequestFromQuery(queryObj)  {
+      var filters = queryObj.filters;
+      var data = [];
+      var multivsep = "~";
+
+      // register filters
+      var filterFunctions = {
+          term         : term,          // field = value
+          termAdvanced : termAdvanced,  // field (operator) value
+          range        : range,         // field > start and field < end
+          list         : list           // field in (list)
+      };
+
+      var dataParsers = {
+          number : function (e) { return parseFloat(e, 10); },
+          string : function (e) { return e.toString() },
+          date   : function (e) {
+              tmp  = new Date(e);
+              return dateFormat(tmp, "yyyy-mm-dd HH:MM:ss");
+          }
+      };
+
+      for(var i=0; i<filters.length;i++) {
+          data.push(filterFunctions[filters[i].type](filters[i]));
+      }
+
+
+      // filters definitions
+
+      function term(filter) {
+          var parse = dataParsers[filter.fieldType];
+          var value = filter.field;
+          var term  = parse(filter.term);
+
+          return (value + " eq "  + term);
+      }
+
+      function termAdvanced(filter) {
+          var parse = dataParsers[filter.fieldType];
+          var value =    filter.field;
+          var term  =    parse(filter.term);
+          var operator = filter.operator;
+
+          return (value + " " + operator + " "  + term);
+      }
+
+      function range(filter) {
+          var parse = dataParsers[filter.fieldType];
+          var value = filter.field;
+          var start = parse(filter.start);
+          var stop  = parse(filter.stop);
+          return (value + " lt " + stop + "," + value + " gt "  + start);
+
+      }
+
+      function list(filter) {
+          var parse = dataParsers[filter.fieldType];
+          var value = filter.field;
+          var list = filter.list;
+
+          var ret = value + " bw ";
+          for(var i=0;i<filter.list.length;i++) {
+              if(i>0)
+               ret = ret + multivsep;
+
+              ret = ret + list[i];
+          }
+
+          return ret;
+
+      }
+
+      return {filters: data.toString()};
+
+  }
 
   // ## _wrapInTimeout
   // 
@@ -106,6 +191,16 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
           }
       }
       return res;
+    }
+
+    function _datatypeMapping(data) {
+        var dataParsers = {
+
+            number : "number",
+            string : "string",
+            date   : "date"
+
+        };
     }
 
 

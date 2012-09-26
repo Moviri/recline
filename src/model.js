@@ -69,10 +69,6 @@ my.Dataset = Backbone.Model.extend({
     }
 
     function handleResults(results) {
-        console.log("handleResults") ;
-      console.log(results);
-
-
       var out = self._normalizeRecordsAndFields(results.records, results.fields);
       if (results.useMemoryStore) {
           self._store = new recline.Backend.Memory.Store(out.records, out.fields);
@@ -186,6 +182,7 @@ my.Dataset = Backbone.Model.extend({
   // Resulting RecordList are used to reset this.records and are
   // also returned.
   query: function(queryObj) {
+
     var self = this;
     var dfd = $.Deferred();
     this.trigger('query:start');
@@ -214,9 +211,6 @@ my.Dataset = Backbone.Model.extend({
 
     var self = this;
 
-      console.log(self);
-      console.log(queryResult);
-
     self.recordCount = queryResult.total;
     var docs = _.map(queryResult.hits, function(hit) {
       var _doc = new my.Record(hit);
@@ -229,10 +223,7 @@ my.Dataset = Backbone.Model.extend({
       });
       return _doc;
     });
-      console.log("a");
-      console.log(docs);
     self.records.reset(docs);
-      console.log("b");
     if (queryResult.facets) {
       var facets = _.map(queryResult.facets, function(facetResult, facetId) {
         facetResult.id = facetId;
@@ -283,22 +274,8 @@ my.Dataset = Backbone.Model.extend({
 
   // ### _backendFromString(backendString)
   //
-  // See backend argument to initialize for details
+  // Look up a backend module from a backend string (look in recline.Backend)
   _backendFromString: function(backendString) {
-    var parts = backendString.split('.');
-    // walk through the specified path xxx.yyy.zzz to get the final object which should be backend class
-    var current = window;
-    for(ii=0;ii<parts.length;ii++) {
-      if (!current) {
-        break;
-      }
-      current = current[parts[ii]];
-    }
-    if (current) {
-      return current;
-    }
-
-    // alternatively we just had a simple string
     var backend = null;
     if (recline && recline.Backend) {
       _.each(_.keys(recline.Backend), function(name) {
@@ -536,24 +513,43 @@ my.Query = Backbone.Model.extend({
     this.trigger('change:filters:new-blank');
   },
 
+    _setSingleFilter: function(filter) {
+        var filters = this.get('filters');
+        for(x=0;x<filters.length;x++){
+            if(filters[x].field == filter.field) {
+                if(filters[x] != filter) {
+                    filters[x] = filter;
+                    return 1;
+                } else return 0;
+            }
+        }
+        filters.push(filter);
+        return 1;
+    },
+
+    // update or add the selected filter(s), a change event is triggered after the update
   setFilter: function(filter) {
-      // todo refactor, non useful cycle
-      // do we need to add another function for that?
-      var filters = this.get('filters');
+      var self = this;
+      // todo should be optimized in order to make only one cycle on filters
 
-      var index = -1;
-      for(x=0;x<filters.length;x++){
-        if(filters[x].field == filter.field)
-            filters[x] = filter;
+      var updatedFilters = 0;
+
+      if(filter.constructor == Array) {
+          for(y=0;y<filter.length;y++){
+              updatedFilters = updatedFilters + this._setSingleFilter(filter[y]);
+          }
+      } else {
+          updatedFilters = this._setSingleFilter(filter);
       }
 
-      if(index == -1) {
-         filters.push(filter);
+      if(updatedFilters > 0) {
+         self.trigger('change');
+
       }
-
-
-      this.trigger('change');
   },
+
+
+
   updateFilter: function(index, value) {
   },
   // ### removeFilter
@@ -596,6 +592,31 @@ my.Query = Backbone.Model.extend({
           // todo check if field is selected
           return false;
       },
+        setSelection: function(s) {
+        // todo should be optimized in order to make only one cycle on filters
+
+        if(s.constructor == Array) {
+            for(y=0;y<s.length;y++){
+                this._setSingleSelection(s[y]);
+            }
+        } else {
+            this._setSingleSelection(s);
+        }
+
+        this.trigger('change:selections');
+    },
+    _setSingleSelection: function(s) {
+        var selections = this.get('selections');
+        for(x=0;x<selections.length;x++){
+            if(selections[x].field == s.field) {
+                selections[x] = s;
+                return;
+            }
+        }
+        selections.push(s);
+    },
+
+
 
 
     // ### addFacet

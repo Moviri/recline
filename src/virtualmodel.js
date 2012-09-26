@@ -23,18 +23,18 @@ my.VirtualDataset = Backbone.Model.extend({
         this.queryState = new my.Query();
 
         this.attributes.dataset.records.bind('reset',       function() {
-            console.log("dataset.records.reset");
-            console.log(self);
+            //console.log("VModel - received records.reset");
             self.initializeCrossfilter(); });
-        this.attributes.dataset.records.bind('change',       function() { self.initializeCrossfilter(); });
+        this.attributes.dataset.records.bind('change',       function() {
+            //console.log("VModel - received records.change");
+            self.initializeCrossfilter(); });
         //this.queryState.bind('change',                      function() { self.updateCrossfilter(); });
 
         //this.queryState.bind('change',                      function() { self.query(); });
         this.queryState.bind('change:filters:new-blank',    function() {
-            console.log("change:filters:new-blank");
+            //console.log("VModel - received change:filters:new-blank");
             self.query(); });
 
-        // TODO manage filtering on data
         // TODO verify if is better to use a new backend (crossfilter) to manage grouping and filtering instead of using it inside the model
     },
 
@@ -55,15 +55,14 @@ my.VirtualDataset = Backbone.Model.extend({
     },
 
     initializeCrossfilter: function() {
-        console.log("Initialize crossfilter");
+
         var start = new Date().getTime();
-        console.log(this);
         this.crossfilterData = crossfilter(this.attributes.dataset.records.toJSON());
 
         var end = new Date().getTime();
         var time = end - start;
 
-        console.log("Initialize - exec time: " + time);
+        console.log("initializeCrossfilter - exec time: " + time);
 
         this.updateCrossfilter();
     },
@@ -94,7 +93,7 @@ my.VirtualDataset = Backbone.Model.extend({
         // TODO has sense to recreate dimension if nothing is changed?, and in general, is better to use a new dimension if added instead of recreate all
         // TODO verify if saving crossfilter data is useful (perhaps no unless we use crossfilterstore to make aggregaation and filtering)
 
-        console.log("Starting update crossfilter");
+
         var start = new Date().getTime();
 
 
@@ -105,7 +104,7 @@ my.VirtualDataset = Backbone.Model.extend({
         var end = new Date().getTime();
         var time = end - start;
 
-        console.log("Grouping - exec time: " + time);
+        console.log("updateCrossfilter - exec time: " + time);
     },
 
     reduce: function() {
@@ -279,6 +278,8 @@ my.VirtualDataset = Backbone.Model.extend({
         console.log(this.attributes.dataset.toJSON());
         console.log(self.records.toJSON() );
         */
+
+        console.log("VModel - query for " + JSON.stringify(queryObj));
 
         var self = this;
         var dfd = $.Deferred();
