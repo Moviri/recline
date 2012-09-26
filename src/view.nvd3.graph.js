@@ -160,8 +160,8 @@ this.recline.View = this.recline.View || {};
 				chart.xAxis
 					.axisLabel(xLabel)
 					.tickFormat(function(d) {
-             			return d3.time.format('%x')(new Date(d))
-		           })
+             			return d3.time.format('%x')(new Date(d)) ;
+		           })   ;
 			}
 			else
 			{
@@ -221,7 +221,7 @@ this.recline.View = this.recline.View || {};
 
           if(actions.SelectionsTargetDataset != null) {
               for (var i = 0; i < actions.SelectionsTargetDataset.length; i++) {
-                  actions.SelectionsTargetDataset[i].queryState.setFilter(selection);
+                  actions.SelectionsTargetDataset[i].queryState.setSelection(selection);
               }
           }
 

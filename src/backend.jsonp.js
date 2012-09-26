@@ -13,12 +13,16 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
   // Load data from a URL
   //
   // Returns array of field names and array of arrays for records
-  my.fetch = function(dataset) {
+
+    // todo has to be merged with query (part is in common)
+    my.fetch = function(dataset) {
+    console.log("Warning requested full records fetch for " + dataset.url);
 
     var jqxhr = $.ajax({
       url: dataset.url,
       dataType: 'jsonp',
-      cache: 'true'
+      jsonpCallbackString: dataset.id,
+      cache: true
 
     });
     var dfd = $.Deferred();
@@ -28,9 +32,9 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
       }
 
       dfd.resolve({
-        records: _performFieldCreation(dataset.fieldCreation, results.result.data),
-        fields: _handleFieldDescription(dataset.fieldCreation, results.result.description),
-        useMemoryStore: true
+            hits: results.result.data,
+            fields:_handleFieldDescription(results.result.description),
+            useMemoryStore: false
       });
     })
     .fail(function(arguments) {
@@ -39,6 +43,116 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
     return dfd.promise();
   };
 
+    my.query = function(queryObj, dataset) {
+
+        var data = buildRequestFromQuery(queryObj);
+
+        console.log("Querying dataset " + dataset.id.toString() +  JSON.stringify(data));
+
+
+
+        var jqxhr = $.ajax({
+            url: dataset.url,
+            dataType: 'jsonp',
+            jsonpCallback: dataset.id,
+            data: data,
+            cache: true
+        });
+        var dfd = $.Deferred();
+        _wrapInTimeout(jqxhr).done(function(results) {
+            if (results.error) {
+                dfd.reject(results.error);
+            }
+
+            dfd.resolve({
+                hits: results.result.data,
+                fields:_handleFieldDescription(results.result.description),
+                useMemoryStore: false
+            });
+        })
+            .fail(function(arguments) {
+                dfd.reject(arguments);
+            });
+        return dfd.promise();
+
+    };
+
+
+  function  buildRequestFromQuery(queryObj)  {
+      var filters = queryObj.filters;
+      var data = [];
+      var multivsep = "~";
+
+      // register filters
+      var filterFunctions = {
+          term         : term,          // field = value
+          termAdvanced : termAdvanced,  // field (operator) value
+          range        : range,         // field > start and field < end
+          list         : list           // field in (list)
+      };
+
+      var dataParsers = {
+          number : function (e) { return parseFloat(e, 10); },
+          string : function (e) { return e.toString() },
+          date   : function (e) {
+              tmp  = new Date(e);
+              return dateFormat(tmp, "yyyy-mm-dd HH:MM:ss");
+          }
+      };
+
+      for(var i=0; i<filters.length;i++) {
+          data.push(filterFunctions[filters[i].type](filters[i]));
+      }
+
+
+      // filters definitions
+
+      function term(filter) {
+          var parse = dataParsers[filter.fieldType];
+          var value = filter.field;
+          var term  = parse(filter.term);
+
+          return (value + " eq "  + term);
+      }
+
+      function termAdvanced(filter) {
+          var parse = dataParsers[filter.fieldType];
+          var value =    filter.field;
+          var term  =    parse(filter.term);
+          var operator = filter.operator;
+
+          return (value + " " + operator + " "  + term);
+      }
+
+      function range(filter) {
+          var parse = dataParsers[filter.fieldType];
+          var value = filter.field;
+          var start = parse(filter.start);
+          var stop  = parse(filter.stop);
+          return (value + " lt " + stop + "," + value + " gt "  + start);
+
+      }
+
+      function list(filter) {
+          var parse = dataParsers[filter.fieldType];
+          var value = filter.field;
+          var list = filter.list;
+
+          var ret = value + " bw ";
+          for(var i=0;i<filter.list.length;i++) {
+              if(i>0)
+               ret = ret + multivsep;
+
+              ret = ret + list[i];
+          }
+
+          return ret;
+
+      }
+
+      return {filters: data.toString()};
+
+  }
 
   // ## _wrapInTimeout
   // 
@@ -64,22 +178,7 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
     return dfd.promise();
   }
 
-  function _performFieldCreation(fieldCreation, result)
-  {
-	if (fieldCreation)
-	{
-		// for each desired added field
-		for (var f in fieldCreation)
-		{
-			var currFieldId = fieldCreation[f].id;
-			// apply calculation formula for each record
-			for (var i = 0; i < result.length; i++)
-				result[i][currFieldId] = fieldCreation[f].formula(result[i]);
-		}
-	}
-	return result;
-  }
-  function _handleFieldDescription(fieldCreation, description) {
+  function _handleFieldDescription(description) {
       var res = [];
       for (var k in description) {
           // use hasOwnProperty to filter out keys from the Object.prototype
@@ -88,13 +187,18 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
 
           }
       }
-		if (fieldCreation)
-			for (var f in fieldCreation)
-				res.push({id: fieldCreation[f].id, type: fieldCreation[f].type});
-
-	  return res;
+      return res;
     }
 
+    function _datatypeMapping(data) {
+        var dataParsers = {
+
+            number : "number",
+            string : "string",
+            date   : "date"
+
+        };
+    }
 
 
 

@@ -888,6 +888,443 @@ this.recline.Backend.GDocs = this.recline.Backend.GDocs || {};
     return urls;
   };
 }(jQuery, this.recline.Backend.GDocs));
+<<<<<<< HEAD
+this.recline = this.recline || {};
+this.recline.Backend = this.recline.Backend || {};
+this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
+
+(function($, my) {
+  my.__type__ = 'Jsonp';
+  // Timeout for request (after this time if no response we error)
+  // Needed because use JSONP so do not receive e.g. 500 errors 
+  my.timeout = 30000;
+
+  // ## load
+  //
+  // Load data from a URL
+  //
+  // Returns array of field names and array of arrays for records
+
+    // todo has to be merged with query (part is in common)
+    my.fetch = function(dataset) {
+    console.log("Warning requested full records fetch for " + dataset.url);
+
+    var jqxhr = $.ajax({
+      url: dataset.url,
+      dataType: 'jsonp',
+      jsonpCallbackString: dataset.id,
+      cache: true
+
+    });
+    var dfd = $.Deferred();
+    _wrapInTimeout(jqxhr).done(function(results) {
+      if (results.error) {
+        dfd.reject(results.error);
+      }
+
+      dfd.resolve({
+            hits: results.result.data,
+            fields:_handleFieldDescription(results.result.description),
+            useMemoryStore: false
+      });
+    })
+    .fail(function(arguments) {
+      dfd.reject(arguments);
+    });
+    return dfd.promise();
+  };
+
+    my.query = function(queryObj, dataset) {
+
+        var data = buildRequestFromQuery(queryObj);
+
+        console.log("Querying dataset " + dataset.id.toString() +  JSON.stringify(data));
+
+
+
+        var jqxhr = $.ajax({
+            url: dataset.url,
+            dataType: 'jsonp',
+            jsonpCallback: dataset.id,
+            data: data,
+            cache: true
+        });
+        var dfd = $.Deferred();
+        _wrapInTimeout(jqxhr).done(function(results) {
+            if (results.error) {
+                dfd.reject(results.error);
+            }
+
+            dfd.resolve({
+                hits: results.result.data,
+                fields:_handleFieldDescription(results.result.description),
+                useMemoryStore: false
+            });
+        })
+            .fail(function(arguments) {
+                dfd.reject(arguments);
+            });
+        return dfd.promise();
+
+    };
+
+  my.wrapper() = function(queryObj, dataset, data) {
+
+  }
+
+  function  buildRequestFromQuery(queryObj)  {
+      var filters = queryObj.filters;
+      var data = [];
+      var multivsep = "~";
+
+      // register filters
+      var filterFunctions = {
+          term         : term,          // field = value
+          termAdvanced : termAdvanced,  // field (operator) value
+          range        : range,         // field > start and field < end
+          list         : list           // field in (list)
+      };
+
+      var dataParsers = {
+          number : function (e) { return parseFloat(e, 10); },
+          string : function (e) { return e.toString() },
+          date   : function (e) {
+              tmp  = new Date(e);
+              return dateFormat(tmp, "yyyy-mm-dd HH:MM:ss");
+          }
+      };
+
+      for(var i=0; i<filters.length;i++) {
+          data.push(filterFunctions[filters[i].type](filters[i]));
+      }
+
+
+      // filters definitions
+
+      function term(filter) {
+          var parse = dataParsers[filter.fieldType];
+          var value = filter.field;
+          var term  = parse(filter.term);
+
+          return (value + " eq "  + term);
+      }
+
+      function termAdvanced(filter) {
+          var parse = dataParsers[filter.fieldType];
+          var value =    filter.field;
+          var term  =    parse(filter.term);
+          var operator = filter.operator;
+
+          return (value + " " + operator + " "  + term);
+      }
+
+      function range(filter) {
+          var parse = dataParsers[filter.fieldType];
+          var value = filter.field;
+          var start = parse(filter.start);
+          var stop  = parse(filter.stop);
+          return (value + " lt " + stop + "," + value + " gt "  + start);
+
+      }
+
+      function list(filter) {
+          var parse = dataParsers[filter.fieldType];
+          var value = filter.field;
+          var list = filter.list;
+
+          var ret = value + " bw ";
+          for(var i=0;i<filter.list.length;i++) {
+              if(i>0)
+               ret = ret + multivsep;
+
+              ret = ret + list[i];
+          }
+
+          return ret;
+
+      }
+
+      return {filters: data.toString()};
+
+  }
+
+  // ## _wrapInTimeout
+  // 
+  // Convenience method providing a crude way to catch backend errors on JSONP calls.
+  // Many of backends use JSONP and so will not get error messages and this is
+  // a crude way to catch those errors.
+  var _wrapInTimeout = function(ourFunction) {
+    var dfd = $.Deferred();
+    var timer = setTimeout(function() {
+      dfd.reject({
+        message: 'Request Error: Backend did not respond after ' + (my.timeout / 1000) + ' seconds'
+      });
+    }, my.timeout);
+    ourFunction.done(function(arguments) {
+        clearTimeout(timer);
+        dfd.resolve(arguments);
+      })
+      .fail(function(arguments) {
+        clearTimeout(timer);
+        dfd.reject(arguments);
+      })
+      ;
+    return dfd.promise();
+  }
+
+  function _handleFieldDescription(description) {
+      var res = [];
+      for (var k in description) {
+          // use hasOwnProperty to filter out keys from the Object.prototype
+          if (description.hasOwnProperty(k)) {
+              res.push({id: k, type: description[k]});
+
+          }
+      }
+      return res;
+    }
+
+    function _datatypeMapping(data) {
+        var dataParsers = {
+
+            number : "number",
+            string : "string",
+            date   : "date"
+
+        };
+    }
+
+
+
+}(jQuery, this.recline.Backend.Jsonp));
+this.recline = this.recline || {};
+this.recline.Backend = this.recline.Backend || {};
+this.recline.Backend.Memory = this.recline.Backend.Memory || {};
+
+(function($, my) {
+  my.__type__ = 'memory';
+
+  // ## Data Wrapper
+  //
+  // Turn a simple array of JS objects into a mini data-store with
+  // functionality like querying, faceting, updating (by ID) and deleting (by
+  // ID).
+  //
+  // @param data list of hashes for each record/row in the data ({key:
+  // value, key: value})
+  // @param fields (optional) list of field hashes (each hash defining a field
+  // as per recline.Model.Field). If fields not specified they will be taken
+  // from the data.
+  my.Store = function(data, fields) {
+    var self = this;
+    this.data = data;
+    if (fields) {
+      this.fields = fields;
+    } else {
+      if (data) {
+        this.fields = _.map(data[0], function(value, key) {
+          return {id: key};
+        });
+      }
+    }
+
+    this.update = function(doc) {
+      _.each(self.data, function(internalDoc, idx) {
+        if(doc.id === internalDoc.id) {
+          self.data[idx] = doc;
+        }
+      });
+    };
+
+    this.delete = function(doc) {
+      var newdocs = _.reject(self.data, function(internalDoc) {
+        return (doc.id === internalDoc.id);
+      });
+      this.data = newdocs;
+    };
+
+    this.save = function(changes, dataset) {
+      var self = this;
+      var dfd = $.Deferred();
+      // TODO _.each(changes.creates) { ... }
+      _.each(changes.updates, function(record) {
+        self.update(record);
+      });
+      _.each(changes.deletes, function(record) {
+        self.delete(record);
+      });
+      dfd.resolve();
+      return dfd.promise();
+    },
+
+    this.query = function(queryObj) {
+      var dfd = $.Deferred();
+      var numRows = queryObj.size || this.data.length;
+      var start = queryObj.from || 0;
+      var results = this.data;
+
+      results = this._applyFilters(results, queryObj);
+      results = this._applyFreeTextQuery(results, queryObj);
+
+      // TODO: this is not complete sorting!
+      // What's wrong is we sort on the *last* entry in the sort list if there are multiple sort criteria
+      _.each(queryObj.sort, function(sortObj) {
+        var fieldName = sortObj.field;
+        results = _.sortBy(results, function(doc) {
+          var _out = doc[fieldName];
+          return _out;
+        });
+        if (sortObj.order == 'desc') {
+          results.reverse();
+        }
+      });
+      var facets = this.computeFacets(results, queryObj);
+      var out = {
+        total: results.length,
+        hits: results.slice(start, start+numRows),
+        facets: facets
+      };
+      dfd.resolve(out);
+      return dfd.promise();
+    };
+
+    // in place filtering
+    this._applyFilters = function(results, queryObj) {
+      var filters = queryObj.filters;
+
+      // register filters
+      var filterFunctions = {
+        term         : term,
+        range        : range,
+        geo_distance : geo_distance
+      };
+      var dataParsers = {
+        number : function (e) { return parseFloat(e, 10); },
+        string : function (e) { return e.toString() },
+        date   : function (e) { return new Date(e).valueOf() }
+      };
+
+      // filter records
+      return _.filter(results, function (record) {
+          var passes = _.map(filters, function (filter) {
+          return filterFunctions[filter.type](record, filter);
+        });
+
+        // return only these records that pass all filters
+        return _.all(passes, _.identity);
+      });
+
+      // filters definitions
+
+      function term(record, filter) {
+        var parse = dataParsers[filter.fieldType];
+        var value = parse(record[filter.field]);
+        var term  = parse(filter.term);
+
+        return (value === term);
+      }
+
+      function range(record, filter) {
+        var parse = dataParsers[filter.fieldType];
+        var value = parse(record[filter.field]);
+        var start = parse(filter.start);
+        var stop  = parse(filter.stop);
+
+        return (value >= start && value <= stop);
+      }
+
+      function geo_distance() {
+        // TODO code here
+      }
+    };
+
+    // we OR across fields but AND across terms in query string
+    this._applyFreeTextQuery = function(results, queryObj) {
+      if (queryObj.q) {
+        var terms = queryObj.q.split(' ');
+        var patterns=_.map(terms, function(term) {
+          return new RegExp(term.toLowerCase());;
+          });
+        results = _.filter(results, function(rawdoc) {
+          var matches = true;
+          _.each(patterns, function(pattern) {
+            var foundmatch = false;
+            _.each(self.fields, function(field) {
+              var value = rawdoc[field.id];
+              if ((value !== null) && (value !== undefined)) { 
+                value = value.toString();
+              } else {
+                // value can be null (apparently in some cases)
+                value = '';
+              }
+              // TODO regexes?
+              foundmatch = foundmatch || (pattern.test(value.toLowerCase()));
+              // TODO: early out (once we are true should break to spare unnecessary testing)
+              // if (foundmatch) return true;
+            });
+            matches = matches && foundmatch;
+            // TODO: early out (once false should break to spare unnecessary testing)
+            // if (!matches) return false;
+          });
+          return matches;
+        });
+      }
+      return results;
+    };
+
+    this.computeFacets = function(records, queryObj) {
+      var facetResults = {};
+      if (!queryObj.facets) {
+        return facetResults;
+      }
+      _.each(queryObj.facets, function(query, facetId) {
+        // TODO: remove dependency on recline.Model
+        facetResults[facetId] = new recline.Model.Facet({id: facetId}).toJSON();
+        facetResults[facetId].termsall = {};
+        facetResults[facetId].termsall_sum = {};
+      });
+      // faceting
+      _.each(records, function(doc) {
+        _.each(queryObj.facets, function(query, facetId) {
+          var fieldId = query.terms.field;
+          var val = doc[fieldId];
+          var tmp = facetResults[facetId];
+          if (val) {
+            tmp.termsall[val] = tmp.termsall[val] ? tmp.termsall[val] + 1 : 1;
+            tmp.termsall_sum[val] = tmp.termsall_sum[val] ? tmp.termsall_sum[val] + 1 : 1;
+          } else {
+            tmp.missing = tmp.missing + 1;
+          }
+        });
+      });
+      _.each(queryObj.facets, function(query, facetId) {
+        var tmp = facetResults[facetId];
+        var terms = _.map(tmp.termsall, function(count, term) {
+          return { term: term, count: count };
+        });
+        tmp.terms = _.sortBy(terms, function(item) {
+          // want descending order
+          return -item.count;
+        });
+        tmp.terms = tmp.terms.slice(0, 10);                        facetResults
+      });
+      return facetResults;
+    };
+
+    this.transform = function(editFunc) {
+      var toUpdate = recline.Data.Transform.mapDocs(this.data, editFunc);
+      // TODO: very inefficient -- could probably just walk the documents and updates in tandem and update
+      _.each(toUpdate.updates, function(record, idx) {
+        self.data[idx] = record;
+      });
+      return this.save(toUpdate);
+    };
+
+
+  };
+
+}(jQuery, this.recline.Backend.Memory));
+=======
 this.recline = this.recline || {};
 this.recline.Backend = this.recline.Backend || {};
 this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
@@ -1220,6 +1657,7 @@ this.recline.Backend.Memory = this.recline.Backend.Memory || {};
   };
 
 }(jQuery, this.recline.Backend.Memory));
+>>>>>>> 2f068b8b1308bf8a1688a447aecdc5aa1d7e1ddd
 this.recline = this.recline || {};
 this.recline.Data = this.recline.Data || {};
 
@@ -1345,6 +1783,7 @@ my.Dataset = Backbone.Model.extend({
       this.backend.fetch(this.toJSON())
         .done(handleResults)
         .fail(function(arguments) {
+          console.log("Fail in fetch data");
           dfd.reject(arguments);
         });
     } else {
@@ -1360,8 +1799,7 @@ my.Dataset = Backbone.Model.extend({
 
       var out = self._normalizeRecordsAndFields(results.records, results.fields);
       if (results.useMemoryStore) {
-
-        self._store = new recline.Backend.Memory.Store(out.records, out.fields);
+          self._store = new recline.Backend.Memory.Store(out.records, out.fields);
       }
 
       self.set(results.metadata);
@@ -1472,6 +1910,7 @@ my.Dataset = Backbone.Model.extend({
   // Resulting RecordList are used to reset this.records and are
   // also returned.
   query: function(queryObj) {
+
     var self = this;
     var dfd = $.Deferred();
     this.trigger('query:start');
@@ -1495,7 +1934,11 @@ my.Dataset = Backbone.Model.extend({
   },
 
   _handleQueryResult: function(queryResult) {
+
+
+
     var self = this;
+
     self.recordCount = queryResult.total;
     var docs = _.map(queryResult.hits, function(hit) {
       var _doc = new my.Record(hit);
@@ -1559,22 +2002,8 @@ my.Dataset = Backbone.Model.extend({
 
   // ### _backendFromString(backendString)
   //
-  // See backend argument to initialize for details
+  // Look up a backend module from a backend string (look in recline.Backend)
   _backendFromString: function(backendString) {
-    var parts = backendString.split('.');
-    // walk through the specified path xxx.yyy.zzz to get the final object which should be backend class
-    var current = window;
-    for(ii=0;ii<parts.length;ii++) {
-      if (!current) {
-        break;
-      }
-      current = current[parts[ii]];
-    }
-    if (current) {
-      return current;
-    }
-
-    // alternatively we just had a simple string
     var backend = null;
     if (recline && recline.Backend) {
       _.each(_.keys(recline.Backend), function(name) {
@@ -1823,6 +2252,46 @@ my.Query = Backbone.Model.extend({
     filters.push(ourfilter);
     this.trigger('change:filters:new-blank');
   },
+<<<<<<< HEAD
+
+    _setSingleFilter: function(filter) {
+        var filters = this.get('filters');
+        for(x=0;x<filters.length;x++){
+            if(filters[x].field == filter.field) {
+                if(filters[x] != filter) {
+                    filters[x] = filter;
+                    return 1;
+                } else return 0;
+            }
+        }
+        filters.push(filter);
+        return 1;
+    },
+
+    // update or add the selected filter(s), a change event is triggered after the update
+  setFilter: function(filter) {
+      var self = this;
+      // todo should be optimized in order to make only one cycle on filters
+
+      var updatedFilters = 0;
+
+      if(filter.constructor == Array) {
+          for(y=0;y<filter.length;y++){
+              updatedFilters = updatedFilters + this._setSingleFilter(filter[y]);
+          }
+      } else {
+          updatedFilters = this._setSingleFilter(filter);
+      }
+
+      if(updatedFilters > 0) {
+         self.trigger('change');
+
+      }
+  },
+
+
+
+=======
   setFilter: function(filter) {
       // todo refactor, non useful cycle
       // do we need to add another function for that?
@@ -1841,6 +2310,7 @@ my.Query = Backbone.Model.extend({
 
       this.trigger('change');
   },
+>>>>>>> 2f068b8b1308bf8a1688a447aecdc5aa1d7e1ddd
   updateFilter: function(index, value) {
   },
   // ### removeFilter
@@ -1883,6 +2353,31 @@ my.Query = Backbone.Model.extend({
           // todo check if field is selected
           return false;
       },
+        setSelection: function(s) {
+        // todo should be optimized in order to make only one cycle on filters
+
+        if(s.constructor == Array) {
+            for(y=0;y<s.length;y++){
+                this._setSingleSelection(s[y]);
+            }
+        } else {
+            this._setSingleSelection(s);
+        }
+
+        this.trigger('change:selections');
+    },
+    _setSingleSelection: function(s) {
+        var selections = this.get('selections');
+        for(x=0;x<selections.length;x++){
+            if(selections[x].field == s.field) {
+                selections[x] = s;
+                return;
+            }
+        }
+        selections.push(s);
+    },
+
+
 
 
     // ### addFacet
@@ -2680,6 +3175,97 @@ my.GridRow = Backbone.View.extend({
 });
 
 })(jQuery, recline.View);
+<<<<<<< HEAD
+/*jshint multistr:true */
+
+this.recline = this.recline || {};
+this.recline.View = this.recline.View || {};
+
+(function($, my) {
+
+// ## Linegraph view for a Dataset using nvd3 graphing library.
+//
+// Initialization arguments (in a hash in first parameter):
+//
+// * model: recline.Model.Dataset
+// * state: (optional) configuration hash of form:
+//
+//        { 
+//          group: {column name for x-axis},
+//          series: [{column name for series A}, {column name series B}, ... ],
+//          colors: ["#edc240", "#afd8f8", ...]
+//        }
+//
+// NB: should *not* provide an el argument to the view but must let the view
+// generate the element itself (you can then append view.el to the DOM.
+    my.Indicator = Backbone.View.extend({
+
+  template: '<div class="recline-graph"> \
+      <div class="panel indicator_{{viewId}}"style="display: block;"> \
+        <div id="indicator_{{viewId}}">N.D.</div>\
+      </div> \
+    </div> ',
+
+  initialize: function(options) {
+    var self = this;
+
+    this.el = $(this.el);
+    _.bindAll(this, 'render');
+
+    this.model.records.bind('add',      function() {self.redraw();});
+    this.model.records.bind('reset',    function() {self.redraw();});
+
+    var stateData = _.extend({
+        id: 0
+      },
+      options.state
+    );
+    this.state = new recline.Model.ObjectState(stateData);
+
+  },
+
+
+    render: function() {
+        var self = this;
+        var tmplData = this.model.toTemplateJSON();
+        tmplData["viewId"] = this.state.attributes["id"];
+
+
+
+        var htmls = Mustache.render(this.template, tmplData);
+         $(this.el).html(htmls);
+        this.$graph = this.el.find('.panel.indicator_' + tmplData["viewId"]);
+        return this;
+    },
+
+    redraw: function() {
+
+        var viewId = this.state.attributes["id"];
+
+        var result = "x/A";
+
+        if(this.model.records.length > 0)               {
+            result = this.model.records.models[0].attributes[this.state.get("value")];
+         }
+
+        $('#indicator_' + viewId).html(result);
+
+
+    },
+
+    show: function() {
+  }
+
+
+  
+
+
+});
+
+
+})(jQuery, recline.View);
+
+=======
 /*jshint multistr:true */
 
 this.recline = this.recline || {};
@@ -2759,6 +3345,7 @@ this.recline.View = this.recline.View || {};
 
 
 })(jQuery, recline.View);
+>>>>>>> 2f068b8b1308bf8a1688a447aecdc5aa1d7e1ddd
 /*jshint multistr:true */
 
 this.recline = this.recline || {};
@@ -2814,11 +3401,21 @@ my.Map = Backbone.View.extend({
         geomField: null,
         lonField: null,
         latField: null,
-        autoZoom: true
+        autoZoom: true,
+        cluster: false
       },
       options.state
     );
     this.state = new recline.Model.ObjectState(stateData);
+
+    this._clusterOptions = {
+      zoomToBoundsOnClick: true,
+      //disableClusteringAtZoom: 10,
+      maxClusterRadius: 80,
+      singleMarkerMode: false,
+      skipDuplicateAddTesting: true,
+      animateAddingMarkers: false
+    };
 
     // Listen to changes in the fields
     this.model.fields.bind('change', function() {
@@ -2843,6 +3440,9 @@ my.Map = Backbone.View.extend({
       self.state.set(self.menu.state.toJSON());
       self.redraw();
     });
+    this.state.bind('change', function() {
+      self.redraw();
+    });
     this.elSidebar = this.menu.el;
   },
 
@@ -2854,7 +3454,7 @@ my.Map = Backbone.View.extend({
   // ### infobox
   //
   // Function to create infoboxes used in popups. The default behaviour is very simple and just lists all attributes.
-  // 
+  //
   // Users should override this function to customize behaviour i.e.
   //
   //     view = new View({...});
@@ -2907,20 +3507,45 @@ my.Map = Backbone.View.extend({
     }
 
     if (this._geomReady() && this.mapReady){
-      if (action == 'reset' || action == 'refresh'){
+      // removing ad re-adding the layer enables faster bulk loading
+      this.map.removeLayer(this.features);
+      this.map.removeLayer(this.markers);
+
+      var countBefore = 0;
+      this.features.eachLayer(function(){countBefore++;});
+
+      if (action == 'refresh' || action == 'reset') {
         this.features.clearLayers();
+        // recreate cluster group because of issues with clearLayer
+        this.map.removeLayer(this.markers);
+        this.markers = new L.MarkerClusterGroup(this._clusterOptions);
         this._add(this.model.records.models);
       } else if (action == 'add' && doc){
         this._add(doc);
       } else if (action == 'remove' && doc){
         this._remove(doc);
       }
+
+      // enable clustering if there is a large number of markers
+      var countAfter = 0;
+      this.features.eachLayer(function(){countAfter++;});
+      var sizeIncreased = countAfter - countBefore > 0;
+      if (!this.state.get('cluster') && countAfter > 64 && sizeIncreased) {
+        this.state.set({cluster: true});
+        return;
+      }
+
       if (this.state.get('autoZoom')){
         if (this.visible){
           this._zoomToFeatures();
         } else {
           this._zoomPending = true;
         }
+      }
+      if (this.state.get('cluster')) {
+        this.map.addLayer(this.markers);
+      } else {
+        this.map.addLayer(this.features);
       }
     }
   },
@@ -2977,7 +3602,6 @@ my.Map = Backbone.View.extend({
 
         try {
           self.features.addData(feature);
-
         } catch (except) {
           wrongSoFar += 1;
           var msg = 'Wrong geometry value';
@@ -2996,7 +3620,7 @@ my.Map = Backbone.View.extend({
     });
   },
 
-  // Private: Remove one or n features to the map
+  // Private: Remove one or n features from the map
   //
   _remove: function(docs){
 
@@ -3105,7 +3729,7 @@ my.Map = Backbone.View.extend({
   //
   _zoomToFeatures: function(){
     var bounds = this.features.getBounds();
-    if (bounds.getNorthEast()){
+    if (bounds && bounds.getNorthEast() && bounds.getSouthWest()){
       this.map.fitBounds(bounds);
     } else {
       this.map.setView([0, 0], 2);
@@ -3118,6 +3742,7 @@ my.Map = Backbone.View.extend({
   // on [OpenStreetMap](http://openstreetmap.org).
   //
   _setupMap: function(){
+    var self = this;
     this.map = new L.Map(this.$map.get(0));
 
     var mapUrl = "http://otile{s}.mqcdn.com/tiles/1.0.0/osm/{z}/{x}/{y}.png";
@@ -3125,12 +3750,16 @@ my.Map = Backbone.View.extend({
     var bg = new L.TileLayer(mapUrl, {maxZoom: 18, attribution: osmAttribution ,subdomains: '1234'});
     this.map.addLayer(bg);
 
-    this.features = new L.GeoJSON(null,
-      {onEachFeature: function(feature,layer) {
-        layer.bindPopup(feature.properties.popupContent);
+    this.markers = new L.MarkerClusterGroup(this._clusterOptions);
+
+    this.features = new L.GeoJSON(null,{
+        pointToLayer: function (feature, latlng) {
+          var marker = new L.marker(latlng);
+          marker.bindPopup(feature.properties.popupContent);
+          self.markers.addLayer(marker);
+          return marker;
         }
-        });
-    this.map.addLayer(this.features);
+    });
 
     this.map.setView([0, 0], 2);
 
@@ -3203,19 +3832,23 @@ my.MapMenu = Backbone.View.extend({
       </div> \
       <div class="editor-options" > \
         <label class="checkbox"> \
-          <input type="checkbox" id="editor-auto-zoom" checked="checked" /> \
+          <input type="checkbox" id="editor-auto-zoom" value="autozoom" checked="checked" /> \
           Auto zoom to features</label> \
+        <label class="checkbox"> \
+          <input type="checkbox" id="editor-cluster" value="cluster"/> \
+          Cluster markers</label> \
       </div> \
       <input type="hidden" class="editor-id" value="map-1" /> \
       </div> \
     </form> \
-',
+  ',
 
   // Define here events for UI elements
   events: {
     'click .editor-update-map': 'onEditorSubmit',
     'change .editor-field-type': 'onFieldTypeChange',
-    'click #editor-auto-zoom': 'onAutoZoomChange'
+    'click #editor-auto-zoom': 'onAutoZoomChange',
+    'click #editor-cluster': 'onClusteringChange'
   },
 
   initialize: function(options) {
@@ -3248,9 +3881,13 @@ my.MapMenu = Backbone.View.extend({
     }
     if (this.state.get('autoZoom')) {
       this.el.find('#editor-auto-zoom').attr('checked', 'checked');
-    }
-    else {
+    } else {
       this.el.find('#editor-auto-zoom').removeAttr('checked');
+    }
+    if (this.state.get('cluster')) {
+      this.el.find('#editor-cluster').attr('checked', 'checked');
+    } else {
+      this.el.find('#editor-cluster').removeAttr('checked');
     }
     return this;
   },
@@ -3300,6 +3937,10 @@ my.MapMenu = Backbone.View.extend({
 
   onAutoZoomChange: function(e){
     this.state.set({autoZoom: !this.state.get('autoZoom')});
+  },
+
+  onClusteringChange: function(e){
+    this.state.set({cluster: !this.state.get('cluster')});
   },
 
   // Private: Helper function to select an option from a select list
@@ -4016,8 +4657,8 @@ this.recline.View = this.recline.View || {};
 				chart.xAxis
 					.axisLabel(xLabel)
 					.tickFormat(function(d) {
-             			return d3.time.format('%x')(new Date(d))
-		           })
+             			return d3.time.format('%x')(new Date(d)) ;
+		           })   ;
 			}
 			else
 			{
@@ -4052,6 +4693,23 @@ this.recline.View = this.recline.View || {};
 
       var actions = this.options.actions;
       var state = this.options.state;
+<<<<<<< HEAD
+
+      var selection ;
+      if(actions.FiltersTargetDataset != null
+          || actions.SelectionsTargetDataset != null) {
+
+
+
+      if(state.seriesNameField != null) {
+          // we use a field to define series
+          // todo fieldtype must be evaluated on fields structure
+          selection = {field: state.seriesNameField, type: "term", term:series.key, fieldType: "string"}   ;
+      } else
+      {
+          // todo to be verified, series index must be used
+          selection = {field: state.series[series.id], type: "term", term:series.key, fieldType: "string"}       ;
+=======
 
       var selection ;
       if(actions.FiltersTargetDataset != null
@@ -4081,11 +4739,32 @@ this.recline.View = this.recline.View || {};
               }
           }
 
+>>>>>>> 2f068b8b1308bf8a1688a447aecdc5aa1d7e1ddd
       }
   },
   
   createSeriesNVD3: function() {
 
+<<<<<<< HEAD
+          if(actions.FiltersTargetDataset != null) {
+              for (var i = 0; i < actions.FiltersTargetDataset.length; i++) {
+                  actions.FiltersTargetDataset[i].queryState.setFilter(selection);
+              }
+          }
+
+          if(actions.SelectionsTargetDataset != null) {
+              for (var i = 0; i < actions.SelectionsTargetDataset.length; i++) {
+                  actions.SelectionsTargetDataset[i].queryState.setSelection(selection);
+              }
+          }
+
+      }
+  },
+  
+  createSeriesNVD3: function() {
+
+=======
+>>>>>>> 2f068b8b1308bf8a1688a447aecdc5aa1d7e1ddd
       var self = this;
       var series = [];
       var colors = this.state.get("colors") ;
@@ -4863,7 +5542,22 @@ my.VirtualDataset = Backbone.Model.extend({
         this.recordCount = null;
         this.queryState = new my.Query();
 
+        this.attributes.dataset.records.bind('reset',       function() {
+            //console.log("VModel - received records.reset");
+            self.initializeCrossfilter(); });
+        this.attributes.dataset.records.bind('change',       function() {
+            //console.log("VModel - received records.change");
+            self.initializeCrossfilter(); });
+        //this.queryState.bind('change',                      function() { self.updateCrossfilter(); });
 
+<<<<<<< HEAD
+        //this.queryState.bind('change',                      function() { self.query(); });
+        this.queryState.bind('change:filters:new-blank',    function() {
+            //console.log("VModel - received change:filters:new-blank");
+            self.query(); });
+
+        // TODO verify if is better to use a new backend (crossfilter) to manage grouping and filtering instead of using it inside the model
+=======
         // this.updateGroupedDataset();
 
         this.attributes.dataset.records.bind('reset',       function() { self.initializeCrossfilter(); });
@@ -4886,6 +5580,7 @@ my.VirtualDataset = Backbone.Model.extend({
     fetch: function() {
         this.attributes.dataset.fetch();
 
+>>>>>>> 2f068b8b1308bf8a1688a447aecdc5aa1d7e1ddd
     },
 
     modifyGrouping: function(dimensions, aggregationField)
@@ -4905,15 +5600,14 @@ my.VirtualDataset = Backbone.Model.extend({
     },
 
     initializeCrossfilter: function() {
-        console.log("Initialize crossfilter");
-        var start = new Date().getTime();
 
+        var start = new Date().getTime();
         this.crossfilterData = crossfilter(this.attributes.dataset.records.toJSON());
 
         var end = new Date().getTime();
         var time = end - start;
 
-        console.log("Initialize - exec time: " + time);
+        console.log("initializeCrossfilter - exec time: " + time);
 
         this.updateCrossfilter();
     },
@@ -4944,7 +5638,7 @@ my.VirtualDataset = Backbone.Model.extend({
         // TODO has sense to recreate dimension if nothing is changed?, and in general, is better to use a new dimension if added instead of recreate all
         // TODO verify if saving crossfilter data is useful (perhaps no unless we use crossfilterstore to make aggregaation and filtering)
 
-        console.log("Starting update crossfilter");
+
         var start = new Date().getTime();
 
 
@@ -4955,7 +5649,7 @@ my.VirtualDataset = Backbone.Model.extend({
         var end = new Date().getTime();
         var time = end - start;
 
-        console.log("Grouping - exec time: " + time);
+        console.log("updateCrossfilter - exec time: " + time);
     },
 
     reduce: function() {
@@ -4978,10 +5672,20 @@ my.VirtualDataset = Backbone.Model.extend({
                     for(x=0;x<partitions.length;x++){
                         var fieldName = aggregatedFields[i] + "_by_" + partitions[x] + "_" + v[partitions[x]];
 
+<<<<<<< HEAD
+                        if(p.sum[fieldName] == null) {
+                            p.sum[fieldName] = 0;
+                            p.partitioncount[fieldname] = 0;
+                        }
+
+                        p.sum[fieldName] = p.sum[fieldName] + v[aggregatedFields[i]];
+                        p.partitioncount[fieldname] = p.partitioncount[fieldname] + 1;
+=======
                         if(p.sum[fieldName] == null)
                             p.sum[fieldName] = 0;
 
                         p.sum[fieldName] = p.sum[fieldName] + v[aggregatedFields[i]];
+>>>>>>> 2f068b8b1308bf8a1688a447aecdc5aa1d7e1ddd
                     }
                 }
 
@@ -5017,6 +5721,22 @@ my.VirtualDataset = Backbone.Model.extend({
                     var map = {};
                     for(var o=0;o<aggr.length;o++){
                         map[aggr[o]] = this.sum[aggr[o]] / this.count;
+<<<<<<< HEAD
+
+                        if(partitioning) {
+                            // for each partition need to verify if exist a value of aggregatefield_by_partition_partitionvalue_sum
+                            for(x=0;x<partitions.length;x++){
+                                var fieldName = aggregatedFields[i] + "_by_" + partitions[x] + "_" + v[partitions[x]];
+
+                                if(p.sum[fieldName] == null)
+                                    p.sum[fieldName] = 0;
+
+                                p.sum[fieldName] = p.sum[fieldName] + v[aggregatedFields[i]];
+                            }
+                        }
+
+=======
+>>>>>>> 2f068b8b1308bf8a1688a447aecdc5aa1d7e1ddd
                     }
 
                     return map;
@@ -5034,6 +5754,8 @@ my.VirtualDataset = Backbone.Model.extend({
         var dimensions = this.attributes.aggregation.dimensions;
 
         var tmpResult;
+<<<<<<< HEAD
+=======
 
         if(dimensions == null)
             tmpResult =  this.reducedGroup.value();
@@ -5042,14 +5764,23 @@ my.VirtualDataset = Backbone.Model.extend({
 
         console.log(tmpResult);
 
+>>>>>>> 2f068b8b1308bf8a1688a447aecdc5aa1d7e1ddd
         var result = [];
         var fields = [];
 
         var tmpField;
-        if(dimensions == null)
-            tmpField =  tmpResult;
-        else
+
+        if(dimensions == null)  {
+            tmpResult =  this.reducedGroup.value();
+            tmpField = tmpResult;
+        }
+        else {
+            tmpResult =  this.reducedGroup.all();
             tmpField = tmpResult[0].value;
+<<<<<<< HEAD
+        }
+=======
+>>>>>>> 2f068b8b1308bf8a1688a447aecdc5aa1d7e1ddd
 
         // set of fields array
 
@@ -5124,7 +5855,10 @@ my.VirtualDataset = Backbone.Model.extend({
         this.recordCount = result.length;
         this.records.reset(result);
 
+<<<<<<< HEAD
+=======
         console.log(result);
+>>>>>>> 2f068b8b1308bf8a1688a447aecdc5aa1d7e1ddd
 
     },
 
@@ -5133,6 +5867,8 @@ my.VirtualDataset = Backbone.Model.extend({
         console.log(this.attributes.dataset.toJSON());
         console.log(self.records.toJSON() );
         */
+
+        console.log("VModel - query for " + JSON.stringify(queryObj));
 
         var self = this;
         var dfd = $.Deferred();
@@ -5582,6 +6318,194 @@ my.FilterEditor = Backbone.View.extend({
 
 })(jQuery, recline.View);
 
+<<<<<<< HEAD
+/*jshint multistr:true */
+
+this.recline = this.recline || {};
+this.recline.View = this.recline.View || {};
+
+(function($, my) {
+
+my.GenericFilter = Backbone.View.extend({
+  className: 'recline-filter-editor well', 
+
+    template: ' \
+    <div class="filters"> \
+      <h3>Filters</h3> \
+      <a href="#" class="js-add-filter">Add filter</a> \
+      <form class="form-stacked js-add" style="display: none;"> \
+        <fieldset> \
+          <label>Filter type</label> \
+          <select class="filterType"> \
+            <option value="term">Term (text)</option> \
+            <option value="range">Range</option> \
+            <option value="geo_distance">Geo distance</option> \
+          </select> \
+          <label>Field</label> \
+          <select class="fields"> \
+            {{#fields}} \
+            <option value="{{id}}">{{label}}</option> \
+            {{/fields}} \
+          </select> \
+          <button type="submit" class="btn">Add</button> \
+        </fieldset> \
+      </form> \
+      <form class="form-stacked js-edit"> \
+        {{#filters}} \
+          {{{filterRender}}} \
+        {{/filters}} \
+        {{#filters.length}} \
+        <button type="submit" class="btn">Update</button> \
+        {{/filters.length}} \
+      </form> \
+    </div> \
+  ',
+  filterTemplates: {
+    term: ' \
+      <div class="filter-{{type}} filter"> \
+        <fieldset> \
+          <legend> \
+            {{field}} <small>{{type}}</small> \
+            <a class="js-remove-filter" href="#" title="Remove this filter">&times;</a> \
+          </legend> \
+          <input type="text" value="{{term}}" name="term" data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" /> \
+        </fieldset> \
+      </div> \
+    ',
+    range: ' \
+      <div class="filter-{{type}} filter"> \
+        <fieldset> \
+          <legend> \
+            {{field}} <small>{{type}}</small> \
+            <a class="js-remove-filter" href="#" title="Remove this filter">&times;</a> \
+          </legend> \
+          <label class="control-label" for="">From</label> \
+          <input type="text" value="{{start}}" name="start" data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" /> \
+          <label class="control-label" for="">To</label> \
+          <input type="text" value="{{stop}}" name="stop" data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" /> \
+        </fieldset> \
+      </div> \
+    ',
+    geo_distance: ' \
+      <div class="filter-{{type}} filter"> \
+        <fieldset> \
+          <legend> \
+            {{field}} <small>{{type}}</small> \
+            <a class="js-remove-filter" href="#" title="Remove this filter">&times;</a> \
+          </legend> \
+          <label class="control-label" for="">Longitude</label> \
+          <input type="text" value="{{point.lon}}" name="lon" data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" /> \
+          <label class="control-label" for="">Latitude</label> \
+          <input type="text" value="{{point.lat}}" name="lat" data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" /> \
+          <label class="control-label" for="">Distance (km)</label> \
+          <input type="text" value="{{distance}}" name="distance" data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" /> \
+        </fieldset> \
+      </div> \
+    '
+  },
+  events: {
+    'click .js-remove-filter': 'onRemoveFilter',
+    'click .js-add-filter': 'onAddFilterShow',
+    'submit form.js-edit': 'onTermFiltersUpdate',
+    'submit form.js-add': 'onAddFilter'
+  },
+  initialize: function() {
+
+     console.log(this);
+
+
+      this.el = $(this.el);
+    _.bindAll(this, 'render');
+    this.model.fields.bind('all', this.render);
+    this.model.queryState.bind('change', this.render);
+    this.model.queryState.bind('change:filters:new-blank', this.render);
+
+
+    this.render();
+
+  },
+  render: function() {
+    var self = this;
+    var tmplData = $.extend(true, {}, this.model.queryState.toJSON());
+    // we will use idx in list as there id ...
+    tmplData.filters = _.map(tmplData.filters, function(filter, idx) {
+      filter.id = idx;
+      return filter;
+    });
+    tmplData.fields = this.model.fields.toJSON();
+    tmplData.filterRender = function() {
+      return Mustache.render(self.filterTemplates[this.type], this);
+    };
+    var out = Mustache.render(this.template, tmplData);
+    this.el.html(out);
+  },
+  onAddFilterShow: function(e) {
+    e.preventDefault();
+    var $target = $(e.target);
+    $target.hide();
+    this.el.find('form.js-add').show();
+  },
+  onAddFilter: function(e) {
+    e.preventDefault();
+    var $target = $(e.target);
+    $target.hide();
+    var filterType = $target.find('select.filterType').val();
+    var field      = $target.find('select.fields').val();
+    var fieldType  = this.model.fields.find(function (e) { return e.get('id') === field }).get('type');
+    //this.model.queryState.addFilter({type: filterType, field: field, fieldType: fieldType});
+
+    for(m in this.options.TargetModel) {
+        m.queryState.addFilter({type: filterType, field: field, fieldType: fieldType});
+    }
+
+    // trigger render explicitly as queryState change will not be triggered (as blank value for filter)
+    this.render();
+  },
+  onRemoveFilter: function(e) {
+    e.preventDefault();
+    var $target = $(e.target);
+    var filterId = $target.closest('.filter').attr('data-filter-id');
+    this.model.queryState.removeFilter(filterId);
+  },
+  onTermFiltersUpdate: function(e) {
+   var self = this;
+    e.preventDefault();
+    var filters = self.model.queryState.get('filters');
+    var $form = $(e.target);
+    _.each($form.find('input'), function(input) {
+      var $input = $(input);
+      var filterType  = $input.attr('data-filter-type');
+      var fieldId     = $input.attr('data-filter-field');
+      var filterIndex = parseInt($input.attr('data-filter-id'));
+      var name        = $input.attr('name');
+      var value       = $input.val();
+
+      switch (filterType) {
+        case 'term':
+          filters[filterIndex].term = value;
+          break;
+        case 'range':
+          filters[filterIndex][name] = value;
+          break;
+        case 'geo_distance':
+          if(name === 'distance') {
+            filters[filterIndex].distance = parseFloat(value);
+          }
+          else {
+            filters[filterIndex].point[name] = parseFloat(value);
+          }
+          break;
+      }
+    });
+    self.model.queryState.set({filters: filters});
+    self.model.queryState.trigger('change');
+  }
+});
+
+
+})(jQuery, recline.View);
+
+=======
 /*jshint multistr:true */
 this.recline = this.recline || {};
 this.recline.View = this.recline.View || {};
@@ -5828,6 +6752,7 @@ my.GenericFilter = Backbone.View.extend({
 });
 
 })(jQuery, recline.View);
+>>>>>>> 2f068b8b1308bf8a1688a447aecdc5aa1d7e1ddd
 /*jshint multistr:true */
 
 this.recline = this.recline || {};

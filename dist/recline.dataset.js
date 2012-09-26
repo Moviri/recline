@@ -56,6 +56,7 @@ my.Dataset = Backbone.Model.extend({
       this.backend.fetch(this.toJSON())
         .done(handleResults)
         .fail(function(arguments) {
+          console.log("Fail in fetch data");
           dfd.reject(arguments);
         });
     } else {
@@ -71,8 +72,7 @@ my.Dataset = Backbone.Model.extend({
 
       var out = self._normalizeRecordsAndFields(results.records, results.fields);
       if (results.useMemoryStore) {
-
-        self._store = new recline.Backend.Memory.Store(out.records, out.fields);
+          self._store = new recline.Backend.Memory.Store(out.records, out.fields);
       }
 
       self.set(results.metadata);
@@ -183,6 +183,7 @@ my.Dataset = Backbone.Model.extend({
   // Resulting RecordList are used to reset this.records and are
   // also returned.
   query: function(queryObj) {
+
     var self = this;
     var dfd = $.Deferred();
     this.trigger('query:start');
@@ -206,7 +207,11 @@ my.Dataset = Backbone.Model.extend({
   },
 
   _handleQueryResult: function(queryResult) {
+
+
+
     var self = this;
+
     self.recordCount = queryResult.total;
     var docs = _.map(queryResult.hits, function(hit) {
       var _doc = new my.Record(hit);
@@ -270,22 +275,8 @@ my.Dataset = Backbone.Model.extend({
 
   // ### _backendFromString(backendString)
   //
-  // See backend argument to initialize for details
+  // Look up a backend module from a backend string (look in recline.Backend)
   _backendFromString: function(backendString) {
-    var parts = backendString.split('.');
-    // walk through the specified path xxx.yyy.zzz to get the final object which should be backend class
-    var current = window;
-    for(ii=0;ii<parts.length;ii++) {
-      if (!current) {
-        break;
-      }
-      current = current[parts[ii]];
-    }
-    if (current) {
-      return current;
-    }
-
-    // alternatively we just had a simple string
     var backend = null;
     if (recline && recline.Backend) {
       _.each(_.keys(recline.Backend), function(name) {
@@ -534,6 +525,46 @@ my.Query = Backbone.Model.extend({
     filters.push(ourfilter);
     this.trigger('change:filters:new-blank');
   },
+<<<<<<< HEAD
+
+    _setSingleFilter: function(filter) {
+        var filters = this.get('filters');
+        for(x=0;x<filters.length;x++){
+            if(filters[x].field == filter.field) {
+                if(filters[x] != filter) {
+                    filters[x] = filter;
+                    return 1;
+                } else return 0;
+            }
+        }
+        filters.push(filter);
+        return 1;
+    },
+
+    // update or add the selected filter(s), a change event is triggered after the update
+  setFilter: function(filter) {
+      var self = this;
+      // todo should be optimized in order to make only one cycle on filters
+
+      var updatedFilters = 0;
+
+      if(filter.constructor == Array) {
+          for(y=0;y<filter.length;y++){
+              updatedFilters = updatedFilters + this._setSingleFilter(filter[y]);
+          }
+      } else {
+          updatedFilters = this._setSingleFilter(filter);
+      }
+
+      if(updatedFilters > 0) {
+         self.trigger('change');
+
+      }
+  },
+
+
+
+=======
   setFilter: function(filter) {
       // todo refactor, non useful cycle
       // do we need to add another function for that?
@@ -552,6 +583,7 @@ my.Query = Backbone.Model.extend({
 
       this.trigger('change');
   },
+>>>>>>> 2f068b8b1308bf8a1688a447aecdc5aa1d7e1ddd
   updateFilter: function(index, value) {
   },
   // ### removeFilter
@@ -594,6 +626,31 @@ my.Query = Backbone.Model.extend({
           // todo check if field is selected
           return false;
       },
+        setSelection: function(s) {
+        // todo should be optimized in order to make only one cycle on filters
+
+        if(s.constructor == Array) {
+            for(y=0;y<s.length;y++){
+                this._setSingleSelection(s[y]);
+            }
+        } else {
+            this._setSingleSelection(s);
+        }
+
+        this.trigger('change:selections');
+    },
+    _setSingleSelection: function(s) {
+        var selections = this.get('selections');
+        for(x=0;x<selections.length;x++){
+            if(selections[x].field == s.field) {
+                selections[x] = s;
+                return;
+            }
+        }
+        selections.push(s);
+    },
+
+
 
 
     // ### addFacet
