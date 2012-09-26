@@ -467,6 +467,18 @@ my.Query = Backbone.Model.extend({
       field: '',
       term: ''
     },
+    drop_down: {
+      type: 'term',
+      // TODO do we need this attribute here?
+      field: '',
+      term: ''
+    },
+    listbox: {
+      type: 'term',
+      // TODO do we need this attribute here?
+      field: '',
+      term: ''
+    },
     range: {
       type: 'range',
       start: '',
@@ -513,6 +525,7 @@ my.Query = Backbone.Model.extend({
     this.trigger('change:filters:new-blank');
   },
 
+
     _setSingleFilter: function(filter) {
         var filters = this.get('filters');
         for(x=0;x<filters.length;x++){
@@ -528,6 +541,7 @@ my.Query = Backbone.Model.extend({
     },
 
     // update or add the selected filter(s), a change event is triggered after the update
+
   setFilter: function(filter) {
       var self = this;
       // todo should be optimized in order to make only one cycle on filters
@@ -695,4 +709,3 @@ Backbone.sync = function(method, model, options) {
 };
 
 }(jQuery, this.recline.Model));
-
