@@ -135,7 +135,7 @@ this.recline.View = this.recline.View || {};
                         });
                 break;
                 case "multiBarChart":
-                    chart = nv.models.multiBarChart();
+                    chart = nv.models.multiBarChart().stacked(true).showControls(false);
                     break;
             }
 

@@ -47,7 +47,7 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
 
         var data = buildRequestFromQuery(queryObj);
 
-        console.log("Querying dataset " + dataset.id.toString() +  JSON.stringify(data));
+        //console.log("Querying dataset " + dataset.id.toString() +  JSON.stringify(data));
 
 
 
