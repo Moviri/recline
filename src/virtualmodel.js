@@ -206,23 +206,23 @@ my.VirtualDataset = Backbone.Model.extend({
         // set of fields array
 
 
-        fields.push( {id: "count"});
+        fields.push( {id: "count", type: "number"});
 
         for (var j in tmpField.sum) {
-            fields.push( {id: j + "_sum"});
+            fields.push( {id: j + "_sum", type: "number"});
         }
 
         for (var j in tmpField.partitionsum) {
-            fields.push( {id: j + "_sum"});
+            fields.push( {id: j + "_sum", type: "number"});
         }
 
         for (var j in tmpField.partitioncount) {
-            fields.push( {id: j + "_count"});
+            fields.push( {id: j + "_count", type: "number"});
         }
 
         var tempAvg =   tmpField.avg() ;
         for (var j in tempAvg) {
-            fields.push( {id: j + "_avg"});
+            fields.push( {id: j + "_avg", type: "number"});
         }
 
         if(dimensions != null) {

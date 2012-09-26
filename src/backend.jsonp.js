@@ -179,26 +179,23 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
   }
 
   function _handleFieldDescription(description) {
+      var dataMapping = {
+          STRING : "string",
+          DATE   : "date",
+          INTEGER: "number",
+          DOUBLE : "number"
+      };
+
+
       var res = [];
       for (var k in description) {
-          // use hasOwnProperty to filter out keys from the Object.prototype
-          if (description.hasOwnProperty(k)) {
-              res.push({id: k, type: description[k]});
 
-          }
-      }
+              res.push({id: k, type: dataMapping[description[k]]});
+        }
+
       return res;
     }
 
-    function _datatypeMapping(data) {
-        var dataParsers = {
-
-            number : "number",
-            string : "string",
-            date   : "date"
-
-        };
-    }
 
 
 

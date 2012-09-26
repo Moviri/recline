@@ -52,6 +52,8 @@ my.Dataset = Backbone.Model.extend({
     var self = this;
     var dfd = $.Deferred();
 
+      console.log("Model fetching data");
+
     if (this.backend !== recline.Backend.Memory) {
       this.backend.fetch(this.toJSON())
         .done(handleResults)
@@ -207,13 +209,15 @@ my.Dataset = Backbone.Model.extend({
 
   _handleQueryResult: function(queryResult) {
 
-
+        console.log("Handle result");
+        console.log(queryResult);
 
     var self = this;
 
     self.recordCount = queryResult.total;
     var docs = _.map(queryResult.hits, function(hit) {
       var _doc = new my.Record(hit);
+
       _doc.fields = self.fields;
       _doc.bind('change', function(doc) {
         self._changes.updates.push(doc.toJSON());
@@ -224,6 +228,13 @@ my.Dataset = Backbone.Model.extend({
       return _doc;
     });
     self.records.reset(docs);
+
+      // todo should be defined in first fetch but what happen if first fecth si done through q eury?
+
+    if (queryResult.fields) {
+      self.fields.reset(queryResult.fields);
+    }
+
     if (queryResult.facets) {
       var facets = _.map(queryResult.facets, function(facetResult, facetId) {
         facetResult.id = facetId;
