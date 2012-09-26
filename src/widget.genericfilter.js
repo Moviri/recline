@@ -126,10 +126,12 @@ my.GenericFilter = Backbone.View.extend({
     this.model.queryState.bind('change:filters:new-blank', this.render);
 	this.origRecords = this.model.records.toJSON();
 	this.userFilters = args.userFilters;
-	if (this.userFilters && this.userFilters.length)
+
+      /*if (this.userFilters && this.userFilters.length)
 		for (var k in this.userFilters)
 			this.model.queryState.setFilter(this.userFilters[k]);
-	
+	*/
+
     this.render();
   },
   render: function() {
@@ -180,7 +182,7 @@ my.GenericFilter = Backbone.View.extend({
   onTermFiltersUpdate: function(e) {
    var self = this;
     e.preventDefault();
-    //var filters = self.model.queryState.get('filters');
+    var filters = self.model.queryState.get('filters');
 	
     var $form = $(e.target);
     _.each($form.find('input,select'), function(input) {
@@ -205,13 +207,14 @@ my.GenericFilter = Backbone.View.extend({
 		}
 		else value = $input.find("option:selected").text();
 	  }
-
+      var filter;
       switch (filterType) {
         case 'term':
-			filter = {field: fieldId, type: filterType, term:value, fieldType: "string"};
+            filters[filterIndex].term = value;
           break;
         case 'range':
-          //filters[filterIndex][name] = value;
+
+          filters[filterIndex][name] = value;
           break;
         case 'drop_down':
 			filter = {field: fieldId, type: 'term', term:value, fieldType: "string"};
@@ -219,22 +222,15 @@ my.GenericFilter = Backbone.View.extend({
         case 'listbox':
 			filter = {field: fieldId, type: 'term', term:values[0], fieldType: "string"};
           break;
-        case 'geo_distance':
-          if(name === 'distance') {
- //           filters[filterIndex].distance = parseFloat(value);
-          }
-          else {
-   //         filters[filterIndex].point[name] = parseFloat(value);
-          }
-          break;
+
       }
-        console.log(filter);
-	       console.log(self.model);
-	       self.model.queryState.setFilter(filter);
+       // console.log(filterType);
+       //     console.log(filter);
+	   //    self.model.queryState.setFilter(filter);
 	  
     });
-//    self.model.queryState.set({filters: filters});
-//    self.model.queryState.trigger('change');
+    self.model.queryState.set({filters: filters});
+    self.model.queryState.trigger('change');
   }
 });
 

@@ -202,7 +202,10 @@ my.VirtualDataset = Backbone.Model.extend({
         }
         else {
             tmpResult =  this.reducedGroup.all();
-            tmpField = tmpResult[0].value;
+            if(tmpResult.length > 0)
+                tmpField = tmpResult[0].value;
+            else
+                tmpField = {count: 0, sum: {}, partitioncount: {}, partitionsum: {}, avg: function() { return; }};
         }
 
         // set of fields array

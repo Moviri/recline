@@ -47,9 +47,7 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
 
         var data = buildRequestFromQuery(queryObj);
 
-        //console.log("Querying dataset " + dataset.id.toString() +  JSON.stringify(data));
-
-
+        console.log("Querying dataset " + dataset.id.toString() +  JSON.stringify(data));
 
         var jqxhr = $.ajax({
             url: dataset.url,
@@ -78,10 +76,14 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
     };
 
 
+
+
   function  buildRequestFromQuery(queryObj)  {
+      var self=this;
       var filters = queryObj.filters;
       var data = [];
       var multivsep = "~";
+
 
       // register filters
       var filterFunctions = {
@@ -94,10 +96,7 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
       var dataParsers = {
           number : function (e) { return parseFloat(e, 10); },
           string : function (e) { return e.toString() },
-          date   : function (e) {
-              tmp  = new Date(e);
-              return dateFormat(tmp, "yyyy-mm-dd HH:MM:ss");
-          }
+          date   : function (e) { return e.toString(); }     //todo parsing and verification of date
       };
 
       for(var i=0; i<filters.length;i++) {
