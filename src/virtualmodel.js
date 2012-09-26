@@ -28,12 +28,14 @@ my.VirtualDataset = Backbone.Model.extend({
         this.attributes.dataset.records.bind('change',       function() {
             //console.log("VModel - received records.change");
             self.initializeCrossfilter(); });
+        this.queryState.bind('change',                      function() { self.query(); });
+
         //this.queryState.bind('change',                      function() { self.updateCrossfilter(); });
 
-        //this.queryState.bind('change',                      function() { self.query(); });
-        this.queryState.bind('change:filters:new-blank',    function() {
+        //this.queryState.bind('change:filters:new-blank',    function() {
             //console.log("VModel - received change:filters:new-blank");
-            self.query(); });
+            //self.query();
+            // });
 
         // TODO verify if is better to use a new backend (crossfilter) to manage grouping and filtering instead of using it inside the model
     },

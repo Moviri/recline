@@ -228,7 +228,9 @@ my.GenericFilter = Backbone.View.extend({
           }
           break;
       }
-	      self.model.queryState.setFilter(filter);
+        console.log(filter);
+	       console.log(self.model);
+	       self.model.queryState.setFilter(filter);
 	  
     });
 //    self.model.queryState.set({filters: filters});
