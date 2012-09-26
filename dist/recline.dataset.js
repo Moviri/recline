@@ -182,6 +182,7 @@ my.Dataset = Backbone.Model.extend({
   // Resulting RecordList are used to reset this.records and are
   // also returned.
   query: function(queryObj) {
+
     var self = this;
     var dfd = $.Deferred();
     this.trigger('query:start');
@@ -512,22 +513,43 @@ my.Query = Backbone.Model.extend({
     this.trigger('change:filters:new-blank');
   },
 
-  setFilter: function(filter) {
-      var filters = this.get('filters');
-
-      for(x=0;x<filters.length;x++){
-        if(filters[x].field == filter.field) {
-            filters[x] = filter;
-            this.trigger('change');
-            return;
+    _setSingleFilter: function(filter) {
+        var filters = this.get('filters');
+        for(x=0;x<filters.length;x++){
+            if(filters[x].field == filter.field) {
+                if(filters[x] != filter) {
+                    filters[x] = filter;
+                    return 1;
+                } else return 0;
+            }
         }
+        filters.push(filter);
+        return 1;
+    },
+
+    // update or add the selected filter(s), a change event is triggered after the update
+  setFilter: function(filter) {
+      var self = this;
+      // todo should be optimized in order to make only one cycle on filters
+
+      var updatedFilters = 0;
+
+      if(filter.constructor == Array) {
+          for(y=0;y<filter.length;y++){
+              updatedFilters = updatedFilters + this._setSingleFilter(filter[y]);
+          }
+      } else {
+          updatedFilters = this._setSingleFilter(filter);
       }
 
-      filters.push(filter);
-      this.trigger('change');
+      if(updatedFilters > 0) {
+         self.trigger('change');
 
-
+      }
   },
+
+
+
   updateFilter: function(index, value) {
   },
   // ### removeFilter
@@ -570,6 +592,31 @@ my.Query = Backbone.Model.extend({
           // todo check if field is selected
           return false;
       },
+        setSelection: function(s) {
+        // todo should be optimized in order to make only one cycle on filters
+
+        if(s.constructor == Array) {
+            for(y=0;y<s.length;y++){
+                this._setSingleSelection(s[y]);
+            }
+        } else {
+            this._setSingleSelection(s);
+        }
+
+        this.trigger('change:selections');
+    },
+    _setSingleSelection: function(s) {
+        var selections = this.get('selections');
+        for(x=0;x<selections.length;x++){
+            if(selections[x].field == s.field) {
+                selections[x] = s;
+                return;
+            }
+        }
+        selections.push(s);
+    },
+
+
 
 
     // ### addFacet

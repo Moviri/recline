@@ -127,10 +127,13 @@ my.VirtualDataset = Backbone.Model.extend({
                     for(x=0;x<partitions.length;x++){
                         var fieldName = aggregatedFields[i] + "_by_" + partitions[x] + "_" + v[partitions[x]];
 
-                        if(p.sum[fieldName] == null)
-                            p.sum[fieldName] = 0;
+                        if(p.partitionsum[fieldName] == null) {
+                            p.partitionsum[fieldName] = 0;
+                            p.partitioncount[fieldName] = 0;
+                        }
 
-                        p.sum[fieldName] = p.sum[fieldName] + v[aggregatedFields[i]];
+                        p.partitionsum[fieldName] = p.partitionsum[fieldName] + v[aggregatedFields[i]];
+                        p.partitioncount[fieldName] = p.partitioncount[fieldName] + 1;
                     }
                 }
 
@@ -141,6 +144,7 @@ my.VirtualDataset = Backbone.Model.extend({
         function sumRemove(p, v) {
             p.count = p.count - 1;
 
+            // todo implement same as sum
             for(i=0;i<aggregatedFields.length;i++){
                 p.sum[aggregatedFields[i]] = p.sum[aggregatedFields[i]] - v[aggregatedFields[i]];
 
@@ -153,12 +157,10 @@ my.VirtualDataset = Backbone.Model.extend({
         function sumInitialize() {
 
 
-            tmp = {count: 0, sum: {}};
+            tmp = {count: 0, sum: {}, partitioncount: {}, partitionsum: {}};
 
             for(i=0;i<aggregatedFields.length;i++){
                 tmp.sum[aggregatedFields[i]] = 0;
-
-
             }
 
             tmp.avg = function(aggr){
@@ -166,7 +168,11 @@ my.VirtualDataset = Backbone.Model.extend({
                     var map = {};
                     for(var o=0;o<aggr.length;o++){
                         map[aggr[o]] = this.sum[aggr[o]] / this.count;
+                     }
+                    for (var j in this.partitioncount) {
+                        map[j] = this.partitionsum[j] / this.partitioncount[j];
                     }
+
 
                     return map;
                 }
@@ -206,6 +212,14 @@ my.VirtualDataset = Backbone.Model.extend({
             fields.push( {id: j + "_sum"});
         }
 
+        for (var j in tmpField.partitionsum) {
+            fields.push( {id: j + "_sum"});
+        }
+
+        for (var j in tmpField.partitioncount) {
+            fields.push( {id: j + "_count"});
+        }
+
         var tempAvg =   tmpField.avg() ;
         for (var j in tempAvg) {
             fields.push( {id: j + "_avg"});
@@ -238,6 +252,15 @@ my.VirtualDataset = Backbone.Model.extend({
                     tmp[j + "_sum"] = tmpResult[i].value.sum[j];
                 }
 
+                for (var j in tmpResult[i].value.partitionsum) {
+                    tmp[j + "_sum"] = tmpResult[i].value.partitionsum[j];
+                }
+
+
+                for (var j in tmpResult[i].value.partitioncount) {
+                    tmp[j + "_count"] = tmpResult[i].value.partitioncount[j];
+                }
+
                 var tempAvg =   tmpResult[i].value.avg();
 
                 for (var j in tempAvg) {
@@ -252,6 +275,10 @@ my.VirtualDataset = Backbone.Model.extend({
 
             for (var j in tmpField.sum) {
                 tmp[j + "_sum"] = tmpField.sum[j];
+            }
+
+            for (var j in tmpField.partitionCount) {
+                tmp[j + "_sum"] = tmpField.partitionCount[j];
             }
 
             var tempAvg =   tmpField.avg();

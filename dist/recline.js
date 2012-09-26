@@ -903,8 +903,11 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
   // Load data from a URL
   //
   // Returns array of field names and array of arrays for records
-  my.fetch = function(dataset) {
+
+    // todo has to be merged with query (part is in common)
+    my.fetch = function(dataset) {
     console.log("Warning requested full records fetch for " + dataset.url);
+
     var jqxhr = $.ajax({
       url: dataset.url,
       dataType: 'jsonp',
@@ -934,7 +937,8 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
 
         var data = buildRequestFromQuery(queryObj);
 
-        console.log("Querying dataset " + dataset.id + " with " + data.toString());
+        console.log("Querying dataset " + dataset.id.toString() +  JSON.stringify(data));
+
 
 
         var jqxhr = $.ajax({
@@ -963,11 +967,14 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
 
     };
 
+  my.wrapper() = function(queryObj, dataset, data) {
 
+  }
 
   function  buildRequestFromQuery(queryObj)  {
       var filters = queryObj.filters;
       var data = [];
+      var multivsep = "~";
 
       // register filters
       var filterFunctions = {
@@ -982,9 +989,7 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
           string : function (e) { return e.toString() },
           date   : function (e) {
               tmp  = new Date(e);
-
               return dateFormat(tmp, "yyyy-mm-dd HH:MM:ss");
-              // yyyy-mm-dd hh:mi:ss
           }
       };
 
@@ -1025,8 +1030,16 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
           var parse = dataParsers[filter.fieldType];
           var value = filter.field;
           var list = filter.list;
-          // todo waiting for backend implementation
-          return "";
+
+          var ret = value + " bw ";
+          for(var i=0;i<filter.list.length;i++) {
+              if(i>0)
+               ret = ret + multivsep;
+
+              ret = ret + list[i];
+          }
+
+          return ret;
 
       }
 
@@ -1561,6 +1574,7 @@ my.Dataset = Backbone.Model.extend({
   // Resulting RecordList are used to reset this.records and are
   // also returned.
   query: function(queryObj) {
+
     var self = this;
     var dfd = $.Deferred();
     this.trigger('query:start');
@@ -1891,22 +1905,43 @@ my.Query = Backbone.Model.extend({
     this.trigger('change:filters:new-blank');
   },
 
-  setFilter: function(filter) {
-      var filters = this.get('filters');
-
-      for(x=0;x<filters.length;x++){
-        if(filters[x].field == filter.field) {
-            filters[x] = filter;
-            this.trigger('change');
-            return;
+    _setSingleFilter: function(filter) {
+        var filters = this.get('filters');
+        for(x=0;x<filters.length;x++){
+            if(filters[x].field == filter.field) {
+                if(filters[x] != filter) {
+                    filters[x] = filter;
+                    return 1;
+                } else return 0;
+            }
         }
+        filters.push(filter);
+        return 1;
+    },
+
+    // update or add the selected filter(s), a change event is triggered after the update
+  setFilter: function(filter) {
+      var self = this;
+      // todo should be optimized in order to make only one cycle on filters
+
+      var updatedFilters = 0;
+
+      if(filter.constructor == Array) {
+          for(y=0;y<filter.length;y++){
+              updatedFilters = updatedFilters + this._setSingleFilter(filter[y]);
+          }
+      } else {
+          updatedFilters = this._setSingleFilter(filter);
       }
 
-      filters.push(filter);
-      this.trigger('change');
+      if(updatedFilters > 0) {
+         self.trigger('change');
 
-
+      }
   },
+
+
+
   updateFilter: function(index, value) {
   },
   // ### removeFilter
@@ -1949,6 +1984,31 @@ my.Query = Backbone.Model.extend({
           // todo check if field is selected
           return false;
       },
+        setSelection: function(s) {
+        // todo should be optimized in order to make only one cycle on filters
+
+        if(s.constructor == Array) {
+            for(y=0;y<s.length;y++){
+                this._setSingleSelection(s[y]);
+            }
+        } else {
+            this._setSingleSelection(s);
+        }
+
+        this.trigger('change:selections');
+    },
+    _setSingleSelection: function(s) {
+        var selections = this.get('selections');
+        for(x=0;x<selections.length;x++){
+            if(selections[x].field == s.field) {
+                selections[x] = s;
+                return;
+            }
+        }
+        selections.push(s);
+    },
+
+
 
 
     // ### addFacet
@@ -4208,7 +4268,7 @@ this.recline.View = this.recline.View || {};
 
           if(actions.SelectionsTargetDataset != null) {
               for (var i = 0; i < actions.SelectionsTargetDataset.length; i++) {
-                  actions.SelectionsTargetDataset[i].queryState.setFilter(selection);
+                  actions.SelectionsTargetDataset[i].queryState.setSelection(selection);
               }
           }
 
@@ -4995,16 +5055,18 @@ my.VirtualDataset = Backbone.Model.extend({
         this.queryState = new my.Query();
 
         this.attributes.dataset.records.bind('reset',       function() {
+            //console.log("VModel - received records.reset");
             self.initializeCrossfilter(); });
-        this.attributes.dataset.records.bind('change',       function() { self.initializeCrossfilter(); });
+        this.attributes.dataset.records.bind('change',       function() {
+            //console.log("VModel - received records.change");
+            self.initializeCrossfilter(); });
         //this.queryState.bind('change',                      function() { self.updateCrossfilter(); });
 
         //this.queryState.bind('change',                      function() { self.query(); });
         this.queryState.bind('change:filters:new-blank',    function() {
-            console.log("change:filters:new-blank");
+            //console.log("VModel - received change:filters:new-blank");
             self.query(); });
 
-        // TODO manage filtering on data
         // TODO verify if is better to use a new backend (crossfilter) to manage grouping and filtering instead of using it inside the model
     },
 
@@ -5025,14 +5087,14 @@ my.VirtualDataset = Backbone.Model.extend({
     },
 
     initializeCrossfilter: function() {
-        console.log("Initialize crossfilter");
+
         var start = new Date().getTime();
         this.crossfilterData = crossfilter(this.attributes.dataset.records.toJSON());
 
         var end = new Date().getTime();
         var time = end - start;
 
-        console.log("Initialize - exec time: " + time);
+        console.log("initializeCrossfilter - exec time: " + time);
 
         this.updateCrossfilter();
     },
@@ -5063,7 +5125,7 @@ my.VirtualDataset = Backbone.Model.extend({
         // TODO has sense to recreate dimension if nothing is changed?, and in general, is better to use a new dimension if added instead of recreate all
         // TODO verify if saving crossfilter data is useful (perhaps no unless we use crossfilterstore to make aggregaation and filtering)
 
-        console.log("Starting update crossfilter");
+
         var start = new Date().getTime();
 
 
@@ -5074,7 +5136,7 @@ my.VirtualDataset = Backbone.Model.extend({
         var end = new Date().getTime();
         var time = end - start;
 
-        console.log("Grouping - exec time: " + time);
+        console.log("updateCrossfilter - exec time: " + time);
     },
 
     reduce: function() {
@@ -5097,10 +5159,13 @@ my.VirtualDataset = Backbone.Model.extend({
                     for(x=0;x<partitions.length;x++){
                         var fieldName = aggregatedFields[i] + "_by_" + partitions[x] + "_" + v[partitions[x]];
 
-                        if(p.sum[fieldName] == null)
+                        if(p.sum[fieldName] == null) {
                             p.sum[fieldName] = 0;
+                            p.partitioncount[fieldname] = 0;
+                        }
 
                         p.sum[fieldName] = p.sum[fieldName] + v[aggregatedFields[i]];
+                        p.partitioncount[fieldname] = p.partitioncount[fieldname] + 1;
                     }
                 }
 
@@ -5136,6 +5201,19 @@ my.VirtualDataset = Backbone.Model.extend({
                     var map = {};
                     for(var o=0;o<aggr.length;o++){
                         map[aggr[o]] = this.sum[aggr[o]] / this.count;
+
+                        if(partitioning) {
+                            // for each partition need to verify if exist a value of aggregatefield_by_partition_partitionvalue_sum
+                            for(x=0;x<partitions.length;x++){
+                                var fieldName = aggregatedFields[i] + "_by_" + partitions[x] + "_" + v[partitions[x]];
+
+                                if(p.sum[fieldName] == null)
+                                    p.sum[fieldName] = 0;
+
+                                p.sum[fieldName] = p.sum[fieldName] + v[aggregatedFields[i]];
+                            }
+                        }
+
                     }
 
                     return map;
@@ -5248,6 +5326,8 @@ my.VirtualDataset = Backbone.Model.extend({
         console.log(this.attributes.dataset.toJSON());
         console.log(self.records.toJSON() );
         */
+
+        console.log("VModel - query for " + JSON.stringify(queryObj));
 
         var self = this;
         var dfd = $.Deferred();

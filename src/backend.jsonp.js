@@ -77,9 +77,6 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
 
     };
 
-  my.wrapper() = function(queryObj, dataset, data) {
-
-  }
 
   function  buildRequestFromQuery(queryObj)  {
       var filters = queryObj.filters;
