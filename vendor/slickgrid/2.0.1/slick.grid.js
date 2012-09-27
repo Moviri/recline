@@ -70,7 +70,7 @@ if (typeof Slick === "undefined") {
       enableAsyncPostRender: false,
       asyncPostRenderDelay: 50,
 	  useInnerChart: false,
-	  innerChartMax: 100,
+	  //innerChartMax: 100,
       autoHeight: false,
       editorLock: Slick.GlobalEditorLock,
       showHeaderRow: false,
@@ -600,13 +600,14 @@ if (typeof Slick === "undefined") {
             .addClass(m.headerCssClass || "")
             .appendTo($headers);
 		
-		if (options.useInnerChart)
+		if (options.useInnerChart && columns.length > 0 && options.innerChartMax)
 		{
 			var lastBottomColumnHtml = "";
 			if (i == columns.length-1)
 			{
 				var max = options.innerChartMax;
-				lastBottomColumnHtml = "<table style='width:100%'><tr style='width:100%'><td style='text-align:left'>"+max+"</td><td style='text-align:left'>"+max/2+"</td><td style='text-align:center'>0</td><td style='text-align:right'>"+max/2+"</td><td style='text-align:right'>"+max+"</td></tr></table>";
+				var numFormatter = d3.format("s");
+				lastBottomColumnHtml = "<table style='width:100%'><tr style='width:100%'><td style='text-align:left'>"+numFormatter(max)+"</td><td style='text-align:left'>"+numFormatter(max/2)+"</td><td style='text-align:center'>0</td><td style='text-align:right'>"+numFormatter(max/2)+"</td><td style='text-align:right'>"+numFormatter(max)+"</td></tr></table>";
 			}	
 			var headerBottom = $("<div class='ui-state-default slick-footer-column' id='" + uid + m.id + "' />")
 				.html("<span class='slick-column-name'>" + lastBottomColumnHtml + "</span>")
@@ -628,7 +629,7 @@ if (typeof Slick === "undefined") {
           "node": header[0],
           "column": m
         });
-		if (options.useInnerChart)
+		if (options.useInnerChart && headerBottom && headerBottom[0])
 		{
 			trigger(self.onHeaderCellRendered, {
 			  "node": headerBottom[0],

@@ -47,7 +47,7 @@ my.SlickGrid = Backbone.View.extend({
       syncColumnCellResize: true,
       forceFitColumns: this.state.get('fitColumns'),
       useInnerChart: this.state.get('useInnerChart'),
-      innerChartMax: this.state.get('useInnerChart'),    
+      innerChartMax: this.state.get('innerChartMax'),    
 	};
 
     // We need all columns, even the hidden ones, to show on the column picker
@@ -80,7 +80,7 @@ my.SlickGrid = Backbone.View.extend({
 
       columns.push(column);
     });
-	if (self.state.get('useInnerChart') == true)
+	if (self.state.get('useInnerChart') == true && self.model.records.length > 0)
 	{
 		columns.push({
         name: self.state.get('innerChartHeader'),
@@ -135,7 +135,7 @@ my.SlickGrid = Backbone.View.extend({
 		}
 	}
 	
-	if (self.state.get('useInnerChart') == true && self.state.get('innerChartSerie1') != null && self.state.get('innerChartSerie2') != null)
+	if (self.state.get('useInnerChart') == true && self.state.get('innerChartSerie1') != null && self.state.get('innerChartSerie2') != null && this.model.records.length > 0)
 	{
 		this.model.records.each(function(doc){
 		  var row = {};

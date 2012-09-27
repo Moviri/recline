@@ -1,6 +1,6 @@
 ---
 layout: moviri
-title: Demos - NVD3 Integration
+title: Dashboard
 recline-deps: true
 root: ../../
 ---
@@ -100,7 +100,7 @@ root: ../../
                 }
             });
             var $el = $('#mygrid');
-            var grid = new recline.View.SlickGrid({model: virtualdatasetAge, el: $el, state: {fitColumns:true, useInnerChart:true, innerChartSerie1:'totalviewed_by_gender_Male_sum', innerChartSerie2:'totalviewed_by_gender_Female_sum', innerChartHeader:'Views by gender'}});
+            var grid = new recline.View.SlickGrid({model: virtualdatasetAge, el: $el, state: {fitColumns:true, useInnerChart:true, innerChartSerie1:'totalviewed_by_gender_Male_sum', innerChartSerie2:'totalviewed_by_gender_Female_sum', innerChartHeader:'Views by Gender'}});
             grid.visible = true;
             grid.render();
 
