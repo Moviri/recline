@@ -58,20 +58,25 @@ root: ../../
         dataset = new recline.Model.Dataset({
             url: url,
             backend: 'jsonp',
-            id: "AudDemoByGender"
+            id: "AudDemoByGender",
+            fieldLabels: [{id: "age", label: "ciccio"}, {id: "gender", label: "pippo"}]
 
         });
 
-        filter = [ {field: "daydate", type: "range", start:"2012-01-01 00:00:00", stop: "2012-01-30 00:00:00", fieldType: "date"}];
+        dataset.fetch(); // needed to populate filter list
 
-        dataset.queryState.setFilter(filter);
+        filters = [ {field: "daydate", type: "range", start:"2012-01-01 00:00:00", stop: "2012-01-30 00:00:00", fieldType: "date"}];
+        for(var i=0;i<filters.length;i++)
+            dataset.queryState.addFilter(filters[i]);
+
 
             virtualdatasetAge= new recline.Model.VirtualDataset({
                 dataset: dataset,
                 aggregation: {
                     dimensions: ["age"],
                     aggregatedFields: ["totalviewed", "price_sum"],
-                    partitions: ["gender"]
+                    partitions: ["gender"],
+                    aggregationFunctions: ["avg", "sum"]
                 }
             });
 
@@ -95,24 +100,16 @@ root: ../../
             virtualdatasetTotal= new recline.Model.VirtualDataset({
                 dataset: dataset,
                 aggregation: {
-                    dimensions: [""],
                     aggregatedFields: ["totalviewed", "price_sum"]
                 }
             });
-            var $el = $('#mygrid');
+
+
+           var $el = $('#mygrid');
             var grid = new recline.View.SlickGrid({model: virtualdatasetAge, el: $el, state: {fitColumns:true, useInnerChart:true, innerChartSerie1:'totalviewed_by_gender_Male_sum', innerChartSerie2:'totalviewed_by_gender_Female_sum', innerChartHeader:'Views by Gender'}});
             grid.visible = true;
             grid.render();
 
-            // var $el = $('#mygrid_week');
-            // var grid1 = new recline.View.SlickGrid({model: virtualdatasetWeekday, el: $el, state: {fitColumns:true}});
-            // grid1.visible = true;
-            // grid1.render();
-
-            // var $el = $('#mygrid_hour');
-            // var grid2 = new recline.View.SlickGrid({model: virtualdatasetHour, el: $el, state: {fitColumns:true}});
-            // grid2.visible = true;
-            // grid2.render();
 
 
             virtualdatasetDay= new recline.Model.VirtualDataset({
@@ -199,6 +196,8 @@ root: ../../
                 label: 'Filters'
             });
             $('#search_container').append(filter.el);
+
+
 
     });
 </script>

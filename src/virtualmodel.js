@@ -1,6 +1,8 @@
 // # Recline Backbone Models
 this.recline = this.recline || {};
 this.recline.Model = this.recline.Model || {};
+this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
+
 
 (function($, my) {
 
@@ -22,20 +24,10 @@ my.VirtualDataset = Backbone.Model.extend({
         this.recordCount = null;
         this.queryState = new my.Query();
 
-        this.attributes.dataset.records.bind('reset',       function() {
-            //console.log("VModel - received records.reset");
-            self.initializeCrossfilter(); });
-        this.attributes.dataset.records.bind('change',       function() {
-            //console.log("VModel - received records.change");
-            self.initializeCrossfilter(); });
-        this.queryState.bind('change',                      function() { self.query(); });
+        this.attributes.dataset.records.bind('add',     function() { self.initializeCrossfilter(); });
+        this.attributes.dataset.records.bind('reset',   function() { self.initializeCrossfilter(); });
 
-        //this.queryState.bind('change',                      function() { self.updateCrossfilter(); });
-
-        //this.queryState.bind('change:filters:new-blank',    function() {
-            //console.log("VModel - received change:filters:new-blank");
-            //self.query();
-            // });
+        this.queryState.bind('change',                  function() { self.query(); });
 
         // TODO verify if is better to use a new backend (crossfilter) to manage grouping and filtering instead of using it inside the model
     },
@@ -59,25 +51,25 @@ my.VirtualDataset = Backbone.Model.extend({
     initializeCrossfilter: function() {
 
         var start = new Date().getTime();
-        this.crossfilterData = crossfilter(this.attributes.dataset.records.toJSON());
 
         var end = new Date().getTime();
         var time = end - start;
 
         console.log("initializeCrossfilter - exec time: " + time);
 
-        this.updateCrossfilter();
+        this.updateCrossfilter(crossfilter(this.attributes.dataset.records.toJSON()));
     },
 
-    createDimensions: function() {
+    createDimensions: function(crossfilterData) {
         var dimensions = this.attributes.aggregation.dimensions;
+        var group;
 
         if(dimensions == null ){
             // need to evaluate aggregation function on all records
-            this.group =  this.crossfilterData.groupAll();
+            group =  crossfilterData.groupAll();
         }
         else {
-            var by_dimension = this.crossfilterData.dimension(function(d) {
+            var by_dimension = crossfilterData.dimension(function(d) {
                 var tmp = "";
                 for(i=0;i<dimensions.length;i++){
                     if(i>0) { tmp = tmp + "_"; }
@@ -86,11 +78,13 @@ my.VirtualDataset = Backbone.Model.extend({
                 }
                 return tmp;
             });
-          this.group = by_dimension.group();
+          group = by_dimension.group();
         }
+
+        return group;
     },
 
-    updateCrossfilter: function() {
+    updateCrossfilter: function(crossfilterData) {
         // TODO optimization has to be done in order to limit the number of cycles on data
         // TODO has sense to recreate dimension if nothing is changed?, and in general, is better to use a new dimension if added instead of recreate all
         // TODO verify if saving crossfilter data is useful (perhaps no unless we use crossfilterstore to make aggregaation and filtering)
@@ -99,9 +93,7 @@ my.VirtualDataset = Backbone.Model.extend({
         var start = new Date().getTime();
 
 
-        this.createDimensions();
-        this.reduce();
-        this.updateStore();
+        this.updateStore(this.reduce(this.createDimensions(crossfilterData)));
 
         var end = new Date().getTime();
         var time = end - start;
@@ -109,8 +101,9 @@ my.VirtualDataset = Backbone.Model.extend({
         console.log("updateCrossfilter - exec time: " + time);
     },
 
-    reduce: function() {
+    reduce: function(group) {
         var aggregatedFields = this.attributes.aggregation.aggregatedFields;
+        var aggregationFunctions = this.attributes.aggregation.aggregationFunctions;
 
         var partitioning = false;
         var partitions;
@@ -119,15 +112,30 @@ my.VirtualDataset = Backbone.Model.extend({
             var partitioning = true;
         }
 
-        function sumAdd(p, v) {
+        function addFunction(p, v) {
             p.count = p.count +1;
             for(i=0;i<aggregatedFields.length;i++){
+
+                // for each aggregation function evaluate results
+                for(j=0;j<aggregationFunctions.length;j++){
+                    var currentAggregationFunction = this.recline.Data.Aggregations.aggregationFunctions[aggregationFunctions[j]];
+
+                    p[aggregationFunctions[j] = currentAggregationFunction( p[aggregationFunctions[j], v[aggregatedFields[i]);
+                }
+
                 p.sum[aggregatedFields[i]] = p.sum[aggregatedFields[i]] + v[aggregatedFields[i]];
 
                 if(partitioning) {
                     // for each partition need to verify if exist a value of aggregatefield_by_partition_partitionvalue_sum
                     for(x=0;x<partitions.length;x++){
                         var fieldName = aggregatedFields[i] + "_by_" + partitions[x] + "_" + v[partitions[x]];
+
+                        // for each aggregation function evaluate results
+                        for(j=0;j<aggregationFunctions.length;j++){
+                            var currentAggregationFunction = this.recline.Data.Aggregations.aggregationFunctions[aggregationFunctions[j]];
+
+                            p.partitions[aggregationFunctions[j] = currentAggregationFunction(p.partitions[aggregationFunctions[j], v[aggregatedFields[i]);
+                        }
 
                         if(p.partitionsum[fieldName] == null) {
                             p.partitionsum[fieldName] = 0;
@@ -143,20 +151,11 @@ my.VirtualDataset = Backbone.Model.extend({
             return p;
         }
 
-        function sumRemove(p, v) {
-            p.count = p.count - 1;
-
-            // todo implement same as sum
-            for(i=0;i<aggregatedFields.length;i++){
-                p.sum[aggregatedFields[i]] = p.sum[aggregatedFields[i]] - v[aggregatedFields[i]];
-
-
-            }
-
-            return p;
+        function removeFunction(p, v) {
+            throw "crossfilter reduce remove function not implemented";
         }
 
-        function sumInitialize() {
+        function initializeFunction() {
 
 
             tmp = {count: 0, sum: {}, partitioncount: {}, partitionsum: {}};
@@ -184,10 +183,10 @@ my.VirtualDataset = Backbone.Model.extend({
         }
 
 
-        this.reducedGroup  =  this.group.reduce(sumAdd,sumRemove,sumInitialize);
+        return reducedGroup  =  group.reduce(sumAdd,sumRemove,sumInitialize);
     },
 
-    updateStore: function() {
+    updateStore: function(reducedGroup) {
         var dimensions = this.attributes.aggregation.dimensions;
 
         var tmpResult;
@@ -197,16 +196,19 @@ my.VirtualDataset = Backbone.Model.extend({
         var tmpField;
 
         if(dimensions == null)  {
-            tmpResult =  this.reducedGroup.value();
+            tmpResult =  reducedGroup.value();
             tmpField = tmpResult;
         }
         else {
-            tmpResult =  this.reducedGroup.all();
+            tmpResult =  reducedGroup.all();
             if(tmpResult.length > 0)
                 tmpField = tmpResult[0].value;
             else
                 tmpField = {count: 0, sum: {}, partitioncount: {}, partitionsum: {}, avg: function() { return; }};
         }
+
+
+
 
         // set of fields array
 
@@ -230,10 +232,15 @@ my.VirtualDataset = Backbone.Model.extend({
             fields.push( {id: j + "_avg", type: "number"});
         }
 
+
         if(dimensions != null) {
             fields.push( {id: "dimension"});
             for(i=0;i<dimensions.length;i++){
-                fields.push( {id: dimensions[i]});
+
+
+                var originalFieldAttributes = this.attributes.dataset.fields.get(dimensions[i]).attributes;;
+                fields.push( {id: dimensions[i], type: originalFieldAttributes.type, label: originalFieldAttributes.label, format: originalFieldAttributes.format});
+
             }
         }
 
@@ -302,6 +309,8 @@ my.VirtualDataset = Backbone.Model.extend({
         this.recordCount = result.length;
         this.records.reset(result);
 
+        //console.log("VModel fields");
+        //console.log(fields);
 
     },
 
