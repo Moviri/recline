@@ -21,17 +21,21 @@ my.VirtualDataset = Backbone.Model.extend({
         this.records = new my.RecordList();
         this.recordCount = null;
         this.queryState = new my.Query();
-
-        this.attributes.dataset.records.bind('reset',       function() {
+        
+		// source model has changed
+	   this.attributes.dataset.records.bind('reset',       function() {
             //console.log("VModel - received records.reset");
-            self.initializeCrossfilter(); });
+            console.log("Fired dataset.records.bind");
+			self.initializeCrossfilter(); });
         this.attributes.dataset.records.bind('change',       function() {
             //console.log("VModel - received records.change");
             self.initializeCrossfilter(); });
-        this.queryState.bind('change',                      function() { self.query(); });
 
-        //this.queryState.bind('change',                      function() { self.updateCrossfilter(); });
-
+		// virtual model is changed (filters)
+        this.queryState.bind('change',                      function() { 
+			console.log("Fired querystate.change");
+			self.query(); 
+		});
         //this.queryState.bind('change:filters:new-blank',    function() {
             //console.log("VModel - received change:filters:new-blank");
             //self.query();
@@ -59,8 +63,11 @@ my.VirtualDataset = Backbone.Model.extend({
     initializeCrossfilter: function() {
 
         var start = new Date().getTime();
-        this.crossfilterData = crossfilter(this.attributes.dataset.records.toJSON());
-
+        
+		this.crossfilterData = crossfilter(this.attributes.dataset.records.toJSON());
+		//this.crossfilterData = crossfilter(this.records.toJSON());
+		
+		
         var end = new Date().getTime();
         var time = end - start;
 
@@ -72,7 +79,7 @@ my.VirtualDataset = Backbone.Model.extend({
     createDimensions: function() {
         var dimensions = this.attributes.aggregation.dimensions;
 
-        if(dimensions == null ){
+        if(dimensions == null || dimensions.length == 0){
             // need to evaluate aggregation function on all records
             this.group =  this.crossfilterData.groupAll();
         }
@@ -196,7 +203,7 @@ my.VirtualDataset = Backbone.Model.extend({
 
         var tmpField;
 
-        if(dimensions == null)  {
+        if(dimensions == null || dimensions.length == 0)  {
             tmpResult =  this.reducedGroup.value();
             tmpField = tmpResult;
         }
@@ -302,7 +309,9 @@ my.VirtualDataset = Backbone.Model.extend({
         this.recordCount = result.length;
         this.records.reset(result);
 
-
+		//todo field reset should not be here
+		console.log(this.records);
+		
     },
 
     query: function(queryObj) {
@@ -346,6 +355,8 @@ my.VirtualDataset = Backbone.Model.extend({
             return _doc;
         });
         self.records.reset(docs);
+		console.log("filtered records");
+		console.log(docs);
     },
 
   toTemplateJSON: function() {
