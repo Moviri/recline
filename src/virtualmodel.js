@@ -395,6 +395,11 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
             }
             var actualQuery = this.queryState.toJSON();
 
+            if(this._store == null) {
+                console.log("Warning query called before data has been calculated for virtual model, call fetch on source dataset");
+                return;
+            }
+
             this._store.query(actualQuery, this.toJSON())
                 .done(function(queryResult) {
                     self._handleQueryResult(queryResult);

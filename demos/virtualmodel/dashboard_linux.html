@@ -235,8 +235,9 @@ root: ../../
         for(var i=0;i<filters.length;i++)
             dataset.queryState.addFilter(filters[i]);
 
-        virtualdatasetAge.queryState.addFilter(filterxx);
-        dataset.fetch(); // needed to populate filter list
+        dataset.fetch();
+        virtualdatasetAge.queryState.setFilter(filterxx);
+        //dataset.fetch(); // needed to populate filter list
 
 
 
