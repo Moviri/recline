@@ -133,7 +133,6 @@ my.GenericFilter = Backbone.View.extend({
     ',
 	range_calendar: ' \
 	<script> \
-	function dateConvert(d) { p = d.split(new RegExp("\D")); console.log(p);return new Date(p[0], p[1], p[2], p[3], p[4], p[5], 0); } \
 	$(function() { \
 		$( "#from{{ctrlId}}" ).datepicker({ \
 			defaultDate: "{{startDate}}", \
@@ -243,16 +242,17 @@ my.GenericFilter = Backbone.View.extend({
   initialize: function(args) {
     this.el = $(this.el);
     _.bindAll(this, 'render');
+	_.bindAll(this, 'getFieldType');
 	this._sourceDataset = args.sourceDataset;
-	this._targetDatasets = args.targetDatasets;
+	this._targetDatasets = args.filtersTargetDatasets;
     this._sourceDataset.fields.bind('all', this.render); 
     this._sourceDataset.records.bind('reset', this.render); 
-	this.userFilters = args.userFilters;
+	this.sourceFields = args.sourceFields;
 	this.filterDialogLabel = args.label;
 
-    if (this.userFilters && this.userFilters.length)
-		for (var k in this.userFilters)
-			this.addNewFilterControl(this.userFilters[k]);
+    if (this.sourceFields && this.sourceFields.length)
+		for (var k in this.sourceFields)
+			this.addNewFilterControl(this.sourceFields[k]);
 
     this.render();
   },
@@ -264,15 +264,10 @@ my.GenericFilter = Backbone.View.extend({
       filter.id = idx;
       return filter;
     });
-	//this.dateConvert(tmplData.filters[0].start);
     tmplData.fields = this._sourceDataset.fields.toJSON();
 	tmplData.records = _.pluck(this._sourceDataset.records.models, "attributes");
 	tmplData.filterLabel = this.filterDialogLabel;
 	tmplData.dateConvert = self.dateConvert;
-	// tmplData.dateConvert = function(d) { 
-		// var p = d.split(/\D/); 
-		// return p[1]+"/"+p[2]+"/"+p[0]; 
-	// } 
     tmplData.filterRender = function() {
 	  // add value list to selected filter or templating of record values will not work
 	  this.tmpValues = _.uniq(_.pluck(tmplData.records, this.field));
@@ -392,26 +387,48 @@ my.GenericFilter = Backbone.View.extend({
 		obj.hide( "blind", {}, 1000, function() {});
 	});
   },
+  getFilterTypeFromControlType: function(controlType) {
+	switch (controlType)
+	{
+		case "listbox":
+		case "list" :
+		case "drop_down" :
+		case "slider" :
+			return "term";
+		case "range_slider" :
+		case "range_calendar" :
+			return "range";
+	}
+	return controlType;
+  }
+  ,
+  getFieldType : function(field) {
+	var fieldFound = this._sourceDataset.fields.find(function (e) { 
+				return e.get('id') === field
+			})
+	if (typeof fieldFound != "undefined" && fieldFound != null)
+		return fieldFound.get('type');
+			
+    return "string";
+  }
+  ,
   onAddFilter: function(e) {
     e.preventDefault();
     var $target = $(e.target).parent().parent();
     $target.hide();//this.hidePanel($target);
     var controlType = $target.find('select.filterType').val();
-	var filterType = controlType;
-	if (controlType == "listbox" || controlType == "list" || controlType == "drop_down" || controlType == "slider")
-		filterType = "term";
-	if (controlType == "range_slider" || controlType == "range_calendar")
-		filterType = "range";
-	
+	var filterType = this.getFilterTypeFromControlType(controlType);
     var field      = $target.find('select.fields').val();
-    var fieldType  = this._sourceDataset.fields.find(function (e) { 
-				return e.get('id') === field 
-			}).get('type');
-	
-	this.addNewFilterControl({type: filterType, field: field, controlType: controlType, fieldType: fieldType});
+	this.addNewFilterControl({type: filterType, field: field, controlType: controlType});
   },
   addNewFilterControl: function(newFilter)
   {
+	if (typeof newFilter.type == 'undefined')
+		newFilter.type = this.getFilterTypeFromControlType(newFilter.controlType)
+
+	if (typeof newFilter.fieldType == 'undefined')
+		newFilter.fieldType = this.getFieldType(newFilter.field)
+		
 	_.each(this._targetDatasets, function(ds) { 
 		ds.queryState.addFilter(newFilter);
 	});

@@ -8,8 +8,11 @@ root: ../../
 
 
 <div class="container-fluid">
-    <div class="row-fluid">
+    <div class="row-fluid" style="height:100%">
         <div class="span2 lightgreyborder">
+            <!--div class="row-fluid">
+                <input type="button" onclick="debugme()"></input>
+            </div-->
             <div class="row-fluid">
                 <div id="search_container"></div>
             </div>
@@ -29,19 +32,19 @@ root: ../../
                     <div class="row-fluid"><h3 class="centered">Revenues</h3><h1 class="orange centered"><div id="indicator2"></div></h1></div>
                 </div>
             </div>
-            <div class="row-fluid">
+            <div class="row-fluid" style="height:40%">
                 <div class="span12" >
                     <div id="mygrid" style="overflow:auto"></div>
                 </div>
             </div>
-            <div class="row-fluid">
+            <div class="row-fluid" style="height:30%">
                 <div class="span12"  ><div id="mygraph2"></div></div>
             </div>
             <div class="row-fluid">
                 <div class="span6" ><div id="mygraph3"></div></div>
                 <div class="span6" ><div id="mygraph4"></div></div>
             </div>
-            <div class="row-fluid">
+            <div class="row-fluid" style="height:30%">
                 <div class="span6" >
                     <div id="mygrid_week" style="overflow:auto"></div>
                 </div>
@@ -55,6 +58,9 @@ root: ../../
 
 
 <script type="text/javascript">
+	function debugme() {
+		console.log("debug me");
+	}
     $(document).ready(function() {
         var url = "http://192.168.100.133:8380/cwwh-iwal-war/cw/wh/ds/AudDemoByGender"; //?filters=daydate lt 2012-01-30 00:00:00,daydate gt 2012-01-01 00:00:00";
 
@@ -62,11 +68,15 @@ root: ../../
             url: url,
             backend: 'jsonp',
             id: "AudDemoByGender",
-            fieldLabels: [{id: "age", label: "age_label"}, {id: "gender", label: "gender_label"}]
+            fieldLabels: [{id: "age", label: "ciccio"}, {id: "gender", label: "pippo"}]
 
         });
 
+        dataset.fetch(); // needed to populate filter list
 
+        filters = [ {field: "daydate", type: "range", start:"2012-01-01 00:00:00", stop: "2012-01-30 00:00:00", fieldType: "date", controlType: "range_calendar" }];
+        for(var i=0;i<filters.length;i++)
+            dataset.queryState.addFilter(filters[i]);
 
             virtualdatasetAge = new recline.Model.VirtualDataset({
                 dataset: dataset,
@@ -74,7 +84,7 @@ root: ../../
                     dimensions: ["age"],
                     aggregatedFields: ["totalviewed", "price_sum"],
                     partitions: ["gender"],
-                    aggregationFunctions: ["sum", "avg"]
+                    aggregationFunctions: ["avg", "sum"]
                 }
             });
 
@@ -83,8 +93,7 @@ root: ../../
                 aggregation: {
                     dimensions: ["dayofweek"],
                     aggregatedFields: ["totalviewed"],
-                    partitions: ["gender"],
-                    aggregationFunctions: ["sum", "avg"]
+                    partitions: ["gender"]
                 }
             });
             virtualdatasetHour= new recline.Model.VirtualDataset({
@@ -92,17 +101,14 @@ root: ../../
                 aggregation: {
                     dimensions: ["dayhour"],
                     aggregatedFields: ["totalviewed"],
-                    partitions: ["gender"],
-                    aggregationFunctions: ["sum", "avg"]
+                    partitions: ["gender"]
                 }
             });
-
 
             virtualdatasetTotal= new recline.Model.VirtualDataset({
                 dataset: dataset,
                 aggregation: {
-                    aggregatedFields: ["totalviewed", "price_sum"],
-                    aggregationFunctions: ["sum"]
+                    aggregatedFields: ["totalviewed", "price_sum"]
                 }
             });
 
@@ -119,8 +125,7 @@ root: ../../
                 aggregation: {
                     dimensions: ["daydate"],
                     aggregatedFields: ["totalviewed", "price_sum"],
-                    partitions: ["gender"],
-                    aggregationFunctions: ["sum", "avg"]
+                    partitions: ["gender"]
                 }
             });
 
@@ -139,9 +144,6 @@ root: ../../
             graph2.redraw();
 
 
-
-
-
             var graph3 = new recline.View.NVD3Graph({
                 model: virtualdatasetWeekday,
                 state: {
@@ -154,8 +156,8 @@ root: ../../
                 }
             });
             $('#mygraph3').append(graph3.el);
-
-
+            graph3.render();
+            graph3.redraw();
 
 
             var graph4 = new recline.View.NVD3Graph({
@@ -170,6 +172,8 @@ root: ../../
                 }
             })
             $('#mygraph4').append(graph4.el);
+            graph4.render();
+            graph4.redraw();
 
 
             var indicator1 = new recline.View.Indicator({
@@ -183,7 +187,6 @@ root: ../../
             $('#indicator1').append(indicator1.el);
             indicator1.render();
 
-
             var indicator2 = new recline.View.Indicator({
                 model: virtualdatasetTotal,
                 state: {
@@ -195,45 +198,21 @@ root: ../../
             $('#indicator2').append(indicator2.el);
             indicator2.render();
 
-
-
-            /*var filter = new recline.View.GenericFilter({
+            var filter = new recline.View.GenericFilter({
                 sourceDataset: dataset,
-				filtersTargetDatasets: [dataset],
+				targetDatasets: [dataset],
                 id: 'filterEditorDB',
                 label: 'DB Filters',
-                ControlType: 'dropdown'
             });
             $('#search_container').append(filter.el);
 
             var filter2 = new recline.View.GenericFilter({
                 sourceDataset: dataset,
-				filtersTargetDatasets: [virtualdatasetAge, virtualdatasetWeekday, virtualdatasetTotal, virtualdatasetHour ],
+				targetDatasets: [virtualdatasetAge, virtualdatasetWeekday, virtualdatasetTotal, virtualdatasetHour ],
                 id: 'filterEditor',
                 label: 'Memory Filters',
-				sourceFields: [{field: 'age', controlType: 'list'}]
+				userFilters: [{field: 'age', type:'list', controlType: 'list', fieldType: 'string'}]
             });
             $('#search_container2').append(filter2.el);
-            */
-
-        var filterxx = {
-            field: "age",
-            type: "term",
-            term: "15",
-            fieldType: "number"
-        };
-
-
-
-        filters = [ {field: "daydate", type: "range", start:"2012-01-01 00:00:00", stop: "2012-01-30 00:00:00", fieldType: "date", controlType: "range_calendar" }];
-        for(var i=0;i<filters.length;i++)
-            dataset.queryState.addFilter(filters[i]);
-
-        dataset.fetch();
-        virtualdatasetAge.queryState.setFilter(filterxx);
-        //dataset.fetch(); // needed to populate filter list
-
-
-
     });
 </script>
