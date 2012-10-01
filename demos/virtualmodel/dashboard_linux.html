@@ -10,9 +10,9 @@ root: ../../
 <div class="container-fluid">
     <div class="row-fluid">
         <div class="span2 lightgreyborder">
-            <div class="row-fluid">
+            <!--div class="row-fluid">
                 <input type="button" onclick="debugme()"></input>
-            </div>
+            </div-->
             <div class="row-fluid">
                 <div id="search_container"></div>
             </div>
@@ -72,21 +72,12 @@ root: ../../
 
         });
 
-<<<<<<< HEAD
-		//dataset.fetch();
-
-        filter = [ {field: "daydate", type: "range", start:"2012-01-01 00:00:00", stop: "2012-03-30 00:00:00", fieldType: "date", controlType:"range_calendar"}];
-=======
         dataset.fetch(); // needed to populate filter list
 
-        filters = [ {field: "daydate", type: "range", start:"2012-01-01 00:00:00", stop: "2012-01-30 00:00:00", fieldType: "date"}];
+        filters = [ {field: "daydate", type: "range", start:"2012-01-01 00:00:00", stop: "2012-01-30 00:00:00", fieldType: "date", controlType: "range_calendar" }];
         for(var i=0;i<filters.length;i++)
             dataset.queryState.addFilter(filters[i]);
 
->>>>>>> 173edb0ac5e9b3a1a7d60077917a3355e4dcbee5
-
-        dataset.queryState.setFilter(filter);
-		
             virtualdatasetAge = new recline.Model.VirtualDataset({
                 dataset: dataset,
                 aggregation: {

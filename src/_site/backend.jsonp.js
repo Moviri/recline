@@ -16,15 +16,21 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
 
     // todo has to be merged with query (part is in common)
     my.fetch = function(dataset) {
-    console.log("Warning requested full records fetch for " + dataset.url);
+    console.log("Fetching data structure " + dataset.url);
+
+    // TODO waiting for implementation of structure results
+    data = {filters: "gender daydate eq 2015-01-01"};
+
 
     var jqxhr = $.ajax({
-      url: dataset.url,
-      dataType: 'jsonp',
-      jsonpCallbackString: dataset.id,
-      cache: true
-
+        url: dataset.url,
+        dataType: 'jsonp',
+        jsonpCallback: dataset.id,
+        data: data,
+        cache: true
     });
+
+
     var dfd = $.Deferred();
     _wrapInTimeout(jqxhr).done(function(results) {
       if (results.error) {
@@ -32,7 +38,6 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
       }
 
       dfd.resolve({
-            hits: results.result.data,
             fields:_handleFieldDescription(results.result.description),
             useMemoryStore: false
       });
@@ -47,7 +52,7 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
 
         var data = buildRequestFromQuery(queryObj);
 
-        console.log("Querying dataset " + dataset.id.toString() +  JSON.stringify(data));
+        //console.log("Querying dataset " + dataset.id.toString() +  JSON.stringify(data));
 
         var jqxhr = $.ajax({
             url: dataset.url,
@@ -178,6 +183,7 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
   }
 
   function _handleFieldDescription(description) {
+
       var dataMapping = {
           STRING : "string",
           DATE   : "date",

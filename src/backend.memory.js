@@ -85,9 +85,7 @@ this.recline.Backend.Memory = this.recline.Backend.Memory || {};
         hits: results.slice(start, start+numRows),
         facets: facets
       };
-      dfd.resolve(out);
-      return dfd.promise();
-    };
+   };
 
     // in place filtering
     this._applyFilters = function(results, queryObj) {

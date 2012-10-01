@@ -52,13 +52,12 @@ my.Dataset = Backbone.Model.extend({
     var self = this;
     var dfd = $.Deferred();
 
-      console.log("Model fetching data");
 
     if (this.backend !== recline.Backend.Memory) {
       this.backend.fetch(this.toJSON())
         .done(handleResults)
         .fail(function(arguments) {
-          console.log("Fail in fetch data");
+          console.log("Fail in fetching data");
           dfd.reject(arguments);
         });
     } else {
@@ -77,8 +76,22 @@ my.Dataset = Backbone.Model.extend({
       }
 
       self.set(results.metadata);
-      self.fields.reset(out.fields);
-      self.query()
+
+
+        // if labels are declared in dataset properties merge it;
+        if(self.attributes.fieldLabels) {
+            for(var i=0; i<out.fields.length; i++) {
+                var tmp  = _.find(self.attributes.fieldLabels, function(x){ return x.id==out.fields[i].id; });
+                if(tmp != null)
+                  out.fields[i].label = tmp.label;
+
+            }
+
+        }
+
+        self.fields.reset(out.fields);
+
+        self.query()
         .done(function() {
           dfd.resolve(self);
         })
@@ -229,11 +242,6 @@ my.Dataset = Backbone.Model.extend({
     });
     self.records.reset(docs);
 
-      // todo should be defined in first fetch but what happen if first fecth si done through q eury?
-
-    if (queryResult.fields) {
-      self.fields.reset(queryResult.fields);
-    }
 
     if (queryResult.facets) {
       var facets = _.map(queryResult.facets, function(facetResult, facetId) {
@@ -474,6 +482,11 @@ my.Query = Backbone.Model.extend({
   _filterTemplates: {
     term: {
       type: 'term',
+      field: '',
+      term: ''
+    },
+    slider: {
+      type: 'term',
       // TODO do we need this attribute here?
       field: '',
       term: ''
@@ -490,13 +503,28 @@ my.Query = Backbone.Model.extend({
       field: '',
       term: ''
     },
+    termAdvanced: {
+          type: 'term',
+          operator : "eq",
+          field: '',
+          term: ''
+      },
     listbox: {
       type: 'term',
-      // TODO do we need this attribute here?
-      field: '',
-      term: ''
+     field: '',
+      list: []
     },
     range: {
+      type: 'range',
+      start: '',
+      stop: ''
+    },
+    range_slider: {
+      type: 'range',
+      start: '',
+      stop: ''
+    },
+    range_calendar: {
       type: 'range',
       start: '',
       stop: ''
@@ -530,10 +558,12 @@ my.Query = Backbone.Model.extend({
   //
   // @param filter an object specifying the filter - see _filterTemplates for examples. If only type is provided will generate a filter by cloning _filterTemplates
   addFilter: function(filter) {
+
     // crude deep copy
     var ourfilter = JSON.parse(JSON.stringify(filter));
     // not full specified so use template and over-write
     // 3 as for 'type', 'field' and 'fieldType'
+
     if (_.keys(filter).length <= 3) {
       ourfilter = _.extend(this._filterTemplates[filter.type], ourfilter);
     }
@@ -560,6 +590,10 @@ my.Query = Backbone.Model.extend({
     // update or add the selected filter(s), a change event is triggered after the update
 
   setFilter: function(filter) {
+
+      console.log("set new filter");
+      console.log(filter);
+
       var self = this;
       // todo should be optimized in order to make only one cycle on filters
 
@@ -575,8 +609,7 @@ my.Query = Backbone.Model.extend({
 
       if(updatedFilters > 0) {
          self.trigger('change');
-
-      }
+     }
   },
 
 

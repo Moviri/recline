@@ -96,9 +96,7 @@ this.recline.Backend.Memory = this.recline.Backend.Memory || {};
       // register filters
       var filterFunctions = {
         term         : term,
-        slider         : term,
         range        : range,
-        range_slider : range,
         list        : term,
         drop_down        : term,
         listbox        : term,
