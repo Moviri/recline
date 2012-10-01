@@ -72,11 +72,7 @@ root: ../../
 
         });
 
-        dataset.fetch(); // needed to populate filter list
 
-        filters = [ {field: "daydate", type: "range", start:"2012-01-01 00:00:00", stop: "2012-01-30 00:00:00", fieldType: "date", controlType: "range_calendar" }];
-        for(var i=0;i<filters.length;i++)
-            dataset.queryState.addFilter(filters[i]);
 
             virtualdatasetAge = new recline.Model.VirtualDataset({
                 dataset: dataset,
@@ -207,7 +203,7 @@ root: ../../
 
 
 
-            var filter = new recline.View.GenericFilter({
+            /*var filter = new recline.View.GenericFilter({
                 sourceDataset: dataset,
 				targetDatasets: [dataset],
                 id: 'filterEditorDB',
@@ -224,5 +220,25 @@ root: ../../
 				userFilters: [{field: 'age', type:'list', controlType: 'list', fieldType: 'string'}]
             });
             $('#search_container2').append(filter2.el);
+            */
+
+        var filterxx = {
+            field: "age",
+            type: "term",
+            term: "15",
+            fieldType: "number"
+        };
+
+
+
+        filters = [ {field: "daydate", type: "range", start:"2012-01-01 00:00:00", stop: "2012-01-30 00:00:00", fieldType: "date", controlType: "range_calendar" }];
+        for(var i=0;i<filters.length;i++)
+            dataset.queryState.addFilter(filters[i]);
+
+        virtualdatasetAge.queryState.addFilter(filterxx);
+        dataset.fetch(); // needed to populate filter list
+
+
+
     });
 </script>

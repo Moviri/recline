@@ -577,7 +577,7 @@ my.Query = Backbone.Model.extend({
 
       if(updatedFilters > 0) {
          self.trigger('change');
-     }
+      }
   },
 
 

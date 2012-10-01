@@ -89,7 +89,7 @@ this.recline.View = this.recline.View || {};
     // check we have something to plot
     if (this.state.get('group') && this.state.get('seriesValues')) {
       // faff around with width because flot draws axes *outside* of the element width which means graph can get push down as it hits element next to it
-      this.$graph.width(this.el.width() - 20);
+      //this.$graph.width(this.el.width() - 20);
 
       // nvd3
         var state = this.state;

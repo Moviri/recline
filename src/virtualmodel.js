@@ -24,7 +24,7 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
             this.recordCount = null;
             this.queryState = new my.Query();
 
-            this.attributes.dataset.records.bind('add',     function() { self.initializeCrossfilter(); });
+            //this.attributes.dataset.records.bind('add',     function() { self.initializeCrossfilter(); });
             this.attributes.dataset.records.bind('reset',   function() { self.initializeCrossfilter(); });
 
             this.queryState.bind('change',                  function() { self.query(); });
@@ -49,14 +49,6 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
         },
 
         initializeCrossfilter: function() {
-
-            var start = new Date().getTime();
-
-            var end = new Date().getTime();
-            var time = end - start;
-
-            console.log("initializeCrossfilter - exec time: " + time);
-
             this.updateCrossfilter(crossfilter(this.attributes.dataset.records.toJSON()));
         },
 
@@ -370,9 +362,10 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
 
 
             this._store = new recline.Backend.Memory.Store(result, fields);
+
             this.fields.reset(fields);
-            this.recordCount = result.length;
-            this.records.reset(result);
+            this.query();
+
 
 
             /*    console.log("VMODEL crossfilter result")
