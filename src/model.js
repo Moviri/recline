@@ -514,7 +514,6 @@ my.Query = Backbone.Model.extend({
       _selectionTemplates: {
           term: {
               type: 'term',
-              // TODO do we need this attribute here?
               field: '',
               term: ''
           },

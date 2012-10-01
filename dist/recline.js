@@ -940,7 +940,10 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
 
         var data = buildRequestFromQuery(queryObj);
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> 1988bbe891fa9376354ffee27d844ea3de347394
         console.log("Querying dataset " + dataset.id.toString() +  JSON.stringify(data));
 
         var jqxhr = $.ajax({
@@ -984,7 +987,7 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
           term         : term,          // field = value
           termAdvanced : termAdvanced,  // field (operator) value
           range        : range,         // field > start and field < end
-          list         : list           // field in (list)
+          list         : term          
       };
 
       var dataParsers = {
@@ -1072,7 +1075,10 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
   }
 
   function _handleFieldDescription(description) {
+<<<<<<< HEAD
 
+=======
+>>>>>>> 1988bbe891fa9376354ffee27d844ea3de347394
       var dataMapping = {
           STRING : "string",
           DATE   : "date",
@@ -1193,8 +1199,9 @@ this.recline.Backend.Memory = this.recline.Backend.Memory || {};
       var filterFunctions = {
         term         : term,
         range        : range,
-        drop_down        : drop_down,
-        listbox        : listbox,
+        list        : term,
+        drop_down        : term,
+        listbox        : term,
         geo_distance : geo_distance
       };
       var dataParsers = {
@@ -1231,10 +1238,6 @@ this.recline.Backend.Memory = this.recline.Backend.Memory || {};
 
         return (value >= start && value <= stop);
       }
-	  function drop_down() {
-	  }
-      function listbox() {
-	  }
       function geo_distance() {
         // TODO code here
       }
@@ -1466,6 +1469,10 @@ my.Dataset = Backbone.Model.extend({
     var self = this;
     var dfd = $.Deferred();
 
+<<<<<<< HEAD
+=======
+      console.log("Model fetching data");
+>>>>>>> 1988bbe891fa9376354ffee27d844ea3de347394
 
     if (this.backend !== recline.Backend.Memory) {
       this.backend.fetch(this.toJSON())
@@ -1656,6 +1663,14 @@ my.Dataset = Backbone.Model.extend({
     });
     self.records.reset(docs);
 
+<<<<<<< HEAD
+=======
+      // todo should be defined in first fetch but what happen if first fecth si done through q eury?
+
+    if (queryResult.fields) {
+      self.fields.reset(queryResult.fields);
+    }
+>>>>>>> 1988bbe891fa9376354ffee27d844ea3de347394
 
     if (queryResult.facets) {
       var facets = _.map(queryResult.facets, function(facetResult, facetId) {
@@ -1896,6 +1911,7 @@ my.Query = Backbone.Model.extend({
   _filterTemplates: {
     term: {
       type: 'term',
+<<<<<<< HEAD
       field: '',
       term: ''
     },
@@ -1906,11 +1922,46 @@ my.Query = Backbone.Model.extend({
           term: ''
       },
     list: {
+=======
+      // TODO do we need this attribute here?
+      field: '',
+      term: ''
+    },
+    slider: {
+      type: 'term',
+      // TODO do we need this attribute here?
+      field: '',
+      term: ''
+    },
+    drop_down: {
+      type: 'term',
+      // TODO do we need this attribute here?
+      field: '',
+      term: ''
+    },
+    list: {
+      type: 'term',
+      // TODO do we need this attribute here?
+      field: '',
+      term: ''
+    },
+    listbox: {
+>>>>>>> 1988bbe891fa9376354ffee27d844ea3de347394
       type: 'term',
      field: '',
       list: []
     },
     range: {
+      type: 'range',
+      start: '',
+      stop: ''
+    },
+    range_slider: {
+      type: 'range',
+      start: '',
+      stop: ''
+    },
+    range_calendar: {
       type: 'range',
       start: '',
       stop: ''
@@ -5103,10 +5154,27 @@ my.VirtualDataset = Backbone.Model.extend({
         this.recordCount = null;
         this.queryState = new my.Query();
 
+<<<<<<< HEAD
         this.attributes.dataset.records.bind('add',     function() { self.initializeCrossfilter(); });
         this.attributes.dataset.records.bind('reset',   function() { self.initializeCrossfilter(); });
 
         this.queryState.bind('change',                  function() { self.query(); });
+=======
+        this.attributes.dataset.records.bind('reset',       function() {
+            //console.log("VModel - received records.reset");
+            self.initializeCrossfilter(); });
+        this.attributes.dataset.records.bind('change',       function() {
+            //console.log("VModel - received records.change");
+            self.initializeCrossfilter(); });
+        this.queryState.bind('change',                      function() { self.query(); });
+
+        //this.queryState.bind('change',                      function() { self.updateCrossfilter(); });
+
+        //this.queryState.bind('change:filters:new-blank',    function() {
+            //console.log("VModel - received change:filters:new-blank");
+            //self.query();
+            // });
+>>>>>>> 1988bbe891fa9376354ffee27d844ea3de347394
 
         // TODO verify if is better to use a new backend (crossfilter) to manage grouping and filtering instead of using it inside the model
     },
@@ -5213,6 +5281,7 @@ my.VirtualDataset = Backbone.Model.extend({
                     for(x=0;x<partitions.length;x++){
                         var fieldName = aggregatedFields[i] + "_by_" + partitions[x] + "_" + v[partitions[x]];
 
+<<<<<<< HEAD
                         // for each aggregation function evaluate results
                         for(j=0;j<aggregationFunctions.length;j++){
                             var currentAggregationFunction = this.recline.Data.Aggregations.aggregationFunctions[aggregationFunctions[j]];
@@ -5225,6 +5294,13 @@ my.VirtualDataset = Backbone.Model.extend({
                             p.partitioncount[fieldName] = 0;
                         }
 
+=======
+                        if(p.partitionsum[fieldName] == null) {
+                            p.partitionsum[fieldName] = 0;
+                            p.partitioncount[fieldName] = 0;
+                        }
+
+>>>>>>> 1988bbe891fa9376354ffee27d844ea3de347394
                         p.partitionsum[fieldName] = p.partitionsum[fieldName] + v[aggregatedFields[i]];
                         p.partitioncount[fieldName] = p.partitioncount[fieldName] + 1;
                     }
@@ -5235,8 +5311,22 @@ my.VirtualDataset = Backbone.Model.extend({
             return p;
         }
 
+<<<<<<< HEAD
         function removeFunction(p, v) {
             throw "crossfilter reduce remove function not implemented";
+=======
+        function sumRemove(p, v) {
+            p.count = p.count - 1;
+
+            // todo implement same as sum
+            for(i=0;i<aggregatedFields.length;i++){
+                p.sum[aggregatedFields[i]] = p.sum[aggregatedFields[i]] - v[aggregatedFields[i]];
+
+
+            }
+
+            return p;
+>>>>>>> 1988bbe891fa9376354ffee27d844ea3de347394
         }
 
         function initializeFunction() {
@@ -5284,15 +5374,22 @@ my.VirtualDataset = Backbone.Model.extend({
             tmpField = tmpResult;
         }
         else {
+<<<<<<< HEAD
             tmpResult =  reducedGroup.all();
+=======
+            tmpResult =  this.reducedGroup.all();
+>>>>>>> 1988bbe891fa9376354ffee27d844ea3de347394
             if(tmpResult.length > 0)
                 tmpField = tmpResult[0].value;
             else
                 tmpField = {count: 0, sum: {}, partitioncount: {}, partitionsum: {}, avg: function() { return; }};
         }
+<<<<<<< HEAD
 
 
 
+=======
+>>>>>>> 1988bbe891fa9376354ffee27d844ea3de347394
 
         // set of fields array
 
@@ -5393,8 +5490,11 @@ my.VirtualDataset = Backbone.Model.extend({
         this.recordCount = result.length;
         this.records.reset(result);
 
+<<<<<<< HEAD
         //console.log("VModel fields");
         //console.log(fields);
+=======
+>>>>>>> 1988bbe891fa9376354ffee27d844ea3de347394
 
     },
 
@@ -5866,15 +5966,19 @@ my.GenericFilter = Backbone.View.extend({
     <div class="filters"> \
       <h3>Filters</h3> \
       <a href="#" class="js-add-filter">Add filter</a> \
-      <form class="form-stacked js-add" style="display: none;"> \
+	  <hr> \
+      <div id="filterCreationForm" class="form-stacked js-add" style="display: none;"> \
         <fieldset> \
           <label>Filter type</label> \
           <select class="filterType"> \
             <option value="term">Term (text)</option> \
+            <option value="slider">Slider</option> \
             <option value="range">Range</option> \
-            <option value="geo_distance">Geo distance</option> \
+            <option value="range_slider">Range slider</option> \
+            <option value="range_calendar">Date range</option> \
             <option value="drop_down">Drop down</option> \
             <option value="listbox">Listbox</option> \
+            <option value="list">Value list</option> \
           </select> \
           <label>Field</label> \
           <select class="fields"> \
@@ -5882,88 +5986,201 @@ my.GenericFilter = Backbone.View.extend({
             <option value="{{id}}">{{label}}</option> \
             {{/fields}} \
           </select> \
+<<<<<<< HEAD
           <button type="submit" class="btn">Add</button> \
+=======
+		  <br> \
+          <input type="button" id="addFilterButton" class="btn" value="Add"></input> \
+>>>>>>> 1988bbe891fa9376354ffee27d844ea3de347394
         </fieldset> \
-      </form> \
-      <form class="form-stacked js-edit"> \
+      </div> \
+      <div class="form-stacked js-edit"> \
         {{#filters}} \
           {{{filterRender}}} \
         {{/filters}} \
-        {{#filters.length}} \
-        <button type="submit" class="btn">Update</button> \
-        {{/filters.length}} \
-      </form> \
+      </div> \
     </div> \
   ',
   filterTemplates: {
     term: ' \
       <div class="filter-{{type}} filter"> \
-        <fieldset> \
+        <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
           <legend> \
-            {{field}} <small>{{type}}</small> \
+            {{field}} <small>{{controlType}}</small> \
             <a class="js-remove-filter" href="#" title="Remove this filter">&times;</a> \
           </legend> \
-          <input type="text" value="{{term}}" name="term" data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" /> \
+          <input type="text" value="{{term}}" name="term" class="data-control-id" /> \
+          <input type="button" class="btn" id="setFilterValueButton" value="Set"></input> \
+        </fieldset> \
+      </div> \
+    ',
+	slider : ' \
+	<script> \
+		$(document).ready(function(){ \
+			$( "#slider-range{{ctrlId}}" ).slider({ \
+				min: {{min}}, \
+				max: {{max}}, \
+				value: {{min}}, \
+				slide: function( event, ui ) { \
+					$( "#amount{{ctrlId}}" ).val(  ui.value ); \
+				} \
+			}); \
+			$( "#amount{{ctrlId}}" ).val(  $( "#slider-range{{ctrlId}}" ).slider( "value" ) ); \
+		}); \
+	</script> \
+      <div class="filter-{{type}} filter"> \
+        <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
+          <legend> \
+            {{field}} <small>{{controlType}}</small> \
+            <a class="js-remove-filter" href="#" title="Remove this filter">&times;</a> \
+          </legend> \
+		  <p> \
+			  <label for="amount{{ctrlId}}">Value range:</label> \
+			  <input type="text" id="amount{{ctrlId}}" style="border:none;" disabled="true"></input> \
+		  </p> \
+		  <div id="slider-range{{ctrlId}}" class="data-control-id" ></div> \
+		  <br> \
+          <input type="button" class="btn" id="setFilterValueButton" value="Set"></input> \
         </fieldset> \
       </div> \
     ',
     range: ' \
       <div class="filter-{{type}} filter"> \
-        <fieldset> \
+        <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
           <legend> \
-            {{field}} <small>{{type}}</small> \
+            {{field}} <small>{{controlType}}</small> \
             <a class="js-remove-filter" href="#" title="Remove this filter">&times;</a> \
           </legend> \
           <label class="control-label" for="">From</label> \
-          <input type="text" value="{{start}}" name="start" data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" /> \
+          <input type="text" value="{{start}}" name="start"  class="data-control-id-from" /> \
           <label class="control-label" for="">To</label> \
-          <input type="text" value="{{stop}}" name="stop" data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" /> \
+          <input type="text" value="{{stop}}" name="stop" class="data-control-id-to" /> \
+		  <br> \
+          <input type="button" class="btn" id="setFilterValueButton" value="Set"></input> \
         </fieldset> \
       </div> \
     ',
+    range_slider: ' \
+	<script> \
+		$(document).ready(function(){ \
+			$( "#slider-range{{ctrlId}}" ).slider({ \
+				range: true, \
+				min: {{min}}, \
+				max: {{max}}, \
+				values: [ {{min}}, {{max}} ], \
+				slide: function( event, ui ) { \
+					$( "#amount{{ctrlId}}" ).val(  ui.values[ 0 ] + " - " + ui.values[ 1 ] ); \
+				} \
+			}); \
+			$( "#amount{{ctrlId}}" ).val(  $( "#slider-range{{ctrlId}}" ).slider( "values", 0 ) + " - " + $( "#slider-range{{ctrlId}}" ).slider( "values", 1 ) ); \
+		}); \
+	</script> \
+      <div class="filter-{{type}} filter"> \
+        <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
+          <legend> \
+            {{field}} <small>{{controlType}}</small> \
+            <a class="js-remove-filter" href="#" title="Remove this filter">&times;</a> \
+          </legend> \
+		  <p> \
+			  <label for="amount{{ctrlId}}">Value range:</label> \
+			  <input type="text" id="amount{{ctrlId}}" style="border:none;" disabled="true"></input> \
+		  </p> \
+		  <div id="slider-range{{ctrlId}}" class="data-control-id-from data-control-id-to" ></div> \
+		  <br> \
+          <input type="button" class="btn" id="setFilterValueButton" value="Set"></input> \
+        </fieldset> \
+      </div> \
+    ',
+	range_calendar: ' \
+	<script> \
+	$(function() { \
+		$( "#from{{ctrlId}}" ).datepicker({ \
+			defaultDate: "+1w", \
+			changeMonth: true, \
+			numberOfMonths: 1, \
+			onSelect: function( selectedDate ) { \
+				$( "#to{{ctrlId}}" ).datepicker( "option", "minDate", selectedDate ); \
+			} \
+		}); \
+		$( "#to{{ctrlId}}" ).datepicker({ \
+			defaultDate: "+1w", \
+			changeMonth: true, \
+			numberOfMonths: 1, \
+			onSelect: function( selectedDate ) { \
+				$( "#from{{ctrlId}}" ).datepicker( "option", "maxDate", selectedDate ); \
+			} \
+		}); \
+	}); \
+	</script> \
+      <div class="filter-{{type}} filter"> \
+        <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
+          <legend> \
+            {{field}} <small>{{controlType}}</small> \
+            <a class="js-remove-filter" href="#" title="Remove this filter">&times;</a> \
+          </legend> \
+			<label for="from{{ctrlId}}">From</label> \
+			<input type="text" id="from{{ctrlId}}" name="from{{ctrlId}}" class="data-control-id-from"/> \
+			<br> \
+			<label for="to{{ctrlId}}">to</label> \
+			<input type="text" id="to{{ctrlId}}" name="to{{ctrlId}}" class="data-control-id-to" /> \
+ 		  <br> \
+          <input type="button" class="btn" id="setFilterValueButton" value="Set"></input> \
+       </fieldset> \
+      </div> \
+	',
     drop_down: ' \
       <div class="filter-{{type}} filter"> \
-        <fieldset> \
+        <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
           <legend> \
-            {{field}} <small>{{type}}</small> \
+            {{field}} <small>{{controlType}}</small> \
             <a class="js-remove-filter" href="#" title="Remove this filter">&times;</a> \
           </legend> \
-			<select class="fields" data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}"> \
+			<select class="drop-down fields data-control-id" > \
+			<option></option> \
             {{#values}} \
-            <option value="{{.}}">{{.}}</option> \
+            <option value="{{val}}">{{val}}</option> \
             {{/values}} \
           </select> \
         </fieldset> \
       </div> \
     ',
+	list: ' \
+	  <style> \
+		.odd-row { background: aliceblue } \
+		.even-row { background: azure } \
+		.list-filter-item { cursor:pointer; } \
+		.list-filter-item:hover { background: lightblue;cursor:pointer; } \
+		.selected { background: orange } \
+		.selected:hover { background: red } \
+	  </style> \
+      <div class="filter-{{type}} filter"> \
+        <fieldset> \
+          <legend> \
+            {{field}} <small>{{controlType}}</small> \
+            <a class="js-remove-filter" href="#" title="Remove this filter">&times;</a> \
+          </legend> \
+			<div style="max-height:500px;width:100%;border:1px solid grey;overflow:auto;"> \
+				<table style="width:100%" data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" > \
+				{{#values}} \
+				<tr><td class="list-filter-item {{evenOdd}}" >{{val}}</td><tr> \
+				{{/values}} \
+			  </table> \
+		  </div> \
+	    </fieldset> \
+      </div> \
+	',
     listbox: ' \
       <div class="filter-{{type}} filter"> \
-        <fieldset> \
+        <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
           <legend> \
-            {{field}} <small>{{type}}</small> \
+            {{field}} <small>{{controlType}}</small> \
             <a class="js-remove-filter" href="#" title="Remove this filter">&times;</a> \
           </legend> \
-			<select class="fields" data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" multiple> \
+			<select class="fields data-control-id"  multiple> \
             {{#values}} \
-            <option value="{{.}}">{{.}}</option> \
+            <option value="{{val}}">{{val}}</option> \
             {{/values}} \
           </select> \
-        </fieldset> \
-      </div> \
-    ',
-    geo_distance: ' \
-      <div class="filter-{{type}} filter"> \
-        <fieldset> \
-          <legend> \
-            {{field}} <small>{{type}}</small> \
-            <a class="js-remove-filter" href="#" title="Remove this filter">&times;</a> \
-          </legend> \
-          <label class="control-label" for="">Longitude</label> \
-          <input type="text" value="{{point.lon}}" name="lon" data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" /> \
-          <label class="control-label" for="">Latitude</label> \
-          <input type="text" value="{{point.lat}}" name="lat" data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" /> \
-          <label class="control-label" for="">Distance (km)</label> \
-          <input type="text" value="{{distance}}" name="distance" data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" /> \
         </fieldset> \
       </div> \
     '
@@ -5971,22 +6188,29 @@ my.GenericFilter = Backbone.View.extend({
   events: {
     'click .js-remove-filter': 'onRemoveFilter',
     'click .js-add-filter': 'onAddFilterShow',
-    'submit form.js-edit': 'onTermFiltersUpdate',
-    'submit form.js-add': 'onAddFilter'
+    'click #addFilterButton': 'onAddFilter',
+	'click .list-filter-item': 'onListItemClicked',
+	'click #setFilterValueButton': 'onFilterValueChanged',
+	'change .drop-down': 'onFilterValueChanged'
   },
+  _ctrlId : 0,
   initialize: function(args) {
     this.el = $(this.el);
     _.bindAll(this, 'render');
     this.model.fields.bind('all', this.render);
-    this.model.queryState.bind('change', this.render);
-    this.model.queryState.bind('change:filters:new-blank', this.render);
-	this.origRecords = this.model.records.toJSON();
+    this.model.records.bind('reset', this.render);
 	this.userFilters = args.userFilters;
 
+<<<<<<< HEAD
       /*if (this.userFilters && this.userFilters.length)
 		for (var k in this.userFilters)
 			this.model.queryState.setFilter(this.userFilters[k]);
 	*/
+=======
+    if (this.userFilters && this.userFilters.length)
+		for (var k in this.userFilters)
+			this.addNewFilterControl(this.userFilters[k]);
+>>>>>>> 1988bbe891fa9376354ffee27d844ea3de347394
 
     this.render();
   },
@@ -5999,35 +6223,115 @@ my.GenericFilter = Backbone.View.extend({
       return filter;
     });
     tmplData.fields = this.model.fields.toJSON();
-	tmplData.records = this.origRecords;
+	tmplData.records = _.pluck(this.model.records.models, "attributes");
     tmplData.filterRender = function() {
 	  // add value list to selected filter or templating of record values will not work
-	  this.values = _.uniq(_.pluck(tmplData.records, this.field));
-      return Mustache.render(self.filterTemplates[this.type], this);
+	  this.tmpValues = _.uniq(_.pluck(tmplData.records, this.field));
+	  this.values = new Array();
+	  if (this.tmpValues.length)
+	  {
+		  this.max = this.tmpValues[0];
+		  this.min = this.tmpValues[0];
+	  }
+	  for (var i in this.tmpValues)
+	  {
+		var v = this.tmpValues[i];
+		this.values.push({val: v, evenOdd: (i % 2 == 0 ? 'even-row' : 'odd-row') });
+		if (v > this.max)
+			this.max = v;
+			
+		if (v < this.min)
+			this.min = v;
+	  }
+	  if (this.controlType.indexOf("slider") >= 0 || this.controlType.indexOf("calendar") >= 0)
+		self._ctrlId++;
+		
+	  this.ctrlId = self._ctrlId;
+      return Mustache.render(self.filterTemplates[this.controlType], this);
     };
     var out = Mustache.render(this.template, tmplData);
     this.el.html(out);
+  },
+  onListItemClicked: function(e) {
+    e.preventDefault();
+    var $target = $(e.currentTarget);
+	$table = $target.parent().parent().parent();
+	$table.find('td').each(function() { 
+						$(this).removeClass("selected");
+					});
+	
+	$target.addClass("selected");
+	var fieldId     = $table.attr('data-filter-field');
+	this.model.queryState.setFilter({field: fieldId, type: 'term', controlType: 'list', term:$target.text(), fieldType: "string"});
+    this.model.queryState.trigger('change');
+  },
+    onFilterValueChanged: function(e) {
+    e.preventDefault();
+    var $target = $(e.target).parent();
+	var fieldId     = $target.attr('data-filter-field');
+	var fieldType     = $target.attr('data-filter-type');
+	var controlType     = $target.attr('data-control-type');
+	var term;
+	var from;
+	var to;
+	if (fieldType == "term")
+	{
+		var termObj = $target.find('.data-control-id');
+		switch (controlType)
+		{
+			case "term": term = termObj.val();break;
+			case "slider": term = termObj.slider("value");break;
+			case "drop_down": term = termObj.val();break;
+			case "listbox": term = termObj.val();break;
+		}
+	}
+	else if (fieldType == "range")
+	{
+		var fromObj = $target.find('.data-control-id-from');
+		var toObj = $target.find('.data-control-id-to');
+		switch (controlType)
+		{
+			case "range": from = fromObj.val();to = toObj.val();break;
+			case "range_slider": from = fromObj.slider("values", 0);to = toObj.slider("values", 1);break;
+			case "range_calendar": from = fromObj.val();to = toObj.val();break;
+		}
+	}
+	this.model.queryState.setFilter({field: fieldId, type: fieldType, controlType: controlType, term:term, start: from, stop: to, fieldType: 'string'});
+    //this.model.queryState.trigger('change');
   },
   onAddFilterShow: function(e) {
     e.preventDefault();
     var $target = $(e.target);
     $target.hide();
-    this.el.find('form.js-add').show();
+    this.el.find('div.js-add').show();
+  },
+  hidePanel: function (obj) {
+	$(function() {
+		obj.hide( "blind", {}, 1000, function() {});
+	});
   },
   onAddFilter: function(e) {
     e.preventDefault();
-    var $target = $(e.target);
-    $target.hide();
-    var filterType = $target.find('select.filterType').val();
+    var $target = $("#filterCreationForm");
+    this.hidePanel($target);//$target.hide();
+    var controlType = $target.find('select.filterType').val();
+	var filterType = controlType;
+	if (controlType == "listbox" || controlType == "list" || controlType == "drop_down" || controlType == "slider")
+		filterType = "term";
+	if (controlType == "range_slider" || controlType == "range_calendar")
+		filterType = "range";
+	
     var field      = $target.find('select.fields').val();
-    var fieldType  = this.model.fields.find(function (e) { return e.get('id') === field }).get('type');
-    this.model.queryState.addFilter({type: filterType, field: field, fieldType: fieldType});
-	//for(m in this.options.TargetModel) {
-    //    m.queryState.addFilter({type: filterType, field: field, fieldType: fieldType});
-    //}
-
-    // trigger render explicitly as queryState change will not be triggered (as blank value for filter)
-    this.render();
+    var fieldType  = this.model.fields.find(function (e) { 
+				return e.get('id') === field 
+			}).get('type');
+	
+	this.addNewFilterControl({type: filterType, field: field, controlType: controlType, fieldType: fieldType});
+  },
+  addNewFilterControl: function(newFilter)
+  {
+	this.model.queryState.addFilter(newFilter);
+	this.render();
   },
   onRemoveFilter: function(e) {
     e.preventDefault();
@@ -6035,6 +6339,7 @@ my.GenericFilter = Backbone.View.extend({
     var filterId = $target.closest('.filter').attr('data-filter-id');
     this.model.queryState.removeFilter(filterId);
   },
+<<<<<<< HEAD
   onTermFiltersUpdate: function(e) {
    var self = this;
     e.preventDefault();
@@ -6088,6 +6393,8 @@ my.GenericFilter = Backbone.View.extend({
     self.model.queryState.set({filters: filters});
     self.model.queryState.trigger('change');
   }
+=======
+>>>>>>> 1988bbe891fa9376354ffee27d844ea3de347394
 });
 
 })(jQuery, recline.View);

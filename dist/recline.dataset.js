@@ -52,6 +52,10 @@ my.Dataset = Backbone.Model.extend({
     var self = this;
     var dfd = $.Deferred();
 
+<<<<<<< HEAD
+=======
+      console.log("Model fetching data");
+>>>>>>> 1988bbe891fa9376354ffee27d844ea3de347394
 
     if (this.backend !== recline.Backend.Memory) {
       this.backend.fetch(this.toJSON())
@@ -242,6 +246,14 @@ my.Dataset = Backbone.Model.extend({
     });
     self.records.reset(docs);
 
+<<<<<<< HEAD
+=======
+      // todo should be defined in first fetch but what happen if first fecth si done through q eury?
+
+    if (queryResult.fields) {
+      self.fields.reset(queryResult.fields);
+    }
+>>>>>>> 1988bbe891fa9376354ffee27d844ea3de347394
 
     if (queryResult.facets) {
       var facets = _.map(queryResult.facets, function(facetResult, facetId) {
@@ -482,6 +494,7 @@ my.Query = Backbone.Model.extend({
   _filterTemplates: {
     term: {
       type: 'term',
+<<<<<<< HEAD
       field: '',
       term: ''
     },
@@ -492,11 +505,46 @@ my.Query = Backbone.Model.extend({
           term: ''
       },
     list: {
+=======
+      // TODO do we need this attribute here?
+      field: '',
+      term: ''
+    },
+    slider: {
+      type: 'term',
+      // TODO do we need this attribute here?
+      field: '',
+      term: ''
+    },
+    drop_down: {
+      type: 'term',
+      // TODO do we need this attribute here?
+      field: '',
+      term: ''
+    },
+    list: {
+      type: 'term',
+      // TODO do we need this attribute here?
+      field: '',
+      term: ''
+    },
+    listbox: {
+>>>>>>> 1988bbe891fa9376354ffee27d844ea3de347394
       type: 'term',
      field: '',
       list: []
     },
     range: {
+      type: 'range',
+      start: '',
+      stop: ''
+    },
+    range_slider: {
+      type: 'range',
+      start: '',
+      stop: ''
+    },
+    range_calendar: {
       type: 'range',
       start: '',
       stop: ''
@@ -830,8 +878,9 @@ this.recline.Backend.Memory = this.recline.Backend.Memory || {};
       var filterFunctions = {
         term         : term,
         range        : range,
-        drop_down        : drop_down,
-        listbox        : listbox,
+        list        : term,
+        drop_down        : term,
+        listbox        : term,
         geo_distance : geo_distance
       };
       var dataParsers = {
@@ -868,10 +917,6 @@ this.recline.Backend.Memory = this.recline.Backend.Memory || {};
 
         return (value >= start && value <= stop);
       }
-	  function drop_down() {
-	  }
-      function listbox() {
-	  }
       function geo_distance() {
         // TODO code here
       }

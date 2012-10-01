@@ -7,285 +7,285 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
 (function($, my) {
 
 // ## <a id="dataset">VirtualDataset</a>
-my.VirtualDataset = Backbone.Model.extend({
-  constructor: function VirtualDataset() {
-      Backbone.Model.prototype.constructor.apply(this, arguments);
-  },
+    my.VirtualDataset = Backbone.Model.extend({
+        constructor: function VirtualDataset() {
+            Backbone.Model.prototype.constructor.apply(this, arguments);
+        },
 
 
-    initialize: function() {
-        _.bindAll(this, 'query');
+        initialize: function() {
+            _.bindAll(this, 'query');
 
 
-        var self = this;
-        this.backend = recline.Backend.Memory;
-        this.fields = new my.FieldList();
-        this.records = new my.RecordList();
-        this.recordCount = null;
-        this.queryState = new my.Query();
+            var self = this;
+            this.backend = recline.Backend.Memory;
+            this.fields = new my.FieldList();
+            this.records = new my.RecordList();
+            this.recordCount = null;
+            this.queryState = new my.Query();
 
-        this.attributes.dataset.records.bind('add',     function() { self.initializeCrossfilter(); });
-        this.attributes.dataset.records.bind('reset',   function() { self.initializeCrossfilter(); });
+            this.attributes.dataset.records.bind('add',     function() { self.initializeCrossfilter(); });
+            this.attributes.dataset.records.bind('reset',   function() { self.initializeCrossfilter(); });
 
-        this.queryState.bind('change',                  function() { self.query(); });
+            this.queryState.bind('change',                  function() { self.query(); });
 
-        // TODO verify if is better to use a new backend (crossfilter) to manage grouping and filtering instead of using it inside the model
-    },
+            // TODO verify if is better to use a new backend (crossfilter) to manage grouping and filtering instead of using it inside the model
+        },
 
-    modifyGrouping: function(dimensions, aggregationField)
-    {
-        this.attributes.aggregation.aggregatedFields = aggregationField;
-        this.attributes.aggregation.dimensions = dimensions;
-        updateCrossfilter(this);
-    },
-    addDimension: function(dimension)
-    {
-        this.attributes.aggregation.dimensions.push = dimension;
-        updateCrossfilter(this);
-    },
-    addAggregationField: function(field) {
-        this.attributes.aggregation.aggregatedFields.push(field);
-        updateCrossfilter(this);
-    },
+        modifyGrouping: function(dimensions, aggregationField)
+        {
+            this.attributes.aggregation.aggregatedFields = aggregationField;
+            this.attributes.aggregation.dimensions = dimensions;
+            updateCrossfilter(this);
+        },
+        addDimension: function(dimension)
+        {
+            this.attributes.aggregation.dimensions.push = dimension;
+            updateCrossfilter(this);
+        },
+        addAggregationField: function(field) {
+            this.attributes.aggregation.aggregatedFields.push(field);
+            updateCrossfilter(this);
+        },
 
-    initializeCrossfilter: function() {
+        initializeCrossfilter: function() {
 
-        var start = new Date().getTime();
+            var start = new Date().getTime();
 
-        var end = new Date().getTime();
-        var time = end - start;
+            var end = new Date().getTime();
+            var time = end - start;
 
-        console.log("initializeCrossfilter - exec time: " + time);
+            console.log("initializeCrossfilter - exec time: " + time);
 
-        this.updateCrossfilter(crossfilter(this.attributes.dataset.records.toJSON()));
-    },
+            this.updateCrossfilter(crossfilter(this.attributes.dataset.records.toJSON()));
+        },
 
-    createDimensions: function(crossfilterData) {
-        var dimensions = this.attributes.aggregation.dimensions;
-        var group;
+        createDimensions: function(crossfilterData) {
+            var dimensions = this.attributes.aggregation.dimensions;
+            var group;
 
-        if(dimensions == null ){
-            // need to evaluate aggregation function on all records
-            group =  crossfilterData.groupAll();
-        }
-        else {
-            var by_dimension = crossfilterData.dimension(function(d) {
-                var tmp = "";
-                for(i=0;i<dimensions.length;i++){
-                    if(i>0) { tmp = tmp + "_"; }
+            if(dimensions == null ){
+                // need to evaluate aggregation function on all records
+                group =  crossfilterData.groupAll();
+            }
+            else {
+                var by_dimension = crossfilterData.dimension(function(d) {
+                    var tmp = "";
+                    for(i=0;i<dimensions.length;i++){
+                        if(i>0) { tmp = tmp + "_"; }
 
-                    tmp = tmp + d[dimensions[i]];
-                }
-                return tmp;
-            });
-          group = by_dimension.group();
-        }
+                        tmp = tmp + d[dimensions[i]];
+                    }
+                    return tmp;
+                });
+                group = by_dimension.group();
+            }
 
-        return group;
-    },
+            return group;
+        },
 
-    updateCrossfilter: function(crossfilterData) {
-        // TODO optimization has to be done in order to limit the number of cycles on data
-        // TODO has sense to recreate dimension if nothing is changed?, and in general, is better to use a new dimension if added instead of recreate all
-        // TODO verify if saving crossfilter data is useful (perhaps no unless we use crossfilterstore to make aggregaation and filtering)
-        // TODO structure defined in initialize could be the same as the one provided to records in order to avoid the cycle inside updatestore?
+        updateCrossfilter: function(crossfilterData) {
+            // TODO optimization has to be done in order to limit the number of cycles on data
+            // TODO has sense to recreate dimension if nothing is changed?, and in general, is better to use a new dimension if added instead of recreate all
+            // TODO verify if saving crossfilter data is useful (perhaps no unless we use crossfilterstore to make aggregaation and filtering)
+            // TODO structure defined in initialize could be the same as the one provided to records in order to avoid the cycle inside updatestore?
 
-        var start = new Date().getTime();
-
-
-        this.updateStore(this.reduce(this.createDimensions(crossfilterData)));
-
-        var end = new Date().getTime();
-        var time = end - start;
-
-        console.log("updateCrossfilter - exec time: " + time);
-    },
-
-    reduce: function(group) {
-        var aggregatedFields = this.attributes.aggregation.aggregatedFields;
-        var aggregationFunctions = this.attributes.aggregation.aggregationFunctions;
-
-        if(this.attributes.aggregation.aggregationFunctions == null || this.attributes.aggregation.aggregationFunctions.length == 0)
-            throw("Error aggregationFunctions parameters is not set for virtual dataset ");
+            var start = new Date().getTime();
 
 
-        var partitioning = false;
-        var partitions;
-        if(this.attributes.aggregation.partitions != null) {
-            partitions = this.attributes.aggregation.partitions;
-            var partitioning = true;
-        }
+            this.updateStore(this.reduce(this.createDimensions(crossfilterData)));
 
-        function addFunction(p, v) {
-            p.count = p.count +1;
-            for(i=0;i<aggregatedFields.length;i++){
+            var end = new Date().getTime();
+            var time = end - start;
 
+            console.log("updateCrossfilter - exec time: " + time);
+        },
 
+        reduce: function(group) {
+            var aggregatedFields = this.attributes.aggregation.aggregatedFields;
+            var aggregationFunctions = this.attributes.aggregation.aggregationFunctions;
 
-                // for each aggregation function evaluate results
-                for(j=0;j<aggregationFunctions.length;j++){
-                    var currentAggregationFunction = this.recline.Data.Aggregations.aggregationFunctions[aggregationFunctions[j]];
-
-                    p[aggregationFunctions[j]][aggregatedFields[i]] =
-                        currentAggregationFunction(
-                            p[aggregationFunctions[j]][aggregatedFields[i]],
-                            v[aggregatedFields[i]]);
-                }
+            if(this.attributes.aggregation.aggregationFunctions == null || this.attributes.aggregation.aggregationFunctions.length == 0)
+                throw("Error aggregationFunctions parameters is not set for virtual dataset ");
 
 
-                if(partitioning) {
-                    // for each partition need to verify if exist a value of aggregatefield_by_partition_partitionvalue_sum
-                    for(x=0;x<partitions.length;x++){
-                        var fieldName = aggregatedFields[i] + "_by_" + partitions[x] + "_" + v[partitions[x]];
+            var partitioning = false;
+            var partitions;
+            if(this.attributes.aggregation.partitions != null) {
+                partitions = this.attributes.aggregation.partitions;
+                var partitioning = true;
+            }
 
-                        // for each aggregation function evaluate results
-                        for(j=0;j<aggregationFunctions.length;j++){
-                            var currentAggregationFunction = this.recline.Data.Aggregations.aggregationFunctions[aggregationFunctions[j]];
+            function addFunction(p, v) {
+                p.count = p.count +1;
+                for(i=0;i<aggregatedFields.length;i++){
 
-                            p.partitions[aggregationFunctions[j]][fieldName] =
-                                currentAggregationFunction(
-                                    p.partitions[aggregationFunctions[j]][fieldName],
-                                    v[aggregatedFields[i]]);
 
-                            if(p.partitions.count[fieldName] == null)
-                                p.partitions.count[fieldName] = 0;
 
-                            p.partitions.count[fieldName] =   p.partitions.count[fieldName] + 1;
+                    // for each aggregation function evaluate results
+                    for(j=0;j<aggregationFunctions.length;j++){
+                        var currentAggregationFunction = this.recline.Data.Aggregations.aggregationFunctions[aggregationFunctions[j]];
 
+                        p[aggregationFunctions[j]][aggregatedFields[i]] =
+                            currentAggregationFunction(
+                                p[aggregationFunctions[j]][aggregatedFields[i]],
+                                v[aggregatedFields[i]]);
+                    }
+
+
+                    if(partitioning) {
+                        // for each partition need to verify if exist a value of aggregatefield_by_partition_partitionvalue_sum
+                        for(x=0;x<partitions.length;x++){
+                            var fieldName = aggregatedFields[i] + "_by_" + partitions[x] + "_" + v[partitions[x]];
+
+                            // for each aggregation function evaluate results
+                            for(j=0;j<aggregationFunctions.length;j++){
+                                var currentAggregationFunction = this.recline.Data.Aggregations.aggregationFunctions[aggregationFunctions[j]];
+
+                                p.partitions[aggregationFunctions[j]][fieldName] =
+                                    currentAggregationFunction(
+                                        p.partitions[aggregationFunctions[j]][fieldName],
+                                        v[aggregatedFields[i]]);
+
+                                if(p.partitions.count[fieldName] == null)
+                                    p.partitions.count[fieldName] = 0;
+
+                                p.partitions.count[fieldName] =   p.partitions.count[fieldName] + 1;
+
+                            }
                         }
                     }
+
+
                 }
-
-
+                return p;
             }
-            return p;
-        }
 
-        function removeFunction(p, v) {
-            throw "crossfilter reduce remove function not implemented";
-        }
+            function removeFunction(p, v) {
+                throw "crossfilter reduce remove function not implemented";
+            }
 
-        function initializeFunction() {
+            function initializeFunction() {
 
-            var tmp = {count: 0};
-
-            for(j=0;j<aggregationFunctions.length;j++){
-                    tmp[aggregationFunctions[j]] = {};
-                    this.recline.Data.Aggregations.initFunctions[aggregationFunctions[j]](tmp, aggregatedFields, partitions);
-              }
-
-            if(partitioning){
-                tmp["partitions"] = {};
-                tmp["partitions"]["count"] = {};
+                var tmp = {count: 0};
 
                 for(j=0;j<aggregationFunctions.length;j++){
+                    tmp[aggregationFunctions[j]] = {};
+                    this.recline.Data.Aggregations.initFunctions[aggregationFunctions[j]](tmp, aggregatedFields, partitions);
+                }
+
+                if(partitioning){
+                    tmp["partitions"] = {};
+                    tmp["partitions"]["count"] = {};
+
+                    for(j=0;j<aggregationFunctions.length;j++){
 
                         tmp["partitions"][aggregationFunctions[j]] = {};
 
+                    }
+                }
+
+                return tmp;
+            }
+
+
+            return group.reduce(addFunction,removeFunction,initializeFunction);
+
+        },
+
+        updateStore: function(reducedGroup) {
+
+
+
+            var dimensions = this.attributes.aggregation.dimensions;
+            var aggregationFunctions =    this.attributes.aggregation.aggregationFunctions;
+            var aggregatedFields = this.attributes.aggregation.aggregatedFields;
+
+            var partitioning = false;
+            var partitionsFields = [];
+            var partitions;
+
+            if(this.attributes.aggregation.partitions != null) {
+                partitions = this.attributes.aggregation.partitions;
+                var partitioning = true;
+            }
+
+
+
+            var tmpResult;
+            var result = [];
+            var fields = [];
+
+            var tmpField;
+
+            if(dimensions == null)  {
+                tmpResult =  [reducedGroup.value()];
+                tmpField = tmpResult;
+            }
+            else {
+                tmpResult =  reducedGroup.all();
+                if(tmpResult.length > 0) {
+                    tmpField = tmpResult[0].value;
+                }
+                else
+                    tmpField = {count: 0};
+
+                for (var x in tmpField.partitions[aggregationFunctions[0]]) {
+                    partitionsFields.push(x);
                 }
             }
 
-            return tmp;
-        }
 
 
-        return group.reduce(addFunction,removeFunction,initializeFunction);
+            // set of fields array
+            fields.push( {id: "count", type: "number"});
 
-    },
-
-    updateStore: function(reducedGroup) {
-
-
-
-        var dimensions = this.attributes.aggregation.dimensions;
-        var aggregationFunctions =    this.attributes.aggregation.aggregationFunctions;
-        var aggregatedFields = this.attributes.aggregation.aggregatedFields;
-
-        var partitioning = false;
-        var partitionsFields = [];
-        var partitions;
-
-        if(this.attributes.aggregation.partitions != null) {
-            partitions = this.attributes.aggregation.partitions;
-            var partitioning = true;
-        }
-
-
-
-        var tmpResult;
-        var result = [];
-        var fields = [];
-
-        var tmpField;
-
-        if(dimensions == null)  {
-            tmpResult =  [reducedGroup.value()];
-            tmpField = tmpResult;
-        }
-        else {
-            tmpResult =  reducedGroup.all();
-            if(tmpResult.length > 0) {
-                tmpField = tmpResult[0].value;
-            }
-            else
-                tmpField = {count: 0};
-
-            for (var x in tmpField.partitions[aggregationFunctions[0]]) {
-                partitionsFields.push(x);
-            }
-        }
-
-
-
-        // set of fields array
-        fields.push( {id: "count", type: "number"});
-
-        // defining fields based on aggreagtion functions
-        for(var j=0;j<aggregationFunctions.length;j++){
-
-            var tempValue;
-            if(typeof tmpField[aggregationFunctions[j]] == 'function')
-                tempValue = tmpField[aggregationFunctions[j]]();
-            else
-                tempValue = tmpField[aggregationFunctions[j]];
-
-            for (var x in tempValue) {
-                fields.push( {id: x + "_" + aggregationFunctions[j], type: "number"});
-            }
-        }
-
-        if(partitioning) {
+            // defining fields based on aggreagtion functions
             for(var j=0;j<aggregationFunctions.length;j++){
 
                 var tempValue;
-                if(typeof tmpField.partitions[aggregationFunctions[j]] == 'function')
-                    tempValue =     tmpField.partitions[aggregationFunctions[j]]();
+                if(typeof tmpField[aggregationFunctions[j]] == 'function')
+                    tempValue = tmpField[aggregationFunctions[j]]();
                 else
-                    tempValue = tmpField.partitions[aggregationFunctions[j]];
+                    tempValue = tmpField[aggregationFunctions[j]];
 
                 for (var x in tempValue) {
                     fields.push( {id: x + "_" + aggregationFunctions[j], type: "number"});
                 }
             }
-        }
 
-        // adding all dimensions to field list
-        if(dimensions != null) {
-            fields.push( {id: "dimension"});
-            for(var i=0;i<dimensions.length;i++){
-                var originalFieldAttributes = this.attributes.dataset.fields.get(dimensions[i]).attributes;;
-                fields.push( {id: dimensions[i], type: originalFieldAttributes.type, label: originalFieldAttributes.label, format: originalFieldAttributes.format});
+            if(partitioning) {
+                for(var j=0;j<aggregationFunctions.length;j++){
 
+                    var tempValue;
+                    if(typeof tmpField.partitions[aggregationFunctions[j]] == 'function')
+                        tempValue =     tmpField.partitions[aggregationFunctions[j]]();
+                    else
+                        tempValue = tmpField.partitions[aggregationFunctions[j]];
+
+                    for (var x in tempValue) {
+                        fields.push( {id: x + "_" + aggregationFunctions[j], type: "number"});
+                    }
+                }
             }
-        }
+
+            // adding all dimensions to field list
+            if(dimensions != null) {
+                fields.push( {id: "dimension"});
+                for(var i=0;i<dimensions.length;i++){
+                    var originalFieldAttributes = this.attributes.dataset.fields.get(dimensions[i]).attributes;;
+                    fields.push( {id: dimensions[i], type: originalFieldAttributes.type, label: originalFieldAttributes.label, format: originalFieldAttributes.format});
+
+                }
+            }
 
 
 
             // set  results of dataset
             for(var i=0;i<tmpResult.length;i++){
 
-               var currentField;
-               var tmp;
+                var currentField;
+                var tmp;
 
                 // if dimensions specified add dimension' fields
                 if(dimensions != null) {
@@ -304,7 +304,7 @@ my.VirtualDataset = Backbone.Model.extend({
                     tmp = {count: tmpResult[i].count};
                 }
 
-               // add records foreach aggregation function
+                // add records foreach aggregation function
                 for(var j=0;j<aggregationFunctions.length;j++){
 
                     // apply finalization function, was not applied since now
@@ -351,7 +351,7 @@ my.VirtualDataset = Backbone.Model.extend({
                             else
                                 tempValue2 = currentField.partitions[aggregationFunctions[j]];
 
-                          tmp[x + "_" + aggregationFunctions[j]] =  tempValue2[x];
+                            tmp[x + "_" + aggregationFunctions[j]] =  tempValue2[x];
                         }
                     }
 
@@ -369,97 +369,97 @@ my.VirtualDataset = Backbone.Model.extend({
             }
 
 
-        this._store = new recline.Backend.Memory.Store(result, fields);
-        this.fields.reset(fields);
-        this.recordCount = result.length;
-        this.records.reset(result);
+            this._store = new recline.Backend.Memory.Store(result, fields);
+            this.fields.reset(fields);
+            this.recordCount = result.length;
+            this.records.reset(result);
 
 
-        /*    console.log("VMODEL crossfilter result")
-            console.log(tmpResult);
-            console.log("VModel result");
-            console.log(result);
-            console.log("VModel fields");
-            console.log(fields);
-        */
+            /*    console.log("VMODEL crossfilter result")
+             console.log(tmpResult);
+             console.log("VModel result");
+             console.log(result);
+             console.log("VModel fields");
+             console.log(fields);
+             */
 
-    },
+        },
 
-    query: function(queryObj) {
-        /*console.log("query start");
-        console.log(this.attributes.dataset.toJSON());
-        console.log(self.records.toJSON() );
-        */
+        query: function(queryObj) {
+            /*console.log("query start");
+             console.log(this.attributes.dataset.toJSON());
+             console.log(self.records.toJSON() );
+             */
 
-        console.log("VModel - query for " + JSON.stringify(queryObj));
+            console.log("VModel - query for " + JSON.stringify(queryObj));
 
-        var self = this;
-        var dfd = $.Deferred();
-        this.trigger('query:start');
+            var self = this;
+            var dfd = $.Deferred();
+            this.trigger('query:start');
 
-        if (queryObj) {
-            this.queryState.set(queryObj, {silent: true});
-        }
-        var actualQuery = this.queryState.toJSON();
+            if (queryObj) {
+                this.queryState.set(queryObj, {silent: true});
+            }
+            var actualQuery = this.queryState.toJSON();
 
-        this._store.query(actualQuery, this.toJSON())
-            .done(function(queryResult) {
-                self._handleQueryResult(queryResult);
-                self.trigger('query:done');
-                dfd.resolve(self.records);
-            })
-            .fail(function(arguments) {
-                self.trigger('query:fail', arguments);
-                dfd.reject(arguments);
+            this._store.query(actualQuery, this.toJSON())
+                .done(function(queryResult) {
+                    self._handleQueryResult(queryResult);
+                    self.trigger('query:done');
+                    dfd.resolve(self.records);
+                })
+                .fail(function(arguments) {
+                    self.trigger('query:fail', arguments);
+                    dfd.reject(arguments);
+                });
+            return dfd.promise();
+        },
+
+        _handleQueryResult: function(queryResult) {
+            var self = this;
+            self.recordCount = queryResult.total;
+            var docs = _.map(queryResult.hits, function(hit) {
+                var _doc = new my.Record(hit);
+                _doc.fields = self.fields;
+                return _doc;
             });
-        return dfd.promise();
-    },
+            self.records.reset(docs);
+        },
 
-    _handleQueryResult: function(queryResult) {
-        var self = this;
-        self.recordCount = queryResult.total;
-        var docs = _.map(queryResult.hits, function(hit) {
-            var _doc = new my.Record(hit);
-            _doc.fields = self.fields;
-            return _doc;
-        });
-        self.records.reset(docs);
-    },
+        toTemplateJSON: function() {
+            var data = this.records.toJSON();
+            data.recordCount = this.recordCount;
+            data.fields = this.fields.toJSON();
+            return data;
+        },
 
-  toTemplateJSON: function() {
-    var data = this.records.toJSON();
-    data.recordCount = this.recordCount;
-    data.fields = this.fields.toJSON();
-    return data;
-  },
+        // ### getFieldsSummary
+        //
+        // Get a summary for each field in the form of a `Facet`.
+        //
+        // @return null as this is async function. Provides deferred/promise interface.
+        getFieldsSummary: function() {
+            // TODO update function in order to manage facets/filter and selection
 
-  // ### getFieldsSummary
-  //
-  // Get a summary for each field in the form of a `Facet`.
-  // 
-  // @return null as this is async function. Provides deferred/promise interface.
-  getFieldsSummary: function() {
-    // TODO update function in order to manage facets/filter and selection
+            var self = this;
+            var query = new my.Query();
+            query.set({size: 0});
 
-    var self = this;
-    var query = new my.Query();
-    query.set({size: 0});
-
-    var dfd = $.Deferred();
-    this._store.query(query.toJSON(), this.toJSON()).done(function(queryResult) {
-      if (queryResult.facets) {
-        _.each(queryResult.facets, function(facetResult, facetId) {
-          facetResult.id = facetId;
-          var facet = new my.Facet(facetResult);
-          // TODO: probably want replace rather than reset (i.e. just replace the facet with this id)
-          self.fields.get(facetId).facets.reset(facet);
-        });
-      }
-      dfd.resolve(queryResult);
+            var dfd = $.Deferred();
+            this._store.query(query.toJSON(), this.toJSON()).done(function(queryResult) {
+                if (queryResult.facets) {
+                    _.each(queryResult.facets, function(facetResult, facetId) {
+                        facetResult.id = facetId;
+                        var facet = new my.Facet(facetResult);
+                        // TODO: probably want replace rather than reset (i.e. just replace the facet with this id)
+                        self.fields.get(facetId).facets.reset(facet);
+                    });
+                }
+                dfd.resolve(queryResult);
+            });
+            return dfd.promise();
+        }
     });
-    return dfd.promise();
-  }
-});
 
 
 

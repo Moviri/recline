@@ -97,8 +97,6 @@ this.recline.Backend.Memory = this.recline.Backend.Memory || {};
       var filterFunctions = {
         term         : term,
         range        : range,
-        drop_down        : drop_down,
-        listbox        : listbox,
         geo_distance : geo_distance
       };
       var dataParsers = {
@@ -135,10 +133,7 @@ this.recline.Backend.Memory = this.recline.Backend.Memory || {};
 
         return (value >= start && value <= stop);
       }
-	  function drop_down() {
-	  }
-      function listbox() {
-	  }
+
       function geo_distance() {
         // TODO code here
       }

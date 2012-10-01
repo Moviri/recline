@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Tutorial - Backends - Loading data from different sources using Backends - Recline Data Explorer and Library</title>
+
+  <!-- Le HTML5 shim, for IE6-8 support of HTML elements -->
+  <!--[if lt IE 9]>
+    <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+
+  <link rel="stylesheet" href="../vendor/bootstrap/2.1.1/css/bootstrap.css" />
+
+  
+    <link rel="stylesheet" href="../vendor/leaflet/0.4.4/leaflet.css">
+<!--[if lte IE 8]>
+<link rel="stylesheet" href="../vendor/leaflet/0.4.4/leaflet.ie.css" />
+<![endif]-->
+<link rel="stylesheet" href="../vendor/leaflet.markercluster/MarkerCluster.css">
+<link rel="stylesheet" href="../vendor/leaflet.markercluster/MarkerCluster.Default.css">
+<!--[if lte IE 8]>
+<link rel="stylesheet" href="../vendor/leaflet.markercluster/MarkerCluster.Default.ie.css" />
+<![endif]-->
+<link rel="stylesheet" href="../vendor/slickgrid/2.0.1/slick.grid.css">
+<link rel="stylesheet" href="../vendor/timeline/20120520/css/timeline.css">
+
+
+  <!-- 3rd party JS libraries -->
+
+  <script type="text/javascript" src="../vendor/underscore/1.3.3/underscore.js"></script>
+  <script type="text/javascript" src="../vendor/backbone/0.9.2/backbone.js"></script>
+  <script type="text/javascript" src="../vendor/mustache/0.5.0-dev/mustache.js"></script>
+  <script type="text/javascript" src="../vendor/flotr2/flotr2.js"></script>
+  <script type="text/javascript" src="../vendor/leaflet/0.4.4/leaflet.js"></script>
+  <script type="text/javascript" src="../vendor/slickgrid/2.0.1/jquery-ui-1.8.16.custom.min.js"></script>
+  <script type="text/javascript" src="../vendor/slickgrid/2.0.1/jquery.event.drag-2.0.min.js"></script>
+  <script type="text/javascript" src="../vendor/slickgrid/2.0.1/slick.core.js"></script>
+  <script type="text/javascript" src="../vendor/slickgrid/2.0.1/slick.editors.js"></script>
+  <script type="text/javascript" src="../vendor/slickgrid/2.0.1/slick.formatters.js"></script>
+  <script type="text/javascript" src="../vendor/slickgrid/2.0.1/slick.grid.js"></script>
+  <script type="text/javascript" src="../vendor/moment/1.6.2/moment.js"></script>
+  <script type="text/javascript" src="../vendor/timeline/20120520/js/timeline.js"></script>
+  <script type="text/javascript" src="../vendor/crossfilter/1.1.0/crossfilter.min.js"></script>
+  <script type="text/javascript" src="../vendor/leaflet/0.4.4/leaflet.js"></script>
+  <script type="text/javascript" src="../vendor/leaflet.markercluster/leaflet.markercluster.js"></script>
+
+
+<!-- NVD3 & D3 libraries -->
+  <link rel="stylesheet" href="../vendor/nvd3/0.0.1/nv.d3.css">
+
+  <script type="text/javascript" src="../vendor/d3/v2/d3.v2.min.js"></script>
+  <script type="text/javascript" src="../vendor/nvd3/0.0.1/nv.d3.js"></script>
+  <script type="text/javascript" src="../vendor/nvd3/0.0.1/tooltip.js"></script>
+  <script type="text/javascript" src="../vendor/nvd3/0.0.1/utils.js"></script>
+  <script type="text/javascript" src="../vendor/nvd3/0.0.1/models/legend.js"></script>
+  <script type="text/javascript" src="../vendor/nvd3/0.0.1/models/axis.js"></script>
+  <script type="text/javascript" src="../vendor/nvd3/0.0.1/models/scatter.js"></script>
+  <script type="text/javascript" src="../vendor/nvd3/0.0.1/models/line.js"></script>
+  <script type="text/javascript" src="../vendor/nvd3/0.0.1/models/lineChart.js"></script>
+
+
+  <!--
+    ## Just use the all in one library version rather than individual files
+
+  <script type="text/javascript" src="../dist/recline.js"></script>
+
+  -->
+
+  <!-- model and backends -->
+  <script type="text/javascript" src="../src/model.js"></script>
+  <script type="text/javascript" src="../src/backend.memory.js"></script>
+  <script type="text/javascript" src="../src/backend.dataproxy.js"></script>
+  <script type="text/javascript" src="../src/backend.gdocs.js"></script>
+  <script type="text/javascript" src="../src/backend.elasticsearch.js"></script>
+  <script type="text/javascript" src="../src/backend.csv.js"></script>
+  <script type="text/javascript" src="../src/backend.jsonp.js"></script>
+
+  <!-- views -->
+  <script type="text/javascript" src="../src/view.grid.js"></script>
+  <script type="text/javascript" src="../src/view.slickgrid.js"></script>
+  <script type="text/javascript" src="../src/view.transform.js"></script>
+  <script type="text/javascript" src="../src/data.transform.js"></script>
+  <script type="text/javascript" src="../src/view.graph.js"></script>
+  <script type="text/javascript" src="../src/view.map.js"></script>
+  <script type="text/javascript" src="../src/view.timeline.js"></script>
+  <script type="text/javascript" src="../src/widget.pager.js"></script>
+  <script type="text/javascript" src="../src/widget.queryeditor.js"></script>
+  <script type="text/javascript" src="../src/widget.filtereditor.js"></script>
+  <script type="text/javascript" src="../src/widget.fields.js"></script>
+  <script type="text/javascript" src="../src/view.multiview.js"></script>
+  <script type="text/javascript" src="../src/view.nvd3.graph.js"></script>
+  <script type="text/javascript" src="../src/view.indicator.js"></script>
+  <script type="text/javascript" src="../src/virtualmodel.js"></script>
+  <script type="text/javascript" src="../src/widget.genericfilter.js"></script>
+
+
+
+
+
+  
+
+  <!-- link rel="stylesheet" href="vendor/bootstrap/2.0.2/css/bootstrap-responsive.css" -->
+
+  <link href="../css/site/pygments.css" rel="stylesheet" type="text/css" />
+  <link href="../css/site/site.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+<div class="navbar navbar-fixed-top">
+  <div class="navbar-inner">
+    <div class="container">
+      <a class="logo-icon pull-left" href="/">
+        <img src="http://assets.okfn.org/p/recline/img/chair.png" />
+      </a>
+      <a class="brand" href="../"><strong>Recline.js</strong> &ndash; relax with your data</a>
+      <ul class="nav">
+        <li>
+          <a href="../docs/">
+            <i class="icon-book icon-white"></i>
+            Documentation
+          </a>
+        </li>
+        <li class="divider-vertical"></li>
+        <li>
+          <a href="../docs/tutorials.html">
+            <i class="icon-road icon-white"></i>
+            Tutorials
+          </a>
+        </li>
+        <li class="divider-vertical"></li>
+        <li>
+          <a href="../demos/">
+            <i class="icon-pencil icon-white"></i>
+            Demos
+          </a>
+        </li>
+        <li class="divider-vertical"></li>
+        <li>
+          <a href="/download.html">
+            <i class="icon-download-alt icon-white"></i>
+            Download
+          </a>
+        </li>
+      </ul>
+      <ul class="nav pull-right">
+        <li>
+          <a href="http://github.com/okfn/recline/">
+            <i class="icon-download-alt icon-white"></i>
+            GitHub
+          </a>
+        </li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class='page-header'>
+  <h1>
+    Loading data from different sources using Backends
+    <br />
+    <small>These set of examples will show you how you can load data from different
+sources such as Google Docs or the DataHub using Recline</small>
+  </h1>
+</div><div class='alert alert-info'>
+<p><strong>Note</strong>: often you are loading data from a given source in
+order to load it into a Recline Dataset and display it in a View. However, you
+can also happily use a Backend to load data on its own without using any other
+part of the Recline library as all the Backends are designed to have no
+dependency on other parts of Recline.</p>
+</div>
+<h2 id='overview'>Overview</h2>
+
+<p>Backends connect Dataset and Documents to data from a specific &#8216;Backend&#8217; data source. They provide methods for loading and saving Datasets and individuals Documents as well as for bulk loading via a query API and doing bulk transforms on the backend.</p>
+
+<p>Backends come in 2 flavours:</p>
+
+<ol>
+<li>Loader backends - only implement fetch method. The data is then cached in a Memory.Store on the Dataset and interacted with there. This is best for sources which just allow you to load data or where you want to load the data once and work with it locally.</li>
+
+<li>Store backends - these support fetch, query and, if write-enabled, save. These are suitable where the backend contains a lot of data (infeasible to load locally - for examples a million rows) or where the backend has capabilities you want to take advantage of.</li>
+</ol>
+
+<h3 id='instantiation_and_use'>Instantiation and Use</h3>
+
+<p>You can use a backend directly e.g.</p>
+
+<p>But more usually the backend will be created or loaded for you by Recline and all you need is provide the identifier for that Backend e.g.</p>
+<div class='alert alert-info'>
+<strong>Backend identifiers</strong>
+How do you know the backend identifier for a given Backend? It's just the name
+of the 'class' in recline.Backend module (but case-insensitive). E.g.
+recline.Backend.ElasticSearch can be identified as 'ElasticSearch' or
+'elasticsearch'.
+</div>
+<h3 id='included_backends'>Included Backends</h3>
+
+<ul>
+<li><a href='src/backend.gdocs.html'>gdocs: Google Docs (Spreadsheet)</a></li>
+
+<li><a href='src/backend.csv.html'>csv: CSV files</a></li>
+
+<li><a href='src/backend.elasticsearch.html'>elasticsearch: ElasticSearch</a> - this also covers the DataHub as it has an ElasticSearch compatible API</li>
+
+<li><a href='src/backend.dataproxy.html'>dataproxy: DataProxy (CSV and XLS on the Web)</a></li>
+
+<li><a href='src/backend.couchdb.html'>couchdb: CouchDB</a></li>
+</ul>
+
+<p>Backend not on this list that you would like to see? It&#8217;s very easy to write a new backend &#8211; see below for more details.</p>
+
+<h2 id='preparing_your_app'>Preparing your app</h2>
+
+<p>This is as per the <a href='tutorial-views.html'>quickstart</a> but the set of files is much more limited if you are just using a Backend. Specifically:</p>
+
+<h2 id='loading_data_from_google_docs'>Loading Data from Google Docs</h2>
+
+<p>We will be using the <a href='https://docs.google.com/spreadsheet/ccc?key=0Aon3JiuouxLUdGZPaUZsMjBxeGhfOWRlWm85MmV0UUE#gid=0'>following Google Doc</a>. For Recline to be able to access a Google Spreadsheet it <strong>must</strong> have been &#8216;Published to the Web&#8217; (enabled via File -&gt; Publish to the Web menu).</p>
+<div class='alert alert-info'>
+<strong>Want a real world example?</strong> This <a href='http://okfnlabs.org/opendatacensus'>Open Data Census micro-app</a> loads
+data from Google Docs and then displays it on a specialist interface combining
+a bespoke chooser and a Kartograph (svg-only) map.
+</div>
+<h3 id='result'>Result</h3>
+<div class='doc-ex-rendered' id='my-gdocs'>&nbsp;</div><script type='text/javascript'>
+// Create a dataset with a Google Docs backend and a url to the Google Doc
+var dataset = new recline.Model.Dataset({
+  url: 'https://docs.google.com/spreadsheet/ccc?key=0Aon3JiuouxLUdGZPaUZsMjBxeGhfOWRlWm85MmV0UUE#gid=0',
+  backend: 'gdocs'
+});
+
+// Optional - display the results in a grid
+// Note how we can set this up before any data has arrived
+// Views will listen for query completion and update themselves automatically
+var grid = new recline.View.Grid({
+  model: dataset
+});
+$('#my-gdocs').append(grid.el);
+
+// Now do the query to the backend to load data
+dataset.fetch().done(function(dataset) {
+  if (console) {
+    console.log(dataset.records);
+  }
+});
+
+
+</script>
+<h2 id='loading_data_from_elasticsearch_and_the_datahub'>Loading Data from ElasticSearch and the DataHub</h2>
+
+<p>Recline supports ElasticSearch as a full read/write/query backend. It also means that Recline can load data from the <a href='http://datahub.io/'>DataHub&#8217;s</a> data API as that is ElasticSearch compatible. Here&#8217;s an example, using <a href='http://datahub.io/dataset/rendition-on-record/ac5a28ea-eb52-4b0a-a399-5dcc1becf9d9&apos;'>this dataset about Rendition flights</a> on the DataHub:</p>
+
+<h3 id='result'>Result</h3>
+<div class='doc-ex-rendered' id='my-elasticsearch'>&nbsp;</div><script type='text/javascript'>
+var dataset = new recline.Model.Dataset({
+  url: 'http://datahub.io/dataset/rendition-on-record/ac5a28ea-eb52-4b0a-a399-5dcc1becf9d9/api',
+  backend: 'elasticsearch'
+});
+
+dataset.fetch();
+
+// For demonstrations purposes display the data in a grid
+var grid = new recline.View.SlickGrid({
+  model: dataset
+});
+$('#my-elasticsearch').append(grid.el);
+
+
+</script>
+<h2 id='loading_data_from_csv_files'>Loading data from CSV files</h2>
+
+<p>For loading data from CSV files there are 3 cases:</p>
+
+<ol>
+<li>CSV is online but on same domain &#8211; we can then load using AJAX (as no problems with same origin policy)</li>
+
+<li>CSV is on local disk &#8211; if your browser supports HTML5 File API we can load the CSV file off disk</li>
+
+<li>CSV is online but not on same domain &#8211; use DataProxy (see below)</li>
+</ol>
+
+<h3 id='local_online_csv_file'>Local online CSV file</h3>
+
+<p>Let&#8217;s start with first case: loading a &#8220;local&#8221; online CSV file. We&#8217;ll be using this <a href='..//demos/data/sample.csv'>example file</a>.</p>
+
+<h4 id='result'>Result</h4>
+<div class='doc-ex-rendered' id='my-online-csv'>&nbsp;</div><script type='text/javascript'>
+// Create the dataset in the usual way
+// Note the additional options you can specify for parsing the CSV file
+var dataset = new recline.Model.Dataset({
+  url: '..//demos/data/sample.csv',
+  backend: 'csv',
+  // separator: ',',
+  // delimiter: '"',
+  // encoding: 'utf8'
+});
+
+// remember this is async so if you want to do something you need to call it in done method e.g.
+// dataset.fetch.done(function(dataset) { console.log(dataset.recordCount)});
+dataset.fetch();
+
+// show the data for illustrations sake
+var grid = new recline.View.Grid({
+  model: dataset
+});
+$('#my-online-csv').append(grid.el);
+
+
+</script>
+<h3 id='csv_file_on_disk'>CSV file on disk</h3>
+
+<p>This requires your browser to support the HTML5 file API. Suppose we have a file input like:</p>
+<input class='my-file-input' type='file' />
+<p>Then we can load the file into a Recline Dataset as follows:</p>
+
+<h4 id='try_it_out'>Try it out!</h4>
+
+<p>Try it out by clicking on the file input above, selecting a CSV file and seeing what happens.</p>
+<div class='doc-ex-rendered' id='my-csv-disk'>&nbsp;</div><script type='text/javascript'>
+// the file input
+var $file = $('.my-file-input')[0];
+
+// listen for the file to be submitted
+$($file).change(function(e) {
+  // create the dataset in the usual way but specifying file attribute
+  var dataset = new recline.Model.Dataset({
+    file: $file.files[0],
+    backend: 'csv'
+  });
+
+  // now load - note that this is again async (HTML5 File API is async)
+  // dataset.fetch().done(function() { console.log('here'); });
+  dataset.fetch();
+
+  // For demonstrations purposes display the data in a grid
+  var grid = new recline.View.Grid({
+    model: dataset
+  });
+  $('#my-csv-disk').append(grid.el);
+});
+
+
+</script>
+<h2 id='loading_data_from_csv_and_excel_files_online_using_dataproxy'>Loading data from CSV and Excel files online using DataProxy</h2>
+
+<p>The <a href='http://github.com/okfn/dataproxy'>DataProxy</a> is a web-service run by the Open Knowledge Foundation that converts CSV and Excel files to JSON. It has a convenient JSON-p-able API which means we can use it to load data from online CSV and Excel into Recline Datasets.</p>
+
+<p>Recline ships with a simple DataProxy &#8220;backend&#8221; that takes care of fetching data from the DataProxy source.</p>
+
+<p>The main limitation of the DataProxy is that it can only handle Excel files up to a certain size (5mb) and that as we must use JSONP to access it error information can be limited.</p>
+
+<h3 id='result'>Result</h3>
+<div class='doc-ex-rendered' id='my-dataproxy'>&nbsp;</div><script type='text/javascript'>
+var dataset = new recline.Model.Dataset({
+  url: 'http://data.london.gov.uk/datafiles/transport/tfl_passengers.csv',
+  // optional rows parameter specifies how many rows to retrieve - default is a 1000
+  // rows: 5000
+  backend: 'dataproxy'
+});
+
+// async again as we fetch via AJAX behind the scenes
+// once data is fetched it will be stored in a local MemoryStore so further querying will not involve the DataProxy
+dataset.fetch();
+
+// For demonstrations purposes display the data in a grid
+var grid = new recline.View.Grid({
+  model: dataset
+});
+$('#my-dataproxy').append(grid.el);
+
+
+</script>
+<h3 id='customizing_the_timeout'>Customizing the timeout</h3>
+
+<p>As we must use JSONP in this backend we have the problem that if DataProxy errors (e.g. 500) this won&#8217;t be picked up. To deal with this and prevent the case where the request never finishes We have a timeout on the request after which the Backend sends back an error stating that request timed out.</p>
+
+<p>You can customize the length of this timeout by setting the following constant:</p>
+
+<h2 id='writing_your_own_backend'>Writing your own backend</h2>
+
+<p>Writing your own backend is easy to do. Details of the required API are in the <a href='backends.html'>Backend documentation</a>.</p>
+</div>
+
+
+
+<section class="footer">
+	<div class="container">
+    <div class="row">
+      <div class="span4">
+        <p class="getit-btn"><a href="../docs/" class="btn">Use the Library &raquo;</a></p>
+        <p>Recline.js is freely redistributable under the terms of the MIT license.</p>
+      </div>
+      <div class="span3">
+        <p><a href="http://www.shuttleworthfoundation.org/"><img src="http://farm8.staticflickr.com/7019/6467412887_18f72f5066_n.jpg" style="width: 140px;" alt="Supported by funding from the Shuttleworth Foundation" /></a></p>
+        <ul>
+          <li><a href="http://datahub.io/">The DataHub</a></li>
+          <li><a href="http://OpenSpending.org/">OpenSpending.org</a></li>
+          <li><a href="http://datacouch.com/">DataCouch.com</a></li>
+        </ul>
+      </div>
+      <div class="span3">
+        <ul>
+          <li><a href="http://okfnlabs.org/">Open Knowledge Foundation Labs</a></li>
+          <li><a href="http://opendefinition.org/">Open Definition</a></li>
+          <li><a href="http://okfn.org/">Open Knowledge Foundation</a></li>
+        </ul>
+      </div>
+      <div class="span2">
+        <h5>Contacts</h5>
+        <ul style="list-style-type: none; margin-left: 0;">
+          <li><a href="http://twitter.com/ReclineJS">@ReclineJS</a></li>
+          <li><a href="http://twitter.com/maxogden">@maxogden</a></li>
+          <li><a href="http://twitter.com/rufuspollock">@rufuspollock</a></li>
+        </ul>
+        <a class="nav-logo" href="http://okfn.org/" title="An Open Knowledge Foundation Project">
+          <img src="http://assets.okfn.org/p/okfn/img/logo_28x30.png" alt="Open Knowledge Foundation logo" />
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+</body>
+</html>
