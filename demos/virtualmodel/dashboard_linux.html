@@ -76,7 +76,7 @@ root: ../../
                     dimensions: ["age"],
                     aggregatedFields: ["totalviewed", "price_sum"],
                     partitions: ["gender"],
-                    aggregationFunctions: ["avg", "sum"]
+                    aggregationFunctions: ["sum", "avg"]
                 }
             });
 
@@ -85,7 +85,8 @@ root: ../../
                 aggregation: {
                     dimensions: ["dayofweek"],
                     aggregatedFields: ["totalviewed"],
-                    partitions: ["gender"]
+                    partitions: ["gender"],
+                    aggregationFunctions: ["sum", "avg"]
                 }
             });
             virtualdatasetHour= new recline.Model.VirtualDataset({
@@ -93,14 +94,17 @@ root: ../../
                 aggregation: {
                     dimensions: ["dayhour"],
                     aggregatedFields: ["totalviewed"],
-                    partitions: ["gender"]
+                    partitions: ["gender"],
+                    aggregationFunctions: ["sum", "avg"]
                 }
             });
+
 
             virtualdatasetTotal= new recline.Model.VirtualDataset({
                 dataset: dataset,
                 aggregation: {
-                    aggregatedFields: ["totalviewed", "price_sum"]
+                    aggregatedFields: ["totalviewed", "price_sum"],
+                    aggregationFunctions: ["sum"]
                 }
             });
 
@@ -117,7 +121,8 @@ root: ../../
                 aggregation: {
                     dimensions: ["daydate"],
                     aggregatedFields: ["totalviewed", "price_sum"],
-                    partitions: ["gender"]
+                    partitions: ["gender"],
+                    aggregationFunctions: ["sum", "avg"]
                 }
             });
 
@@ -136,6 +141,9 @@ root: ../../
             graph2.redraw();
 
 
+
+
+
             var graph3 = new recline.View.NVD3Graph({
                 model: virtualdatasetWeekday,
                 state: {
@@ -148,8 +156,8 @@ root: ../../
                 }
             });
             $('#mygraph3').append(graph3.el);
-            graph3.render();
-            graph3.redraw();
+
+
 
 
             var graph4 = new recline.View.NVD3Graph({
@@ -164,8 +172,6 @@ root: ../../
                 }
             })
             $('#mygraph4').append(graph4.el);
-            graph4.render();
-            graph4.redraw();
 
 
             var indicator1 = new recline.View.Indicator({
@@ -179,6 +185,7 @@ root: ../../
             $('#indicator1').append(indicator1.el);
             indicator1.render();
 
+
             var indicator2 = new recline.View.Indicator({
                 model: virtualdatasetTotal,
                 state: {
@@ -189,6 +196,8 @@ root: ../../
             });
             $('#indicator2').append(indicator2.el);
             indicator2.render();
+
+
 
             var filter = new recline.View.GenericFilter({
                 model: dataset,

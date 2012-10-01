@@ -88,7 +88,7 @@ my.VirtualDataset = Backbone.Model.extend({
         // TODO optimization has to be done in order to limit the number of cycles on data
         // TODO has sense to recreate dimension if nothing is changed?, and in general, is better to use a new dimension if added instead of recreate all
         // TODO verify if saving crossfilter data is useful (perhaps no unless we use crossfilterstore to make aggregaation and filtering)
-
+        // TODO structure defined in initialize could be the same as the one provided to records in order to avoid the cycle inside updatestore?
 
         var start = new Date().getTime();
 
@@ -105,6 +105,10 @@ my.VirtualDataset = Backbone.Model.extend({
         var aggregatedFields = this.attributes.aggregation.aggregatedFields;
         var aggregationFunctions = this.attributes.aggregation.aggregationFunctions;
 
+        if(this.attributes.aggregation.aggregationFunctions == null || this.attributes.aggregation.aggregationFunctions.length == 0)
+            throw("Error aggregationFunctions parameters is not set for virtual dataset ");
+
+
         var partitioning = false;
         var partitions;
         if(this.attributes.aggregation.partitions != null) {
@@ -116,14 +120,18 @@ my.VirtualDataset = Backbone.Model.extend({
             p.count = p.count +1;
             for(i=0;i<aggregatedFields.length;i++){
 
+
+
                 // for each aggregation function evaluate results
                 for(j=0;j<aggregationFunctions.length;j++){
                     var currentAggregationFunction = this.recline.Data.Aggregations.aggregationFunctions[aggregationFunctions[j]];
 
-                    p[aggregationFunctions[j] = currentAggregationFunction( p[aggregationFunctions[j], v[aggregatedFields[i]);
+                    p[aggregationFunctions[j]][aggregatedFields[i]] =
+                        currentAggregationFunction(
+                            p[aggregationFunctions[j]][aggregatedFields[i]],
+                            v[aggregatedFields[i]]);
                 }
 
-                p.sum[aggregatedFields[i]] = p.sum[aggregatedFields[i]] + v[aggregatedFields[i]];
 
                 if(partitioning) {
                     // for each partition need to verify if exist a value of aggregatefield_by_partition_partitionvalue_sum
@@ -134,18 +142,20 @@ my.VirtualDataset = Backbone.Model.extend({
                         for(j=0;j<aggregationFunctions.length;j++){
                             var currentAggregationFunction = this.recline.Data.Aggregations.aggregationFunctions[aggregationFunctions[j]];
 
-                            p.partitions[aggregationFunctions[j] = currentAggregationFunction(p.partitions[aggregationFunctions[j], v[aggregatedFields[i]);
-                        }
+                            p.partitions[aggregationFunctions[j]][fieldName] =
+                                currentAggregationFunction(
+                                    p.partitions[aggregationFunctions[j]][fieldName],
+                                    v[aggregatedFields[i]]);
 
-                        if(p.partitionsum[fieldName] == null) {
-                            p.partitionsum[fieldName] = 0;
-                            p.partitioncount[fieldName] = 0;
-                        }
+                            if(p.partitions.count[fieldName] == null)
+                                p.partitions.count[fieldName] = 0;
 
-                        p.partitionsum[fieldName] = p.partitionsum[fieldName] + v[aggregatedFields[i]];
-                        p.partitioncount[fieldName] = p.partitioncount[fieldName] + 1;
+                            p.partitions.count[fieldName] =   p.partitions.count[fieldName] + 1;
+
+                        }
                     }
                 }
+
 
             }
             return p;
@@ -157,37 +167,50 @@ my.VirtualDataset = Backbone.Model.extend({
 
         function initializeFunction() {
 
+            var tmp = {count: 0};
 
-            tmp = {count: 0, sum: {}, partitioncount: {}, partitionsum: {}};
+            for(j=0;j<aggregationFunctions.length;j++){
+                    tmp[aggregationFunctions[j]] = {};
+                    this.recline.Data.Aggregations.initFunctions[aggregationFunctions[j]](tmp, aggregatedFields, partitions);
+              }
 
-            for(i=0;i<aggregatedFields.length;i++){
-                tmp.sum[aggregatedFields[i]] = 0;
-            }
+            if(partitioning){
+                tmp["partitions"] = {};
+                tmp["partitions"]["count"] = {};
 
-            tmp.avg = function(aggr){
-                return function(){
-                    var map = {};
-                    for(var o=0;o<aggr.length;o++){
-                        map[aggr[o]] = this.sum[aggr[o]] / this.count;
-                     }
-                    for (var j in this.partitioncount) {
-                        map[j] = this.partitionsum[j] / this.partitioncount[j];
-                    }
+                for(j=0;j<aggregationFunctions.length;j++){
 
+                        tmp["partitions"][aggregationFunctions[j]] = {};
 
-                    return map;
                 }
-            }(aggregatedFields);
+            }
 
             return tmp;
         }
 
 
-        return reducedGroup  =  group.reduce(sumAdd,sumRemove,sumInitialize);
+        return group.reduce(addFunction,removeFunction,initializeFunction);
+
     },
 
     updateStore: function(reducedGroup) {
+
+
+
         var dimensions = this.attributes.aggregation.dimensions;
+        var aggregationFunctions =    this.attributes.aggregation.aggregationFunctions;
+        var aggregatedFields = this.attributes.aggregation.aggregatedFields;
+
+        var partitioning = false;
+        var partitionsFields = [];
+        var partitions;
+
+        if(this.attributes.aggregation.partitions != null) {
+            partitions = this.attributes.aggregation.partitions;
+            var partitioning = true;
+        }
+
+
 
         var tmpResult;
         var result = [];
@@ -196,112 +219,154 @@ my.VirtualDataset = Backbone.Model.extend({
         var tmpField;
 
         if(dimensions == null)  {
-            tmpResult =  reducedGroup.value();
+            tmpResult =  [reducedGroup.value()];
             tmpField = tmpResult;
         }
         else {
             tmpResult =  reducedGroup.all();
-            if(tmpResult.length > 0)
+            if(tmpResult.length > 0) {
                 tmpField = tmpResult[0].value;
+            }
             else
-                tmpField = {count: 0, sum: {}, partitioncount: {}, partitionsum: {}, avg: function() { return; }};
-        }
+                tmpField = {count: 0};
 
+            for (var x in tmpField.partitions[aggregationFunctions[0]]) {
+                partitionsFields.push(x);
+            }
+        }
 
 
 
         // set of fields array
-
-
         fields.push( {id: "count", type: "number"});
 
-        for (var j in tmpField.sum) {
-            fields.push( {id: j + "_sum", type: "number"});
+        // defining fields based on aggreagtion functions
+        for(var j=0;j<aggregationFunctions.length;j++){
+
+            var tempValue;
+            if(typeof tmpField[aggregationFunctions[j]] == 'function')
+                tempValue = tmpField[aggregationFunctions[j]]();
+            else
+                tempValue = tmpField[aggregationFunctions[j]];
+
+            for (var x in tempValue) {
+                fields.push( {id: x + "_" + aggregationFunctions[j], type: "number"});
+            }
         }
 
-        for (var j in tmpField.partitionsum) {
-            fields.push( {id: j + "_sum", type: "number"});
+        if(partitioning) {
+            for(var j=0;j<aggregationFunctions.length;j++){
+
+                var tempValue;
+                if(typeof tmpField.partitions[aggregationFunctions[j]] == 'function')
+                    tempValue =     tmpField.partitions[aggregationFunctions[j]]();
+                else
+                    tempValue = tmpField.partitions[aggregationFunctions[j]];
+
+                for (var x in tempValue) {
+                    fields.push( {id: x + "_" + aggregationFunctions[j], type: "number"});
+                }
+            }
         }
 
-        for (var j in tmpField.partitioncount) {
-            fields.push( {id: j + "_count", type: "number"});
-        }
-
-        var tempAvg =   tmpField.avg() ;
-        for (var j in tempAvg) {
-            fields.push( {id: j + "_avg", type: "number"});
-        }
-
-
+        // adding all dimensions to field list
         if(dimensions != null) {
             fields.push( {id: "dimension"});
-            for(i=0;i<dimensions.length;i++){
-
-
+            for(var i=0;i<dimensions.length;i++){
                 var originalFieldAttributes = this.attributes.dataset.fields.get(dimensions[i]).attributes;;
                 fields.push( {id: dimensions[i], type: originalFieldAttributes.type, label: originalFieldAttributes.label, format: originalFieldAttributes.format});
 
             }
         }
 
-        if(dimensions != null) {
-            // set of results dataset
-            for(i=0;i<tmpResult.length;i++){
 
 
-                var keyField = tmpResult[i].key.split("_");
+            // set  results of dataset
+            for(var i=0;i<tmpResult.length;i++){
 
-                var tmp = {dimension: tmpResult[i].key, count: tmpResult[i].value.count};
+               var currentField;
+               var tmp;
+
+                // if dimensions specified add dimension' fields
+                if(dimensions != null) {
+                    var keyField = tmpResult[i].key.split("_");
+
+                    tmp = {dimension: tmpResult[i].key, count: tmpResult[i].value.count};
+
+                    for(var j=0;j<keyField.length;j++){
+                        tmp[dimensions[j]] = keyField[j];
+                    }
+                    currentField = tmpResult[i].value;
+
+                }
+                else {
+                    currentField = tmpResult[i];
+                    tmp = {count: tmpResult[i].count};
+                }
+
+               // add records foreach aggregation function
+                for(var j=0;j<aggregationFunctions.length;j++){
+
+                    // apply finalization function, was not applied since now
+                    // todo verify if can be moved above
+                    // note that finalization can't be applyed at init cause we don't know in advance wich partitions data can be built
+                    recline.Data.Aggregations.finalizeFunctions[aggregationFunctions[j]](currentField,  aggregatedFields, partitionsFields);
+
+                    var tempValue;
 
 
-                for(j=0;j<keyField.length;j++){
-                    tmp[dimensions[j]] = keyField[j];
+
+                    if(typeof currentField[aggregationFunctions[j]] == 'function')
+                        tempValue = currentField[aggregationFunctions[j]]();
+                    else
+                        tempValue = currentField[aggregationFunctions[j]];
+
+
+
+
+                    for (var x in tempValue) {
+
+                        var tempValue2;
+                        if(typeof tempValue[x] == 'function')
+                            tempValue2  =  tempValue[x]();
+                        else
+                            tempValue2  = tempValue[x];
+
+                        tmp[x + "_" + aggregationFunctions[j]] =  tempValue2;
+                    }
+
+
+                    // adding partition records
+                    if(partitioning) {
+                        var tempValue;
+                        if(typeof currentField.partitions[aggregationFunctions[j]] == 'function')
+                            tempValue =currentField.partitions[aggregationFunctions[j]]();
+                        else
+                            tempValue =currentField.partitions[aggregationFunctions[j]];
+
+                        for (var x in tempValue) {
+                            var tempValue2;
+                            if(typeof currentField.partitions[aggregationFunctions[j]] == 'function')
+                                tempValue2 =  currentField.partitions[aggregationFunctions[j]]();
+                            else
+                                tempValue2 = currentField.partitions[aggregationFunctions[j]];
+
+                          tmp[x + "_" + aggregationFunctions[j]] =  tempValue2[x];
+                        }
+                    }
 
                 }
 
-
-                for (var j in tmpResult[i].value.sum) {
-                    tmp[j + "_sum"] = tmpResult[i].value.sum[j];
+                // count is always calculated for each partition
+                if(partitioning) {
+                    for (var x in tmpField.partitions["count"]) {
+                        tmp[x + "_count"] =  tmpResult[i].value.partitions["count"][x];
+                    }
                 }
 
-                for (var j in tmpResult[i].value.partitionsum) {
-                    tmp[j + "_sum"] = tmpResult[i].value.partitionsum[j];
-                }
 
-
-                for (var j in tmpResult[i].value.partitioncount) {
-                    tmp[j + "_count"] = tmpResult[i].value.partitioncount[j];
-                }
-
-                var tempAvg =   tmpResult[i].value.avg();
-
-                for (var j in tempAvg) {
-                    tmp[j + "_avg"] = tempAvg[j];
-                }
                 result.push(tmp);
             }
-        }
-        else
-        {
-            var tmp = { count: tmpField.count};
-
-            for (var j in tmpField.sum) {
-                tmp[j + "_sum"] = tmpField.sum[j];
-            }
-
-            for (var j in tmpField.partitionCount) {
-                tmp[j + "_sum"] = tmpField.partitionCount[j];
-            }
-
-            var tempAvg =   tmpField.avg();
-
-            for (var j in tempAvg) {
-                tmp[j + "_avg"] = tempAvg[j];
-
-            }
-            result.push(tmp);
-
-        }
 
 
         this._store = new recline.Backend.Memory.Store(result, fields);
@@ -309,8 +374,14 @@ my.VirtualDataset = Backbone.Model.extend({
         this.recordCount = result.length;
         this.records.reset(result);
 
-        //console.log("VModel fields");
-        //console.log(fields);
+
+        /*    console.log("VMODEL crossfilter result")
+            console.log(tmpResult);
+            console.log("VModel result");
+            console.log(result);
+            console.log("VModel fields");
+            console.log(fields);
+        */
 
     },
 
@@ -345,8 +416,6 @@ my.VirtualDataset = Backbone.Model.extend({
     },
 
     _handleQueryResult: function(queryResult) {
-        console.log("handlequeryresult virtual");
-
         var self = this;
         self.recordCount = queryResult.total;
         var docs = _.map(queryResult.hits, function(hit) {

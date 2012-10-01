@@ -222,9 +222,6 @@ my.Dataset = Backbone.Model.extend({
 
   _handleQueryResult: function(queryResult) {
 
-        console.log("Handle result");
-        console.log(queryResult);
-
     var self = this;
 
     self.recordCount = queryResult.total;
@@ -345,7 +342,10 @@ my.Record = Backbone.Model.extend({
   // For the provided Field get the corresponding computed data value
   // for this record.
   getFieldValueUnrendered: function(field) {
-    var val = this.get(field.id);
+
+      var val = this.get(field.id);
+
+
     if (field.deriver) {
       val = field.deriver(val, field, this);
     }
@@ -562,9 +562,6 @@ my.Query = Backbone.Model.extend({
     // update or add the selected filter(s), a change event is triggered after the update
 
   setFilter: function(filter) {
-
-      console.log("set new filter");
-      console.log(filter);
 
       var self = this;
       // todo should be optimized in order to make only one cycle on filters

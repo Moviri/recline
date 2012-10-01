@@ -18,9 +18,7 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
     my.fetch = function(dataset) {
     console.log("Fetching data structure " + dataset.url);
 
-    // TODO waiting for implementation of structure results
-    data = {filters: "gender daydate eq 2015-01-01"};
-
+    data = {onlydesc: "true"};
 
     var jqxhr = $.ajax({
         url: dataset.url,
