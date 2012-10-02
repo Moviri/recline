@@ -221,6 +221,8 @@ my.Dataset = Backbone.Model.extend({
   },
 
   _handleQueryResult: function(queryResult) {
+        console.log("Model handlequeryresult");
+        console.log(queryResult);
 
     var self = this;
 
@@ -498,6 +500,7 @@ my.Query = Backbone.Model.extend({
     },
     range: {
       type: 'range',
+      field: '',
       start: '',
       stop: ''
     },
@@ -519,6 +522,7 @@ my.Query = Backbone.Model.extend({
           },
           range: {
               type: 'range',
+              field: '',
               start: '',
               stop: ''
           }
@@ -543,6 +547,9 @@ my.Query = Backbone.Model.extend({
     this.trigger('change:filters:new-blank');
   },
 
+    getFilters: function(){
+      return this.get('filters');
+    },
 
     _setSingleFilter: function(filter) {
         var filters = this.get('filters');
@@ -619,10 +626,6 @@ my.Query = Backbone.Model.extend({
           selections.splice(selectionIndex, 1);
           this.set({selections: selections});
           this.trigger('change:selections');
-      },
-      isFieldSelected: function(fieldName, fieldVale) {
-          // todo check if field is selected
-          return false;
       },
         setSelection: function(s) {
         // todo should be optimized in order to make only one cycle on filters

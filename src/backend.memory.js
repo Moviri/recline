@@ -60,6 +60,7 @@ this.recline.Backend.Memory = this.recline.Backend.Memory || {};
 
     this.query = function(queryObj) {
       var dfd = $.Deferred();
+
       var numRows = queryObj.size || this.data.length;
       var start = queryObj.from || 0;
       var results = this.data;
