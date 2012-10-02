@@ -142,7 +142,9 @@ this.recline.View = this.recline.View || {};
             chart.x(function(d) { return d[0] })
                 .y(function(d) { return d[1] });
 
-			var     xfield =  model.fields.get(state.attributes.group);
+			var xfield =  model.fields.get(state.attributes.group);
+			xfield.set('type', xfield.get('type').toLowerCase());
+			
 			if (xLabel == null || xLabel == "" || typeof xLabel == 'undefined')
 				xLabel = xfield.get('label')
 
@@ -154,8 +156,8 @@ this.recline.View = this.recline.View || {};
 
                 .tickFormat(d3.format('.02f'));
 
-			if (xfield.get('type') == 'DATE' || 
-				(xfield.get('type') == 'STRING' && xLabel.indexOf('date') >= 0 && model.recordCount > 0 && new Date(model.records.get(0).get(xLabel)) instanceof Date))
+			if (xfield.get('type') == 'date' || 
+				(xfield.get('type') == 'string' && xLabel.indexOf('date') >= 0 && model.recordCount > 0 && new Date(model.records.get(0).get(xLabel)) instanceof Date))
 			{
 				chart.xAxis
 					.axisLabel(xLabel)

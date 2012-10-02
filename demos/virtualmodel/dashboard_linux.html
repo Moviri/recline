@@ -9,7 +9,7 @@ root: ../../
 
 <div id="container" class="container-fluid" style="width:100%;height:100%">
     <div class="row-fluid">
-        <div class="span2 lightgreyborder">
+        <div class="span2 ">
             <div class="row-fluid">
                 <div id="search_container"></div>
             </div>
@@ -107,7 +107,15 @@ root: ../../
             });
 
 
-           var $el = $('#mygrid');
+
+
+        filters = [ {field: "daydate", type: "range", start:"2012-01-01 00:00:00", stop: "2012-01-30 00:00:00", fieldType: "date", controlType: "range_calendar" }];
+        for(var i=0;i<filters.length;i++)
+            dataset.queryState.addFilter(filters[i]);
+
+        dataset.fetch(); // needed to populate filter list
+		
+		           var $el = $('#mygrid');
             var grid = new recline.View.SlickGrid({model: virtualdatasetAge, el: $el, state: {fitColumns:true, useInnerChart:true, innerChartSerie1:'totalviewed_by_gender_Male_sum', innerChartSerie2:'totalviewed_by_gender_Female_sum', innerChartHeader:'Views by Gender'}});
             grid.visible = true;
             grid.render();
@@ -208,15 +216,12 @@ root: ../../
 				filtersTargetDatasets: [virtualdatasetAge, virtualdatasetWeekday, virtualdatasetTotal, virtualdatasetHour ],
                 id: 'filterEditor',
                 label: 'Memory Filters',
-				sourceFields: [{field: 'age', controlType: 'list', fieldType: 'number'}]
+				sourceFields: [
+								{field: 'age', controlType: 'list', fieldType: 'number'},
+								{field: 'totalviewed_sum', controlType: 'range_slider', fieldType: 'number'}
+							]
             });
             $('#search_container2').append(filter2.el);
-
-        filters = [ {field: "daydate", type: "range", start:"2012-01-01 00:00:00", stop: "2012-01-30 00:00:00", fieldType: "date", controlType: "range_calendar" }];
-        for(var i=0;i<filters.length;i++)
-            dataset.queryState.addFilter(filters[i]);
-
-        dataset.fetch(); // needed to populate filter list
 		
 		resizeAllElems(); // force initial resize
 		
