@@ -7,7 +7,7 @@ root: ../../
 
 
 
-<div class="container-fluid">
+<div id="container" class="container-fluid" style="width:100%;height:100%">
     <div class="row-fluid">
         <div class="span2 lightgreyborder">
             <div class="row-fluid">
@@ -20,8 +20,8 @@ root: ../../
                 <div id="facet_container"></div>
             </div>
         </div>
-        <div class="span10">
-            <div class="row-fluid" >
+        <div class="span9">
+            <div class="row-fluid" style="height:10%">
                 <div class="span6">
                     <div class="row-fluid"><h3 class="centered">Views</h3><h1 class="orange centered"><div id="indicator1"></div></h1></div>
                 </div>
@@ -29,15 +29,15 @@ root: ../../
                     <div class="row-fluid"><h3 class="centered">Revenues</h3><h1 class="orange centered"><div id="indicator2"></div></h1></div>
                 </div>
             </div>
-            <div class="row-fluid">
+            <div class="row-fluid" style="height:30%">
                 <div class="span12" >
-                    <div id="mygrid" style="overflow:auto"></div>
+                    <div id="mygrid"style="overflow:auto"></div>
                 </div>
             </div>
-            <div class="row-fluid">
-                <div class="span12"  ><div id="mygraph2"></div></div>
+            <div class="row-fluid" style="height:30%">
+                <div class="span12"><div id="mygraph2" ></div></div>
             </div>
-            <div class="row-fluid">
+            <div class="row-fluid" style="height:30%">
                 <div class="span6" ><div id="mygraph3"></div></div>
                 <div class="span6" ><div id="mygraph4"></div></div>
             </div>
@@ -195,14 +195,11 @@ root: ../../
             $('#indicator2').append(indicator2.el);
             indicator2.render();
 
-
-
-            /*var filter = new recline.View.GenericFilter({
+			var filter = new recline.View.GenericFilter({
                 sourceDataset: dataset,
 				filtersTargetDatasets: [dataset],
                 id: 'filterEditorDB',
-                label: 'DB Filters',
-                ControlType: 'dropdown'
+                label: 'DB Filters'
             });
             $('#search_container').append(filter.el);
 
@@ -211,28 +208,35 @@ root: ../../
 				filtersTargetDatasets: [virtualdatasetAge, virtualdatasetWeekday, virtualdatasetTotal, virtualdatasetHour ],
                 id: 'filterEditor',
                 label: 'Memory Filters',
-				sourceFields: [{field: 'age', controlType: 'list'}]
+				sourceFields: [{field: 'age', controlType: 'list', fieldType: 'number'}]
             });
             $('#search_container2').append(filter2.el);
-            */
-
-        var filterxx = {
-            field: "age",
-            type: "term",
-            term: "15",
-            fieldType: "number"
-        };
-
-
 
         filters = [ {field: "daydate", type: "range", start:"2012-01-01 00:00:00", stop: "2012-01-30 00:00:00", fieldType: "date", controlType: "range_calendar" }];
         for(var i=0;i<filters.length;i++)
             dataset.queryState.addFilter(filters[i]);
 
-        virtualdatasetAge.queryState.addFilter(filterxx);
         dataset.fetch(); // needed to populate filter list
-
-
-
-    });
+		
+		resizeAllElems(); // force initial resize
+		
+		// then assign handler for heights of grid/charts on window resize events
+		$(window).resize(resizeAllElems);
+		
+		function resizeAllElems() {
+			_.each([{el:"mygrid", obj:grid}, {el:"mygraph2", obj:graph2}, {el:"mygraph3", obj:graph3}, {el:"mygraph4", obj:graph4}], function(eo) { 
+							resizeElem(eo.el, eo.obj)
+					});
+		}
+		
+		function resizeElem(elemName, obj)
+		{
+			var availH = $(window).height();
+			var perc = document.getElementById(elemName).parentNode.parentNode.style.height.replace("%", "")/100;
+			var newH = availH * perc;
+			$("#"+elemName).height(newH);
+			$("#"+elemName+" svg").height(newH);
+			obj.height = newH;
+		}
+	});
 </script>

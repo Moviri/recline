@@ -236,9 +236,9 @@ my.GenericFilter = Backbone.View.extend({
 	'change .drop-down': 'onFilterValueChanged'
   },
   _ctrlId : 0,
-  _origRecords: [],
   _sourceDataset: null,
   _targetDatasets: [],
+  _activeFilters: [],
   initialize: function(args) {
     this.el = $(this.el);
     _.bindAll(this, 'render');
@@ -249,6 +249,7 @@ my.GenericFilter = Backbone.View.extend({
     this._sourceDataset.records.bind('reset', this.render); 
 	this.sourceFields = args.sourceFields;
 	this.filterDialogLabel = args.label;
+	this._activeFilters = [];
 
     if (this.sourceFields && this.sourceFields.length)
 		for (var k in this.sourceFields)
@@ -264,6 +265,9 @@ my.GenericFilter = Backbone.View.extend({
       filter.id = idx;
       return filter;
     });
+	_.each(this._activeFilters , function(flt) { 
+		tmplData.filters.push(flt); 
+	});
     tmplData.fields = this._sourceDataset.fields.toJSON();
 	tmplData.records = _.pluck(this._sourceDataset.records.models, "attributes");
 	tmplData.filterLabel = this.filterDialogLabel;
@@ -314,7 +318,6 @@ my.GenericFilter = Backbone.View.extend({
 	var fieldId     = $table.attr('data-filter-field');
 	_.each(this._targetDatasets, function(ds) { 
 		ds.queryState.setFilter({field: fieldId, type: 'term', controlType: 'list', term:$target.text(), fieldType: "number"});
-		//ds.queryState.trigger('change');
 	});
   },
 	dateConvert : function(d) { 
@@ -428,10 +431,8 @@ my.GenericFilter = Backbone.View.extend({
 
 	if (typeof newFilter.fieldType == 'undefined')
 		newFilter.fieldType = this.getFieldType(newFilter.field)
-		
-	_.each(this._targetDatasets, function(ds) { 
-		ds.queryState.addFilter(newFilter);
-	});
+	
+	this._activeFilters.push(newFilter);
 	this.render();
   },
   onRemoveFilter: function(e) {
