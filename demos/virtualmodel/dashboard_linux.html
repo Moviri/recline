@@ -7,9 +7,9 @@ root: ../../
 
 
 
-<div class="container-fluid">
+<div id="container" class="container-fluid" style="width:100%;height:100%">
     <div class="row-fluid">
-        <div class="span2 lightgreyborder">
+        <div class="span2 ">
             <div class="row-fluid">
                 <div id="search_container"></div>
             </div>
@@ -20,10 +20,10 @@ root: ../../
                 <div id="facet_container"></div>
             </div>
         </div>
-        <div class="span10">
-            <div class="row-fluid" >
+        <div class="span9">
+            <div class="row-fluid" style="height:10%">
                 <div class="span6">
-                    <div class="row-fluid"><h3 class="centered">Views</h3><h1 class="orange centered"><div id="indicator1"></div></h1></div>
+					<div id="indicator1"></div>
                 </div>
                 <div class="span6">
                     <div class="row-fluid"><h3 class="centered">Revenues</h3><h1 class="orange centered"><div id="indicator2"></div></h1></div>
@@ -62,8 +62,7 @@ root: ../../
             url: url,
             backend: 'jsonp',
             id: "AudDemoByGender",
-            fieldLabels: [{id: "age", label: "age_label"}, {id: "gender", label: "gender_label"}],
-            inMemoryQueryFields: ["age"]
+            fieldLabels: [{id: "age", label: "age_label"}, {id: "gender", label: "gender_label"}]
 
         });
 
@@ -129,6 +128,7 @@ root: ../../
                 model: virtualdatasetDay,
                 state: {
                     group: "daydate",
+					yLabel: "Total Viewed",
                     seriesValues: ["totalviewed_by_gender_Male_sum", "totalviewed_by_gender_Female_sum"],
                     colors: ["DarkTurquoise", "DodgerBlue", "LightBlue"],
                     graphType: "lineChart",
@@ -136,17 +136,12 @@ root: ../../
                 }
             });
             $('#mygraph2').append(graph2.el);
-            graph2.render();
-            graph2.redraw();
-
-
-
-
 
             var graph3 = new recline.View.NVD3Graph({
                 model: virtualdatasetWeekday,
                 state: {
                     group: "dayofweek",
+					yLabel: "Total Viewed AVG",
                     //seriesNameField: ["gender"],
                     seriesValues: ["totalviewed_by_gender_Male_avg", "totalviewed_by_gender_Female_avg"],
                     colors: ["DarkTurquoise", "DodgerBlue", "LightBlue"],
@@ -163,6 +158,7 @@ root: ../../
                 model: virtualdatasetHour,
                 state: {
                     group: "dayhour",
+					yLabel: "Total Viewed AVG",
                     //seriesNameField: ["gender"],
                     seriesValues: ["totalviewed_by_gender_Male_avg", "totalviewed_by_gender_Female_avg"],
                     colors: ["DarkTurquoise", "DodgerBlue", "LightBlue"],
@@ -178,6 +174,7 @@ root: ../../
                 state: {
                     series: ["totalviewed_sum"],
                     format: ',d',
+					label:"Views",
                     id: "6"
                 }
             });
@@ -190,20 +187,18 @@ root: ../../
                 state: {
                     series: ["price_sum_sum"],
                     format: ',.02f',
+					label:"Revenues",
                     id: "7"
                 }
             });
             $('#indicator2').append(indicator2.el);
             indicator2.render();
 
-
-
-            /*var filter = new recline.View.GenericFilter({
+			var filter = new recline.View.GenericFilter({
                 sourceDataset: dataset,
 				filtersTargetDatasets: [dataset],
                 id: 'filterEditorDB',
-                label: 'DB Filters',
-                ControlType: 'dropdown'
+                label: 'DB Filters'
             });
             $('#search_container').append(filter.el);
 
@@ -212,12 +207,33 @@ root: ../../
 				filtersTargetDatasets: [virtualdatasetAge, virtualdatasetWeekday, virtualdatasetTotal, virtualdatasetHour ],
                 id: 'filterEditor',
                 label: 'Memory Filters',
-				sourceFields: [{field: 'age', controlType: 'list'}]
+				sourceFields: [
+								{field: 'age', controlType: 'list', fieldType: 'number'}//,
+								//{field: 'totalviewed_sum', controlType: 'range_slider', fieldType: 'number'}
+							]
             });
             $('#search_container2').append(filter2.el);
-            */
-
-        //   {field: "agex", type: "term", term: 15, fieldType: "number"}
+		
+		resizeAllElems(); // force initial resize
+		
+		// then assign handler for heights of grid/charts on window resize events
+		$(window).resize(resizeAllElems);
+		
+		function resizeAllElems() {
+			_.each([{el:"mygrid", obj:grid}, {el:"mygraph2", obj:graph2}, {el:"mygraph3", obj:graph3}, {el:"mygraph4", obj:graph4}], function(eo) { 
+							resizeElem(eo.el, eo.obj)
+					});
+		}
+		
+		function resizeElem(elemName, obj)
+		{
+			var availH = $(window).height();
+			var perc = document.getElementById(elemName).parentNode.parentNode.style.height.replace("%", "")/100;
+			var newH = availH * perc;
+			$("#"+elemName).height(newH);
+			$("#"+elemName+" svg").height(newH);
+			obj.height = newH;
+		}
 
         filters = [
             {field: "daydate", type: "range", start:"2012-01-01 00:00:00", stop: "2012-01-10 00:00:00", fieldType: "date" }
@@ -229,8 +245,11 @@ root: ../../
 
         //virtualdatasetAge.queryState.setFilter(filterxx);
         dataset.fetch(); // needed to populate filter list
+	});
+
+        //   {field: "agex", type: "term", term: 15, fieldType: "number"}
 
 
 
-    });
+
 </script>
