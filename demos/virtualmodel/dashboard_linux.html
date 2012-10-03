@@ -66,9 +66,9 @@ root: ../../
         });
 
 		
-		dataset.bind('query:done', function() {document.getElementById("loadingImage").style.display = "none";});
-		dataset.bind('query:fail', function() {document.getElementById("loadingImage").style.display = "none";});
-		dataset.bind('query:start', function() {document.getElementById("loadingImage").style.display = "block";});
+		dataset.bind('query:done', function() {document.getElementById("loadingImage").style.display = "none";resizeAllElems();});
+		dataset.bind('query:fail', function() {document.getElementById("loadingImage").style.display = "none";resizeAllElems();});
+		dataset.bind('query:start', function() {document.getElementById("loadingImage").style.display = "block";resizeAllElems();});
 
 
             virtualdatasetAge = new recline.Model.VirtualDataset({
