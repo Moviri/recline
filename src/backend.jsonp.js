@@ -14,76 +14,180 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
   //
   // Returns array of field names and array of arrays for records
 
+    my.queryStateInMemory  = new recline.Model.Query();
+    my.queryStateOnBackend = new recline.Model.Query();
+
+
     // todo has to be merged with query (part is in common)
     my.fetch = function(dataset) {
-    console.log("Fetching data structure " + dataset.url);
 
-    var data = {onlydesc: "true"};
+        console.log("Fetching data structure " + dataset.url);
 
-    var jqxhr = $.ajax({
-        url: dataset.url,
-        dataType: 'jsonp',
-        jsonpCallback: dataset.id,
-        data: data,
-        cache: true
-    });
+        var data = {onlydesc: "true"};
+        return requestJson(dataset, data);
 
-
-    var dfd = $.Deferred();
-    _wrapInTimeout(jqxhr).done(function(results) {
-      if (results.error) {
-        dfd.reject(results.error);
-      }
-
-      dfd.resolve({
-            fields:_handleFieldDescription(results.result.description),
-            useMemoryStore: false
-      });
-    })
-    .fail(function(arguments) {
-      dfd.reject(arguments);
-    });
-    return dfd.promise();
   };
 
     my.query = function(queryObj, dataset) {
 
-        var data = buildRequestFromQuery(queryObj);
+        var tmpQueryStateInMemory  = new recline.Model.Query();
+        var tmpQueryStateOnBackend = new recline.Model.Query();
 
-        //console.log("Querying dataset " + dataset.id.toString() +  JSON.stringify(data));
 
-        var jqxhr = $.ajax({
-            url: dataset.url,
-            dataType: 'jsonp',
-            jsonpCallback: dataset.id,
-            data: data,
-            cache: true
-        });
-        var dfd = $.Deferred();
-        _wrapInTimeout(jqxhr).done(function(results) {
-            if (results.error) {
-                dfd.reject(results.error);
+        if(dataset.inMemoryQueryFields == null)
+            dataset.inMemoryQueryFields = [];
+
+
+
+        var filters =  queryObj.filters;
+        for(var i=0;i<filters.length;i++){
+            // verify if filter is specified in inmemoryfields
+
+            if(_.indexOf(dataset.inMemoryQueryFields, filters[i].field) == -1) {
+                console.log("filtering " + filters[i].field + " on backend");
+                tmpQueryStateOnBackend.addFilter(filters[i]);
             }
+            else {
+                console.log("filtering " + filters[i].field + " on memory");
+                tmpQueryStateInMemory.addFilter(filters[i]);
+            }
+        }
 
-            dfd.resolve({
-                hits: results.result.data,
-                fields:_handleFieldDescription(results.result.description),
-                useMemoryStore: false
-            });
-        })
-            .fail(function(arguments) {
-                dfd.reject(arguments);
-            });
-        return dfd.promise();
+        var changedOnBackend = false;
+        var changedOnMemory = false;
+
+        // verify if filters on backend are changed since last query
+        if(my.queryStateOnBackend != tmpQueryStateOnBackend) {
+            my.queryStateOnBackend = tmpQueryStateOnBackend;
+            changedOnBackend = true;
+        }
+
+        // verify if filters on memory are changed since last query
+        if(dataset.inMemoryQueryFields.length> 0
+            && my.queryStateInMemory != tmpQueryStateInMemory)
+        {
+            my.queryStateInMemory = tmpQueryStateInMemory;
+            changedOnMemory = true;
+        }
+
+
+        if(changedOnBackend) {
+            var data = buildRequestFromQuery(my.queryStateOnBackend);
+            console.log("Querying backend for ");
+            console.log(data);
+            return requestJson(dataset, data);
+        }
+
+        if(changedOnMemory) {
+            if(my.inMemoryStore == null) {
+              console.log("No memory store available for in memory query, execute initial load")
+            }
+            return applyInMemoryFilters();
+        }
+
+        if(my.inMemoryStore == null) {
+            console.log("No memory store available for in memory query, execute initial load")
+        }
+
+        return prepareReturnedData(my.inMemoryStore.data);
+
+
 
     };
 
+    function requestJson(dataset, data) {
+        var dfd = $.Deferred();
 
+      var jqxhr = $.ajax({
+          url: dataset.url,
+          dataType: 'jsonp',
+          jsonpCallback: dataset.id,
+          data: data,
+          cache: true
+      });
+
+     _wrapInTimeout(jqxhr).done(function(results) {
+          if (results.error) {
+              dfd.reject(results.error);
+          }
+          var tmpResults = _handleJsonResult(results);
+
+          dfd.resolve(tmpResults);
+
+      })
+          .fail(function(arguments) {
+              dfd.reject(arguments);
+          });
+
+        return dfd.promise();
+
+  };
+
+  function _handleJsonResult(data) {
+
+      // Im fetching only record description
+      if(data.result.data == null) {
+          return prepareReturnedData(data.result);
+      }
+
+      var result = data.result;
+
+      if(my.queryStateInMemory && my.queryStateInMemory.get("filters").length > 0) {
+          // check if is the first time I use the memory store
+          if(my.inMemoryStore == null) {
+              my.inMemoryStore = new recline.Backend.Memory.Store(result.data, result.description);
+          } else {
+              my.inMemoryStore.Store(result.data, result.description);
+          }
+
+          return applyInMemoryFilters();
+      }
+      else {
+          // no need to query on memory, return json data
+          return prepareReturnedData(result);
+     }
+
+  };
+
+
+    function applyInMemoryFilters() {
+
+
+        var tmpValue;
+
+        my.inMemoryStore.query(my.queryStateInMemory.toJSON())
+            .done(function(value) {
+                tmpValue = value;
+            });
+
+
+        return tmpValue;
+    }
+
+    function prepareReturnedData(data) {
+
+         if(data.hits == null)
+            if(data.data == null) {
+            return {
+                fields:_handleFieldDescription(data.description),
+                useMemoryStore: false
+            }                      }
+        else
+            {
+                return {
+                    hits: data.data,
+                    fields:_handleFieldDescription(data.description),
+                    useMemoryStore: false
+                }
+            }
+
+        return data;
+    }
 
 
   function  buildRequestFromQuery(queryObj)  {
       var self=this;
-      var filters = queryObj.filters;
+      var filters = queryObj.get("filters");
       var data = [];
       var multivsep = "~";
 
@@ -198,7 +302,6 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
 
       return res;
     }
-
 
 
 

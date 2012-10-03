@@ -218,16 +218,16 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
                 tmpResult =  reducedGroup.all();
                 if(tmpResult.length > 0) {
                     tmpField = tmpResult[0].value;
+
+                    for (var x in tmpField.partitions[aggregationFunctions[0]]) {
+                        partitionsFields.push(x);
+                    }
                 }
                 else
                     tmpField = {count: 0};
 
-                for (var x in tmpField.partitions[aggregationFunctions[0]]) {
-                    partitionsFields.push(x);
-                }
+
             }
-
-
 
             // set of fields array
             fields.push( {id: "count", type: "number"});
@@ -246,12 +246,12 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
                 }
             }
 
-            if(partitioning) {
+            if(partitioning && tmpField.partitions) {
                 for(var j=0;j<aggregationFunctions.length;j++){
 
                     var tempValue;
                     if(typeof tmpField.partitions[aggregationFunctions[j]] == 'function')
-                        tempValue =     tmpField.partitions[aggregationFunctions[j]]();
+                        tempValue = tmpField.partitions[aggregationFunctions[j]]();
                     else
                         tempValue = tmpField.partitions[aggregationFunctions[j]];
 
@@ -368,7 +368,9 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
 
 
 
-            /*    console.log("VMODEL crossfilter result")
+             /*
+                console.log("VMODEL crossfilter result")
+
              console.log(tmpResult);
              console.log("VModel result");
              console.log(result);
