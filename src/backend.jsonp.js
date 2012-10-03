@@ -18,9 +18,7 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
     my.fetch = function(dataset) {
     console.log("Fetching data structure " + dataset.url);
 
-    // TODO waiting for implementation of structure results
-    data = {filters: "gender daydate eq 2015-01-01"};
-
+    var data = {onlydesc: "true"};
 
     var jqxhr = $.ajax({
         url: dataset.url,
@@ -52,8 +50,7 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
 
         var data = buildRequestFromQuery(queryObj);
 
-
-        console.log("Querying dataset " + dataset.id.toString() +  JSON.stringify(data));
+        //console.log("Querying dataset " + dataset.id.toString() +  JSON.stringify(data));
 
         var jqxhr = $.ajax({
             url: dataset.url,
@@ -96,7 +93,7 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
           term         : term,          // field = value
           termAdvanced : termAdvanced,  // field (operator) value
           range        : range,         // field > start and field < end
-          list         : list           // field in (list)
+          list         : term          
       };
 
       var dataParsers = {
