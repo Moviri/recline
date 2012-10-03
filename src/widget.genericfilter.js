@@ -268,7 +268,7 @@ my.GenericFilter = Backbone.View.extend({
 	  if (this.stop)
 		this.endDate = tmplData.dateConvert(this.stop);
 		
-	  if (this.tmpValues.length)
+	  if (this.tmpValues.length && typeof this.tmpValues[0] != "undefined")
 	  {
 		  this.max = this.tmpValues[0];
 		  this.min = this.tmpValues[0];
