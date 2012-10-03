@@ -214,14 +214,6 @@ root: ../../
             });
             $('#search_container2').append(filter2.el);
 			
-        filters = [
-            {field: "daydate", type: "range", start:"2012-01-01 00:00:00", stop: "2012-01-30 00:00:00", fieldType: "date" }
-        ];
-        for(var i=0;i<filters.length;i++)
-            dataset.queryState.addFilter(filters[i]);
-        dataset.fetch(); // needed to populate filter list
-
-
         resizeAllElems(); // force initial resize
 		
 		// then assign handler for heights of grid/charts on window resize events

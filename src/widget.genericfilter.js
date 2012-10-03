@@ -311,7 +311,7 @@ my.GenericFilter = Backbone.View.extend({
 	$target.addClass("selected");
 	var fieldId     = $table.attr('data-filter-field');
 	_.each(this._targetDatasets, function(ds) { 
-		ds.queryState.setFilter({field: fieldId, type: 'term', controlType: 'list', term:$target.text(), fieldType: "number"});
+		ds.queryState.setFilter({field: fieldId, type: 'term', term:$target.text(), fieldType: "number"});
 	});
   },
 	dateConvert : function(d) { 
@@ -367,11 +367,12 @@ my.GenericFilter = Backbone.View.extend({
 			case "range_calendar": from = this.dateConvertBack(fromObj.val());to = this.dateConvertBack(toObj.val());break;
 		}
 	}
-	_.each(this._targetDatasets, function(ds) { 
-		ds.queryState.setFilter({field: fieldId, type: fieldType, controlType: controlType, term:term, start: from, stop: to, fieldType: 'number'});
+	for (var j in this._targetDatasets)
+	{
+		var ds = this._targetDatasets[j];
+		ds.queryState.setFilter({field: fieldId, type: fieldType, term:term, start: from, stop: to, fieldType: this.getFieldType(fieldId)});
 		//ds.queryState.trigger('change');
-	});
-
+	}
   },
   onAddFilterShow: function(e) {
     e.preventDefault();
