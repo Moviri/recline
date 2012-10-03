@@ -235,18 +235,21 @@ my.GenericFilter = Backbone.View.extend({
   },
   render: function() {
     var self = this;
-    var tmplData = $.extend(true, {}, this._targetDatasets[0].queryState.toJSON());
-    // we will use idx in list as there id ...
-    tmplData.filters = _.map(tmplData.filters, function(filter, idx) {
-      filter.id = idx;
-      return filter;
-    });
-	_.each(this._activeFilters , function(flt) { 
-		tmplData.filters.push(flt); 
-	});
+	var tmplData = {filters : this._activeFilters};
 	_.each(tmplData.filters , function(flt) { 
 		flt.hrVisible = 'block'; 
-	});	
+	});
+	// retrieve filters already set on the model and map them to the correct controlType also retaining their values (start/from/term)
+	_.each(this._targetDatasets[0].queryState.toJSON().filters, function(modelFilter) {
+		for (var j in tmplData.filters)
+		{
+			 if (tmplData.filters[j].field == modelFilter.field)
+			 {
+				$.extend(tmplData.filters[j], modelFilter);
+				break;
+			 }
+		}
+	});
 	if (tmplData.filters.length > 0)
 		tmplData.filters[tmplData.filters.length -1].hrVisible = 'none'
 	

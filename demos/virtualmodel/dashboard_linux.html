@@ -101,7 +101,7 @@ root: ../../
 
 
 
-        filters = [ {field: "daydate", type: "range", start:"2012-01-01 00:00:00", stop: "2012-01-30 00:00:00", fieldType: "date", controlType: "range_calendar" }];
+        filters = [ {field: "daydate", type: "range", start:"2012-01-01 00:00:00", stop: "2012-01-30 00:00:00", fieldType: "date" }];
         for(var i=0;i<filters.length;i++)
             dataset.queryState.addFilter(filters[i]);
 
@@ -204,7 +204,8 @@ root: ../../
                 sourceDataset: dataset,
 				filtersTargetDatasets: [dataset],
                 id: 'filterEditorDB',
-                label: 'DB Filters'
+                label: 'DB Filters',
+				sourceFields: [{field: "daydate", type: "range", fieldType: "date", controlType: "range_calendar" }]
             });
             $('#search_container').append(filter.el);
 
