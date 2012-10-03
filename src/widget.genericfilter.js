@@ -8,9 +8,6 @@ my.GenericFilter = Backbone.View.extend({
   className: 'recline-filter-editor well', 
   template: ' \
     <div class="filters"> \
-      <h3>{{filterLabel}}</h3> \
-      <a href="#" class="js-add-filter">Add filter</a> \
-	  <hr> \
       <div id="filterCreationForm" class="form-stacked js-add" style="display: none;"> \
         <fieldset> \
           <label>Filter type</label> \
@@ -37,6 +34,7 @@ my.GenericFilter = Backbone.View.extend({
       <div class="form-stacked js-edit"> \
         {{#filters}} \
           {{{filterRender}}} \
+		  <hr style="display:{{hrVisible}}"> \
         {{/filters}} \
       </div> \
     </div> \
@@ -45,10 +43,8 @@ my.GenericFilter = Backbone.View.extend({
     term: ' \
       <div class="filter-{{type}} filter"> \
         <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
-          <legend> \
-            {{field}} <small>{{controlType}}</small> \
-            <a class="js-remove-filter" href="#" title="Remove this filter">&times;</a> \
-          </legend> \
+            <b>{{field}}</b>  \
+			<br> \
           <input type="text" value="{{term}}" name="term" class="data-control-id" /> \
           <input type="button" class="btn" id="setFilterValueButton" value="Set"></input> \
         </fieldset> \
@@ -57,28 +53,23 @@ my.GenericFilter = Backbone.View.extend({
 	slider : ' \
 	<script> \
 		$(document).ready(function(){ \
-			$( "#slider-range{{ctrlId}}" ).slider({ \
+			$( "#slider{{ctrlId}}" ).slider({ \
 				min: {{min}}, \
 				max: {{max}}, \
 				value: {{min}}, \
 				slide: function( event, ui ) { \
-					$( "#amount{{ctrlId}}" ).val(  ui.value ); \
+					$( "#amount{{ctrlId}}" ).html( "Value: "+ ui.value ); \
 				} \
 			}); \
-			$( "#amount{{ctrlId}}" ).val(  $( "#slider-range{{ctrlId}}" ).slider( "value" ) ); \
+			$( "#amount{{ctrlId}}" ).html( "Value: "+ $( "#slider{{ctrlId}}" ).slider( "value" ) ); \
 		}); \
 	</script> \
       <div class="filter-{{type}} filter"> \
         <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
-          <legend> \
-            {{field}} <small>{{controlType}}</small> \
-            <a class="js-remove-filter" href="#" title="Remove this filter">&times;</a> \
-          </legend> \
-		  <p> \
-			  <label for="amount{{ctrlId}}">Value range:</label> \
-			  <input type="text" id="amount{{ctrlId}}" style="border:none;" disabled="true"></input> \
-		  </p> \
-		  <div id="slider-range{{ctrlId}}" class="data-control-id" ></div> \
+            <b>{{field}}</b>  \
+			<br> \
+		  <label id="amount{{ctrlId}}">Value: </label></span> \
+		  <div id="slider{{ctrlId}}" class="data-control-id" ></div> \
 		  <br> \
           <input type="button" class="btn" id="setFilterValueButton" value="Set"></input> \
         </fieldset> \
@@ -87,10 +78,8 @@ my.GenericFilter = Backbone.View.extend({
     range: ' \
       <div class="filter-{{type}} filter"> \
         <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
-          <legend> \
-            {{field}} <small>{{controlType}}</small> \
-            <a class="js-remove-filter" href="#" title="Remove this filter">&times;</a> \
-          </legend> \
+            <b>{{field}}</b>  \
+			<br> \
           <label class="control-label" for="">From</label> \
           <input type="text" value="{{start}}" name="start"  class="data-control-id-from" /> \
           <label class="control-label" for="">To</label> \
@@ -109,22 +98,17 @@ my.GenericFilter = Backbone.View.extend({
 				max: {{max}}, \
 				values: [ {{min}}, {{max}} ], \
 				slide: function( event, ui ) { \
-					$( "#amount{{ctrlId}}" ).val(  ui.values[ 0 ] + " - " + ui.values[ 1 ] ); \
+					$( "#amount{{ctrlId}}" ).html(  "Value range: " + ui.values[ 0 ] + " - " + ui.values[ 1 ] ); \
 				} \
 			}); \
-			$( "#amount{{ctrlId}}" ).val(  $( "#slider-range{{ctrlId}}" ).slider( "values", 0 ) + " - " + $( "#slider-range{{ctrlId}}" ).slider( "values", 1 ) ); \
+			$( "#amount{{ctrlId}}" ).html(  "Value range: " + $( "#slider-range{{ctrlId}}" ).slider( "values", 0 ) + " - " + $( "#slider-range{{ctrlId}}" ).slider( "values", 1 ) ); \
 		}); \
 	</script> \
       <div class="filter-{{type}} filter"> \
         <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
-          <legend> \
-            {{field}} <small>{{controlType}}</small> \
-            <a class="js-remove-filter" href="#" title="Remove this filter">&times;</a> \
-          </legend> \
-		  <p> \
-			  <label for="amount{{ctrlId}}">Value range:</label> \
-			  <input type="text" id="amount{{ctrlId}}" style="border:none;" disabled="true"></input> \
-		  </p> \
+            <b>{{field}}</b>  \
+			<br> \
+		  <label id="amount{{ctrlId}}">Value range: </label></span> \
 		  <div id="slider-range{{ctrlId}}" class="data-control-id-from data-control-id-to" ></div> \
 		  <br> \
           <input type="button" class="btn" id="setFilterValueButton" value="Set"></input> \
@@ -154,10 +138,8 @@ my.GenericFilter = Backbone.View.extend({
 	</script> \
       <div class="filter-{{type}} filter"> \
         <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
-          <legend> \
-            {{field}} <small>{{controlType}}</small> \
-            <a class="js-remove-filter" href="#" title="Remove this filter">&times;</a> \
-          </legend> \
+            <b>{{field}}</b>  \
+			<br> \
 			<label for="from{{ctrlId}}">From</label> \
 			<input type="text" id="from{{ctrlId}}" name="from{{ctrlId}}" class="data-control-id-from" value="{{startDate}}"/> \
 			<br> \
@@ -171,10 +153,8 @@ my.GenericFilter = Backbone.View.extend({
     drop_down: ' \
       <div class="filter-{{type}} filter"> \
         <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
-          <legend> \
-            {{field}} <small>{{controlType}}</small> \
-            <a class="js-remove-filter" href="#" title="Remove this filter">&times;</a> \
-          </legend> \
+            <b>{{field}}</b>  \
+			<br> \
 			<select class="drop-down fields data-control-id" > \
 			<option></option> \
             {{#values}} \
@@ -195,10 +175,8 @@ my.GenericFilter = Backbone.View.extend({
 	  </style> \
       <div class="filter-{{type}} filter"> \
         <fieldset> \
-          <legend> \
-            {{field}} <small>{{controlType}}</small> \
-            <a class="js-remove-filter" href="#" title="Remove this filter">&times;</a> \
-          </legend> \
+            <b>{{field}}</b>  \
+			<br> \
 			<div style="max-height:500px;width:100%;border:1px solid grey;overflow:auto;"> \
 				<table style="width:100%" data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" > \
 				{{#values}} \
@@ -212,10 +190,8 @@ my.GenericFilter = Backbone.View.extend({
     listbox: ' \
       <div class="filter-{{type}} filter"> \
         <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
-          <legend> \
-            {{field}} <small>{{controlType}}</small> \
-            <a class="js-remove-filter" href="#" title="Remove this filter">&times;</a> \
-          </legend> \
+            <b>{{field}}</b>  \
+			<br> \
 			<select class="fields data-control-id"  multiple SIZE=10> \
             {{#values}} \
             <option value="{{val}}">{{val}}</option> \
@@ -236,9 +212,9 @@ my.GenericFilter = Backbone.View.extend({
 	'change .drop-down': 'onFilterValueChanged'
   },
   _ctrlId : 0,
-  _origRecords: [],
   _sourceDataset: null,
   _targetDatasets: [],
+  _activeFilters: [],
   initialize: function(args) {
     this.el = $(this.el);
     _.bindAll(this, 'render');
@@ -249,6 +225,7 @@ my.GenericFilter = Backbone.View.extend({
     this._sourceDataset.records.bind('reset', this.render); 
 	this.sourceFields = args.sourceFields;
 	this.filterDialogLabel = args.label;
+	this._activeFilters = [];
 
     if (this.sourceFields && this.sourceFields.length)
 		for (var k in this.sourceFields)
@@ -264,13 +241,26 @@ my.GenericFilter = Backbone.View.extend({
       filter.id = idx;
       return filter;
     });
+	_.each(this._activeFilters , function(flt) { 
+		tmplData.filters.push(flt); 
+	});
+	_.each(tmplData.filters , function(flt) { 
+		flt.hrVisible = 'block'; 
+	});	
+	if (tmplData.filters.length > 0)
+		tmplData.filters[tmplData.filters.length -1].hrVisible = 'none'
+	
     tmplData.fields = this._sourceDataset.fields.toJSON();
 	tmplData.records = _.pluck(this._sourceDataset.records.models, "attributes");
 	tmplData.filterLabel = this.filterDialogLabel;
 	tmplData.dateConvert = self.dateConvert;
     tmplData.filterRender = function() {
+		
+	  this.tmpValues = [];
 	  // add value list to selected filter or templating of record values will not work
-	  this.tmpValues = _.uniq(_.pluck(tmplData.records, this.field));
+	  if (this.controlType === 'list' || this.controlType.indexOf('slider') >= 0)
+		this.tmpValues = _.uniq(_.pluck(tmplData.records, this.field));
+		
 	  this.values = new Array();
 	  if (this.start)
 		this.startDate = tmplData.dateConvert(this.start);
@@ -282,6 +272,11 @@ my.GenericFilter = Backbone.View.extend({
 	  {
 		  this.max = this.tmpValues[0];
 		  this.min = this.tmpValues[0];
+	  }
+	  else
+	  {
+		  this.max = 100;
+		  this.min = 0;
 	  }
 	  for (var i in this.tmpValues)
 	  {
@@ -314,7 +309,6 @@ my.GenericFilter = Backbone.View.extend({
 	var fieldId     = $table.attr('data-filter-field');
 	_.each(this._targetDatasets, function(ds) { 
 		ds.queryState.setFilter({field: fieldId, type: 'term', controlType: 'list', term:$target.text(), fieldType: "number"});
-		//ds.queryState.trigger('change');
 	});
   },
 	dateConvert : function(d) { 
@@ -428,10 +422,8 @@ my.GenericFilter = Backbone.View.extend({
 
 	if (typeof newFilter.fieldType == 'undefined')
 		newFilter.fieldType = this.getFieldType(newFilter.field)
-		
-	_.each(this._targetDatasets, function(ds) { 
-		ds.queryState.addFilter(newFilter);
-	});
+	
+	this._activeFilters.push(newFilter);
 	this.render();
   },
   onRemoveFilter: function(e) {

@@ -1,6 +1,9 @@
 .lightgreyborder {
   border: 1px solid lightgrey;
 }
+.lightgreydottedborder {
+  border: 1px dotted lightgrey;
+}
 
 .list-filter-item
 {
