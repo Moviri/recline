@@ -73,6 +73,8 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
 
         if(changedOnBackend) {
             var data = buildRequestFromQuery(my.queryStateOnBackend);
+            console.log("Querying backend for ");
+            console.log(data);
             return requestJson(dataset, data);
         }
 
@@ -163,10 +165,20 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
     }
 
     function prepareReturnedData(data) {
+
          if(data.hits == null)
+            if(data.data == null) {
             return {
                 fields:_handleFieldDescription(data.description),
                 useMemoryStore: false
+            }                      }
+        else
+            {
+                return {
+                    hits: data.data,
+                    fields:_handleFieldDescription(data.description),
+                    useMemoryStore: false
+                }
             }
 
         return data;

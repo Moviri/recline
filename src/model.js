@@ -221,8 +221,7 @@ my.Dataset = Backbone.Model.extend({
   },
 
   _handleQueryResult: function(queryResult) {
-        console.log("Model handlequeryresult");
-        console.log(queryResult);
+
 
     var self = this;
 

@@ -368,7 +368,9 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
 
 
 
-            /*    console.log("VMODEL crossfilter result")
+             /*
+                console.log("VMODEL crossfilter result")
+
              console.log(tmpResult);
              console.log("VModel result");
              console.log(result);
