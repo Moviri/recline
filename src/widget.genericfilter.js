@@ -81,9 +81,9 @@ my.GenericFilter = Backbone.View.extend({
             <b>{{field}}</b>  \
 			<br> \
           <label class="control-label" for="">From</label> \
-          <input type="text" value="{{start}}" name="start"  class="data-control-id-from" /> \
+          <input type="text" value="{{start}}" name="start"  class="data-control-id-from" style="width:auto"/> \
           <label class="control-label" for="">To</label> \
-          <input type="text" value="{{stop}}" name="stop" class="data-control-id-to" /> \
+          <input type="text" value="{{stop}}" name="stop" class="data-control-id-to"  style="width:auto"/> \
 		  <br> \
           <input type="button" class="btn" id="setFilterValueButton" value="Set"></input> \
         </fieldset> \
@@ -141,10 +141,10 @@ my.GenericFilter = Backbone.View.extend({
             <b>{{field}}</b>  \
 			<br> \
 			<label for="from{{ctrlId}}">From</label> \
-			<input type="text" id="from{{ctrlId}}" name="from{{ctrlId}}" class="data-control-id-from" value="{{startDate}}"/> \
+			<input type="text" id="from{{ctrlId}}" name="from{{ctrlId}}" class="data-control-id-from" value="{{startDate}}" style="width:auto"/> \
 			<br> \
 			<label for="to{{ctrlId}}">to</label> \
-			<input type="text" id="to{{ctrlId}}" name="to{{ctrlId}}" class="data-control-id-to" value="{{endDate}}"/> \
+			<input type="text" id="to{{ctrlId}}" name="to{{ctrlId}}" class="data-control-id-to" value="{{endDate}}" style="width:auto"/> \
  		  <br> \
           <input type="button" class="btn" id="setFilterValueButton" value="Set"></input> \
        </fieldset> \

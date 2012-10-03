@@ -5,8 +5,15 @@ recline-deps: true
 root: ../../
 ---
 
-
-
+<div id="loadingImage" style="display:none">
+	<div style="position:absolute;top:45%;left:45%;width:150px;height:80px;border:1px solid grey;background-color: #E0E0E0">
+		<p class="centered">
+			Loading...
+			<br>
+			<img  src="../../images/ajax-loader.gif" >
+		</p>
+	</div>
+</div>
 <div id="container" class="container-fluid">
     <div class="row-fluid">
         <div class="span2 ">
@@ -58,6 +65,10 @@ root: ../../
 
         });
 
+		
+		dataset.bind('query:done', function() {document.getElementById("loadingImage").style.display = "none";});
+		dataset.bind('query:fail', function() {document.getElementById("loadingImage").style.display = "none";});
+		dataset.bind('query:start', function() {document.getElementById("loadingImage").style.display = "block";});
 
 
             virtualdatasetAge = new recline.Model.VirtualDataset({
@@ -213,6 +224,12 @@ root: ../../
 							]
             });
             $('#search_container2').append(filter2.el);
+
+            // var facet = new recline.View.FacetViewer({
+				// model: virtualdatasetAge
+			// });
+            // $('#facet_container').append(facet.el);
+			
 			
         resizeAllElems(); // force initial resize
 		
@@ -227,10 +244,9 @@ root: ../../
 		
 		function resizeElem(elemName, obj)
 		{
-			var availH = window.innerHeight-5;
+			var availH = window.innerHeight-5; // substract 5px for Chrome
 			var perc = document.getElementById(elemName).parentNode.parentNode.style.height.replace("%", "")/100;
 			var newH = parseInt(availH * perc);
-			//console.log("AvailH = "+availH+" Resizing "+elemName+" from "+$("#"+elemName).height()+" to "+newH);
 			$("#"+elemName).height(newH);
 			$("#"+elemName+" svg").height(newH);
 			obj.height = newH;
@@ -238,10 +254,6 @@ root: ../../
 		}
 
 	});
-
-        //   {field: "agex", type: "term", term: 15, fieldType: "number"}
-
-
 
 
 </script>

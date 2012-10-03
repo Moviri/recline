@@ -26,7 +26,10 @@ this.recline.View = this.recline.View || {};
 
   template: '<div class="recline-graph"> \
       <div class="panel indicator_{{viewId}}"style="display: block;"> \
-        <div id="indicator_{{viewId}}"><h3 class="centered">{{label}}</h3><h1 class="orange centered">{{value}}</h1></div>\
+        <div id="indicator_{{viewId}}"> \
+			<h3 class="centered">{{label}}</h3> \
+			<h1 class="orange centered">{{value}}</h1> \
+		</div>\
       </div> \
     </div> ',
 
@@ -36,9 +39,9 @@ this.recline.View = this.recline.View || {};
     this.el = $(this.el);
     _.bindAll(this, 'render');
 
-    this.model.records.bind('add',      function() {self.render();});
-    this.model.records.bind('reset',    function() {self.render();});
-    this.model.records.bind('change',      function() {self.render();});
+    this.model.records.bind('add',      function() {self.render('');});
+    this.model.records.bind('reset',    function() {self.render('');});
+    this.model.records.bind('change',      function() {self.render('');});
 
     var stateData = _.extend({
         id: 0
@@ -49,11 +52,16 @@ this.recline.View = this.recline.View || {};
 
   },
 
-    render: function() {
+    render: function(ev) {
         var self = this;
         var tmplData = this.model.toTemplateJSON();
         tmplData["viewId"] = this.state.attributes["id"];
 		tmplData.label = this.state.attributes["label"];
+		if (ev == "start")
+			tmplData.imgVisible = 'block'
+		else if (ev == "start")
+			tmplData.imgVisible = 'none';
+			
 		var format = this.state.attributes.format || this.defaults.format;
 		var applyFormatFunction = d3.format(format)
 		
