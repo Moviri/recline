@@ -115,6 +115,36 @@ my.GenericFilter = Backbone.View.extend({
         </fieldset> \
       </div> \
     ',
+	month_calendar: ' \
+	  <style> \
+		.odd-row { background: aliceblue } \
+		.even-row { background: azure } \
+		.list-filter-item { cursor:pointer; } \
+		.list-filter-item:hover { background: lightblue;cursor:pointer; } \
+		.selected { background: orange } \
+		.selected:hover { background: red } \
+	  </style> \
+      <div class="filter-{{type}} filter"> \
+        <fieldset> \
+            <b>{{field}}</b>  \
+            <a class="js-remove-filter" href="#" title="Remove this filter">&times;</a> \
+			<br> \
+			<select class="drop-down2 fields data-control-id" > \
+            {{#yearValues}} \
+            <option value="{{.}}">{{.}}</option> \
+            {{/yearValues}} \
+          </select> \
+			<br> \
+			<div style="max-height:500px;width:100%;border:1px solid grey;overflow:auto;"> \
+				<table class="table" style="width:100%" data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" > \
+				{{#monthValues}} \
+				<tr><td class="list-filter-item {{evenOdd}}" myValue="{{val}}">{{label}}</td><tr> \
+				{{/monthValues}} \
+			  </table> \
+		  </div> \
+	    </fieldset> \
+      </div> \
+	',
 	range_calendar: ' \
 	<script> \
 	$(function() { \
@@ -174,8 +204,9 @@ my.GenericFilter = Backbone.View.extend({
 		.selected:hover { background: red } \
 	  </style> \
       <div class="filter-{{type}} filter"> \
-        <fieldset> \
+        <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}"> \
             <b>{{field}}</b>  \
+            <a class="js-remove-filter" href="#" title="Remove this filter">&times;</a> \
 			<br> \
 			<div style="max-height:500px;width:100%;border:1px solid grey;overflow:auto;"> \
 				<table style="width:100%" data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" > \
@@ -209,7 +240,8 @@ my.GenericFilter = Backbone.View.extend({
     'click #addFilterButton': 'onAddFilter',
 	'click .list-filter-item': 'onListItemClicked',
 	'click #setFilterValueButton': 'onFilterValueChanged',
-	'change .drop-down': 'onFilterValueChanged'
+	'change .drop-down': 'onFilterValueChanged',
+	'change .drop-down2': 'onListItemClicked'
   },
   _ctrlId : 0,
   _sourceDataset: null,
@@ -219,6 +251,7 @@ my.GenericFilter = Backbone.View.extend({
     this.el = $(this.el);
     _.bindAll(this, 'render');
 	_.bindAll(this, 'getFieldType');
+	_.bindAll(this, 'onRemoveFilter');
 	this._sourceDataset = args.sourceDataset;
 	this._targetDatasets = args.filtersTargetDatasets;
     this._sourceDataset.fields.bind('all', this.render); 
@@ -291,6 +324,21 @@ my.GenericFilter = Backbone.View.extend({
 		if (v < this.min)
 			this.min = v;
 	  }
+	  if (this.controlType == "month_calendar")
+	  {
+		this.monthValues = [];
+		for (m = 1; m <= 12; m++)
+			this.monthValues.push({ val: d3.format("02d")(m), 
+									label: d3.time.format("%B")(new Date(m+"/01/2012")), 
+									evenOdd: (m % 2 == 0 ? 'even-row' : 'odd-row' )
+								});
+		
+		this.yearValues = [];
+		var startYear = 2012;
+		var endYear = parseInt(d3.time.format("%Y")(new Date()))
+		for (var y = startYear; y <= endYear; y++)
+			this.yearValues.push(y);
+	  }
 	  if (this.controlType.indexOf("slider") >= 0 || this.controlType.indexOf("calendar") >= 0)
 		self._ctrlId++;
 		
@@ -302,17 +350,60 @@ my.GenericFilter = Backbone.View.extend({
   },
   onListItemClicked: function(e) {
     e.preventDefault();
+	// let's check if user clicked on combobox or table and behave consequently
     var $target = $(e.currentTarget);
-	$table = $target.parent().parent().parent();
-	$table.find('td').each(function() { 
-						$(this).removeClass("selected");
-					});
-	
-	$target.addClass("selected");
-	var fieldId     = $table.attr('data-filter-field');
-	_.each(this._targetDatasets, function(ds) { 
-		ds.queryState.setFilter({field: fieldId, type: 'term', term:$target.text(), fieldType: "number"});
-	});
+	var $table;
+	var $targetTD;
+	var $targetOption;
+	var $combo;
+	if ($target.is('td'))
+	{
+		$targetTD = $target;
+		$table = $target.parent().parent().parent();
+		var type  = $table.attr('data-filter-type');
+		if (type == "range")
+			$combo = $table.parent().parent().find(".drop-down2");
+	}
+	else if ($target.is('select'))
+	{
+		$combo = $target;
+		$table = $combo.parent().find(".table");
+	}
+	this.handleListItemClicked($targetTD, $table, $combo);
+  },
+  handleListItemClicked: function($targetTD, $table, $combo) {
+	if (typeof $targetTD != "undefined")
+	{
+		// user clicked on table
+		$table.find('td').each(function() { 
+							$(this).removeClass("selected");
+						});
+		
+		$targetTD.addClass("selected");
+		var fieldId = $table.attr('data-filter-field');
+		var type = $table.attr('data-filter-type');
+		if (type == "range")
+		{
+			// case month_calendar 
+			var month = $targetTD.attr('myValue');
+			var year = $combo.val();
+			var startDate = year+"-"+month+"-01 00:00:00"
+			var endDate = year+"-"+d3.format("02d")(parseInt(month)+1)+"-01 00:00:00"
+			if (month == '12')
+				endDate = (parseInt(year)+1)+"-01-01 00:00:00"
+				
+			_.each(this._targetDatasets, function(ds) { 
+				ds.queryState.setFilter({field: fieldId, type: 'range', start:startDate, stop:endDate, fieldType: "date"});
+			});
+		}
+		else
+		{
+			// case normal list
+			_.each(this._targetDatasets, function(ds) { 
+				ds.queryState.setFilter({field: fieldId, type: 'term', term:$targetTD.text(), fieldType: "number"});
+			});
+		}
+	}
   },
 	dateConvert : function(d) { 
 		// convert 2012-01-31 00:00:00 to 01/31/2012
@@ -413,7 +504,7 @@ my.GenericFilter = Backbone.View.extend({
   onAddFilter: function(e) {
     e.preventDefault();
     var $target = $(e.target).parent().parent();
-    $target.hide();//this.hidePanel($target);
+    $target.hide();
     var controlType = $target.find('select.filterType').val();
 	var filterType = this.getFilterTypeFromControlType(controlType);
     var field      = $target.find('select.fields').val();
@@ -433,10 +524,11 @@ my.GenericFilter = Backbone.View.extend({
   onRemoveFilter: function(e) {
     e.preventDefault();
     var $target = $(e.target);
-    var filterId = $target.closest('.filter').attr('data-filter-id');
+    var field = $target.parent().attr('data-filter-field');
 	_.each(this._targetDatasets, function(ds) { 
-		ds.queryState.removeFilter(filterId);
+		ds.queryState.removeFilterByField(field);
 	});
+	this.render();
   }
 
 

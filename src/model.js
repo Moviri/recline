@@ -599,6 +599,33 @@ my.Query = Backbone.Model.extend({
     this.set({filters: filters});
     this.trigger('change');
   },
+  removeFilterByField: function(field) {
+    var filters = this.get('filters');
+	for (var j in filters)
+	{
+		if (filters[j].field == field)
+		{
+			filters.splice(j, 1);
+			this.set({filters: filters});
+			this.trigger('change');
+			break;
+		}
+	}
+  },
+  clearFilter: function(field) {
+    var filters = this.get('filters');
+	for (var j in filters)
+	{
+		if (filters[j].field == field)
+		{
+			filters[j].term = null;
+			filters[j].start = null;
+			filters[j].stop = null;
+			this.trigger('change');
+			break;
+		}
+	}
+  },
 
       // ### addSelection
       //

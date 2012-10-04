@@ -21,10 +21,10 @@ root: ../../
                 <div id="search_container"></div>
             </div>
             <div class="row-fluid">
-                <div id="search_container2"></div>
+                <div id="search_container1"></div>
             </div>
             <div class="row-fluid">
-                <div id="facet_container"></div>
+                <div id="search_container2"></div>
             </div>
         </div>
         <div class="span9">
@@ -65,11 +65,8 @@ root: ../../
 
         });
 
-		
-		dataset.bind('query:done', function() {document.getElementById("loadingImage").style.display = "none";resizeAllElems();});
-		dataset.bind('query:fail', function() {document.getElementById("loadingImage").style.display = "none";resizeAllElems();});
-		dataset.bind('query:start', function() {document.getElementById("loadingImage").style.display = "block";resizeAllElems();});
-
+		dataset.bind('query:done query:fail', function() { document.getElementById("loadingImage").style.display = "none";resizeAllElems(); });
+		dataset.bind('query:start', function() { document.getElementById("loadingImage").style.display = "block"; });
 
             virtualdatasetAge = new recline.Model.VirtualDataset({
                 dataset: dataset,
@@ -100,6 +97,15 @@ root: ../../
                 }
             });
 
+            virtualdatasetDay= new recline.Model.VirtualDataset({
+                dataset: dataset,
+                aggregation: {
+                    dimensions: ["daydate"],
+                    aggregatedFields: ["totalviewed", "price_sum"],
+                    partitions: ["gender"],
+                    aggregationFunctions: ["sum", "avg"]
+                }
+            });
 
             virtualdatasetTotal= new recline.Model.VirtualDataset({
                 dataset: dataset,
@@ -124,15 +130,6 @@ root: ../../
 
 
 
-            virtualdatasetDay= new recline.Model.VirtualDataset({
-                dataset: dataset,
-                aggregation: {
-                    dimensions: ["daydate"],
-                    aggregatedFields: ["totalviewed", "price_sum"],
-                    partitions: ["gender"],
-                    aggregationFunctions: ["sum", "avg"]
-                }
-            });
 
             var graph2 = new recline.View.NVD3Graph({
                 model: virtualdatasetDay,
@@ -213,11 +210,22 @@ root: ../../
             });
             $('#search_container').append(filter.el);
 
+            var filter1 = new recline.View.GenericFilter({
+                sourceDataset: dataset,
+				filtersTargetDatasets: [virtualdatasetDay ],
+                id: 'filterEditor1',
+                label: 'Memory Filters1',
+				sourceFields: [
+								{field: 'daydate', type: "range", controlType: 'month_calendar', fieldType: 'date'}
+							]
+            });
+            $('#search_container1').append(filter1.el);
+
             var filter2 = new recline.View.GenericFilter({
                 sourceDataset: dataset,
-				filtersTargetDatasets: [virtualdatasetAge, virtualdatasetWeekday, virtualdatasetTotal, virtualdatasetHour ],
-                id: 'filterEditor',
-                label: 'Memory Filters',
+				filtersTargetDatasets: [virtualdatasetAge, virtualdatasetDay, virtualdatasetWeekday, virtualdatasetTotal, virtualdatasetHour ],
+                id: 'filterEditor2',
+                label: 'Memory Filters2',
 				sourceFields: [
 								{field: 'age', controlType: 'list', fieldType: 'number'}//,
 								//{field: 'totalviewed_sum', controlType: 'range_slider', fieldType: 'number'}
