@@ -98,7 +98,7 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
     function requestJson(dataset, data) {
         var dfd = $.Deferred();
 
-      var jqxhr = $.ajax({
+        var jqxhr = $.ajax({
           url: dataset.url,
           dataType: 'jsonp',
           jsonpCallback: dataset.id,
@@ -107,12 +107,14 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
       });
 
      _wrapInTimeout(jqxhr).done(function(results) {
-          if (results.error) {
-              dfd.reject(results.error);
-          }
-          var tmpResults = _handleJsonResult(results);
 
-          dfd.resolve(tmpResults);
+          // verify if returned data is not an error
+          if (results.results.length != 1 || results.results[0].status.code != 0) {
+              console.log("Error in fetching data: " + results.results[0].status.message + " Statuscode:[" + results.results[0].status.code + "]" );
+
+              dfd.reject(results.results[0].status);
+          } else
+          dfd.resolve(_handleJsonResult(results.results[0].result));
 
       })
           .fail(function(arguments) {
@@ -126,11 +128,11 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
   function _handleJsonResult(data) {
 
       // Im fetching only record description
-      if(data.result.data == null) {
-          return prepareReturnedData(data.result);
+      if(data.data == null) {
+          return prepareReturnedData(data);
       }
 
-      var result = data.result;
+      var result = data;
 
       if(my.queryStateInMemory && my.queryStateInMemory.get("filters").length > 0) {
           // check if is the first time I use the memory store
