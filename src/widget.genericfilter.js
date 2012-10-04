@@ -387,10 +387,12 @@ my.GenericFilter = Backbone.View.extend({
 			// case month_calendar 
 			var month = $targetTD.attr('myValue');
 			var year = $combo.val();
-			var startDate = year+"-"+month+"-01 00:00:00"
-			var endDate = year+"-"+d3.format("02d")(parseInt(month)+1)+"-01 00:00:00"
-			if (month == '12')
-				endDate = (parseInt(year)+1)+"-01-01 00:00:00"
+			var startDate =  new Date(year, month-1, 1, 0, 0, 0, 0);
+            var endDate;
+            if(month=="12")
+                endDate = new Date(year+1, 0, 1, 0, 0, 0, 0);
+            else
+                endDate = new Date(year, month, 1, 0, 0, 0, 0);
 				
 			_.each(this._targetDatasets, function(ds) { 
 				ds.queryState.setFilter({field: fieldId, type: 'range', start:startDate, stop:endDate, fieldType: "date"});

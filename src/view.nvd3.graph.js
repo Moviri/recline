@@ -73,6 +73,7 @@ this.recline.View = this.recline.View || {};
   },
 
   redraw: function() {
+
     var self=this;
     // There appear to be issues generating a Flot graph if either:
 
@@ -131,7 +132,7 @@ this.recline.View = this.recline.View || {};
                         .showValues(true);
 
                         chart.discretebar.dispatch.on('elementClick', function(e) {
-                            self.applyFiltersAndSelections(e.series);
+                            self.doActions("elementClick", e);
                         });
                 break;
                 case "multiBarChart":
@@ -194,42 +195,57 @@ this.recline.View = this.recline.View || {};
     }
   },
 
-  applyFiltersAndSelections: function(series) {
+  doActions: function(eventType, event) {
+      console.log(event);
 
+      var self = this;
       var actions = this.options.actions;
-      var state = this.options.state;
 
-      var selection ;
-      if(actions.FiltersTargetDataset != null
-          || actions.SelectionsTargetDataset != null) {
+      var seriesNameField = self.state.attributes.seriesNameField ;
 
+      var eventData = {};
 
-
-      if(state.seriesNameField != null) {
-          // we use a field to define series
-          // todo fieldtype must be evaluated on fields structure
-          selection = {field: state.seriesNameField, type: "term", term:series.key, fieldType: "string"}   ;
-      } else
+      // if seriesaname is not defined click means selection of single data
+      if(seriesNameField == null ){
+        var seriesFieldName = event.series.key;
+        eventData[seriesFieldName] = event.value;
+      }
+      else
       {
-          // todo to be verified, series index must be used
-          selection = {field: state.series[series.id], type: "term", term:series.key, fieldType: "string"}       ;
+          eventData[ seriesNameField[0] ] = event.series.key;
       }
 
-          if(actions.FiltersTargetDataset != null) {
-              for (var i = 0; i < actions.FiltersTargetDataset.length; i++) {
-                  actions.FiltersTargetDataset[i].queryState.setFilter(selection);
-              }
-          }
 
-          if(actions.SelectionsTargetDataset != null) {
-              for (var i = 0; i < actions.SelectionsTargetDataset.length; i++) {
-                  actions.SelectionsTargetDataset[i].queryState.setSelection(selection);
-              }
-          }
+      // find all actions configured for eventType
+      var targetActions = _.filter(actions, function(d) { return d["event"]==eventType; });
 
-      }
+
+
+      // foreach action prepare field
+      _.each(targetActions, function(currentAction) {
+          var mapping = currentAction.mapping;
+          var actionParameters = [];
+          //foreach mapping set destination field
+          _.each(mapping, function(map) {
+              if(eventData[map["srcField"]] == null) {
+                  console.log( "warn: sourceField: [" + map["srcField"] + "] not present in event data" );
+              } else {
+
+
+              var param = {
+                  filter: map["filter"],
+                  value: [eventData[map["srcField"]]]
+              };
+                  actionParameters.push(param);
+              }
+          });
+
+          if( actionParameters.length > 0)  {
+              currentAction.action.doAction(actionParameters);
+          }
+      });
   },
-  
+
   createSeriesNVD3: function() {
 
       var self = this;
@@ -265,8 +281,8 @@ this.recline.View = this.recline.View || {};
 
 
              var points = [];
-             var x = parseFloat(doc.getFieldValue(xfield));
-             var y = parseFloat(doc.getFieldValue(seriesValues));
+             var x = doc.getFieldValue(xfield);
+             var y = doc.getFieldValue(seriesValues);
              tmpS["values"].push([x, y]);
 
              //console.log("xfield: " + xfield + " seriesvalue: " + seriesValues + " seriesNameField: " + seriesNameField + " key: " + key + " x: "+ x + " y: "+ y);
@@ -312,7 +328,7 @@ this.recline.View = this.recline.View || {};
        });
      }
 
-      //console.log(JSON.stringify(series));
+
       return series;
 }
 

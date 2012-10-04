@@ -164,27 +164,48 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
 
 
         return tmpValue;
-    }
+    };
 
     function prepareReturnedData(data) {
 
-         if(data.hits == null)
-            if(data.data == null) {
+       if(data.hits == null)
+           var fields = _handleFieldDescription(data.description);
+           if(data.data == null) {
             return {
-                fields:_handleFieldDescription(data.description),
+                fields: fields,
                 useMemoryStore: false
-            }                      }
+            }
+           }
         else
             {
                 return {
-                    hits: data.data,
-                    fields:_handleFieldDescription(data.description),
+                    hits: _normalizeRecords(data.data, fields),
+                    fields:fields,
                     useMemoryStore: false
                 }
             }
 
         return data;
-    }
+    };
+
+    // convert each record in native format
+    // todo verify if could cause performance problems
+    function _normalizeRecords(records, fields) {
+        console.log(records, fields);
+        console.log(this);
+        console.log(recline);
+
+        _.each(fields, function(f) {
+            if(f != "string")
+                _.each(records, function(r) {
+                    r[f.id] = recline.Data.FormattersMODA[f.type](r[f.id]);
+                })
+        });
+
+        console.log(records, fields);
+        return records;
+
+    };
 
 
   function  buildRequestFromQuery(queryObj)  {
@@ -292,7 +313,7 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
           STRING : "string",
           DATE   : "date",
           INTEGER: "number",
-          DOUBLE : "number"
+          DOUBLE : "float"
       };
 
 
@@ -301,6 +322,9 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
 
               res.push({id: k, type: dataMapping[description[k]]});
         }
+
+      // use custom renderer
+      res.options = {renderer: recline.Data.Renderers};
 
       return res;
     }
