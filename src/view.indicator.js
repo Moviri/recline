@@ -26,7 +26,10 @@ this.recline.View = this.recline.View || {};
 
   template: '<div class="recline-graph"> \
       <div class="panel indicator_{{viewId}}"style="display: block;"> \
-        <div id="indicator_{{viewId}}"><h3 class="centered">{{label}}</h3><h1 class="orange centered">{{value}}</h1></div>\
+        <div id="indicator_{{viewId}}"> \
+			<h3 class="centered">{{label}}</h3> \
+			<h1 class="orange centered">{{value}}</h1> \
+		</div>\
       </div> \
     </div> ',
 
@@ -54,6 +57,7 @@ this.recline.View = this.recline.View || {};
         var tmplData = this.model.toTemplateJSON();
         tmplData["viewId"] = this.state.attributes["id"];
 		tmplData.label = this.state.attributes["label"];
+			
 		var format = this.state.attributes.format || this.defaults.format;
 		var applyFormatFunction = d3.format(format)
 		

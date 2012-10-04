@@ -81,9 +81,9 @@ my.GenericFilter = Backbone.View.extend({
             <b>{{field}}</b>  \
 			<br> \
           <label class="control-label" for="">From</label> \
-          <input type="text" value="{{start}}" name="start"  class="data-control-id-from" /> \
+          <input type="text" value="{{start}}" name="start"  class="data-control-id-from" style="width:auto"/> \
           <label class="control-label" for="">To</label> \
-          <input type="text" value="{{stop}}" name="stop" class="data-control-id-to" /> \
+          <input type="text" value="{{stop}}" name="stop" class="data-control-id-to"  style="width:auto"/> \
 		  <br> \
           <input type="button" class="btn" id="setFilterValueButton" value="Set"></input> \
         </fieldset> \
@@ -141,10 +141,10 @@ my.GenericFilter = Backbone.View.extend({
             <b>{{field}}</b>  \
 			<br> \
 			<label for="from{{ctrlId}}">From</label> \
-			<input type="text" id="from{{ctrlId}}" name="from{{ctrlId}}" class="data-control-id-from" value="{{startDate}}"/> \
+			<input type="text" id="from{{ctrlId}}" name="from{{ctrlId}}" class="data-control-id-from" value="{{startDate}}" style="width:auto"/> \
 			<br> \
 			<label for="to{{ctrlId}}">to</label> \
-			<input type="text" id="to{{ctrlId}}" name="to{{ctrlId}}" class="data-control-id-to" value="{{endDate}}"/> \
+			<input type="text" id="to{{ctrlId}}" name="to{{ctrlId}}" class="data-control-id-to" value="{{endDate}}" style="width:auto"/> \
  		  <br> \
           <input type="button" class="btn" id="setFilterValueButton" value="Set"></input> \
        </fieldset> \
@@ -235,18 +235,21 @@ my.GenericFilter = Backbone.View.extend({
   },
   render: function() {
     var self = this;
-    var tmplData = $.extend(true, {}, this._targetDatasets[0].queryState.toJSON());
-    // we will use idx in list as there id ...
-    tmplData.filters = _.map(tmplData.filters, function(filter, idx) {
-      filter.id = idx;
-      return filter;
-    });
-	_.each(this._activeFilters , function(flt) { 
-		tmplData.filters.push(flt); 
-	});
+	var tmplData = {filters : this._activeFilters};
 	_.each(tmplData.filters , function(flt) { 
 		flt.hrVisible = 'block'; 
-	});	
+	});
+	// retrieve filters already set on the model and map them to the correct controlType also retaining their values (start/from/term)
+	_.each(this._targetDatasets[0].queryState.toJSON().filters, function(modelFilter) {
+		for (var j in tmplData.filters)
+		{
+			 if (tmplData.filters[j].field == modelFilter.field)
+			 {
+				$.extend(tmplData.filters[j], modelFilter);
+				break;
+			 }
+		}
+	});
 	if (tmplData.filters.length > 0)
 		tmplData.filters[tmplData.filters.length -1].hrVisible = 'none'
 	
@@ -308,7 +311,7 @@ my.GenericFilter = Backbone.View.extend({
 	$target.addClass("selected");
 	var fieldId     = $table.attr('data-filter-field');
 	_.each(this._targetDatasets, function(ds) { 
-		ds.queryState.setFilter({field: fieldId, type: 'term', controlType: 'list', term:$target.text(), fieldType: "number"});
+		ds.queryState.setFilter({field: fieldId, type: 'term', term:$target.text(), fieldType: "number"});
 	});
   },
 	dateConvert : function(d) { 
@@ -364,11 +367,12 @@ my.GenericFilter = Backbone.View.extend({
 			case "range_calendar": from = this.dateConvertBack(fromObj.val());to = this.dateConvertBack(toObj.val());break;
 		}
 	}
-	_.each(this._targetDatasets, function(ds) { 
-		ds.queryState.setFilter({field: fieldId, type: fieldType, controlType: controlType, term:term, start: from, stop: to, fieldType: 'number'});
+	for (var j in this._targetDatasets)
+	{
+		var ds = this._targetDatasets[j];
+		ds.queryState.setFilter({field: fieldId, type: fieldType, term:term, start: from, stop: to, fieldType: this.getFieldType(fieldId)});
 		//ds.queryState.trigger('change');
-	});
-
+	}
   },
   onAddFilterShow: function(e) {
     e.preventDefault();
