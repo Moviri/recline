@@ -39,9 +39,9 @@ this.recline.View = this.recline.View || {};
     this.el = $(this.el);
     _.bindAll(this, 'render');
 
-    this.model.records.bind('add',      function() {self.render();});
-    this.model.records.bind('reset',    function() {self.render();});
-    this.model.records.bind('change',      function() {self.render();});
+    this.model.records.bind('add',          function() {self.render();});
+    this.model.records.bind('reset',        function() {self.render();});
+    this.model.records.bind('change',       function() {self.render();});
 
     var stateData = _.extend({
         id: 0

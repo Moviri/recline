@@ -557,6 +557,17 @@ my.Query = Backbone.Model.extend({
       return this.get('filters');
     },
 
+    getFilterByFieldName: function(fieldName) {
+      var res = _.find(this.get('filters'), function(f) {
+          return f.field == fieldName;
+      });
+      if(res == -1)
+          return null;
+      else
+          return res;
+
+    },
+
     _setSingleFilter: function(filter) {
         var filters = this.get('filters');
         for(x=0;x<filters.length;x++){

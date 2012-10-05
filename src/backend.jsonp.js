@@ -17,11 +17,16 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
     my.queryStateInMemory  = new recline.Model.Query();
     my.queryStateOnBackend = new recline.Model.Query();
 
-
     // todo has to be merged with query (part is in common)
     my.fetch = function(dataset) {
 
         console.log("Fetching data structure " + dataset.url);
+
+        if(dataset.inMemoryQueryFields == null) {
+            dataset.inMemoryQueryFields = [];
+       }
+        else
+            my.inMemoryQuery = true;
 
         var data = {onlydesc: "true"};
         return requestJson(dataset, data);
@@ -34,8 +39,12 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
         var tmpQueryStateOnBackend = new recline.Model.Query();
 
 
-        if(dataset.inMemoryQueryFields == null)
+
+        if(dataset.inMemoryQueryFields == null) {
             dataset.inMemoryQueryFields = [];
+
+        } else
+            my.inMemoryQuery = true;
 
 
 
@@ -44,11 +53,11 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
             // verify if filter is specified in inmemoryfields
 
             if(_.indexOf(dataset.inMemoryQueryFields, filters[i].field) == -1) {
-                console.log("filtering " + filters[i].field + " on backend");
+                //console.log("filtering " + filters[i].field + " on backend");
                 tmpQueryStateOnBackend.addFilter(filters[i]);
             }
             else {
-                console.log("filtering " + filters[i].field + " on memory");
+                //console.log("filtering " + filters[i].field + " on memory");
                 tmpQueryStateInMemory.addFilter(filters[i]);
             }
         }
@@ -57,14 +66,14 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
         var changedOnMemory = false;
 
         // verify if filters on backend are changed since last query
-        if(my.queryStateOnBackend != tmpQueryStateOnBackend) {
+        if (!isArrayEquals(my.queryStateOnBackend.attributes.filters, tmpQueryStateOnBackend.attributes.filters)) {
             my.queryStateOnBackend = tmpQueryStateOnBackend;
             changedOnBackend = true;
         }
 
         // verify if filters on memory are changed since last query
         if(dataset.inMemoryQueryFields.length> 0
-            && my.queryStateInMemory != tmpQueryStateInMemory)
+            && !isArrayEquals(my.queryStateInMemory.attributes.filters, tmpQueryStateInMemory.attributes.filters))
         {
             my.queryStateInMemory = tmpQueryStateInMemory;
             changedOnMemory = true;
@@ -78,22 +87,20 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
             return requestJson(dataset, data);
         }
 
-        if(changedOnMemory) {
-            if(my.inMemoryStore == null) {
-              console.log("No memory store available for in memory query, execute initial load")
-            }
-            return applyInMemoryFilters();
-        }
-
         if(my.inMemoryStore == null) {
-            console.log("No memory store available for in memory query, execute initial load")
+            throw "No memory store available for in memory query, execute initial load"
         }
 
-        return prepareReturnedData(my.inMemoryStore.data);
+        var dfd = $.Deferred();
+        dfd.resolve(applyInMemoryFilters());
+        return dfd.promise();
 
 
 
     };
+
+    function isArrayEquals(a,b) { return !(a<b || b<a); };
+
 
     function requestJson(dataset, data) {
         var dfd = $.Deferred();
@@ -125,7 +132,7 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
 
   };
 
-  function _handleJsonResult(data) {
+    function _handleJsonResult(data) {
 
       // Im fetching only record description
       if(data.data == null) {
@@ -134,15 +141,14 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
 
       var result = data;
 
-      if(my.queryStateInMemory && my.queryStateInMemory.get("filters").length > 0) {
+      if(my.inMemoryQuery) {
           // check if is the first time I use the memory store
-          if(my.inMemoryStore == null) {
-              my.inMemoryStore = new recline.Backend.Memory.Store(result.data, result.description);
-          } else {
-              my.inMemoryStore.Store(result.data, result.description);
-          }
+          my.inMemoryStore = new recline.Backend.Memory.Store(result.data, result.description);
 
-          return applyInMemoryFilters();
+          if(my.queryStateInMemory && my.queryStateInMemory.get("filters").length > 0)
+            return applyInMemoryFilters();
+          else
+            return prepareReturnedData(result);
       }
       else {
           // no need to query on memory, return json data
@@ -150,7 +156,6 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
      }
 
   };
-
 
     function applyInMemoryFilters() {
 
@@ -191,9 +196,6 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
     // convert each record in native format
     // todo verify if could cause performance problems
     function _normalizeRecords(records, fields) {
-        console.log(records, fields);
-        console.log(this);
-        console.log(recline);
 
         _.each(fields, function(f) {
             if(f != "string")
@@ -202,7 +204,6 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
                 })
         });
 
-        console.log(records, fields);
         return records;
 
     };

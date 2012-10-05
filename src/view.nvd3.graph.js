@@ -196,8 +196,6 @@ this.recline.View = this.recline.View || {};
   },
 
   doActions: function(eventType, event) {
-      console.log(event);
-
       var self = this;
       var actions = this.options.actions;
 
@@ -215,35 +213,6 @@ this.recline.View = this.recline.View || {};
           eventData[ seriesNameField[0] ] = event.series.key;
       }
 
-
-      // find all actions configured for eventType
-      var targetActions = _.filter(actions, function(d) { return d["event"]==eventType; });
-
-
-
-      // foreach action prepare field
-      _.each(targetActions, function(currentAction) {
-          var mapping = currentAction.mapping;
-          var actionParameters = [];
-          //foreach mapping set destination field
-          _.each(mapping, function(map) {
-              if(eventData[map["srcField"]] == null) {
-                  console.log( "warn: sourceField: [" + map["srcField"] + "] not present in event data" );
-              } else {
-
-
-              var param = {
-                  filter: map["filter"],
-                  value: [eventData[map["srcField"]]]
-              };
-                  actionParameters.push(param);
-              }
-          });
-
-          if( actionParameters.length > 0)  {
-              currentAction.action.doAction(actionParameters);
-          }
-      });
   },
 
   createSeriesNVD3: function() {

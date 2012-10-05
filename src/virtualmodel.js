@@ -394,7 +394,7 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
                 this.queryState.set(queryObj, {silent: true});
             }
             var actualQuery = this.queryState.toJSON();
-            console.log("VModel - query for " + JSON.stringify(actualQuery));
+            //console.log("VModel - query for " + JSON.stringify(actualQuery));
 
             if(this._store == null) {
                 console.log("Warning query called before data has been calculated for virtual model, call fetch on source dataset");
@@ -422,9 +422,6 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
                 _doc.fields = self.fields;
                 return _doc;
             });
-            console.log("handleQueryResult");
-            console.log(self);
-            console.log(docs);
             self.records.reset(docs);
         },
 

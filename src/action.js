@@ -12,9 +12,11 @@ my.Action = Backbone.Model.extend({
 
    },
 
-   doAction: function(data) {
-        console.log("Received doAction for");
+    // action could be add/remove
+   doAction: function(data, action) {
+       console.log("Received doAction for");
        console.log(data);
+
 
        var self=this;
 
@@ -51,8 +53,10 @@ my.Action = Backbone.Model.extend({
                        // verify if filter is associated with current model
                        if(_.find(models.filters, function(x) {x == f.name;}) != -1) {
                             // if associated add the filter
-                           self.modelsAddFilterActions[type](m.model, f);
-
+                           if(action == "add")
+                            self.modelsAddFilterActions[type](m.model, f);
+                           else if(action == "remove")
+                            self.modelsRemoveFilterActions[type](m.model, f);
                        }
                    });
 
@@ -66,9 +70,56 @@ my.Action = Backbone.Model.extend({
 
    },
 
+    getActiveFilters: function(filterName, srcField) {
+        var self=this;
+        var models = this.attributes.models;
+        var type = this.attributes.type;
+        var filtersProp = this.attributes.filters;
+
+        // for each type
+        // foreach dataset
+        // get filter
+        // push to result, if already present error
+        var foundFilters = [];
+
+        _.each(type, function(type) {
+            _.each(models, function(m) {
+                var usedFilters = _.filter(m.filters, function(f){ return f == filterName; });
+                _.each(usedFilters, function(f) {
+                    // search filter
+                    var filter = filtersProp[f];
+                    if(filter != null) {
+                        var filterOnModel = self.modelsGetFilter[type](m.model, filter.field);
+                        // substitution of fieldname with the one provided by source
+                        if(filterOnModel != null) {
+                            filterOnModel.field = srcField;
+                            foundFilters.push(filterOnModel);
+                        }
+                    }
+                });
+             });
+        });
+
+
+        return foundFilters;
+    },
+
+
+    modelsGetFilter: {
+        filter:     function(model, fieldName) {
+            return model.queryState.getFilterByFieldName(fieldName)  ;
+        },
+        selection:  function(model, fieldName) { throw "not implemented selection for modelsGetFilterActions" }
+    },
+
     modelsAddFilterActions: {
         filter:     function(model, filter) { model.queryState.addFilter(filter)},
         selection:  function(model, filter) { model.queryState.addSelection(filter)}
+    },
+
+    modelsRemoveFilterActions: {
+        filter:     function(model, filter) { model.queryState.removeFilterByField(filter.field)},
+        selection:  function(model, filter) { throw "modelsRemoveFilterActions not implemented for selection"}
     },
 
     modelsTriggerActions: {
@@ -79,10 +130,23 @@ my.Action = Backbone.Model.extend({
     filters: {
         term: function(filter, data) {
 
-            if(data.length != 1)
-                throw "Data passed for filtertype term not valid. Data lenght should be 1 but is " + data.length;
+            if(data.length > 1) {
+                console.log(data);
+                throw "Data passed for filtertype term not valid. Data lenght should be 1 or empty but is " + data.length;
+            }
 
             filter["term"] = data[0];
+            return filter;
+        },
+        range: function(filter, data) {
+
+            if(data.length != 2) {
+                console.log(data);
+                throw "Data passed for filtertype range not valid. Data lenght should be 2 but is " + data.length;
+            }
+
+            filter["start"] = data[0];
+            filter["stop"]  = data[1];
             return filter;
         }
     }
