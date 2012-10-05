@@ -3,6 +3,8 @@ this.recline.Data = this.recline.Data || {};
 
 (function(my){
 
+	my.Format = {};
+
     // formatters define how data is rapresented in internal dataset
     my.FormattersMODA = {
         number : function (e) { return parseFloat(e, 10); },
