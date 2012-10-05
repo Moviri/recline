@@ -5,7 +5,9 @@ this.recline.Data = this.recline.Data || {};
 (function(my) {
 
 	my.Format = {};
-
+	
+	my.Format.decimal = d3.format(".00f");
+	
 	my.Format.scale = function(options) {
 		return function(records) {			
 			var ret = {}, count;
