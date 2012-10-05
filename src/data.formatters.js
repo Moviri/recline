@@ -17,7 +17,11 @@ this.recline.Data = this.recline.Data || {};
             return JSON.stringify(val);
         },
         data: function(val, field, doc) {
-            return val;
+            var format = field.get('format');
+            if(format == null || format == "date")
+                return val;
+
+            return val.toLocaleDateString();
         },
         geo_point: function(val, field, doc) {
             return JSON.stringify(val);

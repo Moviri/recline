@@ -414,23 +414,16 @@ my.GenericFilter = Backbone.View.extend({
 
             this.doAction("onListItemClicked", fieldId, [startDate, endDate], "add");
 
-			/*_.each(this._targetDatasets, function(ds) {
-				ds.queryState.setFilter({field: fieldId, type: 'range', start:startDate, stop:endDate, fieldType: "date"});
-			});*/
 
 		}
 		else
 		{
             this.doAction("onListItemClicked", fieldId, [$targetTD.text()], "add");
 
-			// case normal list
-			/*_.each(this._targetDatasets, function(ds) {
-				ds.queryState.setFilter({field: fieldId, type: 'term', term:$targetTD.text(), fieldType: "number"});
-			});*/
 		}
 	}
   },
-    // todo doAction should be moved to action class
+
     // action could be add or remove
     doAction: function(eventType, fieldName, values, actionType) {
 
@@ -441,17 +434,11 @@ my.GenericFilter = Backbone.View.extend({
         recline.ActionUtility.doAction(actions, eventType, eventData, actionType);
     },
 
-	dateConvert : function(d) { 
-		// convert 2012-01-31 00:00:00 to 01/31/2012
-		try
-		{
-			var p = d.split(/\D/); 
-			return p[1]+"/"+p[2]+"/"+p[0]; 
-		}
-		catch(ex) {
-			return d;
-		}
-	},
+    dateConvert: function(d) {
+        var dd= new Date(d);
+        return dd.toLocaleDateString();
+    },
+
 	dateConvertBack : function(d) { 
 		// convert 01/31/2012  to 2012-01-31 00:00:00
 		try

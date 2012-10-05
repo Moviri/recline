@@ -138,6 +138,12 @@ this.recline.View = this.recline.View || {};
                 case "multiBarChart":
                     chart = nv.models.multiBarChart().stacked(true).showControls(false);
                     break;
+                case "lineWithBrushChart":
+                    chart = nv.models.lineWithBrushChart(function(e) {
+                        self.doActions("elementSelection", e);
+                        //alert('x0= '+x[0]+'x1='+x[1]);
+                        });
+                    break;
             }
 
             chart.x(function(d) { return d[0] })
@@ -200,19 +206,29 @@ this.recline.View = this.recline.View || {};
       var self = this;
       var actions = this.options.actions;
 
-      var seriesNameField = self.state.attributes.seriesNameField ;
+      var seriesNameField = self.state.attributes.seriesNameField;
 
       var eventData = {};
 
-      // if seriesaname is not defined click means selection of single data
-      if(seriesNameField == null ){
-        var seriesFieldName = event.series.key;
-        eventData[seriesFieldName] = [event.value];
+      switch (eventType)   {
+        case "elementClick":
+            // if seriesaname is not defined click means selection of single data
+            if(seriesNameField == null ){
+                var seriesFieldName = event.series.key;
+                eventData[seriesFieldName] = [event.value]; }
+            else {
+                eventData[ seriesNameField[0] ] = [event.series.key];
+            };
+            break;
+          case "elementSelection":
+              eventData[self.state.attributes.group] = [event[0], event[1]];
+              console.log(eventData);
+              break;
+          throw "Error eventype " + eventType + " not implemented"
       }
-      else
-      {
-          eventData[ seriesNameField[0] ] = [event.series.key];
-      }
+
+
+
 
       recline.ActionUtility.doAction(actions, eventType, eventData, "add");
 
