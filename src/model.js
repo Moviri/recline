@@ -455,7 +455,14 @@ my.Field = Backbone.Model.extend({
         }
         return val
       }
-    }
+    },
+	'date': function(val, field, doc) {
+		// if val contains timer value (in msecs), possibly in string format, ensure it's converted to number
+		var intVal = parseInt(val);
+		if (!isNaN(intVal) && isFinite(val))
+			return intVal;
+		else return new Date(val);
+	}
   }
 });
 
