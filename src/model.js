@@ -455,7 +455,14 @@ my.Field = Backbone.Model.extend({
         }
         return val
       }
-    }
+    },
+	'date': function(val, field, doc) {
+		// if val contains timer value (in msecs), possibly in string format, ensure it's converted to number
+		var intVal = parseInt(val);
+		if (!isNaN(intVal) && isFinite(val))
+			return intVal;
+		else return new Date(val);
+	}
   }
 });
 
@@ -550,6 +557,17 @@ my.Query = Backbone.Model.extend({
       return this.get('filters');
     },
 
+    getFilterByFieldName: function(fieldName) {
+      var res = _.find(this.get('filters'), function(f) {
+          return f.field == fieldName;
+      });
+      if(res == -1)
+          return null;
+      else
+          return res;
+
+    },
+
     _setSingleFilter: function(filter) {
         var filters = this.get('filters');
         for(x=0;x<filters.length;x++){
@@ -598,6 +616,33 @@ my.Query = Backbone.Model.extend({
     filters.splice(filterIndex, 1);
     this.set({filters: filters});
     this.trigger('change');
+  },
+  removeFilterByField: function(field) {
+    var filters = this.get('filters');
+	for (var j in filters)
+	{
+		if (filters[j].field == field)
+		{
+			filters.splice(j, 1);
+			this.set({filters: filters});
+			this.trigger('change');
+			break;
+		}
+	}
+  },
+  clearFilter: function(field) {
+    var filters = this.get('filters');
+	for (var j in filters)
+	{
+		if (filters[j].field == field)
+		{
+			filters[j].term = null;
+			filters[j].start = null;
+			filters[j].stop = null;
+			this.trigger('change');
+			break;
+		}
+	}
   },
 
       // ### addSelection

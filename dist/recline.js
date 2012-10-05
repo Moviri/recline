@@ -1,4 +1,216 @@
 this.recline = this.recline || {};
+
+(function($, my) {
+
+    my.ActionUtility = {};
+
+my.ActionUtility.doAction =    function(actions, eventType, eventData, actionType) {
+
+        // find all actions configured for eventType
+        var targetActions = _.filter(actions, function(d) {
+            var tmpFound = _.find(d["event"], function(x) {return x==eventType});
+            if(tmpFound != -1)
+                return true;
+            else
+                return false;
+        });
+
+        // foreach action prepare field
+        _.each(targetActions, function(currentAction) {
+            var mapping = currentAction.mapping;
+            var actionParameters = [];
+            //foreach mapping set destination field
+            _.each(mapping, function(map) {
+                if(eventData[map["srcField"]] == null) {
+                    console.log( "warn: sourceField: [" + map["srcField"] + "] not present in event data" );
+                } else {
+
+
+                    var param = {
+                        filter: map["filter"],
+                        value: eventData[map["srcField"]]
+                    };
+                    actionParameters.push(param);
+                }
+            });
+
+            if( actionParameters.length > 0)  {
+                currentAction.action._internalDoAction(actionParameters, actionType);
+            }
+        });
+    },
+
+my.ActionUtility.getActiveFilters = function(actions) {
+
+    var activeFilters = [];
+    _.each(actions, function(currentAction) {
+        _.each(currentAction.mapping, function(map) {
+            var currentFilter= currentAction.action.getActiveFilters(map.filter, map.srcField);
+            if(currentFilter!=null && currentFilter.length>0)
+                activeFilters = _.union(activeFilters, currentFilter) ;
+        })
+    });
+
+    return activeFilters;
+};
+
+// ## <a id="dataset">Action</a>
+my.Action = Backbone.Model.extend({
+    constructor: function Action() {
+        Backbone.Model.prototype.constructor.apply(this, arguments);
+    },
+
+   initialize: function(){
+
+   },
+
+    // action could be add/remove
+   _internalDoAction: function(data, action) {
+       console.log("Received doAction for");
+       console.log(data);
+
+
+       var self=this;
+
+       var filters = this.attributes.filters;
+       var models = this.attributes.models;
+       var type = this.attributes.type;
+
+       var targetFilters = [];
+
+       //populate all filters with data received from event
+       //foreach filter defined in data
+       _.each(data, function(f) {
+           // filter creation
+           var currentFilter = filters[f.filter];
+           if(currentFilter == null){
+               throw "Filter " + f.filter + " defined in actions data not configured for action ";
+           }
+           currentFilter["name"] = f.filter;
+           if(self.filters[currentFilter.type] == null)
+                throw "Filter not implemented for type " + currentFilter.type;
+
+           targetFilters.push(self.filters[currentFilter.type](currentFilter, f.value));
+
+       });
+
+
+       // foreach type and dataset add all filters and trigger events
+       _.each(type, function(type) {
+               _.each(models, function(m) {
+
+                   // todo check if models contains filter
+                   _.each(targetFilters, function(f) {
+
+                       // verify if filter is associated with current model
+                       if(_.find(models.filters, function(x) {x == f.name;}) != -1) {
+                            // if associated add the filter
+                           if(action == "add")
+                            self.modelsAddFilterActions[type](m.model, f);
+                           else if(action == "remove")
+                            self.modelsRemoveFilterActions[type](m.model, f);
+                       }
+                   });
+
+                   self.modelsTriggerActions[type](m.model);
+
+               });
+       });
+
+
+
+
+   },
+
+    getActiveFilters: function(filterName, srcField) {
+        var self=this;
+        var models = this.attributes.models;
+        var type = this.attributes.type;
+        var filtersProp = this.attributes.filters;
+
+        // for each type
+        // foreach dataset
+        // get filter
+        // push to result, if already present error
+        var foundFilters = [];
+
+        _.each(type, function(type) {
+            _.each(models, function(m) {
+                var usedFilters = _.filter(m.filters, function(f){ return f == filterName; });
+                _.each(usedFilters, function(f) {
+                    // search filter
+                    var filter = filtersProp[f];
+                    if(filter != null) {
+                        var filterOnModel = self.modelsGetFilter[type](m.model, filter.field);
+                        // substitution of fieldname with the one provided by source
+                        if(filterOnModel != null) {
+                            filterOnModel.field = srcField;
+                            foundFilters.push(filterOnModel);
+                        }
+                    }
+                });
+             });
+        });
+
+
+        return foundFilters;
+    },
+
+
+    modelsGetFilter: {
+        filter:     function(model, fieldName) {
+            return model.queryState.getFilterByFieldName(fieldName)  ;
+        },
+        selection:  function(model, fieldName) { throw "not implemented selection for modelsGetFilterActions" }
+    },
+
+    modelsAddFilterActions: {
+        filter:     function(model, filter) { model.queryState.addFilter(filter)},
+        selection:  function(model, filter) { model.queryState.addSelection(filter)}
+    },
+
+    modelsRemoveFilterActions: {
+        filter:     function(model, filter) { model.queryState.removeFilterByField(filter.field)},
+        selection:  function(model, filter) { throw "modelsRemoveFilterActions not implemented for selection"}
+    },
+
+    modelsTriggerActions: {
+        filter:     function(model) { model.queryState.trigger("change")},
+        selection:  function(model) { model.queryState.trigger("selection:change")}
+    },
+
+    filters: {
+        term: function(filter, data) {
+
+            if(data.length > 1) {
+                console.log(data);
+                throw "Data passed for filtertype term not valid. Data lenght should be 1 or empty but is " + data.length;
+            }
+
+            filter["term"] = data[0];
+            return filter;
+        },
+        range: function(filter, data) {
+
+            if(data.length != 2) {
+                console.log(data);
+                throw "Data passed for filtertype range not valid. Data lenght should be 2 but is " + data.length;
+            }
+
+            filter["start"] = data[0];
+            filter["stop"]  = data[1];
+            return filter;
+        }
+    }
+
+
+
+
+});
+
+
+}(jQuery, this.recline));
+this.recline = this.recline || {};
 this.recline.Backend = this.recline.Backend || {};
 this.recline.Backend.Ckan = this.recline.Backend.Ckan || {};
 
@@ -904,76 +1116,204 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
   //
   // Returns array of field names and array of arrays for records
 
+    my.queryStateInMemory  = new recline.Model.Query();
+    my.queryStateOnBackend = new recline.Model.Query();
+
     // todo has to be merged with query (part is in common)
     my.fetch = function(dataset) {
-    console.log("Fetching data structure " + dataset.url);
 
-    var data = {onlydesc: "true"};
+        console.log("Fetching data structure " + dataset.url);
 
-    var jqxhr = $.ajax({
-        url: dataset.url,
-        dataType: 'jsonp',
-        jsonpCallback: dataset.id,
-        data: data,
-        cache: true
-    });
+        if(dataset.inMemoryQueryFields == null) {
+            dataset.inMemoryQueryFields = [];
+       }
+        else
+            my.inMemoryQuery = true;
 
+        var data = {onlydesc: "true"};
+        return requestJson(dataset, data);
 
-    var dfd = $.Deferred();
-    _wrapInTimeout(jqxhr).done(function(results) {
-      if (results.error) {
-        dfd.reject(results.error);
-      }
-
-      dfd.resolve({
-            fields:_handleFieldDescription(results.result.description),
-            useMemoryStore: false
-      });
-    })
-    .fail(function(arguments) {
-      dfd.reject(arguments);
-    });
-    return dfd.promise();
   };
 
     my.query = function(queryObj, dataset) {
 
-        var data = buildRequestFromQuery(queryObj);
+        var tmpQueryStateInMemory  = new recline.Model.Query();
+        var tmpQueryStateOnBackend = new recline.Model.Query();
 
-        //console.log("Querying dataset " + dataset.id.toString() +  JSON.stringify(data));
+
+
+        if(dataset.inMemoryQueryFields == null) {
+            dataset.inMemoryQueryFields = [];
+
+        } else
+            my.inMemoryQuery = true;
+
+
+
+        var filters =  queryObj.filters;
+        for(var i=0;i<filters.length;i++){
+            // verify if filter is specified in inmemoryfields
+
+            if(_.indexOf(dataset.inMemoryQueryFields, filters[i].field) == -1) {
+                //console.log("filtering " + filters[i].field + " on backend");
+                tmpQueryStateOnBackend.addFilter(filters[i]);
+            }
+            else {
+                //console.log("filtering " + filters[i].field + " on memory");
+                tmpQueryStateInMemory.addFilter(filters[i]);
+            }
+        }
+
+        var changedOnBackend = false;
+        var changedOnMemory = false;
+
+        // verify if filters on backend are changed since last query
+        if (!isArrayEquals(my.queryStateOnBackend.attributes.filters, tmpQueryStateOnBackend.attributes.filters)) {
+            my.queryStateOnBackend = tmpQueryStateOnBackend;
+            changedOnBackend = true;
+        }
+
+        // verify if filters on memory are changed since last query
+        if(dataset.inMemoryQueryFields.length> 0
+            && !isArrayEquals(my.queryStateInMemory.attributes.filters, tmpQueryStateInMemory.attributes.filters))
+        {
+            my.queryStateInMemory = tmpQueryStateInMemory;
+            changedOnMemory = true;
+        }
+
+
+        if(changedOnBackend) {
+            var data = buildRequestFromQuery(my.queryStateOnBackend);
+            console.log("Querying backend for ");
+            console.log(data);
+            return requestJson(dataset, data);
+        }
+
+        if(my.inMemoryStore == null) {
+            throw "No memory store available for in memory query, execute initial load"
+        }
+
+        var dfd = $.Deferred();
+        dfd.resolve(applyInMemoryFilters());
+        return dfd.promise();
+
+
+
+    };
+
+    function isArrayEquals(a,b) { return !(a<b || b<a); };
+
+
+    function requestJson(dataset, data) {
+        var dfd = $.Deferred();
 
         var jqxhr = $.ajax({
-            url: dataset.url,
-            dataType: 'jsonp',
-            jsonpCallback: dataset.id,
-            data: data,
-            cache: true
-        });
-        var dfd = $.Deferred();
-        _wrapInTimeout(jqxhr).done(function(results) {
-            if (results.error) {
-                dfd.reject(results.error);
+          url: dataset.url,
+          dataType: 'jsonp',
+          jsonpCallback: dataset.id,
+          data: data,
+          cache: true
+      });
+
+     _wrapInTimeout(jqxhr).done(function(results) {
+
+          // verify if returned data is not an error
+          if (results.results.length != 1 || results.results[0].status.code != 0) {
+              console.log("Error in fetching data: " + results.results[0].status.message + " Statuscode:[" + results.results[0].status.code + "]" );
+
+              dfd.reject(results.results[0].status);
+          } else
+          dfd.resolve(_handleJsonResult(results.results[0].result));
+
+      })
+          .fail(function(arguments) {
+              dfd.reject(arguments);
+          });
+
+        return dfd.promise();
+
+  };
+
+    function _handleJsonResult(data) {
+
+      // Im fetching only record description
+      if(data.data == null) {
+          return prepareReturnedData(data);
+      }
+
+      var result = data;
+
+      if(my.inMemoryQuery) {
+          // check if is the first time I use the memory store
+          my.inMemoryStore = new recline.Backend.Memory.Store(result.data, result.description);
+
+          if(my.queryStateInMemory && my.queryStateInMemory.get("filters").length > 0)
+            return applyInMemoryFilters();
+          else
+            return prepareReturnedData(result);
+      }
+      else {
+          // no need to query on memory, return json data
+          return prepareReturnedData(result);
+     }
+
+  };
+
+    function applyInMemoryFilters() {
+
+
+        var tmpValue;
+
+        my.inMemoryStore.query(my.queryStateInMemory.toJSON())
+            .done(function(value) {
+                tmpValue = value;
+            });
+
+
+        return tmpValue;
+    };
+
+    function prepareReturnedData(data) {
+
+       if(data.hits == null)
+           var fields = _handleFieldDescription(data.description);
+           if(data.data == null) {
+            return {
+                fields: fields,
+                useMemoryStore: false
+            }
+           }
+        else
+            {
+                return {
+                    hits: _normalizeRecords(data.data, fields),
+                    fields:fields,
+                    useMemoryStore: false
+                }
             }
 
-            dfd.resolve({
-                hits: results.result.data,
-                fields:_handleFieldDescription(results.result.description),
-                useMemoryStore: false
-            });
-        })
-            .fail(function(arguments) {
-                dfd.reject(arguments);
-            });
-        return dfd.promise();
+        return data;
+    };
+
+    // convert each record in native format
+    // todo verify if could cause performance problems
+    function _normalizeRecords(records, fields) {
+
+        _.each(fields, function(f) {
+            if(f != "string")
+                _.each(records, function(r) {
+                    r[f.id] = recline.Data.FormattersMODA[f.type](r[f.id]);
+                })
+        });
+
+        return records;
 
     };
 
 
-
-
   function  buildRequestFromQuery(queryObj)  {
       var self=this;
-      var filters = queryObj.filters;
+      var filters = queryObj.get("filters");
       var data = [];
       var multivsep = "~";
 
@@ -1076,7 +1416,7 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
           STRING : "string",
           DATE   : "date",
           INTEGER: "number",
-          DOUBLE : "number"
+          DOUBLE : "float"
       };
 
 
@@ -1086,9 +1426,11 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
               res.push({id: k, type: dataMapping[description[k]]});
         }
 
+      // use custom renderer
+      res.options = {renderer: recline.Data.Renderers};
+
       return res;
     }
-
 
 
 
@@ -1155,6 +1497,7 @@ this.recline.Backend.Memory = this.recline.Backend.Memory || {};
 
     this.query = function(queryObj) {
       var dfd = $.Deferred();
+
       var numRows = queryObj.size || this.data.length;
       var start = queryObj.from || 0;
       var results = this.data;
@@ -1392,6 +1735,60 @@ this.recline.Data = this.recline.Data || {};
         min         : function () {}
     };
 
+
+})(this.recline.Data);this.recline = this.recline || {};
+this.recline.Data = this.recline.Data || {};
+
+(function(my){
+
+    // formatters define how data is rapresented in internal dataset
+    my.FormattersMODA = {
+        number : function (e) { return parseFloat(e, 10); },
+        string : function (e) { return e.toString() },
+        date   : function (e) { return new Date(e)},
+        float  : function (e) { return parseFloat(e, 10); }
+    };
+
+    // renderers use fieldtype and fieldformat to generate output for getFieldValue
+    my.Renderers = {
+        object: function(val, field, doc) {
+            return JSON.stringify(val);
+        },
+        data: function(val, field, doc) {
+            return val;
+        },
+        geo_point: function(val, field, doc) {
+            return JSON.stringify(val);
+        },
+        'float': function(val, field, doc) {
+            var format = field.get('format');
+            if (format === 'percentage') {
+                return val + '%';
+            }
+            return val;
+        },
+        'string': function(val, field, doc) {
+            var format = field.get('format');
+            if (format === 'markdown') {
+                if (typeof Showdown !== 'undefined') {
+                    var showdown = new Showdown.converter();
+                    out = showdown.makeHtml(val);
+                    return out;
+                } else {
+                    return val;
+                }
+            } else if (format == 'plain') {
+                return val;
+            } else {
+                // as this is the default and default type is string may get things
+                // here that are not actually strings
+                if (val && typeof val === 'string') {
+                    val = val.replace(/(https?:\/\/[^ ]+)/g, '<a href="$1">$1</a>');
+                }
+                return val
+            }
+        }
+    }
 
 })(this.recline.Data);this.recline = this.recline || {};
 this.recline.Data = this.recline.Data || {};
@@ -1684,6 +2081,7 @@ my.Dataset = Backbone.Model.extend({
 
   _handleQueryResult: function(queryResult) {
 
+
     var self = this;
 
     self.recordCount = queryResult.total;
@@ -1916,7 +2314,14 @@ my.Field = Backbone.Model.extend({
         }
         return val
       }
-    }
+    },
+	'date': function(val, field, doc) {
+		// if val contains timer value (in msecs), possibly in string format, ensure it's converted to number
+		var intVal = parseInt(val);
+		if (!isNaN(intVal) && isFinite(val))
+			return intVal;
+		else return new Date(val);
+	}
   }
 });
 
@@ -1960,6 +2365,7 @@ my.Query = Backbone.Model.extend({
     },
     range: {
       type: 'range',
+      field: '',
       start: '',
       stop: ''
     },
@@ -1981,6 +2387,7 @@ my.Query = Backbone.Model.extend({
           },
           range: {
               type: 'range',
+              field: '',
               start: '',
               stop: ''
           }
@@ -2005,6 +2412,20 @@ my.Query = Backbone.Model.extend({
     this.trigger('change:filters:new-blank');
   },
 
+    getFilters: function(){
+      return this.get('filters');
+    },
+
+    getFilterByFieldName: function(fieldName) {
+      var res = _.find(this.get('filters'), function(f) {
+          return f.field == fieldName;
+      });
+      if(res == -1)
+          return null;
+      else
+          return res;
+
+    },
 
     _setSingleFilter: function(filter) {
         var filters = this.get('filters');
@@ -2055,6 +2476,33 @@ my.Query = Backbone.Model.extend({
     this.set({filters: filters});
     this.trigger('change');
   },
+  removeFilterByField: function(field) {
+    var filters = this.get('filters');
+	for (var j in filters)
+	{
+		if (filters[j].field == field)
+		{
+			filters.splice(j, 1);
+			this.set({filters: filters});
+			this.trigger('change');
+			break;
+		}
+	}
+  },
+  clearFilter: function(field) {
+    var filters = this.get('filters');
+	for (var j in filters)
+	{
+		if (filters[j].field == field)
+		{
+			filters[j].term = null;
+			filters[j].start = null;
+			filters[j].stop = null;
+			this.trigger('change');
+			break;
+		}
+	}
+  },
 
       // ### addSelection
       //
@@ -2081,10 +2529,6 @@ my.Query = Backbone.Model.extend({
           selections.splice(selectionIndex, 1);
           this.set({selections: selections});
           this.trigger('change:selections');
-      },
-      isFieldSelected: function(fieldName, fieldVale) {
-          // todo check if field is selected
-          return false;
       },
         setSelection: function(s) {
         // todo should be optimized in order to make only one cycle on filters
@@ -2936,7 +3380,10 @@ this.recline.View = this.recline.View || {};
 
   template: '<div class="recline-graph"> \
       <div class="panel indicator_{{viewId}}"style="display: block;"> \
-        <div id="indicator_{{viewId}}">{{value}}</div>\
+        <div id="indicator_{{viewId}}"> \
+			<h3 class="centered">{{label}}</h3> \
+			<h1 class="orange centered">{{value}}</h1> \
+		</div>\
       </div> \
     </div> ',
 
@@ -2946,9 +3393,9 @@ this.recline.View = this.recline.View || {};
     this.el = $(this.el);
     _.bindAll(this, 'render');
 
-    this.model.records.bind('add',      function() {self.render();});
-    this.model.records.bind('reset',    function() {self.render();});
-    this.model.records.bind('change',      function() {self.render();});
+    this.model.records.bind('add',          function() {self.render();});
+    this.model.records.bind('reset',        function() {self.render();});
+    this.model.records.bind('change',       function() {self.render();});
 
     var stateData = _.extend({
         id: 0
@@ -2963,6 +3410,8 @@ this.recline.View = this.recline.View || {};
         var self = this;
         var tmplData = this.model.toTemplateJSON();
         tmplData["viewId"] = this.state.attributes["id"];
+		tmplData.label = this.state.attributes["label"];
+			
 		var format = this.state.attributes.format || this.defaults.format;
 		var applyFormatFunction = d3.format(format)
 		
@@ -4211,6 +4660,7 @@ this.recline.View = this.recline.View || {};
   },
 
   redraw: function() {
+
     var self=this;
     // There appear to be issues generating a Flot graph if either:
 
@@ -4269,7 +4719,7 @@ this.recline.View = this.recline.View || {};
                         .showValues(true);
 
                         chart.discretebar.dispatch.on('elementClick', function(e) {
-                            self.applyFiltersAndSelections(e.series);
+                            self.doActions("elementClick", e);
                         });
                 break;
                 case "multiBarChart":
@@ -4280,7 +4730,9 @@ this.recline.View = this.recline.View || {};
             chart.x(function(d) { return d[0] })
                 .y(function(d) { return d[1] });
 
-			var     xfield =  model.fields.get(state.attributes.group);
+			var xfield =  model.fields.get(state.attributes.group);
+			xfield.set('type', xfield.get('type').toLowerCase());
+			
 			if (xLabel == null || xLabel == "" || typeof xLabel == 'undefined')
 				xLabel = xfield.get('label')
 
@@ -4292,8 +4744,8 @@ this.recline.View = this.recline.View || {};
 
                 .tickFormat(d3.format('.02f'));
 
-			if (xfield.get('type') == 'DATE' || 
-				(xfield.get('type') == 'STRING' && xLabel.indexOf('date') >= 0 && model.recordCount > 0 && new Date(model.records.get(0).get(xLabel)) instanceof Date))
+			if (xfield.get('type') == 'date' || 
+				(xfield.get('type') == 'string' && xLabel.indexOf('date') >= 0 && model.recordCount > 0 && new Date(model.records.get(0).get(xLabel)) instanceof Date))
 			{
 				chart.xAxis
 					.axisLabel(xLabel)
@@ -4330,42 +4782,29 @@ this.recline.View = this.recline.View || {};
     }
   },
 
-  applyFiltersAndSelections: function(series) {
+  doActions: function(eventType, event) {
 
+      var self = this;
       var actions = this.options.actions;
-      var state = this.options.state;
 
-      var selection ;
-      if(actions.FiltersTargetDataset != null
-          || actions.SelectionsTargetDataset != null) {
+      var seriesNameField = self.state.attributes.seriesNameField ;
 
+      var eventData = {};
 
-
-      if(state.seriesNameField != null) {
-          // we use a field to define series
-          // todo fieldtype must be evaluated on fields structure
-          selection = {field: state.seriesNameField, type: "term", term:series.key, fieldType: "string"}   ;
-      } else
+      // if seriesaname is not defined click means selection of single data
+      if(seriesNameField == null ){
+        var seriesFieldName = event.series.key;
+        eventData[seriesFieldName] = [event.value];
+      }
+      else
       {
-          // todo to be verified, series index must be used
-          selection = {field: state.series[series.id], type: "term", term:series.key, fieldType: "string"}       ;
+          eventData[ seriesNameField[0] ] = [event.series.key];
       }
 
-          if(actions.FiltersTargetDataset != null) {
-              for (var i = 0; i < actions.FiltersTargetDataset.length; i++) {
-                  actions.FiltersTargetDataset[i].queryState.setFilter(selection);
-              }
-          }
+      recline.ActionUtility.doAction(actions, eventType, eventData, "add");
 
-          if(actions.SelectionsTargetDataset != null) {
-              for (var i = 0; i < actions.SelectionsTargetDataset.length; i++) {
-                  actions.SelectionsTargetDataset[i].queryState.setSelection(selection);
-              }
-          }
-
-      }
   },
-  
+
   createSeriesNVD3: function() {
 
       var self = this;
@@ -4401,8 +4840,8 @@ this.recline.View = this.recline.View || {};
 
 
              var points = [];
-             var x = parseFloat(doc.getFieldValue(xfield));
-             var y = parseFloat(doc.getFieldValue(seriesValues));
+             var x = doc.getFieldValue(xfield);
+             var y = doc.getFieldValue(seriesValues);
              tmpS["values"].push([x, y]);
 
              //console.log("xfield: " + xfield + " seriesvalue: " + seriesValues + " seriesNameField: " + seriesNameField + " key: " + key + " x: "+ x + " y: "+ y);
@@ -4448,7 +4887,7 @@ this.recline.View = this.recline.View || {};
        });
      }
 
-      //console.log(JSON.stringify(series));
+
       return series;
 }
 
@@ -4601,7 +5040,7 @@ my.SlickGrid = Backbone.View.extend({
 		this.model.records.each(function(doc){
 		  var row = {};
 		  self.model.fields.each(function(field){
-			row[field.id] = doc.getFieldValueUnrendered(field);
+			row[field.id] = doc.getFieldValue(field);
 			if (field.id == self.state.get('innerChartSerie1') || field.id == self.state.get('innerChartSerie2'))
 			{
 				var currVal = Math.abs(parseFloat(row[field.id]));
@@ -4618,7 +5057,7 @@ my.SlickGrid = Backbone.View.extend({
     this.model.records.each(function(doc){
       var row = {};
       self.model.fields.each(function(field){
-        row[field.id] = doc.getFieldValueUnrendered(field);
+        row[field.id] = doc.getFieldValue(field);
       });
 	  if (self.state.get('useInnerChart') == true && self.state.get('innerChartSerie1') != null && self.state.get('innerChartSerie2') != null)
 		row['innerChart'] = [ row[self.state.get('innerChartSerie1')], row[self.state.get('innerChartSerie2')], max ];
@@ -5149,7 +5588,6 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
 
             //this.attributes.dataset.records.bind('add',     function() { self.initializeCrossfilter(); });
             this.attributes.dataset.records.bind('reset',   function() { self.initializeCrossfilter(); });
-
             this.queryState.bind('change',                  function() { self.query(); });
 
             // TODO verify if is better to use a new backend (crossfilter) to manage grouping and filtering instead of using it inside the model
@@ -5341,16 +5779,16 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
                 tmpResult =  reducedGroup.all();
                 if(tmpResult.length > 0) {
                     tmpField = tmpResult[0].value;
+
+                    for (var x in tmpField.partitions[aggregationFunctions[0]]) {
+                        partitionsFields.push(x);
+                    }
                 }
                 else
                     tmpField = {count: 0};
 
-                for (var x in tmpField.partitions[aggregationFunctions[0]]) {
-                    partitionsFields.push(x);
-                }
+
             }
-
-
 
             // set of fields array
             fields.push( {id: "count", type: "number"});
@@ -5369,12 +5807,12 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
                 }
             }
 
-            if(partitioning) {
+            if(partitioning && tmpField.partitions) {
                 for(var j=0;j<aggregationFunctions.length;j++){
 
                     var tempValue;
                     if(typeof tmpField.partitions[aggregationFunctions[j]] == 'function')
-                        tempValue =     tmpField.partitions[aggregationFunctions[j]]();
+                        tempValue = tmpField.partitions[aggregationFunctions[j]]();
                     else
                         tempValue = tmpField.partitions[aggregationFunctions[j]];
 
@@ -5491,7 +5929,9 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
 
 
 
-            /*    console.log("VMODEL crossfilter result")
+             /*
+                console.log("VMODEL crossfilter result")
+
              console.log(tmpResult);
              console.log("VModel result");
              console.log(result);
@@ -5507,7 +5947,6 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
              console.log(self.records.toJSON() );
              */
 
-            console.log("VModel - query for " + JSON.stringify(queryObj));
 
             var self = this;
             var dfd = $.Deferred();
@@ -5517,6 +5956,12 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
                 this.queryState.set(queryObj, {silent: true});
             }
             var actualQuery = this.queryState.toJSON();
+            //console.log("VModel - query for " + JSON.stringify(actualQuery));
+
+            if(this._store == null) {
+                console.log("Warning query called before data has been calculated for virtual model, call fetch on source dataset");
+                return;
+            }
 
             this._store.query(actualQuery, this.toJSON())
                 .done(function(queryResult) {
@@ -5965,9 +6410,6 @@ my.GenericFilter = Backbone.View.extend({
   className: 'recline-filter-editor well', 
   template: ' \
     <div class="filters"> \
-      <h3>{{filterLabel}}</h3> \
-      <a href="#" class="js-add-filter">Add filter</a> \
-	  <hr> \
       <div id="filterCreationForm" class="form-stacked js-add" style="display: none;"> \
         <fieldset> \
           <label>Filter type</label> \
@@ -5994,6 +6436,7 @@ my.GenericFilter = Backbone.View.extend({
       <div class="form-stacked js-edit"> \
         {{#filters}} \
           {{{filterRender}}} \
+		  <hr style="display:{{hrVisible}}"> \
         {{/filters}} \
       </div> \
     </div> \
@@ -6002,10 +6445,8 @@ my.GenericFilter = Backbone.View.extend({
     term: ' \
       <div class="filter-{{type}} filter"> \
         <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
-          <legend> \
-            {{field}} <small>{{controlType}}</small> \
-            <a class="js-remove-filter" href="#" title="Remove this filter">&times;</a> \
-          </legend> \
+            <b>{{field}}</b>  \
+			<br> \
           <input type="text" value="{{term}}" name="term" class="data-control-id" /> \
           <input type="button" class="btn" id="setFilterValueButton" value="Set"></input> \
         </fieldset> \
@@ -6014,28 +6455,23 @@ my.GenericFilter = Backbone.View.extend({
 	slider : ' \
 	<script> \
 		$(document).ready(function(){ \
-			$( "#slider-range{{ctrlId}}" ).slider({ \
+			$( "#slider{{ctrlId}}" ).slider({ \
 				min: {{min}}, \
 				max: {{max}}, \
 				value: {{min}}, \
 				slide: function( event, ui ) { \
-					$( "#amount{{ctrlId}}" ).val(  ui.value ); \
+					$( "#amount{{ctrlId}}" ).html( "Value: "+ ui.value ); \
 				} \
 			}); \
-			$( "#amount{{ctrlId}}" ).val(  $( "#slider-range{{ctrlId}}" ).slider( "value" ) ); \
+			$( "#amount{{ctrlId}}" ).html( "Value: "+ $( "#slider{{ctrlId}}" ).slider( "value" ) ); \
 		}); \
 	</script> \
       <div class="filter-{{type}} filter"> \
         <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
-          <legend> \
-            {{field}} <small>{{controlType}}</small> \
-            <a class="js-remove-filter" href="#" title="Remove this filter">&times;</a> \
-          </legend> \
-		  <p> \
-			  <label for="amount{{ctrlId}}">Value range:</label> \
-			  <input type="text" id="amount{{ctrlId}}" style="border:none;" disabled="true"></input> \
-		  </p> \
-		  <div id="slider-range{{ctrlId}}" class="data-control-id" ></div> \
+            <b>{{field}}</b>  \
+			<br> \
+		  <label id="amount{{ctrlId}}">Value: </label></span> \
+		  <div id="slider{{ctrlId}}" class="data-control-id" ></div> \
 		  <br> \
           <input type="button" class="btn" id="setFilterValueButton" value="Set"></input> \
         </fieldset> \
@@ -6044,14 +6480,12 @@ my.GenericFilter = Backbone.View.extend({
     range: ' \
       <div class="filter-{{type}} filter"> \
         <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
-          <legend> \
-            {{field}} <small>{{controlType}}</small> \
-            <a class="js-remove-filter" href="#" title="Remove this filter">&times;</a> \
-          </legend> \
+            <b>{{field}}</b>  \
+			<br> \
           <label class="control-label" for="">From</label> \
-          <input type="text" value="{{start}}" name="start"  class="data-control-id-from" /> \
+          <input type="text" value="{{start}}" name="start"  class="data-control-id-from" style="width:auto"/> \
           <label class="control-label" for="">To</label> \
-          <input type="text" value="{{stop}}" name="stop" class="data-control-id-to" /> \
+          <input type="text" value="{{stop}}" name="stop" class="data-control-id-to"  style="width:auto"/> \
 		  <br> \
           <input type="button" class="btn" id="setFilterValueButton" value="Set"></input> \
         </fieldset> \
@@ -6066,28 +6500,53 @@ my.GenericFilter = Backbone.View.extend({
 				max: {{max}}, \
 				values: [ {{min}}, {{max}} ], \
 				slide: function( event, ui ) { \
-					$( "#amount{{ctrlId}}" ).val(  ui.values[ 0 ] + " - " + ui.values[ 1 ] ); \
+					$( "#amount{{ctrlId}}" ).html(  "Value range: " + ui.values[ 0 ] + " - " + ui.values[ 1 ] ); \
 				} \
 			}); \
-			$( "#amount{{ctrlId}}" ).val(  $( "#slider-range{{ctrlId}}" ).slider( "values", 0 ) + " - " + $( "#slider-range{{ctrlId}}" ).slider( "values", 1 ) ); \
+			$( "#amount{{ctrlId}}" ).html(  "Value range: " + $( "#slider-range{{ctrlId}}" ).slider( "values", 0 ) + " - " + $( "#slider-range{{ctrlId}}" ).slider( "values", 1 ) ); \
 		}); \
 	</script> \
       <div class="filter-{{type}} filter"> \
         <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
-          <legend> \
-            {{field}} <small>{{controlType}}</small> \
-            <a class="js-remove-filter" href="#" title="Remove this filter">&times;</a> \
-          </legend> \
-		  <p> \
-			  <label for="amount{{ctrlId}}">Value range:</label> \
-			  <input type="text" id="amount{{ctrlId}}" style="border:none;" disabled="true"></input> \
-		  </p> \
+            <b>{{field}}</b>  \
+			<br> \
+		  <label id="amount{{ctrlId}}">Value range: </label></span> \
 		  <div id="slider-range{{ctrlId}}" class="data-control-id-from data-control-id-to" ></div> \
 		  <br> \
           <input type="button" class="btn" id="setFilterValueButton" value="Set"></input> \
         </fieldset> \
       </div> \
     ',
+	month_calendar: ' \
+	  <style> \
+		.odd-row { background: aliceblue } \
+		.even-row { background: azure } \
+		.list-filter-item { cursor:pointer; } \
+		.list-filter-item:hover { background: lightblue;cursor:pointer; } \
+		.selected { background: orange } \
+		.selected:hover { background: red } \
+	  </style> \
+      <div class="filter-{{type}} filter"> \
+        <fieldset> \
+            <b>{{field}}</b>  \
+            <a class="js-remove-filter" href="#" title="Remove this filter">&times;</a> \
+			<br> \
+			<select class="drop-down2 fields data-control-id" > \
+            {{#yearValues}} \
+            <option value="{{.}}">{{.}}</option> \
+            {{/yearValues}} \
+          </select> \
+			<br> \
+			<div style="max-height:500px;width:100%;border:1px solid grey;overflow:auto;"> \
+				<table class="table" style="width:100%" data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" > \
+				{{#monthValues}} \
+				<tr><td class="list-filter-item {{evenOdd}}" myValue="{{val}}">{{label}}</td><tr> \
+				{{/monthValues}} \
+			  </table> \
+		  </div> \
+	    </fieldset> \
+      </div> \
+	',
 	range_calendar: ' \
 	<script> \
 	$(function() { \
@@ -6111,15 +6570,13 @@ my.GenericFilter = Backbone.View.extend({
 	</script> \
       <div class="filter-{{type}} filter"> \
         <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
-          <legend> \
-            {{field}} <small>{{controlType}}</small> \
-            <a class="js-remove-filter" href="#" title="Remove this filter">&times;</a> \
-          </legend> \
+            <b>{{field}}</b>  \
+			<br> \
 			<label for="from{{ctrlId}}">From</label> \
-			<input type="text" id="from{{ctrlId}}" name="from{{ctrlId}}" class="data-control-id-from" value="{{startDate}}"/> \
+			<input type="text" id="from{{ctrlId}}" name="from{{ctrlId}}" class="data-control-id-from" value="{{startDate}}" style="width:auto"/> \
 			<br> \
 			<label for="to{{ctrlId}}">to</label> \
-			<input type="text" id="to{{ctrlId}}" name="to{{ctrlId}}" class="data-control-id-to" value="{{endDate}}"/> \
+			<input type="text" id="to{{ctrlId}}" name="to{{ctrlId}}" class="data-control-id-to" value="{{endDate}}" style="width:auto"/> \
  		  <br> \
           <input type="button" class="btn" id="setFilterValueButton" value="Set"></input> \
        </fieldset> \
@@ -6128,10 +6585,8 @@ my.GenericFilter = Backbone.View.extend({
     drop_down: ' \
       <div class="filter-{{type}} filter"> \
         <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
-          <legend> \
-            {{field}} <small>{{controlType}}</small> \
-            <a class="js-remove-filter" href="#" title="Remove this filter">&times;</a> \
-          </legend> \
+            <b>{{field}}</b>  \
+			<br> \
 			<select class="drop-down fields data-control-id" > \
 			<option></option> \
             {{#values}} \
@@ -6151,11 +6606,10 @@ my.GenericFilter = Backbone.View.extend({
 		.selected:hover { background: red } \
 	  </style> \
       <div class="filter-{{type}} filter"> \
-        <fieldset> \
-          <legend> \
-            {{field}} <small>{{controlType}}</small> \
+        <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}"> \
+            <b>{{field}}</b>  \
             <a class="js-remove-filter" href="#" title="Remove this filter">&times;</a> \
-          </legend> \
+			<br> \
 			<div style="max-height:500px;width:100%;border:1px solid grey;overflow:auto;"> \
 				<table style="width:100%" data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" > \
 				{{#values}} \
@@ -6169,10 +6623,8 @@ my.GenericFilter = Backbone.View.extend({
     listbox: ' \
       <div class="filter-{{type}} filter"> \
         <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
-          <legend> \
-            {{field}} <small>{{controlType}}</small> \
-            <a class="js-remove-filter" href="#" title="Remove this filter">&times;</a> \
-          </legend> \
+            <b>{{field}}</b>  \
+			<br> \
 			<select class="fields data-control-id"  multiple SIZE=10> \
             {{#values}} \
             <option value="{{val}}">{{val}}</option> \
@@ -6190,48 +6642,69 @@ my.GenericFilter = Backbone.View.extend({
     'click #addFilterButton': 'onAddFilter',
 	'click .list-filter-item': 'onListItemClicked',
 	'click #setFilterValueButton': 'onFilterValueChanged',
-	'change .drop-down': 'onFilterValueChanged'
+	'change .drop-down': 'onFilterValueChanged',
+	'change .drop-down2': 'onListItemClicked'
   },
   _ctrlId : 0,
   _sourceDataset: null,
-  _targetDatasets: [],
   _activeFilters: [],
   initialize: function(args) {
     this.el = $(this.el);
     _.bindAll(this, 'render');
 	_.bindAll(this, 'getFieldType');
+	_.bindAll(this, 'onRemoveFilter');
 	this._sourceDataset = args.sourceDataset;
-	this._targetDatasets = args.filtersTargetDatasets;
-    this._sourceDataset.fields.bind('all', this.render); 
-    this._sourceDataset.records.bind('reset', this.render); 
+
+    //this._sourceDataset.fields.bind('all', this.render);
+
 	this.sourceFields = args.sourceFields;
 	this.filterDialogLabel = args.label;
 	this._activeFilters = [];
+
+    this._actions = args.actions;
 
     if (this.sourceFields && this.sourceFields.length)
 		for (var k in this.sourceFields)
 			this.addNewFilterControl(this.sourceFields[k]);
 
-    this.render();
+    this._sourceDataset.records.bind('reset', this.render);
   },
+
   render: function() {
     var self = this;
-    var tmplData = $.extend(true, {}, this._targetDatasets[0].queryState.toJSON());
-    // we will use idx in list as there id ...
-    tmplData.filters = _.map(tmplData.filters, function(filter, idx) {
-      filter.id = idx;
-      return filter;
-    });
-	_.each(this._activeFilters , function(flt) { 
-		tmplData.filters.push(flt); 
+	var tmplData = {filters : this._activeFilters};
+	_.each(tmplData.filters , function(flt) { 
+		flt.hrVisible = 'block'; 
 	});
+
+	// retrieve filters already set on the model
+
+    //  map them to the correct controlType also retaining their values (start/from/term)
+      _.each(recline.ActionUtility.getActiveFilters(this._actions), function(filter) {
+          for (var j in tmplData.filters)
+          {
+              if (tmplData.filters[j].field == filter.field)
+              {
+                  $.extend(tmplData.filters[j], filter);
+                  break;
+              }
+          }
+      });
+
+      if (tmplData.filters.length > 0)
+		tmplData.filters[tmplData.filters.length -1].hrVisible = 'none'
+	
     tmplData.fields = this._sourceDataset.fields.toJSON();
 	tmplData.records = _.pluck(this._sourceDataset.records.models, "attributes");
 	tmplData.filterLabel = this.filterDialogLabel;
 	tmplData.dateConvert = self.dateConvert;
     tmplData.filterRender = function() {
+		
+	  this.tmpValues = [];
 	  // add value list to selected filter or templating of record values will not work
-	  this.tmpValues = _.uniq(_.pluck(tmplData.records, this.field));
+	  if (this.controlType === 'list' || this.controlType.indexOf('slider') >= 0)
+		this.tmpValues = _.uniq(_.pluck(tmplData.records, this.field));
+		
 	  this.values = new Array();
 	  if (this.start)
 		this.startDate = tmplData.dateConvert(this.start);
@@ -6239,10 +6712,15 @@ my.GenericFilter = Backbone.View.extend({
 	  if (this.stop)
 		this.endDate = tmplData.dateConvert(this.stop);
 		
-	  if (this.tmpValues.length)
+	  if (this.tmpValues.length && typeof this.tmpValues[0] != "undefined")
 	  {
 		  this.max = this.tmpValues[0];
 		  this.min = this.tmpValues[0];
+	  }
+	  else
+	  {
+		  this.max = 100;
+		  this.min = 0;
 	  }
 	  for (var i in this.tmpValues)
 	  {
@@ -6254,29 +6732,117 @@ my.GenericFilter = Backbone.View.extend({
 		if (v < this.min)
 			this.min = v;
 	  }
+	  if (this.controlType == "month_calendar")
+	  {
+		this.monthValues = [];
+		for (m = 1; m <= 12; m++)
+			this.monthValues.push({ val: d3.format("02d")(m), 
+									label: d3.time.format("%B")(new Date(m+"/01/2012")), 
+									evenOdd: (m % 2 == 0 ? 'even-row' : 'odd-row' )
+								});
+		
+		this.yearValues = [];
+		var startYear = 2012;
+		var endYear = parseInt(d3.time.format("%Y")(new Date()))
+		for (var y = startYear; y <= endYear; y++)
+			this.yearValues.push(y);
+	  }
 	  if (this.controlType.indexOf("slider") >= 0 || this.controlType.indexOf("calendar") >= 0)
 		self._ctrlId++;
 		
 	  this.ctrlId = self._ctrlId;
       return Mustache.render(self.filterTemplates[this.controlType], this);
     };
+
     var out = Mustache.render(this.template, tmplData);
     this.el.html(out);
   },
   onListItemClicked: function(e) {
+
+
+
+
     e.preventDefault();
+	// let's check if user clicked on combobox or table and behave consequently
     var $target = $(e.currentTarget);
-	$table = $target.parent().parent().parent();
-	$table.find('td').each(function() { 
-						$(this).removeClass("selected");
-					});
-	
-	$target.addClass("selected");
-	var fieldId     = $table.attr('data-filter-field');
-	_.each(this._targetDatasets, function(ds) { 
-		ds.queryState.setFilter({field: fieldId, type: 'term', controlType: 'list', term:$target.text(), fieldType: "number"});
-	});
+	var $table;
+	var $targetTD;
+	var $targetOption;
+	var $combo;
+	if ($target.is('td'))
+	{
+		$targetTD = $target;
+		$table = $target.parent().parent().parent();
+		var type  = $table.attr('data-filter-type');
+		if (type == "range")
+			$combo = $table.parent().parent().find(".drop-down2");
+	}
+	else if ($target.is('select'))
+	{
+		$combo = $target;
+		$table = $combo.parent().find(".table");
+	}
+	this.handleListItemClicked($targetTD, $table, $combo);
   },
+
+  handleListItemClicked: function($targetTD, $table, $combo) {
+
+
+	if (typeof $targetTD != "undefined")
+	{
+
+		// user clicked on table
+		$table.find('td').each(function() { 
+							$(this).removeClass("selected");
+						});
+		
+		$targetTD.addClass("selected");
+		var fieldId = $table.attr('data-filter-field');
+		var type = $table.attr('data-filter-type');
+
+
+
+        if (type == "range")
+		{
+			// case month_calendar 
+			var month = $targetTD.attr('myValue');
+			var year = $combo.val();
+			var startDate =  new Date(year, month-1, 1, 0, 0, 0, 0);
+            var endDate;
+            if(month=="12")
+                endDate = new Date(year+1, 0, 1, 0, 0, 0, 0);
+            else
+                endDate = new Date(year, month, 1, 0, 0, 0, 0);
+
+            this.doAction("onListItemClicked", fieldId, [startDate, endDate], "add");
+
+			/*_.each(this._targetDatasets, function(ds) {
+				ds.queryState.setFilter({field: fieldId, type: 'range', start:startDate, stop:endDate, fieldType: "date"});
+			});*/
+
+		}
+		else
+		{
+            this.doAction("onListItemClicked", fieldId, [$targetTD.text()], "add");
+
+			// case normal list
+			/*_.each(this._targetDatasets, function(ds) {
+				ds.queryState.setFilter({field: fieldId, type: 'term', term:$targetTD.text(), fieldType: "number"});
+			});*/
+		}
+	}
+  },
+    // todo doAction should be moved to action class
+    // action could be add or remove
+    doAction: function(eventType, fieldName, values, actionType) {
+
+        var actions = this.options.actions;
+        var eventData = {};
+        eventData[fieldName] = values;
+
+        recline.ActionUtility.doAction(actions, eventType, eventData, actionType);
+    },
+
 	dateConvert : function(d) { 
 		// convert 2012-01-31 00:00:00 to 01/31/2012
 		try
@@ -6299,17 +6865,18 @@ my.GenericFilter = Backbone.View.extend({
 			return d;
 		}
 	},
+
     onFilterValueChanged: function(e) {
     e.preventDefault();
     var $target = $(e.target).parent();
 	var fieldId     = $target.attr('data-filter-field');
 	var fieldType     = $target.attr('data-filter-type');
 	var controlType     = $target.attr('data-control-type');
-	var term;
-	var from;
-	var to;
+
+
 	if (fieldType == "term")
 	{
+        var term;
 		var termObj = $target.find('.data-control-id');
 		switch (controlType)
 		{
@@ -6318,9 +6885,12 @@ my.GenericFilter = Backbone.View.extend({
 			case "drop_down": term = termObj.val();break;
 			case "listbox": term = termObj.val();break;
 		}
+        this.doAction("onFilterValueChanged", fieldId, [term], "add");
 	}
 	else if (fieldType == "range")
 	{
+        var from;
+        var to;
 		var fromObj = $target.find('.data-control-id-from');
 		var toObj = $target.find('.data-control-id-to');
 		switch (controlType)
@@ -6329,11 +6899,12 @@ my.GenericFilter = Backbone.View.extend({
 			case "range_slider": from = fromObj.slider("values", 0);to = toObj.slider("values", 1);break;
 			case "range_calendar": from = this.dateConvertBack(fromObj.val());to = this.dateConvertBack(toObj.val());break;
 		}
+        this.doAction("onFilterValueChanged", fieldId, [from, to], "add");
 	}
-	_.each(this._targetDatasets, function(ds) { 
-		ds.queryState.setFilter({field: fieldId, type: fieldType, controlType: controlType, term:term, start: from, stop: to, fieldType: 'number'});
-		//ds.queryState.trigger('change');
-	});
+
+		/*var ds = this._targetDatasets[j];
+		ds.queryState.setFilter({field: fieldId, type: fieldType, term:term, start: from, stop: to, fieldType: this.getFieldType(fieldId)});
+		*/
 
   },
   onAddFilterShow: function(e) {
@@ -6375,7 +6946,7 @@ my.GenericFilter = Backbone.View.extend({
   onAddFilter: function(e) {
     e.preventDefault();
     var $target = $(e.target).parent().parent();
-    $target.hide();//this.hidePanel($target);
+    $target.hide();
     var controlType = $target.find('select.filterType').val();
 	var filterType = this.getFilterTypeFromControlType(controlType);
     var field      = $target.find('select.fields').val();
@@ -6390,15 +6961,18 @@ my.GenericFilter = Backbone.View.extend({
 		newFilter.fieldType = this.getFieldType(newFilter.field)
 	
 	this._activeFilters.push(newFilter);
-	this.render();
+
   },
   onRemoveFilter: function(e) {
     e.preventDefault();
     var $target = $(e.target);
-    var filterId = $target.closest('.filter').attr('data-filter-id');
-	_.each(this._targetDatasets, function(ds) { 
-		ds.queryState.removeFilter(filterId);
-	});
+    var field = $target.parent().attr('data-filter-field');
+
+  	/*_.each(this._targetDatasets, function(ds) {
+		ds.queryState.removeFilterByField(field);
+	});*/
+      this.doAction("onRemoveFilter", field, [], "remove");
+
   }
 
 
