@@ -2,6 +2,58 @@ this.recline = this.recline || {};
 
 (function($, my) {
 
+    my.ActionUtility = {};
+
+my.ActionUtility.doAction =    function(actions, eventType, eventData, actionType) {
+
+        // find all actions configured for eventType
+        var targetActions = _.filter(actions, function(d) {
+            var tmpFound = _.find(d["event"], function(x) {return x==eventType});
+            if(tmpFound != -1)
+                return true;
+            else
+                return false;
+        });
+
+        // foreach action prepare field
+        _.each(targetActions, function(currentAction) {
+            var mapping = currentAction.mapping;
+            var actionParameters = [];
+            //foreach mapping set destination field
+            _.each(mapping, function(map) {
+                if(eventData[map["srcField"]] == null) {
+                    console.log( "warn: sourceField: [" + map["srcField"] + "] not present in event data" );
+                } else {
+
+
+                    var param = {
+                        filter: map["filter"],
+                        value: eventData[map["srcField"]]
+                    };
+                    actionParameters.push(param);
+                }
+            });
+
+            if( actionParameters.length > 0)  {
+                currentAction.action._internalDoAction(actionParameters, actionType);
+            }
+        });
+    },
+
+my.ActionUtility.getActiveFilters = function(actions) {
+
+    var activeFilters = [];
+    _.each(actions, function(currentAction) {
+        _.each(currentAction.mapping, function(map) {
+            var currentFilter= currentAction.action.getActiveFilters(map.filter, map.srcField);
+            if(currentFilter!=null && currentFilter.length>0)
+                activeFilters = _.union(activeFilters, currentFilter) ;
+        })
+    });
+
+    return activeFilters;
+};
+
 // ## <a id="dataset">Action</a>
 my.Action = Backbone.Model.extend({
     constructor: function Action() {
@@ -13,7 +65,7 @@ my.Action = Backbone.Model.extend({
    },
 
     // action could be add/remove
-   doAction: function(data, action) {
+   _internalDoAction: function(data, action) {
        console.log("Received doAction for");
        console.log(data);
 

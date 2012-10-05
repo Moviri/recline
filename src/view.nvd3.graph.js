@@ -196,6 +196,7 @@ this.recline.View = this.recline.View || {};
   },
 
   doActions: function(eventType, event) {
+
       var self = this;
       var actions = this.options.actions;
 
@@ -206,12 +207,14 @@ this.recline.View = this.recline.View || {};
       // if seriesaname is not defined click means selection of single data
       if(seriesNameField == null ){
         var seriesFieldName = event.series.key;
-        eventData[seriesFieldName] = event.value;
+        eventData[seriesFieldName] = [event.value];
       }
       else
       {
-          eventData[ seriesNameField[0] ] = event.series.key;
+          eventData[ seriesNameField[0] ] = [event.series.key];
       }
+
+      recline.ActionUtility.doAction(actions, eventType, eventData, "add");
 
   },
 

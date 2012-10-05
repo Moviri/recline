@@ -277,28 +277,17 @@ my.GenericFilter = Backbone.View.extend({
 
 	// retrieve filters already set on the model
 
-      var activeFilters = [];
-      _.each(this._actions, function(currentAction) {
-        _.each(currentAction.mapping, function(map) {
-            var currentFilter= currentAction.action.getActiveFilters(map.filter, map.srcField);
-            if(currentFilter!=null && currentFilter.length>0)
-                activeFilters = _.union(activeFilters, currentFilter) ;
-        })
-      });
-
-
-      //  map them to the correct controlType also retaining their values (start/from/term)
-      _.each(activeFilters, function(filter) {
-              for (var j in tmplData.filters)
+    //  map them to the correct controlType also retaining their values (start/from/term)
+      _.each(recline.ActionUtility.getActiveFilters(this._actions), function(filter) {
+          for (var j in tmplData.filters)
+          {
+              if (tmplData.filters[j].field == filter.field)
               {
-                  if (tmplData.filters[j].field == filter.field)
-                  {
-                      $.extend(tmplData.filters[j], filter);
-                      break;
-                  }
+                  $.extend(tmplData.filters[j], filter);
+                  break;
               }
+          }
       });
-
 
       if (tmplData.filters.length > 0)
 		tmplData.filters[tmplData.filters.length -1].hrVisible = 'none'
@@ -449,38 +438,7 @@ my.GenericFilter = Backbone.View.extend({
         var eventData = {};
         eventData[fieldName] = values;
 
-        // find all actions configured for eventType
-        var targetActions = _.filter(actions, function(d) {
-            var tmpFound = _.find(d["event"], function(x) {return x==eventType});
-            if(tmpFound != -1)
-                return true;
-            else
-                return false;
-        });
-
-        // foreach action prepare field
-        _.each(targetActions, function(currentAction) {
-            var mapping = currentAction.mapping;
-            var actionParameters = [];
-            //foreach mapping set destination field
-            _.each(mapping, function(map) {
-                if(eventData[map["srcField"]] == null) {
-                    console.log( "warn: sourceField: [" + map["srcField"] + "] not present in event data" );
-                } else {
-
-
-                    var param = {
-                        filter: map["filter"],
-                        value: eventData[map["srcField"]]
-                    };
-                    actionParameters.push(param);
-                }
-            });
-
-            if( actionParameters.length > 0)  {
-                currentAction.action.doAction(actionParameters, actionType);
-            }
-        });
+        recline.ActionUtility.doAction(actions, eventType, eventData, actionType);
     },
 
 	dateConvert : function(d) { 
