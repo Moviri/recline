@@ -115,31 +115,37 @@ my.GenericFilter = Backbone.View.extend({
         </fieldset> \
       </div> \
     ',
-	month_calendar: ' \
+	month_week_calendar: ' \
 	  <style> \
-		.odd-row { background: aliceblue } \
-		.even-row { background: azure } \
 		.list-filter-item { cursor:pointer; } \
 		.list-filter-item:hover { background: lightblue;cursor:pointer; } \
-		.selected { background: orange } \
-		.selected:hover { background: red } \
 	  </style> \
       <div class="filter-{{type}} filter"> \
         <fieldset> \
             <b>{{field}}</b>  \
             <a class="js-remove-filter" href="#" title="Remove this filter">&times;</a> \
 			<br> \
+			Year<br> \
 			<select class="drop-down2 fields data-control-id" > \
             {{#yearValues}} \
-            <option value="{{.}}">{{.}}</option> \
+            <option value="{{val}}" {{selected}}>{{val}}</option> \
             {{/yearValues}} \
           </select> \
 			<br> \
+			Type<br> \
+			<select class="drop-down3 fields" > \
+				{{#periodValues}} \
+				<option value="{{val}}" {{selected}}>{{val}}</option> \
+				{{/periodValues}} \
+			</select> \
+			<br> \
 			<div style="max-height:500px;width:100%;border:1px solid grey;overflow:auto;"> \
-				<table class="table" style="width:100%" data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" > \
-				{{#monthValues}} \
-				<tr><td class="list-filter-item {{evenOdd}}" myValue="{{val}}">{{label}}</td><tr> \
-				{{/monthValues}} \
+				<table class="table table-striped table-hover table-condensed" style="width:100%" data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" > \
+				<tbody>\
+				{{#values}} \
+				<tr><td class="list-filter-item " myValue="{{val}}" startDate="{{startDate}}" stopDate="{{stopDate}}">{{label}}</td></tr> \
+				{{/values}} \
+				</tbody> \
 			  </table> \
 		  </div> \
 	    </fieldset> \
@@ -196,12 +202,8 @@ my.GenericFilter = Backbone.View.extend({
     ',
 	list: ' \
 	  <style> \
-		.odd-row { background: aliceblue } \
-		.even-row { background: azure } \
 		.list-filter-item { cursor:pointer; } \
 		.list-filter-item:hover { background: lightblue;cursor:pointer; } \
-		.selected { background: orange } \
-		.selected:hover { background: red } \
 	  </style> \
       <div class="filter-{{type}} filter"> \
         <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}"> \
@@ -209,10 +211,12 @@ my.GenericFilter = Backbone.View.extend({
             <a class="js-remove-filter" href="#" title="Remove this filter">&times;</a> \
 			<br> \
 			<div style="max-height:500px;width:100%;border:1px solid grey;overflow:auto;"> \
-				<table style="width:100%" data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" > \
+				<table class="table table-striped table-hover table-condensed" style="width:100%" data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" > \
+				<tbody>\
 				{{#values}} \
-				<tr><td class="list-filter-item {{evenOdd}}" >{{val}}</td><tr> \
+				<tr><td class="list-filter-item " >{{val}}</td></tr> \
 				{{/values}} \
+				</tbody>\
 			  </table> \
 		  </div> \
 	    </fieldset> \
@@ -241,7 +245,8 @@ my.GenericFilter = Backbone.View.extend({
 	'click .list-filter-item': 'onListItemClicked',
 	'click #setFilterValueButton': 'onFilterValueChanged',
 	'change .drop-down': 'onFilterValueChanged',
-	'change .drop-down2': 'onListItemClicked'
+	'change .drop-down2': 'onListItemClicked',
+	'change .drop-down3': 'onPeriodChanged'
   },
   _ctrlId : 0,
   _sourceDataset: null,
@@ -252,6 +257,9 @@ my.GenericFilter = Backbone.View.extend({
     _.bindAll(this, 'render');
 	_.bindAll(this, 'getFieldType');
 	_.bindAll(this, 'onRemoveFilter');
+	_.bindAll(this, 'onPeriodChanged');
+	_.bindAll(this, 'findActiveFilterByField');
+
 	this._sourceDataset = args.sourceDataset;
 	this._targetDatasets = args.filtersTargetDatasets;
     this._sourceDataset.fields.bind('all', this.render); 
@@ -317,27 +325,68 @@ my.GenericFilter = Backbone.View.extend({
 	  for (var i in this.tmpValues)
 	  {
 		var v = this.tmpValues[i];
-		this.values.push({val: v, evenOdd: (i % 2 == 0 ? 'even-row' : 'odd-row') });
+		this.values.push({val: v});
 		if (v > this.max)
 			this.max = v;
 			
 		if (v < this.min)
 			this.min = v;
 	  }
-	  if (this.controlType == "month_calendar")
+	  if (this.controlType == "month_week_calendar")
 	  {
+		this.weekValues = [];
+		this.periodValues = [ {val: "Months", selected: (this.period == "Months" ? "selected" : "")}, {val:"Weeks", selected: (this.period == "Weeks" ? "selected" : "")} ]
+		var currYear = this.year;
+		var januaryFirst = new Date(currYear,0,1);
+		var januaryFirst_time = januaryFirst.getTime();
+		var weekOffset = januaryFirst.getDay();
+		var finished = false;
+		for (var w = 0; w <= 53 && !finished; w++)
+		{
+			var weekStartTime = januaryFirst_time+7*86400000*(w-1)+(7-weekOffset)*86400000;
+			var weekEndTime = weekStartTime+7*86400000;
+			if (w == 0)
+				weekStartTime = januaryFirst_time;
+				
+			if (new Date(weekEndTime).getFullYear() > currYear)
+			{
+				weekEndTime = new Date(currYear+1,0,1).getTime();
+				finished = true;
+			}
+			this.weekValues.push({val: w+1,
+									label: ""+(w+1)+ " ["+d3.time.format("%x")(new Date(weekStartTime))+" -> "+d3.time.format("%x")(new Date(weekEndTime-1000))+"]",
+									startDate: new Date(weekStartTime), 
+									stopDate: new Date(weekEndTime)
+								});
+		}
+		
 		this.monthValues = [];
 		for (m = 1; m <= 12; m++)
+		{
+			var endYear = currYear;
+			var endMonth = m;
+			if (m == 12)
+			{
+				endYear = currYear+1;
+				endMonth = 0;
+			}
 			this.monthValues.push({ val: d3.format("02d")(m), 
-									label: d3.time.format("%B")(new Date(m+"/01/2012")), 
-									evenOdd: (m % 2 == 0 ? 'even-row' : 'odd-row' )
+									label: d3.time.format("%B")(new Date(m+"/01/2012"))+" "+currYear,
+									startDate: new Date(currYear, m-1, 1, 0, 0, 0, 0),
+									stopDate: new Date(endYear, endMonth, 1, 0, 0, 0, 0)
 								});
-		
+		}
+		if (this.period == "Months")
+			this.values = this.monthValues;
+		else if (this.period == "Weeks")
+			this.values = this.weekValues;
+
 		this.yearValues = [];
-		var startYear = 2012;
+		var startYear = 2010;
 		var endYear = parseInt(d3.time.format("%Y")(new Date()))
 		for (var y = startYear; y <= endYear; y++)
-			this.yearValues.push(y);
+			this.yearValues.push({val: y, selected: (this.year == y ? "selected" : "")});
+			
 	  }
 	  if (this.controlType.indexOf("slider") >= 0 || this.controlType.indexOf("calendar") >= 0)
 		self._ctrlId++;
@@ -372,25 +421,32 @@ my.GenericFilter = Backbone.View.extend({
 	this.handleListItemClicked($targetTD, $table, $combo);
   },
   handleListItemClicked: function($targetTD, $table, $combo) {
+	var fieldId = $table.attr('data-filter-field');
+	var type = $table.attr('data-filter-type');
+	if (type == "range" && typeof $targetTD == "undefined")
+	{
+		// case month_week_calendar
+		// user clicked on year combo
+		var year = parseInt($combo.val());
+		// update year value in filter (so that the value is retained after re-rendering)
+		this.findActiveFilterByField(fieldId).year = year;
+		this.render();
+	}
 	if (typeof $targetTD != "undefined")
 	{
 		// user clicked on table
-		$table.find('td').each(function() { 
-							$(this).removeClass("selected");
+		// use bootstrap ready-for-use classes to highlight selection (avail classes are success, warning, info & error)
+		$table.find('tr').each(function() { 
+							$(this).removeClass("error"); 
 						});
 		
-		$targetTD.addClass("selected");
-		var fieldId = $table.attr('data-filter-field');
-		var type = $table.attr('data-filter-type');
+		$targetTD.parent().addClass("error");
 		if (type == "range")
 		{
-			// case month_calendar 
-			var month = $targetTD.attr('myValue');
-			var year = $combo.val();
-			var startDate = year+"-"+month+"-01 00:00:00"
-			var endDate = year+"-"+d3.format("02d")(parseInt(month)+1)+"-01 00:00:00"
-			if (month == '12')
-				endDate = (parseInt(year)+1)+"-01-01 00:00:00"
+			// case month_week_calendar 
+			var year = parseInt($combo.val());
+			var startDate = $targetTD.attr('startDate');
+			var endDate = $targetTD.attr('stopDate');
 				
 			_.each(this._targetDatasets, function(ds) { 
 				ds.queryState.setFilter({field: fieldId, type: 'range', start:startDate, stop:endDate, fieldType: "date"});
@@ -517,9 +573,36 @@ my.GenericFilter = Backbone.View.extend({
 
 	if (typeof newFilter.fieldType == 'undefined')
 		newFilter.fieldType = this.getFieldType(newFilter.field)
+		
+	if (newFilter.controlType == "month_week_calendar")
+	{
+		if (typeof newFilter.period == "undefined")
+			newFilter.period = "Months"
+
+		if (typeof newFilter.year == "undefined")
+			newFilter.year = new Date().getFullYear();
+	}
 	
 	this._activeFilters.push(newFilter);
 	this.render();
+  },
+  onPeriodChanged: function(e) {
+    e.preventDefault();
+	var $table = $(e.target).parent().find(".table");
+	//var $yearCombo = $(e.target).parent().find(".drop-down2");
+	var fieldId = $table.attr('data-filter-field');
+	var type = $table.attr('data-filter-type');
+	this.findActiveFilterByField(fieldId).period = $(e.target).val();
+	this.render();
+	//this.handleListItemClicked(undefined, $table, $yearCombo);
+  },
+  findActiveFilterByField: function(fieldId) {
+	for (var j in this._activeFilters)
+	{
+		if (this._activeFilters[j].field == fieldId)
+			return this._activeFilters[j];
+	}
+	return new Object(); // to avoid "undefined" errors
   },
   onRemoveFilter: function(e) {
     e.preventDefault();
