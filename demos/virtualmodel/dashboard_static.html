@@ -114,8 +114,8 @@ root: ../../
                     aggregationFunctions: ["sum"]
                 }
             });
-		
-		//recline.ActionUtility.doAction(this.options.actions, "dashboard_html", {daydate: ["2012-01-01 00:00:00", "2012-01-30 00:00:00"]}, "add");
+
+
 
         filters = [ {field: "daydate", type: "range", start:"2012-01-01 00:00:00", stop: "2012-01-30 00:00:00", fieldType: "date" }];
         for(var i=0;i<filters.length;i++)
@@ -216,7 +216,7 @@ root: ../../
                 id: 'filterEditor1',
                 label: 'Memory Filters1',
 				sourceFields: [
-								{field: 'daydate', type: "range", controlType: 'month_week_calendar', fieldType: 'date'}
+								{field: 'daydate', type: "range", controlType: 'month_calendar', fieldType: 'date'}
 							]
             });
             $('#search_container1').append(filter1.el);

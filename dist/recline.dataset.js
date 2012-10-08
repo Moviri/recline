@@ -222,6 +222,7 @@ my.Dataset = Backbone.Model.extend({
 
   _handleQueryResult: function(queryResult) {
 
+
     var self = this;
 
     self.recordCount = queryResult.total;
@@ -454,7 +455,14 @@ my.Field = Backbone.Model.extend({
         }
         return val
       }
-    }
+    },
+	'date': function(val, field, doc) {
+		// if val contains timer value (in msecs), possibly in string format, ensure it's converted to number
+		var intVal = parseInt(val);
+		if (!isNaN(intVal) && isFinite(val))
+			return intVal;
+		else return new Date(val);
+	}
   }
 });
 
@@ -498,6 +506,7 @@ my.Query = Backbone.Model.extend({
     },
     range: {
       type: 'range',
+      field: '',
       start: '',
       stop: ''
     },
@@ -519,6 +528,7 @@ my.Query = Backbone.Model.extend({
           },
           range: {
               type: 'range',
+              field: '',
               start: '',
               stop: ''
           }
@@ -543,6 +553,20 @@ my.Query = Backbone.Model.extend({
     this.trigger('change:filters:new-blank');
   },
 
+    getFilters: function(){
+      return this.get('filters');
+    },
+
+    getFilterByFieldName: function(fieldName) {
+      var res = _.find(this.get('filters'), function(f) {
+          return f.field == fieldName;
+      });
+      if(res == -1)
+          return null;
+      else
+          return res;
+
+    },
 
     _setSingleFilter: function(filter) {
         var filters = this.get('filters');
@@ -593,6 +617,33 @@ my.Query = Backbone.Model.extend({
     this.set({filters: filters});
     this.trigger('change');
   },
+  removeFilterByField: function(field) {
+    var filters = this.get('filters');
+	for (var j in filters)
+	{
+		if (filters[j].field == field)
+		{
+			filters.splice(j, 1);
+			this.set({filters: filters});
+			this.trigger('change');
+			break;
+		}
+	}
+  },
+  clearFilter: function(field) {
+    var filters = this.get('filters');
+	for (var j in filters)
+	{
+		if (filters[j].field == field)
+		{
+			filters[j].term = null;
+			filters[j].start = null;
+			filters[j].stop = null;
+			this.trigger('change');
+			break;
+		}
+	}
+  },
 
       // ### addSelection
       //
@@ -619,10 +670,6 @@ my.Query = Backbone.Model.extend({
           selections.splice(selectionIndex, 1);
           this.set({selections: selections});
           this.trigger('change:selections');
-      },
-      isFieldSelected: function(fieldName, fieldVale) {
-          // todo check if field is selected
-          return false;
       },
         setSelection: function(s) {
         // todo should be optimized in order to make only one cycle on filters
@@ -789,6 +836,7 @@ this.recline.Backend.Memory = this.recline.Backend.Memory || {};
 
     this.query = function(queryObj) {
       var dfd = $.Deferred();
+
       var numRows = queryObj.size || this.data.length;
       var start = queryObj.from || 0;
       var results = this.data;

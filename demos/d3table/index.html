@@ -1,0 +1,86 @@
+---
+layout: moviri
+title: Demos - D3 Table Integration
+recline-deps: true
+root: ../../
+---
+
+<div id="graph_container" style="width: 1200">
+
+</div>
+
+<script src="./js/d3table.js"></script>
+<link rel="stylesheet" type="text/css" href="./css/bootstrap.css"> 
+<script type="text/javascript">
+	var url, dataset, virtualdatasetAge;
+
+	url = "http://192.168.100.133:8380/cwwh-iwal-war/cw/wh/ds/AudDemoByGender";
+
+	dataset = new recline.Model.Dataset({
+		//records: []
+		url : url, //+"&jsonpcallback=jsonpcallback",
+		backend : 'jsonp',
+		id : "AudDemoByGender"
+
+	});
+
+	var filter = [{
+		field : "daydate",
+		type : "range",
+		start : "2012-01-01 00:00:00",
+		stop : "2012-01-07 00:00:00",
+		fieldType : "date"
+	}];
+
+	dataset.records.bind('add', function() {
+		console.log('add');
+	});
+	dataset.records.bind('reset', function() {
+		console.log('reset');
+	});
+	dataset.records.bind('remove', function() {
+		console.log('remove');
+	});
+
+	virtualdatasetAge = new recline.Model.VirtualDataset({
+		dataset : dataset,
+		aggregation : {
+			dimensions : ["age"],
+			aggregatedFields : ["totalviewed", "price_sum"],
+			partitions : ["gender"],
+			aggregationFunctions : ["sum", "avg"]
+		}
+	});
+	
+	var filter2 = [{
+		field : "age",
+		type : "range",
+		start : "0",
+		stop : "40",
+		fieldType : "number"
+	}];
+
+	var graph = new recline.View.d3Table({
+		model : virtualdatasetAge,
+		columns : [{"name":"age","fields": [{"id":"age"}], "label": "Age (bin)", "sortable": true, "width": "20%"},
+					{"name":"totalviewed_sum","fields": [{"id":"totalviewed_sum"}], "label": "Views", "width": "20%", "sortable": true},
+					{"name":"price_sum_sum","fields": [{"id": "price_sum_sum", "format":recline.Data.Format.decimal}], "label": "Revenues", "width": "20%"},
+					{"name":"totalviewed_by_gender_X_sum","fields": [{"id":"totalviewed_by_gender_Female_sum", "color":"DarkTurquoise"},{"id": "totalviewed_by_gender_Male_sum", "color":"DodgerBlue"}], 
+							"type": "barchart", "scale": recline.Data.Format.scale({type: 'linear', invertEven: true, domain: ['totalviewed_by_gender_Male_sum','totalviewed_by_gender_Female_sum'], range: [0,50]}),
+							"width": "40%", "label":"Views by Gender"}
+				],
+		conf : {"row_size": 20, "height": 200},
+		state : {
+		}
+	});
+	$('#graph_container').append(graph.el);
+	
+	filters = [ {field: "daydate", type: "range", start:"2012-01-01 00:00:00", stop: "2012-01-30 00:00:00", fieldType: "date", controlType: "range_calendar" }];
+	
+	filter.forEach(function(filter){dataset.queryState.addFilter(filter)});
+	//filter2.forEach(function(filter){virtualdatasetAge.queryState.addFilter(filter)});		
+		
+    dataset.fetch(); // needed to populate filter list
+	
+
+</script>

@@ -250,7 +250,6 @@ my.GenericFilter = Backbone.View.extend({
   },
   _ctrlId : 0,
   _sourceDataset: null,
-  _targetDatasets: [],
   _activeFilters: [],
   initialize: function(args) {
     this.el = $(this.el);
@@ -261,37 +260,44 @@ my.GenericFilter = Backbone.View.extend({
 	_.bindAll(this, 'findActiveFilterByField');
 
 	this._sourceDataset = args.sourceDataset;
-	this._targetDatasets = args.filtersTargetDatasets;
-    this._sourceDataset.fields.bind('all', this.render); 
-    this._sourceDataset.records.bind('reset', this.render); 
+
+    //this._sourceDataset.fields.bind('all', this.render);
+
 	this.sourceFields = args.sourceFields;
 	this.filterDialogLabel = args.label;
 	this._activeFilters = [];
+
+    this._actions = args.actions;
 
     if (this.sourceFields && this.sourceFields.length)
 		for (var k in this.sourceFields)
 			this.addNewFilterControl(this.sourceFields[k]);
 
-    this.render();
+    this._sourceDataset.records.bind('reset', this.render);
   },
+
   render: function() {
     var self = this;
 	var tmplData = {filters : this._activeFilters};
 	_.each(tmplData.filters , function(flt) { 
 		flt.hrVisible = 'block'; 
 	});
-	// retrieve filters already set on the model and map them to the correct controlType also retaining their values (start/from/term)
-	_.each(this._targetDatasets[0].queryState.toJSON().filters, function(modelFilter) {
-		for (var j in tmplData.filters)
-		{
-			 if (tmplData.filters[j].field == modelFilter.field)
-			 {
-				$.extend(tmplData.filters[j], modelFilter);
-				break;
-			 }
-		}
-	});
-	if (tmplData.filters.length > 0)
+
+	// retrieve filters already set on the model
+
+    //  map them to the correct controlType also retaining their values (start/from/term)
+      _.each(recline.ActionUtility.getActiveFilters(this._actions), function(filter) {
+          for (var j in tmplData.filters)
+          {
+              if (tmplData.filters[j].field == filter.field)
+              {
+                  $.extend(tmplData.filters[j], filter);
+                  break;
+              }
+          }
+      });
+
+      if (tmplData.filters.length > 0)
 		tmplData.filters[tmplData.filters.length -1].hrVisible = 'none'
 	
     tmplData.fields = this._sourceDataset.fields.toJSON();
@@ -394,6 +400,7 @@ my.GenericFilter = Backbone.View.extend({
 	  this.ctrlId = self._ctrlId;
       return Mustache.render(self.filterTemplates[this.controlType], this);
     };
+
     var out = Mustache.render(this.template, tmplData);
     this.el.html(out);
   },
@@ -420,6 +427,7 @@ my.GenericFilter = Backbone.View.extend({
 	}
 	this.handleListItemClicked($targetTD, $table, $combo);
   },
+
   handleListItemClicked: function($targetTD, $table, $combo) {
 	var fieldId = $table.attr('data-filter-field');
 	var type = $table.attr('data-filter-type');
@@ -448,30 +456,30 @@ my.GenericFilter = Backbone.View.extend({
 			var startDate = $targetTD.attr('startDate');
 			var endDate = $targetTD.attr('stopDate');
 				
-			_.each(this._targetDatasets, function(ds) { 
-				ds.queryState.setFilter({field: fieldId, type: 'range', start:startDate, stop:endDate, fieldType: "date"});
-			});
+			this.doAction("onListItemClicked", fieldId, [startDate, endDate], "add");
 		}
 		else
 		{
-			// case normal list
-			_.each(this._targetDatasets, function(ds) { 
-				ds.queryState.setFilter({field: fieldId, type: 'term', term:$targetTD.text(), fieldType: "number"});
-			});
+            this.doAction("onListItemClicked", fieldId, [$targetTD.text()], "add");
 		}
 	}
   },
-	dateConvert : function(d) { 
-		// convert 2012-01-31 00:00:00 to 01/31/2012
-		try
-		{
-			var p = d.split(/\D/); 
-			return p[1]+"/"+p[2]+"/"+p[0]; 
-		}
-		catch(ex) {
-			return d;
-		}
-	},
+
+    // action could be add or remove
+    doAction: function(eventType, fieldName, values, actionType) {
+
+        var actions = this.options.actions;
+        var eventData = {};
+        eventData[fieldName] = values;
+
+        recline.ActionUtility.doAction(actions, eventType, eventData, actionType);
+    },
+
+    dateConvert: function(d) {
+        var dd= new Date(d);
+        return dd.toLocaleDateString();
+    },
+
 	dateConvertBack : function(d) { 
 		// convert 01/31/2012  to 2012-01-31 00:00:00
 		try
@@ -483,17 +491,18 @@ my.GenericFilter = Backbone.View.extend({
 			return d;
 		}
 	},
+
     onFilterValueChanged: function(e) {
     e.preventDefault();
     var $target = $(e.target).parent();
 	var fieldId     = $target.attr('data-filter-field');
 	var fieldType     = $target.attr('data-filter-type');
 	var controlType     = $target.attr('data-control-type');
-	var term;
-	var from;
-	var to;
+
+
 	if (fieldType == "term")
 	{
+        var term;
 		var termObj = $target.find('.data-control-id');
 		switch (controlType)
 		{
@@ -502,9 +511,12 @@ my.GenericFilter = Backbone.View.extend({
 			case "drop_down": term = termObj.val();break;
 			case "listbox": term = termObj.val();break;
 		}
+        this.doAction("onFilterValueChanged", fieldId, [term], "add");
 	}
 	else if (fieldType == "range")
 	{
+        var from;
+        var to;
 		var fromObj = $target.find('.data-control-id-from');
 		var toObj = $target.find('.data-control-id-to');
 		switch (controlType)
@@ -513,12 +525,7 @@ my.GenericFilter = Backbone.View.extend({
 			case "range_slider": from = fromObj.slider("values", 0);to = toObj.slider("values", 1);break;
 			case "range_calendar": from = this.dateConvertBack(fromObj.val());to = this.dateConvertBack(toObj.val());break;
 		}
-	}
-	for (var j in this._targetDatasets)
-	{
-		var ds = this._targetDatasets[j];
-		ds.queryState.setFilter({field: fieldId, type: fieldType, term:term, start: from, stop: to, fieldType: this.getFieldType(fieldId)});
-		//ds.queryState.trigger('change');
+        this.doAction("onFilterValueChanged", fieldId, [from, to], "add");
 	}
   },
   onAddFilterShow: function(e) {
@@ -584,7 +591,7 @@ my.GenericFilter = Backbone.View.extend({
 	}
 	
 	this._activeFilters.push(newFilter);
-	this.render();
+
   },
   onPeriodChanged: function(e) {
     e.preventDefault();
@@ -608,10 +615,12 @@ my.GenericFilter = Backbone.View.extend({
     e.preventDefault();
     var $target = $(e.target);
     var field = $target.parent().attr('data-filter-field');
-	_.each(this._targetDatasets, function(ds) { 
+
+  	/*_.each(this._targetDatasets, function(ds) {
 		ds.queryState.removeFilterByField(field);
-	});
-	this.render();
+	});*/
+      this.doAction("onRemoveFilter", field, [], "remove");
+
   }
 
 
