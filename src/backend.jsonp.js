@@ -227,7 +227,7 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
       var dataParsers = {
           number : function (e) { return parseFloat(e, 10); },
           string : function (e) { return e.toString() },
-          date   : function (e) { return e.toString(); }     //todo parsing and verification of date
+          date   : function (e) { return new Date(e).valueOf() }
       };
 
       for(var i=0; i<filters.length;i++) {

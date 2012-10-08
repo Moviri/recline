@@ -24,7 +24,7 @@ this.recline.Backend.Memory = this.recline.Backend.Memory || {};
     } else {
       if (data) {
         this.fields = _.map(data[0], function(value, key) {
-          return {id: key};
+          return {id: key, type: 'string'};
         });
       }
     }
@@ -37,7 +37,7 @@ this.recline.Backend.Memory = this.recline.Backend.Memory || {};
       });
     };
 
-    this.delete = function(doc) {
+    this.remove = function(doc) {
       var newdocs = _.reject(self.data, function(internalDoc) {
         return (doc.id === internalDoc.id);
       });
@@ -52,7 +52,7 @@ this.recline.Backend.Memory = this.recline.Backend.Memory || {};
         self.update(record);
       });
       _.each(changes.deletes, function(record) {
-        self.delete(record);
+        self.remove(record);
       });
       dfd.resolve();
       return dfd.promise();
@@ -60,11 +60,10 @@ this.recline.Backend.Memory = this.recline.Backend.Memory || {};
 
     this.query = function(queryObj) {
       var dfd = $.Deferred();
-
       var numRows = queryObj.size || this.data.length;
       var start = queryObj.from || 0;
       var results = this.data;
-
+      
       results = this._applyFilters(results, queryObj);
       results = this._applyFreeTextQuery(results, queryObj);
 
@@ -93,7 +92,6 @@ this.recline.Backend.Memory = this.recline.Backend.Memory || {};
     // in place filtering
     this._applyFilters = function(results, queryObj) {
       var filters = queryObj.filters;
-
       // register filters
       var filterFunctions = {
         term         : term,
@@ -101,14 +99,24 @@ this.recline.Backend.Memory = this.recline.Backend.Memory || {};
         geo_distance : geo_distance
       };
       var dataParsers = {
-        number : function (e) { return parseFloat(e, 10); },
+        integer: function (e) { return parseFloat(e, 10); },
+        'float': function (e) { return parseFloat(e, 10); },
         string : function (e) { return e.toString() },
-        date   : function (e) { return new Date(e).valueOf() }
+        date   : function (e) { return new Date(e).valueOf() },
+        datetime   : function (e) { return new Date(e).valueOf() }
       };
+      var keyedFields = {};
+      _.each(self.fields, function(field) {
+        keyedFields[field.id] = field;
+      });
+      function getDataParser(filter) {
+        var fieldType = keyedFields[filter.field].type || 'string';
+        return dataParsers[fieldType];
+      }
 
       // filter records
       return _.filter(results, function (record) {
-          var passes = _.map(filters, function (filter) {
+        var passes = _.map(filters, function (filter) {
           return filterFunctions[filter.type](record, filter);
         });
 
@@ -117,9 +125,8 @@ this.recline.Backend.Memory = this.recline.Backend.Memory || {};
       });
 
       // filters definitions
-
       function term(record, filter) {
-        var parse = dataParsers[filter.fieldType];
+        var parse = getDataParser(filter);
         var value = parse(record[filter.field]);
         var term  = parse(filter.term);
 
@@ -127,7 +134,7 @@ this.recline.Backend.Memory = this.recline.Backend.Memory || {};
       }
 
       function range(record, filter) {
-        var parse = dataParsers[filter.fieldType];
+        var parse = getDataParser(filter);
         var value = parse(record[filter.field]);
         var start = parse(filter.start);
         var stop  = parse(filter.stop);
@@ -183,7 +190,6 @@ this.recline.Backend.Memory = this.recline.Backend.Memory || {};
         // TODO: remove dependency on recline.Model
         facetResults[facetId] = new recline.Model.Facet({id: facetId}).toJSON();
         facetResults[facetId].termsall = {};
-        facetResults[facetId].termsall_sum = {};
       });
       // faceting
       _.each(records, function(doc) {
@@ -193,7 +199,6 @@ this.recline.Backend.Memory = this.recline.Backend.Memory || {};
           var tmp = facetResults[facetId];
           if (val) {
             tmp.termsall[val] = tmp.termsall[val] ? tmp.termsall[val] + 1 : 1;
-            tmp.termsall_sum[val] = tmp.termsall_sum[val] ? tmp.termsall_sum[val] + 1 : 1;
           } else {
             tmp.missing = tmp.missing + 1;
           }
@@ -208,7 +213,7 @@ this.recline.Backend.Memory = this.recline.Backend.Memory || {};
           // want descending order
           return -item.count;
         });
-        tmp.terms = tmp.terms.slice(0, 10);                        facetResults
+        tmp.terms = tmp.terms.slice(0, 10);
       });
       return facetResults;
     };
@@ -221,8 +226,6 @@ this.recline.Backend.Memory = this.recline.Backend.Memory || {};
       });
       return this.save(toUpdate);
     };
-
-
   };
 
 }(jQuery, this.recline.Backend.Memory));

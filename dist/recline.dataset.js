@@ -12,8 +12,6 @@ my.Dataset = Backbone.Model.extend({
 
   // ### initialize
   initialize: function() {
-
-
     _.bindAll(this, 'query');
     this.backend = null;
     if (this.get('backend')) {
@@ -31,7 +29,6 @@ my.Dataset = Backbone.Model.extend({
       creates: []
     };
     this.facets = new my.FacetList();
-
     this.recordCount = null;
     this.queryState = new my.Query();
     this.queryState.bind('change', this.query);
@@ -51,7 +48,6 @@ my.Dataset = Backbone.Model.extend({
   fetch: function() {
     var self = this;
     var dfd = $.Deferred();
-
 
     if (this.backend !== recline.Backend.Memory) {
       this.backend.fetch(this.toJSON())
@@ -98,13 +94,10 @@ my.Dataset = Backbone.Model.extend({
         .fail(function(arguments) {
           dfd.reject(arguments);
         });
-
     }
 
     return dfd.promise();
   },
-
-
 
   // ### _normalizeRecordsAndFields
   // 
@@ -197,7 +190,6 @@ my.Dataset = Backbone.Model.extend({
   // Resulting RecordList are used to reset this.records and are
   // also returned.
   query: function(queryObj) {
-
     var self = this;
     var dfd = $.Deferred();
     this.trigger('query:start');
@@ -221,14 +213,10 @@ my.Dataset = Backbone.Model.extend({
   },
 
   _handleQueryResult: function(queryResult) {
-
-
     var self = this;
-
     self.recordCount = queryResult.total;
     var docs = _.map(queryResult.hits, function(hit) {
       var _doc = new my.Record(hit);
-
       _doc.fields = self.fields;
       _doc.bind('change', function(doc) {
         self._changes.updates.push(doc.toJSON());
@@ -239,8 +227,6 @@ my.Dataset = Backbone.Model.extend({
       return _doc;
     });
     self.records.reset(docs);
-
-
     if (queryResult.facets) {
       var facets = _.map(queryResult.facets, function(facetResult, facetId) {
         facetResult.id = facetId;
@@ -343,10 +329,7 @@ my.Record = Backbone.Model.extend({
   // For the provided Field get the corresponding computed data value
   // for this record.
   getFieldValueUnrendered: function(field) {
-
-      var val = this.get(field.id);
-
-
+    var val = this.get(field.id);
     if (field.deriver) {
       val = field.deriver(val, field, this);
     }
@@ -480,6 +463,7 @@ my.Query = Backbone.Model.extend({
   },
   defaults: function() {
     return {
+      size: 100,
       from: 0,
       q: '',
       facets: {},
@@ -490,6 +474,7 @@ my.Query = Backbone.Model.extend({
   _filterTemplates: {
     term: {
       type: 'term',
+      // TODO do we need this attribute here?
       field: '',
       term: ''
     },
@@ -539,12 +524,10 @@ my.Query = Backbone.Model.extend({
   //
   // @param filter an object specifying the filter - see _filterTemplates for examples. If only type is provided will generate a filter by cloning _filterTemplates
   addFilter: function(filter) {
-
     // crude deep copy
     var ourfilter = JSON.parse(JSON.stringify(filter));
     // not full specified so use template and over-write
     // 3 as for 'type', 'field' and 'fieldType'
-
     if (_.keys(filter).length <= 3) {
       ourfilter = _.extend(this._filterTemplates[filter.type], ourfilter);
     }
@@ -753,12 +736,6 @@ my.FacetList = Backbone.Collection.extend({
   model: my.Facet
 });
 
-
-
-
-
-
-
 // ## Object State
 //
 // Convenience Backbone model for storing (configuration) state of objects like Views.
@@ -774,6 +751,7 @@ Backbone.sync = function(method, model, options) {
 };
 
 }(jQuery, this.recline.Model));
+
 this.recline = this.recline || {};
 this.recline.Backend = this.recline.Backend || {};
 this.recline.Backend.Memory = this.recline.Backend.Memory || {};
@@ -813,7 +791,7 @@ this.recline.Backend.Memory = this.recline.Backend.Memory || {};
       });
     };
 
-    this.delete = function(doc) {
+    this.remove = function(doc) {
       var newdocs = _.reject(self.data, function(internalDoc) {
         return (doc.id === internalDoc.id);
       });
@@ -828,7 +806,7 @@ this.recline.Backend.Memory = this.recline.Backend.Memory || {};
         self.update(record);
       });
       _.each(changes.deletes, function(record) {
-        self.delete(record);
+        self.remove(record);
       });
       dfd.resolve();
       return dfd.promise();
@@ -836,11 +814,10 @@ this.recline.Backend.Memory = this.recline.Backend.Memory || {};
 
     this.query = function(queryObj) {
       var dfd = $.Deferred();
-
       var numRows = queryObj.size || this.data.length;
       var start = queryObj.from || 0;
       var results = this.data;
-
+      
       results = this._applyFilters(results, queryObj);
       results = this._applyFreeTextQuery(results, queryObj);
 
@@ -869,7 +846,6 @@ this.recline.Backend.Memory = this.recline.Backend.Memory || {};
     // in place filtering
     this._applyFilters = function(results, queryObj) {
       var filters = queryObj.filters;
-
       // register filters
       var filterFunctions = {
         term         : term,
@@ -884,7 +860,7 @@ this.recline.Backend.Memory = this.recline.Backend.Memory || {};
 
       // filter records
       return _.filter(results, function (record) {
-          var passes = _.map(filters, function (filter) {
+        var passes = _.map(filters, function (filter) {
           return filterFunctions[filter.type](record, filter);
         });
 
@@ -959,7 +935,6 @@ this.recline.Backend.Memory = this.recline.Backend.Memory || {};
         // TODO: remove dependency on recline.Model
         facetResults[facetId] = new recline.Model.Facet({id: facetId}).toJSON();
         facetResults[facetId].termsall = {};
-        facetResults[facetId].termsall_sum = {};
       });
       // faceting
       _.each(records, function(doc) {
@@ -969,7 +944,6 @@ this.recline.Backend.Memory = this.recline.Backend.Memory || {};
           var tmp = facetResults[facetId];
           if (val) {
             tmp.termsall[val] = tmp.termsall[val] ? tmp.termsall[val] + 1 : 1;
-            tmp.termsall_sum[val] = tmp.termsall_sum[val] ? tmp.termsall_sum[val] + 1 : 1;
           } else {
             tmp.missing = tmp.missing + 1;
           }
@@ -984,7 +958,7 @@ this.recline.Backend.Memory = this.recline.Backend.Memory || {};
           // want descending order
           return -item.count;
         });
-        tmp.terms = tmp.terms.slice(0, 10);                        facetResults
+        tmp.terms = tmp.terms.slice(0, 10);
       });
       return facetResults;
     };
@@ -997,8 +971,6 @@ this.recline.Backend.Memory = this.recline.Backend.Memory || {};
       });
       return this.save(toUpdate);
     };
-
-
   };
 
 }(jQuery, this.recline.Backend.Memory));

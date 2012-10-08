@@ -12,8 +12,6 @@ my.Dataset = Backbone.Model.extend({
 
   // ### initialize
   initialize: function() {
-
-
     _.bindAll(this, 'query');
     this.backend = null;
     if (this.get('backend')) {
@@ -31,7 +29,6 @@ my.Dataset = Backbone.Model.extend({
       creates: []
     };
     this.facets = new my.FacetList();
-
     this.recordCount = null;
     this.queryState = new my.Query();
     this.queryState.bind('change', this.query);
@@ -51,7 +48,6 @@ my.Dataset = Backbone.Model.extend({
   fetch: function() {
     var self = this;
     var dfd = $.Deferred();
-
 
     if (this.backend !== recline.Backend.Memory) {
       this.backend.fetch(this.toJSON())
@@ -98,13 +94,10 @@ my.Dataset = Backbone.Model.extend({
         .fail(function(arguments) {
           dfd.reject(arguments);
         });
-
     }
 
     return dfd.promise();
   },
-
-
 
   // ### _normalizeRecordsAndFields
   // 
@@ -197,7 +190,6 @@ my.Dataset = Backbone.Model.extend({
   // Resulting RecordList are used to reset this.records and are
   // also returned.
   query: function(queryObj) {
-
     var self = this;
     var dfd = $.Deferred();
     this.trigger('query:start');
@@ -221,14 +213,10 @@ my.Dataset = Backbone.Model.extend({
   },
 
   _handleQueryResult: function(queryResult) {
-
-
     var self = this;
-
     self.recordCount = queryResult.total;
     var docs = _.map(queryResult.hits, function(hit) {
       var _doc = new my.Record(hit);
-
       _doc.fields = self.fields;
       _doc.bind('change', function(doc) {
         self._changes.updates.push(doc.toJSON());
@@ -239,8 +227,6 @@ my.Dataset = Backbone.Model.extend({
       return _doc;
     });
     self.records.reset(docs);
-
-
     if (queryResult.facets) {
       var facets = _.map(queryResult.facets, function(facetResult, facetId) {
         facetResult.id = facetId;
@@ -343,10 +329,7 @@ my.Record = Backbone.Model.extend({
   // For the provided Field get the corresponding computed data value
   // for this record.
   getFieldValueUnrendered: function(field) {
-
-      var val = this.get(field.id);
-
-
+    var val = this.get(field.id);
     if (field.deriver) {
       val = field.deriver(val, field, this);
     }
@@ -480,6 +463,7 @@ my.Query = Backbone.Model.extend({
   },
   defaults: function() {
     return {
+      size: 100,
       from: 0,
       q: '',
       facets: {},
@@ -490,6 +474,7 @@ my.Query = Backbone.Model.extend({
   _filterTemplates: {
     term: {
       type: 'term',
+      // TODO do we need this attribute here?
       field: '',
       term: ''
     },
@@ -519,6 +504,7 @@ my.Query = Backbone.Model.extend({
         lat: 0
       }
     }
+  // ### addFilter(filter)
   },
       _selectionTemplates: {
           term: {
@@ -535,16 +521,13 @@ my.Query = Backbone.Model.extend({
       },
   // ### addFilter
   //
-  // Add a new filter (appended to the list of filters)
+  // Add a new filter specified by the filter hash and append to the list of filters
   //
   // @param filter an object specifying the filter - see _filterTemplates for examples. If only type is provided will generate a filter by cloning _filterTemplates
   addFilter: function(filter) {
-
     // crude deep copy
     var ourfilter = JSON.parse(JSON.stringify(filter));
-    // not full specified so use template and over-write
-    // 3 as for 'type', 'field' and 'fieldType'
-
+    // not fully specified so use template and over-write
     if (_.keys(filter).length <= 3) {
       ourfilter = _.extend(this._filterTemplates[filter.type], ourfilter);
     }
@@ -617,88 +600,7 @@ my.Query = Backbone.Model.extend({
     this.set({filters: filters});
     this.trigger('change');
   },
-  removeFilterByField: function(field) {
-    var filters = this.get('filters');
-	for (var j in filters)
-	{
-		if (filters[j].field == field)
-		{
-			filters.splice(j, 1);
-			this.set({filters: filters});
-			this.trigger('change');
-			break;
-		}
-	}
-  },
-  clearFilter: function(field) {
-    var filters = this.get('filters');
-	for (var j in filters)
-	{
-		if (filters[j].field == field)
-		{
-			filters[j].term = null;
-			filters[j].start = null;
-			filters[j].stop = null;
-			this.trigger('change');
-			break;
-		}
-	}
-  },
-
-      // ### addSelection
-      //
-      // Add a new selection (appended to the list of selections)
-      //
-      // @param selection an object specifying the filter - see _filterTemplates for examples. If only type is provided will generate a filter by cloning _filterTemplates
-      addSelection: function(selection) {
-          // crude deep copy
-          var myselection = JSON.parse(JSON.stringify(selection));
-          // not full specified so use template and over-write
-          // 3 as for 'type', 'field' and 'fieldType'
-          if (_.keys(selection).length <= 3) {
-              myselection = _.extend(this._selectionTemplates[selection.type], myselection);
-          }
-          var selections = this.get('selections');
-          selections.push(myselection);
-          this.trigger('change:selections');
-      },
-      // ### removeSelection
-      //
-      // Remove a selection at index selectionIndex
-      removeSelection: function(selectionIndex) {
-          var selections = this.get('selections');
-          selections.splice(selectionIndex, 1);
-          this.set({selections: selections});
-          this.trigger('change:selections');
-      },
-        setSelection: function(s) {
-        // todo should be optimized in order to make only one cycle on filters
-
-        if(s.constructor == Array) {
-            for(y=0;y<s.length;y++){
-                this._setSingleSelection(s[y]);
-            }
-        } else {
-            this._setSingleSelection(s);
-        }
-
-        this.trigger('change:selections');
-    },
-    _setSingleSelection: function(s) {
-        var selections = this.get('selections');
-        for(x=0;x<selections.length;x++){
-            if(selections[x].field == s.field) {
-                selections[x] = s;
-                return;
-            }
-        }
-        selections.push(s);
-    },
-
-
-
-
-    // ### addFacet
+  // ### addFacet
   //
   // Add a Facet to this query
   //
@@ -753,12 +655,6 @@ my.FacetList = Backbone.Collection.extend({
   model: my.Facet
 });
 
-
-
-
-
-
-
 // ## Object State
 //
 // Convenience Backbone model for storing (configuration) state of objects like Views.
@@ -774,3 +670,4 @@ Backbone.sync = function(method, model, options) {
 };
 
 }(jQuery, this.recline.Model));
+
