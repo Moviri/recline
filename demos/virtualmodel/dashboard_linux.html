@@ -132,9 +132,22 @@ root: ../../
             type: ["filter"]
         });
 		
-		//recline.ActionUtility.doAction("filter_daydate", "dashboard_html", {daydate: ["2012-01-01 00:00:00", "2012-01-30 00:00:00"]}, "add");
-
-         filters = [ {field: "daydate", type: "range", start:"2012-01-01 00:00:00"/*new Date(2012,0,01,00,00,00,0)*/, stop:"2012-01-30 00:00:00"/*new Date(2012,0,30,00,00,00,0)*/, fieldType: "date" }];
+		var action_vmodel = new recline.Action({
+            filters: {
+                filter_daydate: {type: "range", field: "daydate", fieldType: "date"},
+                filter_age:     {type: "term",  field: "age", fieldType: "number"}
+            },
+            models: [
+                {model: virtualdatasetAge, filters:["filter_age"]},
+                {model: virtualdatasetDay, filters:["filter_age", "filter_daydate"]},
+                {model: virtualdatasetWeekday, filters:["filter_age"]},
+                {model: virtualdatasetTotal, filters:["filter_age"]},
+                {model: virtualdatasetHour, filters:["filter_age"]}
+            ],
+            type: ["filter"]
+        });
+		
+         filters = [ {field: "daydate", type: "range", start:new Date(2012,0,01,00,00,00,0), stop:new Date(2012,0,30,00,00,00,0), fieldType: "date" }];
          for(var i=0;i<filters.length;i++)
              dataset.queryState.addFilter(filters[i]);
 
@@ -258,15 +271,14 @@ root: ../../
 
             var filter2 = new recline.View.GenericFilter({
                 sourceDataset: dataset,
-				filtersTargetDatasets: [virtualdatasetAge, virtualdatasetDay, virtualdatasetWeekday, virtualdatasetTotal, virtualdatasetHour ],
-                id: 'filterEditor2',
+				id: 'filterEditor2',
                 label: 'Memory Filters2',
 				sourceFields: [
 								{field: 'age', controlType: 'list', fieldType: 'number'}//,
 								//{field: 'totalviewed_sum', controlType: 'range_slider', fieldType: 'number'}
 							],
                 actions: [{
-                    action: action_db,
+                    action: action_vmodel,
                     mapping: [
                         {srcField: "age", filter: "filter_age"}
                     ],
