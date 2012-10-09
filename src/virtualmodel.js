@@ -30,6 +30,14 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
 
             // TODO verify if is better to use a new backend (crossfilter) to manage grouping and filtering instead of using it inside the model
         },
+        
+        getRecords: function(type) {
+        	if(type==='filtered'){
+        		return this.records;
+        	}else {
+        		return this._store.data;
+        	}
+        },
 
         modifyGrouping: function(dimensions, aggregationField)
         {
