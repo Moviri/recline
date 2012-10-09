@@ -61,8 +61,8 @@ root: ../../
             url: url,
             backend: 'jsonp',
             id: "AudDemoByGender",
-            fieldLabels: [{id: "age", label: "age_label"}, {id: "gender", label: "gender_label"}]
-
+            fieldLabels: [{id: "age", label: "age_label"}, {id: "gender", label: "gender_label"}],
+            inMemoryQueryFields: ["age"]
         });
 
 		dataset.bind('query:done query:fail', function() { document.getElementById("loadingImage").style.display = "none";resizeAllElems(); });
@@ -114,12 +114,29 @@ root: ../../
                     aggregationFunctions: ["sum"]
                 }
             });
-		
-		//recline.ActionUtility.doAction(this.options.actions, "dashboard_html", {daydate: ["2012-01-01 00:00:00", "2012-01-30 00:00:00"]}, "add");
+			
+		var action_db = new recline.Action({
+            filters: {
+                filter_daydate: {type: "range", field: "daydate", fieldType: "date"},
+                filter_age:     {type: "term",  field: "age", fieldType: "number"}
+            },
+            models: [
+                {model: dataset, filters:["filter_daydate", "filter_age"]},
 
-        filters = [ {field: "daydate", type: "range", start:"2012-01-01 00:00:00", stop: "2012-01-30 00:00:00", fieldType: "date" }];
-        for(var i=0;i<filters.length;i++)
-            dataset.queryState.addFilter(filters[i]);
+                {model: virtualdatasetAge, filters:["filter_age"]},
+                {model: virtualdatasetDay, filters:["filter_age", "filter_daydate"]},
+                {model: virtualdatasetWeekday, filters:["filter_age"]},
+                {model: virtualdatasetTotal, filters:["filter_age"]},
+                {model: virtualdatasetHour, filters:["filter_age"]}
+            ],
+            type: ["filter"]
+        });
+		
+		//recline.ActionUtility.doAction("filter_daydate", "dashboard_html", {daydate: ["2012-01-01 00:00:00", "2012-01-30 00:00:00"]}, "add");
+
+         filters = [ {field: "daydate", type: "range", start:"2012-01-01 00:00:00"/*new Date(2012,0,01,00,00,00,0)*/, stop:"2012-01-30 00:00:00"/*new Date(2012,0,30,00,00,00,0)*/, fieldType: "date" }];
+         for(var i=0;i<filters.length;i++)
+             dataset.queryState.addFilter(filters[i]);
 
         dataset.fetch(); // needed to populate filter list
 		
@@ -127,9 +144,6 @@ root: ../../
 		   var grid = new recline.View.SlickGrid({model: virtualdatasetAge, el: $el, state: {fitColumns:true, useInnerChart:true, innerChartSerie1:'totalviewed_by_gender_Male_sum', innerChartSerie2:'totalviewed_by_gender_Female_sum', innerChartHeader:'Views by Gender'}});
             grid.visible = true;
             grid.render();
-
-
-
 
             var graph2 = new recline.View.NVD3Graph({
                 model: virtualdatasetDay,
@@ -140,7 +154,14 @@ root: ../../
                     colors: ["DarkTurquoise", "DodgerBlue", "LightBlue"],
                     graphType: "lineChart",
                     id: "2"
-                }
+                },
+				actions: [{
+					action: action_db,
+					mapping: [
+						{srcField: "daydate", filter: "filter_daydate"}
+					],
+					event: ["elementSelection"]
+				}]
             });
             $('#mygraph2').append(graph2.el);
 
@@ -206,7 +227,14 @@ root: ../../
 				filtersTargetDatasets: [dataset],
                 id: 'filterEditorDB',
                 label: 'DB Filters',
-				sourceFields: [{field: "daydate", controlType: 'range_calendar', type: "range", fieldType: "date" }]
+				sourceFields: [{field: "daydate", controlType: 'range_calendar', type: "range", fieldType: "date" }],
+                actions: [{
+                    action: action_db,
+                    mapping: [
+                        {srcField: "daydate", filter: "filter_daydate"}
+                    ],
+                    event: ["onFilterValueChanged", "onListItemClicked", "onRemoveFilter"]
+                }]
             });
             $('#search_container').append(filter.el);
 
@@ -217,7 +245,14 @@ root: ../../
                 label: 'Memory Filters1',
 				sourceFields: [
 								{field: 'daydate', type: "range", controlType: 'month_week_calendar', fieldType: 'date'}
-							]
+							],
+                actions: [{
+                    action: action_db,
+                    mapping: [
+                        {srcField: "daydate", filter: "filter_daydate"}
+                    ],
+                    event: ["onFilterValueChanged", "onListItemClicked", "onRemoveFilter"]
+                }]
             });
             $('#search_container1').append(filter1.el);
 
@@ -229,7 +264,14 @@ root: ../../
 				sourceFields: [
 								{field: 'age', controlType: 'list', fieldType: 'number'}//,
 								//{field: 'totalviewed_sum', controlType: 'range_slider', fieldType: 'number'}
-							]
+							],
+                actions: [{
+                    action: action_db,
+                    mapping: [
+                        {srcField: "age", filter: "filter_age"}
+                    ],
+                    event: ["onFilterValueChanged", "onListItemClicked", "onRemoveFilter"]
+                }]
             });
             $('#search_container2').append(filter2.el);
 

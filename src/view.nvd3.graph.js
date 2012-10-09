@@ -160,8 +160,7 @@ this.recline.View = this.recline.View || {};
 
             chart.yAxis
                 .axisLabel(yLabel)
-
-                .tickFormat(d3.format('.02f'));
+                .tickFormat(d3.format('s'));
 
 			if (xfield.get('type') == 'date' || 
 				(xfield.get('type') == 'string' && xLabel.indexOf('date') >= 0 && model.recordCount > 0 && new Date(model.records.get(0).get(xLabel)) instanceof Date))
