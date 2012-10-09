@@ -56,7 +56,7 @@ if (typeof Slick === "undefined") {
     // settings
     var defaults = {
       explicitInitialization: false,
-      rowHeight: 25,
+      rowHeight: 30,
       defaultColumnWidth: 80,
       enableAddRow: false,
       leaveSpaceForNewRows: false,
@@ -222,7 +222,11 @@ if (typeof Slick === "undefined") {
           .css("overflow", "hidden")
           .css("outline", 0)
           .addClass(uid)
-          .addClass("ui-widget");
+		  .addClass("s-table")
+		  .addClass("s-table-hover")
+		  .addClass("s-table-striped")
+		  .addClass("s-table-condensed")
+          //.addClass("ui-widget");
 
       // set up a positioning container if needed
       if (!/relative|absolute|fixed/.test($container.css("position"))) {
@@ -231,11 +235,11 @@ if (typeof Slick === "undefined") {
 
       $focusSink = $("<div tabIndex='0' hideFocus style='position:fixed;width:0;height:0;top:0;left:0;outline:0;'></div>").appendTo($container);
 
-      $headerScroller = $("<div class='slick-header ui-state-default' style='overflow:hidden;position:relative;' />").appendTo($container);
+      $headerScroller = $("<div class='slick-header s-thead ui-state-default' style='overflow:hidden;position:relative;' />").appendTo($container);
       $headers = $("<div class='slick-header-columns' style='left:-1000px' />").appendTo($headerScroller);
       $headers.width(getHeadersWidth());
       $headerRowScroller = $("<div class='slick-headerrow ui-state-default' style='overflow:hidden;position:relative;' />").appendTo($container);
-      $headerRow = $("<div class='slick-headerrow-columns' />").appendTo($headerRowScroller);
+      $headerRow = $("<div class='slick-headerrow-columns s-tr' />").appendTo($headerRowScroller);
       $headerRowSpacer = $("<div style='display:block;height:1px;position:absolute;top:0;left:0;'></div>")
           .css("width", getCanvasWidth() + scrollbarDimensions.width + "px")
           .appendTo($headerRowScroller);
@@ -260,7 +264,7 @@ if (typeof Slick === "undefined") {
       $viewport = $("<div class='slick-viewport' style='width:100%;overflow:auto;outline:0;position:relative;;'>").appendTo($container);
       $viewport.css("overflow-y", options.autoHeight ? "hidden" : "auto");
 
-      $canvas = $("<div class='grid-canvas' />").appendTo($viewport);
+      $canvas = $("<div class='grid-canvas s-tbody' />").appendTo($viewport);
 
       if (!options.explicitInitialization) {
         finishInitialization();
@@ -592,7 +596,7 @@ if (typeof Slick === "undefined") {
       for (var i = 0; i < columns.length; i++) {
         var m = columns[i];
 
-        var header = $("<div class='ui-state-default slick-header-column' id='" + uid + m.id + "' />")
+        var header = $("<div class='ui-state-default slick-header-column s-th' id='" + uid + m.id + "' />")
             .html("<span class='slick-column-name'>" + m.name + "</span>")
             .width(m.width - headerColumnWidthDiff)
             .attr("title", m.toolTip || "")
@@ -949,8 +953,8 @@ if (typeof Slick === "undefined") {
       });
       el.remove();
 
-      var r = $("<div class='slick-row' />").appendTo($canvas);
-      el = $("<div class='slick-cell' id='' style='visibility:hidden'>-</div>").appendTo(r);
+      var r = $("<div class='slick-row s-tr' />").appendTo($canvas);
+      el = $("<div class='slick-cell s-td' id='' style='visibility:hidden'>-</div>").appendTo(r);
       cellWidthDiff = cellHeightDiff = 0;
       $.each(h, function (n, val) {
         cellWidthDiff += parseFloat(el.css(val)) || 0;
@@ -1440,7 +1444,7 @@ if (typeof Slick === "undefined") {
     function appendRowHtml(stringArray, row, range) {
       var d = getDataItem(row);
       var dataLoading = row < getDataLength() && !d;
-      var rowCss = "slick-row" +
+      var rowCss = "slick-row s-tr" +
           (dataLoading ? " loading" : "") +
           (row === activeRow ? " active" : "") +
           (row % 2 == 1 ? " odd" : " even");
@@ -1451,7 +1455,7 @@ if (typeof Slick === "undefined") {
         rowCss += " " + metadata.cssClasses;
       }
 
-      stringArray.push("<div class='ui-widget-content " + rowCss + "' style='top:" + (options.rowHeight * row - offset) + "px'>");
+      stringArray.push("<div class='"/*ui-widget-content "*/ + rowCss + "' style='top:" + (options.rowHeight * row - offset) + "px'>");
 
       var colspan, m;
       for (var i = 0, ii = columns.length; i < ii; i++) {
@@ -1487,7 +1491,7 @@ if (typeof Slick === "undefined") {
       var m = columns[cell];
       var d = getDataItem(row);
 	  
-	  var cellCssStart = "slick-cell";
+	  var cellCssStart = "s-td slick-cell";
 	  if (m.alignLeft == true)
 		cellCssStart += "-left";
 
