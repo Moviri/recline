@@ -92,9 +92,6 @@ my.Action = Backbone.Model.extend({
 
        });
 
-       console.log("targetFiltersEvent");
-       console.log(targetFilters);
-
        // foreach type and dataset add all filters and trigger events
        _.each(type, function(type) {
                _.each(models, function(m) {
@@ -114,9 +111,6 @@ my.Action = Backbone.Model.extend({
                            }
                              else if(action == "remove") {
 
-                            console.log(self);
-                            console.log(f);
-
                                 self.modelsRemoveFilterActions[type](m.model, f);
                                modified = true;
                            }
@@ -124,8 +118,6 @@ my.Action = Backbone.Model.extend({
                    });
 
                    if(modified) {
-                       console.log("Triggering update for type " + type);
-                       console.log(m.model);
                        self.modelsTriggerActions[type](m.model);
                    }
                });
