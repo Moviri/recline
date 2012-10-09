@@ -24,9 +24,9 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
             this.recordCount = null;
             this.queryState = new my.Query();
 
-            //this.attributes.dataset.records.bind('add',     function() { self.initializeCrossfilter(); });
+            this.attributes.dataset.records.bind('add',     function() { self.initializeCrossfilter(); });
             this.attributes.dataset.records.bind('reset',   function() { self.initializeCrossfilter(); });
-            this.queryState.bind('change',                  function() { self.query(); });
+            this.queryState.bind('change',                  function() { console.log("called change on model " + self.attributes.name); self.query(); });
 
             // TODO verify if is better to use a new backend (crossfilter) to manage grouping and filtering instead of using it inside the model
         },
@@ -89,7 +89,7 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
             var end = new Date().getTime();
             var time = end - start;
 
-            console.log("updateCrossfilter - exec time: " + time);
+            //console.log("updateCrossfilter - exec time: " + time);
         },
 
         reduce: function(group) {
@@ -394,12 +394,13 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
                 this.queryState.set(queryObj, {silent: true});
             }
             var actualQuery = this.queryState.toJSON();
-            //console.log("VModel - query for " + JSON.stringify(actualQuery));
+            console.log("VModel [" + self.attributes.name + "] query [" + JSON.stringify(actualQuery) + "]");
 
             if(this._store == null) {
                 console.log("Warning query called before data has been calculated for virtual model, call fetch on source dataset");
                 return;
             }
+
 
             this._store.query(actualQuery, this.toJSON())
                 .done(function(queryResult) {
@@ -422,7 +423,9 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
                 _doc.fields = self.fields;
                 return _doc;
             });
+
             self.records.reset(docs);
+
         },
 
         toTemplateJSON: function() {

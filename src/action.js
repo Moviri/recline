@@ -66,8 +66,6 @@ my.Action = Backbone.Model.extend({
 
     // action could be add/remove
    _internalDoAction: function(data, action) {
-       console.log("Received doAction for");
-       console.log(data);
 
 
        var self=this;
@@ -94,26 +92,42 @@ my.Action = Backbone.Model.extend({
 
        });
 
+       console.log("targetFiltersEvent");
+       console.log(targetFilters);
 
        // foreach type and dataset add all filters and trigger events
        _.each(type, function(type) {
                _.each(models, function(m) {
 
-                   // todo check if models contains filter
+                   var modified = false;
+
                    _.each(targetFilters, function(f) {
 
                        // verify if filter is associated with current model
-                       if(_.find(models.filters, function(x) {x == f.name;}) != -1) {
+                       if(_.find(m.filters, function(x) {return x == f.name;}) != null) {
                             // if associated add the filter
                            if(action == "add")
+                           {
+
                             self.modelsAddFilterActions[type](m.model, f);
-                           else if(action == "remove")
-                            self.modelsRemoveFilterActions[type](m.model, f);
+                               modified = true;
+                           }
+                             else if(action == "remove") {
+
+                            console.log(self);
+                            console.log(f);
+
+                                self.modelsRemoveFilterActions[type](m.model, f);
+                               modified = true;
+                           }
                        }
                    });
 
-                   self.modelsTriggerActions[type](m.model);
-
+                   if(modified) {
+                       console.log("Triggering update for type " + type);
+                       console.log(m.model);
+                       self.modelsTriggerActions[type](m.model);
+                   }
                });
        });
 
@@ -170,12 +184,12 @@ my.Action = Backbone.Model.extend({
     },
 
     modelsRemoveFilterActions: {
-        filter:     function(model, filter) { model.queryState.removeFilterByField(filter.field)},
+        filter:     function(model, filter) { console.log(model.queryState); model.queryState.removeFilterByField(filter.field); console.log(model.queryState); },
         selection:  function(model, filter) { throw "modelsRemoveFilterActions not implemented for selection"}
     },
 
     modelsTriggerActions: {
-        filter:     function(model) { model.queryState.trigger("change")},
+        filter:     function(model) {console.log("trigger action change on model " + model.attributes.name); model.queryState.trigger("change")},
         selection:  function(model) { model.queryState.trigger("selection:change")}
     },
 

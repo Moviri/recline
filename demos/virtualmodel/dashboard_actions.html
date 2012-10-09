@@ -61,7 +61,7 @@ root: ../../
         var url = "http://192.168.100.133:8380/cwwh-iwal-war/cw/wh/ds/AudDemoByGender";
         //var url ="http://localhost/AudDemoByGender.xml";
 
-        dataset = new recline.Model.Dataset({
+       var  dataset = new recline.Model.Dataset({
             url: url,
             backend: 'jsonp',
             id: "AudDemoByGender",
@@ -74,6 +74,7 @@ root: ../../
 
             virtualdatasetAge = new recline.Model.VirtualDataset({
                 dataset: dataset,
+                name: "virtualdatasetAge",
                 aggregation: {
                     dimensions: ["age"],
                     aggregatedFields: ["totalviewed", "price_sum"],
@@ -84,6 +85,7 @@ root: ../../
 
             virtualdatasetWeekday= new recline.Model.VirtualDataset({
                 dataset: dataset,
+                name: "virtualdatasetWeekday",
                 aggregation: {
                     dimensions: ["dayofweek"],
                     aggregatedFields: ["totalviewed"],
@@ -93,6 +95,7 @@ root: ../../
             });
             virtualdatasetHour= new recline.Model.VirtualDataset({
                 dataset: dataset,
+                name: "virtualdatasetHour",
                 aggregation: {
                     dimensions: ["dayhour"],
                     aggregatedFields: ["totalviewed"],
@@ -103,6 +106,7 @@ root: ../../
 
             virtualdatasetDay= new recline.Model.VirtualDataset({
                 dataset: dataset,
+                name: "virtualdatasetDay",
                 aggregation: {
                     dimensions: ["daydate"],
                     aggregatedFields: ["totalviewed", "price_sum"],
@@ -113,6 +117,7 @@ root: ../../
 
             virtualdatasetTotal= new recline.Model.VirtualDataset({
                 dataset: dataset,
+                name: "virtualdatasetTotal",
                 aggregation: {
                     aggregatedFields: ["totalviewed", "price_sum"],
                     aggregationFunctions: ["sum"]
@@ -121,7 +126,7 @@ root: ../../
 
 
 
-        filters = [ {field: "daydate", type: "range", start:"2012-01-01 00:00:00", stop: "2012-01-30 00:00:00", fieldType: "date" }];
+        var filters = [ {field: "daydate", type: "range", start: new Date("2012-01-01 00:00:00"), stop: new Date("2012-01-30 00:00:00"), fieldType: "date" }];
         for(var i=0;i<filters.length;i++)
             dataset.queryState.addFilter(filters[i]);
 
@@ -138,12 +143,7 @@ root: ../../
             },
             models: [
                 {model: dataset, filters:["filter_daydate", "filter_age"]},
-
-                {model: virtualdatasetAge, filters:["filter_age"]},
-                {model: virtualdatasetDay, filters:["filter_age", "filter_daydate"]},
-                {model: virtualdatasetWeekday, filters:["filter_age"]},
-                {model: virtualdatasetTotal, filters:["filter_age"]},
-                {model: virtualdatasetHour, filters:["filter_age"]}
+                {model: virtualdatasetDay, filters:["filter_daydate"]}
             ],
             type: ["filter"]
         });
@@ -259,8 +259,8 @@ root: ../../
                 id: 'filterEditor1',
                 label: 'Memory Filters1',
 				sourceFields: [
-                    {field: 'daydate', type: "range", controlType: 'range_calendar', fieldType: 'date'},
-                    {field: 'age', controlType: 'list', fieldType: 'number'}
+                    {field: 'daydate', type: "range", controlType: 'range_calendar'},
+                    {field: 'age', controlType: 'list'}
                 ],
                 actions: [{
                     action: action_db,

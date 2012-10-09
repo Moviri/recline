@@ -294,9 +294,9 @@ this.recline.View = this.recline.View || {};
 
           _.each(records, function(doc, index) {
 
-
               var x = doc.getFieldValue(xfield);
 
+              try {
               var yfield = self.model.fields.get(field);
               var y = doc.getFieldValue(yfield);
 
@@ -306,13 +306,16 @@ this.recline.View = this.recline.View || {};
                   xAxisIsDate = true;
               }
 
-              //points.push({x: x, y: y});
-              points.push([x,y]);
-              //console.log("x: " +x + " y: " + y + " doc: " + doc);
+                points.push([x,y]);
 
+              }
+              catch(err) {
+                //console.log("Can't add field [" + field + "] to graph, filtered?")
+              }
           });
 
-          series.push({values: points, key: field, color:  colors[color]});
+           if(points.length>0)
+            series.push({values: points, key: field, color:  colors[color]});
        });
      }
 

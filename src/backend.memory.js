@@ -91,6 +91,7 @@ this.recline.Backend.Memory = this.recline.Backend.Memory || {};
 
     // in place filtering
     this._applyFilters = function(results, queryObj) {
+        var self=this;
       var filters = queryObj.filters;
       // register filters
       var filterFunctions = {
@@ -110,7 +111,15 @@ this.recline.Backend.Memory = this.recline.Backend.Memory || {};
         keyedFields[field.id] = field;
       });
       function getDataParser(filter) {
-        var fieldType = keyedFields[filter.field].type || 'string';
+        var field = keyedFields[filter.field];
+        var fieldType = 'string';
+
+          if(field == null) {
+                console.log("Warning could not find field " + filter.field + " for dataset " );
+                console.log(self);
+            }
+          else
+            fieldType = field.type;
         return dataParsers[fieldType];
       }
 

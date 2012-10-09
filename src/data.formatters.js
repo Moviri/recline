@@ -7,7 +7,7 @@ this.recline.Data = this.recline.Data || {};
 
     // formatters define how data is rapresented in internal dataset
     my.FormattersMODA = {
-        number : function (e) { return parseFloat(e, 10); },
+        integer : function (e) { return parseInt(e); },
         string : function (e) { return e.toString() },
         date   : function (e) { return new Date(e)},
         float  : function (e) { return parseFloat(e, 10); }

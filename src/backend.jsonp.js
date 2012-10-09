@@ -143,7 +143,7 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
 
       if(my.inMemoryQuery) {
           // check if is the first time I use the memory store
-          my.inMemoryStore = new recline.Backend.Memory.Store(result.data, result.description);
+          my.inMemoryStore = new recline.Backend.Memory.Store(result.data, _handleFieldDescription(result.description));
 
           if(my.queryStateInMemory && my.queryStateInMemory.get("filters").length > 0)
             return applyInMemoryFilters();
@@ -165,6 +165,7 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
         my.inMemoryStore.query(my.queryStateInMemory.toJSON())
             .done(function(value) {
                 tmpValue = value;
+                tmpValue["fields"] = my.memoryFields;
             });
 
 
@@ -176,6 +177,7 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
        if(data.hits == null)
            var fields = _handleFieldDescription(data.description);
            if(data.data == null) {
+            my.memoryFields = fields;
             return {
                 fields: fields,
                 useMemoryStore: false
@@ -183,6 +185,7 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
            }
         else
             {
+                my.memoryFields = fields;
                 return {
                     hits: _normalizeRecords(data.data, fields),
                     fields:fields,
@@ -190,6 +193,7 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
                 }
             }
 
+        my.memoryFields = data.fields;
         return data;
     };
 
@@ -207,6 +211,25 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
         return records;
 
     };
+
+
+
+    // todo remove it after wal update
+    function getDate(temp) {
+        var tmp = new Date();
+
+        var dateStr = padStr(temp.getFullYear()) + "-"  +
+            padStr(1 + temp.getMonth()) + "-"  +
+            padStr(temp.getDate()) + " " +
+            padStr(temp.getHours()) + ":"+
+            padStr(temp.getMinutes()) + ":" +
+            padStr(temp.getSeconds());
+        return dateStr;
+    }
+
+    function padStr(i) {
+        return (i < 10) ? "0" + i : "" + i;
+    }
 
 
   function  buildRequestFromQuery(queryObj)  {
@@ -227,7 +250,13 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
       var dataParsers = {
           number : function (e) { return parseFloat(e, 10); },
           string : function (e) { return e.toString() },
-          date   : function (e) { return new Date(e).valueOf() }
+          date   : function (e) {
+              var tmp = new Date(e);
+              //console.log("---> " + e  + " ---> "+ getDate(tmp)) ;
+              return getDate(tmp);
+
+              // return new Date(e).valueOf()
+          }
       };
 
       for(var i=0; i<filters.length;i++) {
@@ -313,7 +342,7 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
       var dataMapping = {
           STRING : "string",
           DATE   : "date",
-          INTEGER: "number",
+          INTEGER: "integer",
           DOUBLE : "float"
       };
 
