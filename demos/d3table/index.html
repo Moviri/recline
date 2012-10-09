@@ -106,12 +106,12 @@ root: ../../
 		model : virtualdatasetAge,
 		columns : [{"name":"age","fields": [{"id":"age"}], "label": "Age (bin)", "sortable": true, "width": "20%"},
 					{"name":"totalviewed_sum","fields": [{"id":"totalviewed_sum"}], "label": "Views", "width": "20%", "sortable": true},
-					{"name":"price_sum_sum","fields": [{"id": "price_sum_sum", "format":recline.Data.Format.decimal}], "label": "Revenues", "width": "20%"},
+					{"name":"price_sum_sum","fields": [{"id": "price_sum_sum", "format":recline.Data.Format.decimal}], "label": "Revenues", "width": "20%", "sortable": true},
 					{"name":"totalviewed_by_gender_X_sum","fields": [{"id":"totalviewed_by_gender_Female_sum", "color":"DarkTurquoise"},{"id": "totalviewed_by_gender_Male_sum", "color":"DodgerBlue"}], 
 							"type": "barchart", "scale": recline.Data.Format.scale({type: 'linear', invertEven: true, domain: ['totalviewed_by_gender_Male_sum','totalviewed_by_gender_Female_sum']}), "range": 0.8,
-							"width": "30%", "label":"Views by Gender"}
+							"width": "30%", "label":"Views by Gender", "sortable": true}
 				],
-		conf : {"row_size": 25, "height": 300},
+		conf : {"row_height": 25, "height": 300},
 		state : {
 		},
 		actions: [{

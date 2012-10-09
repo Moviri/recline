@@ -79,7 +79,7 @@
 		return val;
 	};
 
-	function sort(rowSize, tableId) {
+	function sort(rowHeight, tableId) {
 	    return function (dimension) {
 	        var dimensionName = dimension.fields[0].id,
 	            descending = d3.select(this)
@@ -124,7 +124,7 @@
 	        })
 	            .duration(750)
 	            .attr("transform", function (record, i) {
-	            return "translate(0," + i * rowSize + ")";
+	            return "translate(0," + i * rowHeight + ")";
 	        });
 	    }
 	}
@@ -173,12 +173,12 @@
         },
         initialize: function (options) {
             
-            _.defaults(options.conf,{"row_size": 20, "height":200});
+            _.defaults(options.conf,{"row_height": 20, "height":200});
             options.actions = options.actions || [];
             this.el = $(this.el);
     		_.bindAll(this, 'render', 'redraw', 'refresh');
                      
-            this.rowSize = options.conf.row_size;
+            this.rowHeight = options.conf.row_height;
             
             var clickActions=[], hoverActions=[];
             //processing actions
@@ -267,14 +267,14 @@
             }, this);         
         },
         redraw: function () {        
-            var rowSize = this.rowSize;
+            var rowHeight = this.rowHeight;
             var columns = this.columns;
             var records = this.model.records.models;
 			var charts = {};
 			var chartsField = {};			
             
-            d3.select('#'+this.graphId+' .g-tbody-container div').style('height',(rowSize)*records.length+'px');            
-            d3.select('#'+this.graphId+' .g-tbody-container').classed('g-tbody-container-overflow',(rowSize)*records.length>this.height);
+            d3.select('#'+this.graphId+' .g-tbody-container div').style('height',(rowHeight)*records.length+'px');            
+            d3.select('#'+this.graphId+' .g-tbody-container').classed('g-tbody-container-overflow',(rowHeight)*records.length>this.height);
             			
 			columns.forEach(function (dimension) {
                 if (dimension.scale) {
@@ -297,13 +297,13 @@
                 .append("g")
                 .attr("class", "g-tr")
                 .attr("transform", function (record, i) {
-                return "translate(0," + i * (rowSize) + ")";
+                return "translate(0," + i * (rowHeight) + ")";
             });
 
             row.append("rect")
                 .attr("class", "g-background")
                 .attr("width", "100%")
-                .attr("height", rowSize).on('click', rowClick(this.clickActions)).on('mouseover', rowOver(this.hoverActions));
+                .attr("height", rowHeight).on('click', rowClick(this.clickActions)).on('mouseover', rowOver(this.hoverActions));
                 
 
             row.each(function (record) {
@@ -328,7 +328,7 @@
                 	});
                 	
                 //horizontal lines
-               	d3.select(this).append('line').attr('class', 'g-row-border').attr('y1',rowSize).attr('y2',rowSize).attr('x2','100%');
+               	d3.select(this).append('line').attr('class', 'g-row-border').attr('y1',rowHeight).attr('y2',rowHeight).attr('x2','100%');
                
                 var barChartCell = cell.filter(function (dimension) {           	
                     return dimension.scale && dimension.type === 'barchart';
@@ -344,7 +344,7 @@
                     .attr("width", function (field, index) {
                     	return field.scale(record.getFieldValue(field));
                		})
-                    .attr("height", rowSize-1)
+                    .attr("height", rowHeight-1)
                     .attr("transform", function (field, i) {
                     	
                     	charts[field.id]=this;
@@ -392,7 +392,7 @@
                     	return dimension.hwidth;
                 	})
                     .attr("width", 20)
-                    .attr("height", rowSize);
+                    .attr("height", rowHeight);
             });
             
             //axis management
@@ -443,7 +443,7 @@
 			//add sorting
             d3.selectAll('#'+this.graphId+' .g-thead .g-th.g-sortable')
                 .data(columns)
-                .on("click", sort(rowSize, this.graphId));    
+                .on("click", sort(rowHeight, this.graphId));    
                 
             //vertical lines
             {
