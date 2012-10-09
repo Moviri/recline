@@ -1,6 +1,26 @@
 (function ($, view) {
 	
-	function scrollBarWidth(){
+	var rowClick = function(actions){
+		return function(row){
+			if(actions.length && row){
+				console.log("rowClick");			
+				var ctrlKey = d3.event.ctrlKey;
+				
+				row.classed('info',true);
+			}		
+		};
+	};
+	
+	var rowOver = function(actions){
+		return function(row){
+			if(actions.length && row){
+				console.log("rowOver");
+					
+			}
+		};		
+	};
+	
+	var scrollBarWidth = function(){
 		  document.body.style.overflow = 'hidden'; 
 		  var width = document.body.clientWidth;
 		  document.body.style.overflow = 'scroll'; 
@@ -8,7 +28,7 @@
 		  if(!width) width = document.body.offsetWidth - document.body.clientWidth;
 		  document.body.style.overflow = ''; 
 		  return width; 
-	}
+	};
 
 		
 	var fetchRecordValue = frv = function(record, dimension){
@@ -31,9 +51,9 @@
 	        d3.selectAll(".g-ascending")
 	            .classed("g-ascending", false);
 
-	        if (descending) {
+	        if (!descending) {
 	            d3.select(this)
-	                .classed("g-descending", true);
+	                .classed("g-ascending", true);
 	            var orderQuantitative = function (a, b) {
 	                return (isNaN(frv(a, dimension)) - isNaN(frv(b, dimension))) || (frv(a, dimension) - frv(b, dimension)) || (a.index - b.index);
 	            };
@@ -43,7 +63,7 @@
 	            };
 	        } else {
 	            d3.select(this)
-	                .classed("g-ascending", true);
+	                .classed("g-descending", true);
 
 	            var orderQuantitative = function (a, b) {
 	                return (isNaN(frv(b, dimension)) - isNaN(frv(a, dimension))) || (frv(b, dimension) - frv(a, dimension)) || (b.index - a.index);
@@ -73,7 +93,7 @@
     view.d3Table = Backbone.View.extend({
         className: 'recline-table-editor well',
         template: ' \
-  				<div id="{{graphId}}" class="g-table"> \
+  				<div id="{{graphId}}" class="g-table g-table-hover g-table-striped"> \
   					<h2 class="g-title">{{title}}</h2> \
   					<p class="lead">{{instructions}}</p> \
   					<small>{{summary}}</small> \
@@ -85,7 +105,7 @@
         			<div class="g-thead"> \
   						<div class="g-tr"> \
   							{{#columns}} \
-  							<div class="g-th {{#sortable}}g-sortable{{/sortable}}" style="width: {{hwidth}}px"><div>{{label}}</div></div> \
+  							<div class="g-th {{#sortable}}g-sortable{{/sortable}}" style="width: {{hwidth}}"><div>{{label}}</div></div> \
   							{{/columns}} \
   						</div> \
   					</div> \
@@ -113,11 +133,25 @@
         initialize: function (options) {
             
             _.defaults(options.conf,{"row_size": 20, "height":200});
+            options.actions = options.actions || [];
+            this.el = $(this.el);
+    		_.bindAll(this, 'render', 'redraw');
                      
             this.rowSize = options.conf.row_size;
             
-            this.el = $(this.el);
-    		_.bindAll(this, 'render', 'redraw');
+            var clickActions=[], hoverActions=[];
+            //processing actions
+            {
+            	options.actions.forEach(function(action){
+            		action.event.forEach(function(event){
+            			if(event==='click') clickActions.push(action);
+            			else if(event==='hover')  hoverActions(action);
+            		});
+            	});
+            }           
+            
+            this.clickActions = clickActions;
+            this.hoverActions = hoverActions; 
                         
             this.model.bind('change', this.render);
             this.model.fields.bind('reset', this.render);
@@ -125,6 +159,7 @@
             this.model.records.bind('add', this.redraw);
             this.model.records.bind('reset', this.redraw);
 
+			//create a nuew columns array with default values 
             this.columns = _.map(options.columns, function (column) {
                 return _.defaults(column, {
                     label: "",
@@ -184,8 +219,7 @@
             this.columns.forEach(function (column, i) {
                 column.fields = recline.Data.Aggregations.intersectionObjects('id', column.fields, this.model.fields.models);
                 column.index = i;
-            }, this);
-            
+            }, this);         
         },
         redraw: function () {        
             var rowSize = this.rowSize;
@@ -199,13 +233,14 @@
             			
 			columns.forEach(function (dimension) {
                 if (dimension.scale) {
-                	var scale = dimension.scale(records);
+                	var scale = dimension.scale(records, dimension.computed_width, (dimension.range || 1.0));
                     dimension.scale = scale.scale;
                     dimension.axisScale = scale.axisScale;
                     dimension.fields.forEach(function (field, i) {
                         field.scale = dimension.scale;
                         field.axisScale = dimension.axisScale[field.id];
                         field.width = dimension.width;
+                        field.computed_width = dimension.computed_width;
                     });
                 }
             });
@@ -223,7 +258,7 @@
             row.append("rect")
                 .attr("class", "g-background")
                 .attr("width", "100%")
-                .attr("height", rowSize);
+                .attr("height", rowSize).on('click', rowClick(this.clickActions)).on('mouseover', rowOver(this.hoverActions));
                 
 
             row.each(function (record) {
@@ -270,7 +305,7 @@
                     	charts[field.id]=this;
                     	chartsField[field.id]=field;
                     	
-	                    var translation = Math.ceil((i === 0) ? ((field.width) / 2) - field.scale(record.attributes[field.id]) : i * (field.width) / 2);
+	                    var translation = Math.ceil((i === 0) ? ((field.computed_width) / 2) - field.scale(record.attributes[field.id]) : i * (field.computed_width) / 2);
 	
 	                    if (i == 0) {
 	                        return "translate(" + translation + ")";
@@ -301,7 +336,7 @@
                     return dimension.format(frv(record, dimension));
                 })
                     .attr("clip-path", function (dimension) {
-                    return (dimension.clipped = this.getComputedTextLength() > ((dimension.width))-20) ? "url(#g-clip-cell)" : null;
+                    return (dimension.clipped = this.getComputedTextLength() > ((dimension.computed_width))-20) ? "url(#g-clip-cell)" : null;
                 });
 
                 cell.filter(function (dimension) {
@@ -323,7 +358,7 @@
 	            var cell = axisRow.selectAll('.g-td').data(columns).enter().append('g')
 	                    .attr("class", "g-td")
 	                    .attr("width", function (dimension, i) {
-	                    	return (dimension.width);
+	                    	return (dimension.computed_width);
 	                	})
 	                	.attr("transform", function (dimension, i) {
 	                    	return "translate(" + (dimension.translation+dimension.padding_left)+ ")";
@@ -335,9 +370,10 @@
                 
                 var dimensionWidth;
                 var fieldNum;
+                var range;
                 barChartCell.selectAll(".g-axis").data(function (dimension) {
-                		dimensionWidth = dimension.width;
                 		fieldNum = dimension.fields.length;
+                		range = dimension.range;
                     	return dimension.fields;
                	  })
                	  .enter()
@@ -346,11 +382,16 @@
                	  	return 'g-axis';
                	  })
                	  .attr("transform", function (field, i) {
-               	  			if(i==0) return "translate(" + 7 + ")";
-               	  			else return "translate(" + i * dimensionWidth/fieldNum + ")";
+               	  			var trans = 0;
+               	  			var w = field.computed_width/fieldNum;
+               	  			            	  			
+               	  			if(i==0) trans = w - w*range;
+               	  			else trans = i * w;
+               	  			
+               	  			return "translate(" + trans + ")";
                 		})
                	  .each(function(field, i){
-               	  		d3.select(this).call(d3.svg.axis().scale(field.axisScale).ticks(5).orient("bottom"));
+               	  		d3.select(this).call(d3.svg.axis().scale(field.axisScale).ticks(3).orient("bottom"));
                	  	});           		
             }
 
@@ -372,7 +413,7 @@
 				d3.select('#'+this.graphId+' .g-tbody').selectAll(".g-compare").data(columns.filter(function(dimension) {
 					return dimension.scale;
 				})).enter().append("line").attr("class", "g-compare").attr("transform", function(dimension) {
-					return "translate(" + (dimension.translation+dimension.padding_left + dimension.width/2) + ",0)";
+					return "translate(" + (dimension.translation+dimension.padding_left + dimension.computed_width/2) + ",0)";
 				}).attr("y2", "100%"); 
 			}
 

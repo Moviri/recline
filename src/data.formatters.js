@@ -16,36 +16,42 @@ this.recline.Data = this.recline.Data || {};
     my.Format.decimal = d3.format(".00f");
 	
 	my.Format.scale = function(options) {
-		return function(records) {			
+		var calculateRange = function(rangePerc, dimwidth){			
+			return [0, rangePerc*dimwidth];
+		};
+		
+		return function(records, width, range) {			
 			var ret = {}, count;
 			
 			ret.axisScale = {};
+			
+			var calcRange = calculateRange(range, width);
 			
 			if (options.type === 'linear') {
 				var max = d3.max(records, function(record) {
 					var max=0;
 					count=0;
-					_.each(options.domain, function(dim) {
-						max = (record.attributes[dim] > max) ? record.attributes[dim] : max;
+					_.each(options.domain, function(field) {
+						max = (record.attributes[field] > max) ? record.attributes[field] : max;
 						count++;
 					});
 					return max*count;
 				});
 				
-				_.each(options.domain, function(dim, i){
+				_.each(options.domain, function(field, i){
 					var domain;
-					var range = [options.range[0],options.range[1]/count];
+					var frange = [calcRange[0],calcRange[1]/count];
 					
 					if(i%2==1 && options.invertEven){
 						domain = [max/count, 0];
 					}else{
 						domain=[0, max/count];
 					}					
-					console.log(domain);
-					ret.axisScale[dim] = d3.scale.linear().domain(domain).range(range);
+
+					ret.axisScale[field] = d3.scale.linear().domain(domain).range(frange);
 				});			
 				
-				ret.scale = d3.scale.linear().domain([0, max]).range(options.range);
+				ret.scale = d3.scale.linear().domain([0, max]).range(calcRange);
 			}
 			
 			return ret;

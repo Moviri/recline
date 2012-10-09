@@ -5,14 +5,43 @@ recline-deps: true
 root: ../../
 ---
 
-<div id="graph_container" style="width: 1200">
-
+<div id="loadingImage" style="display:none">
+	<div style="position:absolute;top:45%;left:45%;width:150px;height:80px;border:1px solid grey;background-color: #E0E0E0">
+		<p class="centered">
+			Loading...
+			<br>
+			<img  src="../../images/ajax-loader.gif" >
+		</p>
+	</div>
 </div>
+
+<div id="container" class="container-fluid">
+	<div class="row-fluid">
+		<div class="span2 ">
+			<div class="row-fluid">
+			</div>			
+		</div>
+        <div class="span9">
+        	
+            <div class="row-fluid" style="height:10%">
+                <div class="span6">
+					<div id="indicator1"></div>
+                </div>
+            </div>
+            <div class="row-fluid" style="height:30%">
+                <div class="span12" >
+                    <div id="graph_container"style="overflow:auto"></div>
+                </div>
+            </div>       	
+		</div>		
+	</div>	
+</div>
+
 
 <script src="./js/d3table.js"></script>
 <link rel="stylesheet" type="text/css" href="./css/bootstrap.css"> 
 <script type="text/javascript">
-	var url, dataset, virtualdatasetAge;
+	var url, dataset, virtualdatasetAge, virtualdatasetTotal;
 
 	url = "http://192.168.100.133:8380/cwwh-iwal-war/cw/wh/ds/AudDemoByGender";
 
@@ -52,6 +81,14 @@ root: ../../
 		}
 	});
 	
+	virtualdatasetTotal= new recline.Model.VirtualDataset({
+		dataset: dataset,
+		aggregation: {
+			aggregatedFields: ["totalviewed", "price_sum"],
+			aggregationFunctions: ["sum"]
+		}
+	});
+	
 	var filter2 = [{
 		field : "age",
 		type : "range",
@@ -59,6 +96,22 @@ root: ../../
 		stop : "40",
 		fieldType : "number"
 	}];
+	
+	filters = [ {field: "daydate", type: "range", start:"2012-01-01 00:00:00", stop: "2012-01-30 00:00:00", fieldType: "date", controlType: "range_calendar" }];
+	
+	filter.forEach(function(filter){dataset.queryState.addFilter(filter)});
+	//filter2.forEach(function(filter){virtualdatasetAge.queryState.addFilter(filter)});		
+
+	var action_db = new recline.Action({
+		filters : {
+			filter_daydate : {type : "range",field : "daydate",fieldType : "date"},
+			filter_age : {type : "term",field : "age",fieldType : "number"}
+		},
+		models : [{model : dataset,filters : ["filter_daydate", "filter_age"]}, 
+					{model : virtualdatasetAge,filters : ["filter_age"]},
+					{model : virtualdatasetTotal,filters : ["filter_age"]}],
+		type : ["filter"]
+	});	
 
 	var graph = new recline.View.d3Table({
 		model : virtualdatasetAge,
@@ -66,21 +119,39 @@ root: ../../
 					{"name":"totalviewed_sum","fields": [{"id":"totalviewed_sum"}], "label": "Views", "width": "20%", "sortable": true},
 					{"name":"price_sum_sum","fields": [{"id": "price_sum_sum", "format":recline.Data.Format.decimal}], "label": "Revenues", "width": "20%"},
 					{"name":"totalviewed_by_gender_X_sum","fields": [{"id":"totalviewed_by_gender_Female_sum", "color":"DarkTurquoise"},{"id": "totalviewed_by_gender_Male_sum", "color":"DodgerBlue"}], 
-							"type": "barchart", "scale": recline.Data.Format.scale({type: 'linear', invertEven: true, domain: ['totalviewed_by_gender_Male_sum','totalviewed_by_gender_Female_sum'], range: [0,50]}),
-							"width": "40%", "label":"Views by Gender"}
+							"type": "barchart", "scale": recline.Data.Format.scale({type: 'linear', invertEven: true, domain: ['totalviewed_by_gender_Male_sum','totalviewed_by_gender_Female_sum']}), "range": 0.8,
+							"width": "30%", "label":"Views by Gender"}
 				],
-		conf : {"row_size": 20, "height": 200},
+		conf : {"row_size": 25, "height": 200},
 		state : {
-		}
+		},
+		actions: [{
+			action: action_db,
+			mapping: [
+						{srcField: "daydate", filter: "filter_daydate"}
+						],
+			event: ["click"]
+			}]
 	});
 	$('#graph_container').append(graph.el);
 	
-	filters = [ {field: "daydate", type: "range", start:"2012-01-01 00:00:00", stop: "2012-01-30 00:00:00", fieldType: "date", controlType: "range_calendar" }];
 	
-	filter.forEach(function(filter){dataset.queryState.addFilter(filter)});
-	//filter2.forEach(function(filter){virtualdatasetAge.queryState.addFilter(filter)});		
-		
-    dataset.fetch(); // needed to populate filter list
+	var indicator1 = new recline.View.Indicator({
+		model: virtualdatasetTotal,
+		state: {
+			series: ["totalviewed_sum"],
+			format: ',d',
+			label:"Views",
+			id: "6"
+		}
+	});
+	$('#indicator1').append(indicator1.el);
+	
+	
+	
+
+	dataset.fetch();
+ // needed to populate filter list
 	
 
 </script>
