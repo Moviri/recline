@@ -37,8 +37,6 @@ root: ../../
 	</div>	
 </div>
 
-
-<script src="./js/d3table.js"></script>
 <link rel="stylesheet" type="text/css" href="./css/bootstrap.css"> 
 <script type="text/javascript">
 	var url, dataset, virtualdatasetAge, virtualdatasetTotal;
@@ -53,13 +51,7 @@ root: ../../
 
 	});
 	
-	var filter = [{
-		field : "daydate",
-		type : "range",
-		start : "2012-01-01 00:00:00",
-		stop : "2012-01-07 00:00:00",
-		fieldType : "date"
-	}];
+	var filters = [ {field: "daydate", type: "range", start: new Date("2012-01-01T00:00:00"), stop: new Date("2012-01-07T00:00:00"), fieldType: "date" }];
 
 	dataset.records.bind('add', function() {
 		console.log('add');
@@ -88,32 +80,29 @@ root: ../../
 			aggregationFunctions: ["sum"]
 		}
 	});
-	
-	var filter2 = [{
-		field : "age",
-		type : "range",
-		start : "0",
-		stop : "40",
-		fieldType : "number"
-	}];
-	
-	filters = [ {field: "daydate", type: "range", start:"2012-01-01 00:00:00", stop: "2012-01-30 00:00:00", fieldType: "date", controlType: "range_calendar" }];
-	
-	filter.forEach(function(filter){dataset.queryState.addFilter(filter)});
-	//filter2.forEach(function(filter){virtualdatasetAge.queryState.addFilter(filter)});		
+		
+	filters.forEach(function(filter){dataset.queryState.addFilter(filter)});	
 
 	var action_db = new recline.Action({
 		filters : {
-			filter_daydate : {type : "range",field : "daydate",fieldType : "date"},
-			filter_age : {type : "term",field : "age",fieldType : "number"}
+			filter_age : {type : "list",field : "age",fieldType : "number"}
 		},
-		models : [{model : dataset,filters : ["filter_daydate", "filter_age"]}, 
+		models : [
 					{model : virtualdatasetAge,filters : ["filter_age"]},
+					{model : virtualdatasetTotal,filters : ["filter_age"]}],
+		type : ["selection"]
+	});	
+	
+	var action_filter = new recline.Action({
+		filters : {
+			filter_age : {type : "list",field : "age",fieldType : "number"}
+		},
+		models : [
 					{model : virtualdatasetTotal,filters : ["filter_age"]}],
 		type : ["filter"]
 	});	
 
-	var graph = new recline.View.d3Table({
+	var graph = new recline.View.d3.table({
 		model : virtualdatasetAge,
 		columns : [{"name":"age","fields": [{"id":"age"}], "label": "Age (bin)", "sortable": true, "width": "20%"},
 					{"name":"totalviewed_sum","fields": [{"id":"totalviewed_sum"}], "label": "Views", "width": "20%", "sortable": true},
@@ -122,13 +111,13 @@ root: ../../
 							"type": "barchart", "scale": recline.Data.Format.scale({type: 'linear', invertEven: true, domain: ['totalviewed_by_gender_Male_sum','totalviewed_by_gender_Female_sum']}), "range": 0.8,
 							"width": "30%", "label":"Views by Gender"}
 				],
-		conf : {"row_size": 25, "height": 200},
+		conf : {"row_size": 25, "height": 300},
 		state : {
 		},
 		actions: [{
 			action: action_db,
 			mapping: [
-						{srcField: "daydate", filter: "filter_daydate"}
+						{srcField: "age", filter: "filter_age"}
 						],
 			event: ["click"]
 			}]
