@@ -305,8 +305,8 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
                         var field = dimensions[j];
                         var originalFieldAttributes = this.attributes.dataset.fields.get(field).attributes;
                         var type = originalFieldAttributes.type;
-                        if(type == "date")
-                            console.log("test2");
+                        //if(type == "date")
+                        //    console.log("test2");
 
                         var parse = dataParsers[type];
                         var value = parse(keyField[j]);

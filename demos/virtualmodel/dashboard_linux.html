@@ -6,7 +6,7 @@ root: ../../
 ---
 
 <div id="loadingImage" style="display:none">
-	<div style="position:absolute;top:45%;left:45%;width:150px;height:80px;border:1px solid grey;background-color: #E0E0E0">
+	<div style="position:absolute;top:45%;left:45%;width:150px;height:80px;border:1px solid grey;background-color: #E0E0E0;color: black">
 		<p class="centered">
 			Loading...
 			<br>
@@ -131,7 +131,7 @@ root: ../../
                 filter_age:     {type: "term",  field: "age", fieldType: "number"}
             },
             models: [
-                {model: dataset, filters:["filter_age"]}
+                {model: virtualdatasetAge, filters:["filter_age"]}
             ],
             type: ["filter"]
         });

@@ -143,7 +143,7 @@ my.GenericFilter = Backbone.View.extend({
 				<table class="table table-striped table-hover table-condensed" style="width:100%" data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" > \
 				<tbody>\
 				{{#values}} \
-				<tr><td class="list-filter-item " myValue="{{val}}" startDate="{{startDate}}" stopDate="{{stopDate}}">{{label}}</td></tr> \
+				<tr class="{{selected}}"><td class="list-filter-item " myValue="{{val}}" startDate="{{startDate}}" stopDate="{{stopDate}}">{{label}}</td></tr> \
 				{{/values}} \
 				</tbody> \
 			  </table> \
@@ -216,7 +216,7 @@ my.GenericFilter = Backbone.View.extend({
 				<table class="table table-striped table-hover table-condensed" style="width:100%" data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" > \
 				<tbody>\
 				{{#values}} \
-				<tr><td class="list-filter-item " >{{val}}</td></tr> \
+				<tr class="{{selected}}"><td class="list-filter-item" >{{val}}</td></tr> \
 				{{/values}} \
 				</tbody>\
 			  </table> \
@@ -253,6 +253,7 @@ my.GenericFilter = Backbone.View.extend({
   _ctrlId : 0,
   _sourceDataset: null,
   _activeFilters: [],
+  _selectedClassName : "error", // use bootstrap ready-for-use classes to highlight list item selection (avail classes are success, warning, info & error)
   initialize: function(args) {
     this.el = $(this.el);
     _.bindAll(this, 'render');
@@ -333,7 +334,7 @@ my.GenericFilter = Backbone.View.extend({
 	  for (var i in this.tmpValues)
 	  {
 		var v = this.tmpValues[i];
-		this.values.push({val: v});
+		this.values.push({val: v, selected: (this.term == v ? self._selectedClassName : "")});
 		if (v > this.max)
 			this.max = v;
 			
@@ -364,7 +365,8 @@ my.GenericFilter = Backbone.View.extend({
 			this.weekValues.push({val: w+1,
 									label: ""+(w+1)+ " ["+d3.time.format("%x")(new Date(weekStartTime))+" -> "+d3.time.format("%x")(new Date(weekEndTime-1000))+"]",
 									startDate: new Date(weekStartTime), 
-									stopDate: new Date(weekEndTime)
+									stopDate: new Date(weekEndTime),
+									selected: (this.term == w+1 ? self._selectedClassName : "")
 								});
 		}
 		
@@ -381,7 +383,8 @@ my.GenericFilter = Backbone.View.extend({
 			this.monthValues.push({ val: d3.format("02d")(m), 
 									label: d3.time.format("%B")(new Date(m+"/01/2012"))+" "+currYear,
 									startDate: new Date(currYear, m-1, 1, 0, 0, 0, 0),
-									stopDate: new Date(endYear, endMonth, 1, 0, 0, 0, 0)
+									stopDate: new Date(endYear, endMonth, 1, 0, 0, 0, 0),
+									selected: (this.term == m ? self._selectedClassName : "")
 								});
 		}
 		if (this.period == "Months")
@@ -429,7 +432,6 @@ my.GenericFilter = Backbone.View.extend({
 	}
 	this.handleListItemClicked($targetTD, $table, $combo);
   },
-
   handleListItemClicked: function($targetTD, $table, $combo) {
 	var fieldId = $table.attr('data-filter-field');
 	var type = $table.attr('data-filter-type');
@@ -445,18 +447,21 @@ my.GenericFilter = Backbone.View.extend({
 	if (typeof $targetTD != "undefined")
 	{
 		// user clicked on table
-		// use bootstrap ready-for-use classes to highlight selection (avail classes are success, warning, info & error)
+		
 		$table.find('tr').each(function() { 
-							$(this).removeClass("error"); 
+							$(this).removeClass(this._selectedClassName); 
 						});
 		
-		$targetTD.parent().addClass("error");
+		$targetTD.parent().addClass(this._selectedClassName);
 		if (type == "range")
 		{
 			// case month_week_calendar 
 			var year = parseInt($combo.val());
 			var startDate = $targetTD.attr('startDate');
 			var endDate = $targetTD.attr('stopDate');
+
+			var currFilter = this.findActiveFilterByField(fieldId);
+			currFilter.term = $targetTD.attr('myValue'); // save selected item for re-rendering later
 				
 			this.doAction("onListItemClicked", fieldId, [startDate, endDate], "add");
 		}
@@ -617,6 +622,23 @@ my.GenericFilter = Backbone.View.extend({
     e.preventDefault();
     var $target = $(e.target);
     var field = $target.parent().attr('data-filter-field');
+	var currFilter = this.findActiveFilterByField(field);
+	//console.log(currFilter);
+	currFilter.term = "";
+	currFilter.value = [];
+	
+	if (currFilter.controlType == "list" || currFilter.controlType == "month_week_calendar")
+	{
+		$table = $target.parent().find(".table")
+		if (typeof $table != "undefined")
+		{
+			$table.find('tr').each(function() { 
+							$(this).removeClass(this._selectedClassName); 
+						});
+		}		
+	}
+	
+
 
   	/*_.each(this._targetDatasets, function(ds) {
 		ds.queryState.removeFilterByField(field);
