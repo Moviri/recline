@@ -26,7 +26,6 @@ this.recline.Data = this.recline.Data || {};
 			var ret = {}, count;
 			
 			ret.axisScale = {};
-			
 			var calcRange = calculateRange(range, width);
 			
 			if (options.type === 'linear') {
@@ -34,12 +33,12 @@ this.recline.Data = this.recline.Data || {};
 					var max=0;
 					count=0;
 					_.each(options.domain, function(field) {
-						max = (record.attributes[field] > max) ? record.attributes[field] : max;
+						max = (record.getFieldValue({"id":field}) > max) ? record.getFieldValue({"id":field}) : max;
 						count++;
 					});
 					return max*count;
 				});
-				
+								
 				_.each(options.domain, function(field, i){
 					var domain;
 					var frange = [calcRange[0],calcRange[1]/count];
