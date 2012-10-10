@@ -66,10 +66,6 @@ my.Action = Backbone.Model.extend({
 
     // action could be add/remove
    _internalDoAction: function(data, action) {
-       console.log("actions.internalDoAction");
-       console.log(data);
-       console.log(action);
-
        var self=this;
 
        var filters = this.attributes.filters;

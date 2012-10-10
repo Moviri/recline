@@ -37,7 +37,13 @@ my.Filters = {};
     my.Filters._getDataParser =  function(filter, fields) {
 
         var keyedFields = {};
-        fields.each( function(field) {
+        var tmpFields;
+        if(fields.models)
+            tmpFields = fields.models;
+        else
+            tmpFields = fields;
+
+        _.each(tmpFields, function(field) {
             keyedFields[field.id] = field;
         });
 
@@ -49,9 +55,12 @@ my.Filters = {};
             console.log("Warning could not find field " + filter.field + " for dataset " );
             console.log(fields);
         }
-        else
-            fieldType = field.attributes.type;
-
+        else {
+            if(field.attributes)
+                fieldType = field.attributes.type;
+            else
+                fieldType = field.type;
+        }
         return recline.Data.Filters._dataParsers[fieldType];
     },
 
