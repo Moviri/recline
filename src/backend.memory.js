@@ -71,7 +71,7 @@ this.recline.Backend.Memory = this.recline.Backend.Memory || {};
         // filter records
         var selectedRecords = _.filter(self.data, function (record) {
             var passes = _.map(filters, function (filter) {
-                return self.filterFunctions[filter.type](record, filter);
+                return self[filter.type](record, filter);
             });
             // return only these records that pass all filters
             return _.all(passes, _.identity);
@@ -116,13 +116,13 @@ this.recline.Backend.Memory = this.recline.Backend.Memory || {};
 
     // in place filtering
     this._applyFilters = function(results, queryObj) {
-      var self=this;
-      var filters = queryObj.filters;
+        var self= this;
+       var filters = queryObj.filters;
 
       // filter records
       return _.filter(results, function (record) {
         var passes = _.map(filters, function (filter) {
-          return self.filterFunctions[filter.type](record, filter);
+          return self.filterFunctions[filter.type](record, filter, self);
         });
 
         // return only these records that pass all filters
@@ -212,8 +212,8 @@ this.recline.Backend.Memory = this.recline.Backend.Memory || {};
       return this.save(toUpdate);
     };
 
-
       this.getDataParser = function(filter) {
+
           var keyedFields = {};
           _.each(self.fields, function(field) {
               keyedFields[field.id] = field;
@@ -229,36 +229,43 @@ this.recline.Backend.Memory = this.recline.Backend.Memory || {};
           }
           else
               fieldType = field.type;
-          return this.dataParsers[fieldType];
+          return recline.Backend.Memory.dataParsers[fieldType];
       };
 
-    this.filterFunctions = {
-        term: function(record, filter) {
-          var parse = this.getDataParser(filter);
-          var value = parse(record[filter.field]);
-          var term  = parse(filter.term);
+      this.filterFunctions = {
+          term: function(record, filter, storeInstance) {
 
-          return (value === term);
-      },
+              var parse = storeInstance.getDataParser(filter);
+              var value = parse(record[filter.field]);
+              var term  = parse(filter.term);
 
-      range: function (record, filter) {
-          var parse =  this.getDataParser(filter);
-          var value = parse(record[filter.field]);
-          var start = parse(filter.start);
-          var stop  = parse(filter.stop);
+              return (value === term);
+          },
 
-          return (value >= start && value <= stop);
-      }
+          range: function (record, filter, storeInstance) {
 
-    };
+              var parse =  storeInstance.getDataParser(filter);
+              var value = self(record[filter.field]);
+              var start = parse(filter.start);
+              var stop  = parse(filter.stop);
 
-      this.dataParsers = {
+              return (value >= start && value <= stop);
+          }
+
+      };
+  };
+
+
+
+
+
+      my.dataParsers = {
           integer: function (e) { return parseFloat(e, 10); },
           'float': function (e) { return parseFloat(e, 10); },
           string : function (e) { return e.toString() },
           date   : function (e) { return new Date(e).valueOf() },
           datetime   : function (e) { return new Date(e).valueOf() }
       };
-  };
+
 
 }(jQuery, this.recline.Backend.Memory));

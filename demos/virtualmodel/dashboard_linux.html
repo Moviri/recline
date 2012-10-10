@@ -131,15 +131,10 @@ root: ../../
 		
 		var action_vmodel = new recline.Action({
             filters: {
-                filter_daydate: {type: "range", field: "daydate", fieldType: "date"},
                 filter_age:     {type: "term",  field: "age", fieldType: "number"}
             },
             models: [
-                {model: virtualdatasetAge, filters:["filter_age"]},
-                {model: virtualdatasetDay, filters:["filter_age", "filter_daydate"]},
-                {model: virtualdatasetWeekday, filters:["filter_age"]},
-                {model: virtualdatasetTotal, filters:["filter_age"]},
-                {model: virtualdatasetHour, filters:["filter_age"]}
+                {model: dataset, filters:["filter_age"]}
             ],
             type: ["filter"]
         });
