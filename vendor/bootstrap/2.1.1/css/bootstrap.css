@@ -2168,6 +2168,7 @@ div.s-table {
 
 .s-table div.s-th {
   font-weight: bold;
+  text-align: center;
 }
 
 .s-table div.s-thead div.s-th {

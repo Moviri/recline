@@ -41,13 +41,10 @@ root: ../../
                     <div id="mygrid"style="overflow:auto"></div>
                 </div>
             </div>
-            <div class="row-fluid" style="height:20%">
+            <div class="row-fluid" style="height:30%">
                 <div class="span12"><div id="mygraph2" ></div></div>
             </div>
-            <div class="row-fluid" style="height:20%">
-                <div class="span12" ><div id="mygrid2"></div></div>
-            </div>
-            <div class="row-fluid" style="height:20%">
+            <div class="row-fluid" style="height:30%">
                 <div class="span6" ><div id="mygraph3"></div></div>
                 <div class="span6" ><div id="mygraph4"></div></div>
             </div>
@@ -64,7 +61,7 @@ root: ../../
             url: url,
             backend: 'jsonp',
             id: "AudDemoByGender",
-            fieldLabels: [{id: "age", label: "age_label"}, {id: "gender", label: "gender_label"}],
+            fieldLabels: [{id: "age", label: "Age (bin)"}, {id: "gender", label: "Gender"}],
             inMemoryQueryFields: ["age"]
         });
 
@@ -147,14 +144,21 @@ root: ../../
         dataset.fetch(); // needed to populate filter list
 		
            var $el = $('#mygrid');
-		   var grid = new recline.View.SlickGrid({model: virtualdatasetAge, el: $el, state: {fitColumns:true, useInnerChart:true, innerChartSerie1:'totalviewed_by_gender_Male_sum', innerChartSerie2:'totalviewed_by_gender_Female_sum', innerChartHeader:'Views by Gender'}});
+		   var grid = new recline.View.SlickGrid(
+											{model: virtualdatasetAge, el: $el, 
+												state: {
+													fitColumns:true, 
+													visibleColumns: ['totalviewed_sum', 'price_sum_sum', 'age', 'inner_chart'],
+													columnsOrder: ['age', 'totalviewed_sum', 'price_sum_sum', 'innerChart'],
+													useInnerChart:true, 
+													innerChartSerie1:'totalviewed_by_gender_Male_sum', 
+													innerChartSerie2:'totalviewed_by_gender_Female_sum', 
+													innerChartHeader:'Views by Gender',
+													fieldLabels: [{id: "totalviewed_sum", label: "Views"}, {id: "price_sum_sum", label: "Revenues"}]
+												}
+											}); 
             grid.visible = true;
             grid.render();
-
-           $el = $('#mygrid2');
-		   var grid2 = new recline.View.SlickGrid({model: virtualdatasetDay, el: $el, state: {fitColumns:true}});
-            grid2.visible = true;
-            grid2.render();
 
             var graph2 = new recline.View.NVD3Graph({
                 model: virtualdatasetDay,
