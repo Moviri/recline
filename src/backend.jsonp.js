@@ -157,6 +157,12 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
 
   };
 
+    my.applySelections = function(selections) {
+        if(my.inMemoryStore != null)
+            recline.Data.Filters.applySelectionsOnData(selections,  my.inMemoryStore.data, my.inMemoryStore.fields);
+
+    };
+
     function applyInMemoryFilters() {
 
 
@@ -173,10 +179,16 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
     };
 
     function prepareReturnedData(data) {
+        var test;
+
 
        if(data.hits == null)
            var fields = _handleFieldDescription(data.description);
-           if(data.data == null) {
+
+            _.each(fields, function(f) { f.renderer = recline.Data.Renderers;});
+
+
+            if(data.data == null) {
             my.memoryFields = fields;
             return {
                 fields: fields,
@@ -185,9 +197,11 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
            }
         else
             {
-                my.memoryFields = fields;
+               var fields =my.memoryFields;
+                _.each(fields, function(f) { f.renderer = recline.Data.Renderers;});
+
                 return {
-                    hits: _normalizeRecords(data.data, fields),
+                    hits: _normalizeRecords(data.data,fields ),
                     fields:fields,
                     useMemoryStore: false
                 }

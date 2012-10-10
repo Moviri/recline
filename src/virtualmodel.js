@@ -26,7 +26,8 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
 
             this.attributes.dataset.records.bind('add',     function() { self.initializeCrossfilter(); });
             this.attributes.dataset.records.bind('reset',   function() { self.initializeCrossfilter(); });
-            this.queryState.bind('change',                  function() { console.log("called change on model " + self.attributes.name); self.query(); });
+            this.queryState.bind('change',                  function() { self.query(); });
+            this.queryState.bind('selection:change',        function() { self.selection(); });
 
             // TODO verify if is better to use a new backend (crossfilter) to manage grouping and filtering instead of using it inside the model
         },
@@ -441,6 +442,30 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
             return dfd.promise();
         },
 
+        selection: function(queryObj) {
+            var self = this;
+
+            this.trigger('selection:start');
+
+            if (queryObj) {
+                self.queryState.set(queryObj, {silent: true});
+            }
+            var actualQuery = self.queryState
+
+            // if memory store apply on memory
+            /*if (self.backend == recline.Backend.Memory
+             || self.backend == recline.Backend.Jsonp) {
+             self.backend.applySelections(this.queryState.get('selections'));
+             }*/
+
+            // apply on current records
+            // needed cause memory store is not mandatory
+            recline.Data.Filters.applySelectionsOnData(self.queryState.get('selections'), self.records.models, self.fields);
+
+            self.queryState.trigger('selection:done');
+
+        },
+
         _handleQueryResult: function(queryResult) {
             var self = this;
             self.recordCount = queryResult.total;
@@ -450,6 +475,7 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
                 return _doc;
             });
 
+            recline.Data.Filters.applySelectionsOnData(self.queryState.get('selections'), docs, self.fields);
             self.records.reset(docs);
 
         },

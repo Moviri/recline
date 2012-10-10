@@ -23,6 +23,8 @@ my.SlickGrid = Backbone.View.extend({
     this.model.records.bind('reset', this.render);
     this.model.records.bind('remove', this.render);
 
+    this.model.queryState.bind('selection:done', this.render);
+
     var state = _.extend({
         hiddenColumns: [],
         columnsOrder: [],
@@ -156,8 +158,11 @@ my.SlickGrid = Backbone.View.extend({
 
     this.model.records.each(function(doc){
       var row = {};
+
       self.model.fields.each(function(field){
+
         row[field.id] = doc.getFieldValue(field);
+
       });
 	  if (self.state.get('useInnerChart') == true && self.state.get('innerChartSerie1') != null && self.state.get('innerChartSerie2') != null)
 		row['innerChart'] = [ row[self.state.get('innerChartSerie1')], row[self.state.get('innerChartSerie2')], max ];

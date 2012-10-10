@@ -12,7 +12,7 @@ my.Dataset = Backbone.Model.extend({
 
   // ### initialize
   initialize: function() {
-    _.bindAll(this, 'query');
+    _.bindAll(this, 'query', 'selection');
     this.backend = null;
     if (this.get('backend')) {
       this.backend = this._backendFromString(this.get('backend'));
@@ -33,6 +33,7 @@ my.Dataset = Backbone.Model.extend({
     this.queryState = new my.Query();
     this.queryState.bind('change', this.query);
     this.queryState.bind('facet:add', this.query);
+    this.queryState.bind('selection:change', this.selection);
     // store is what we query and save against
     // store will either be the backend or be a memory store if Backend fetch
     // tells us to use memory store
@@ -231,7 +232,9 @@ my.Dataset = Backbone.Model.extend({
       return _doc;
     });
 
+    recline.Data.Filters.applySelectionsOnData(self.queryState.get('selections'), docs, self.fields);
     self.records.reset(docs);
+
     if (queryResult.facets) {
       var facets = _.map(queryResult.facets, function(facetResult, facetId) {
         facetResult.id = facetId;
@@ -247,20 +250,24 @@ my.Dataset = Backbone.Model.extend({
         this.trigger('selection:start');
 
         if (queryObj) {
-            this.queryState.set(queryObj, {silent: true});
+            self.queryState.set(queryObj, {silent: true});
         }
-        var actualQuery = this.queryState
+        var actualQuery = self.queryState
 
         // if memory store apply on memory
-        if (this.backend == recline.Backend.Memory) {
-            this.backend.applySelections(this.queryState.selections);
-        }
+        /*if (self.backend == recline.Backend.Memory
+            || self.backend == recline.Backend.Jsonp) {
+            self.backend.applySelections(this.queryState.get('selections'));
+        }*/
 
         // apply on current records
         // needed cause memory store is not mandatory
-        this._applySelection();
+        recline.Data.Filters.applySelectionsOnData(self.queryState.get('selections'), self.records.models, self.fields);
 
-        self.trigger('selection:done');
+        console.log("selection done");
+        console.log(self);
+
+        self.queryState.trigger('selection:done');
 
     },
 
@@ -339,6 +346,8 @@ my.Record = Backbone.Model.extend({
   // Certain methods require presence of a fields attribute (identical to that on Dataset)
   initialize: function() {
     _.bindAll(this, 'getFieldValue');
+
+     this["is_selected"] = false;
   },
 
   // ### getFieldValue
@@ -363,6 +372,14 @@ my.Record = Backbone.Model.extend({
       val = field.deriver(val, field, this);
     }
     return val;
+  },
+
+  isRecordSelected: function() {
+    var self=this;
+      return self.is_selected;
+  },
+  setRecordSelection: function(sel) {
+      this["is_selected"] = sel;
   },
 
   // ### summary
@@ -409,8 +426,7 @@ my.Field = Backbone.Model.extend({
     label: null,
     type: 'string',
     format: null,
-    is_derived: false,
-    is_selected: false
+    is_derived: false
   },
   // ### initialize
   //

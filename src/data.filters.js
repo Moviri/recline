@@ -21,20 +21,23 @@ my.Filters = {};
 
     // data should be {records:[], fields:[]}
     my.Filters.applySelectionsOnData = function(selections, records, fields) {
-        _.each(records, function(record) {
-            record["is_selected"] = false;
+        _.each(records, function(currentRecord) {
+            currentRecord.setRecordSelection(false);
+
             _.each(selections, function(sel) {
-               if(recline.Data.Filters._filterFunctions[sel.type](record, sel, fields)) {
-                   record["is_selected"] = true;
-               }
+                if(recline.Data.Filters._filterFunctions[sel.type](currentRecord.attributes, sel, fields)) {
+                    currentRecord.setRecordSelection(true);
+                }
             });
         });
+
+
     },
 
     my.Filters._getDataParser =  function(filter, fields) {
 
         var keyedFields = {};
-        _.each(fields, function(field) {
+        fields.each( function(field) {
             keyedFields[field.id] = field;
         });
 
@@ -47,7 +50,8 @@ my.Filters = {};
             console.log(fields);
         }
         else
-            fieldType = field.type;
+            fieldType = field.attributes.type;
+
         return recline.Data.Filters._dataParsers[fieldType];
     },
 

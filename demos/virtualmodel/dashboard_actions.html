@@ -148,6 +148,17 @@ root: ../../
             type: ["filter"]
         });
 
+        var action_selection_age = new recline.Action({
+            filters: {
+                filter_age:     {type: "term",  field: "age", fieldType: "number"}
+            },
+            models: [
+                {model: dataset, filters:[ "filter_age"]},
+                {model: virtualdatasetAge, filters:["filter_age"]}
+            ],
+            type: ["selection"]
+        });
+
 
 
             var graph2 = new recline.View.NVD3Graph({
@@ -259,13 +270,11 @@ root: ../../
                 id: 'filterEditor1',
                 label: 'Memory Filters1',
 				sourceFields: [
-                    {field: 'daydate', type: "range", controlType: 'range_calendar'},
                     {field: 'age', controlType: 'list'}
                 ],
                 actions: [{
-                    action: action_db,
+                    action: action_selection_age    ,
                     mapping: [
-                        {srcField: "daydate", filter: "filter_daydate"},
                         {srcField: "age", filter: "filter_age"}
                     ],
                     event: ["onFilterValueChanged", "onListItemClicked", "onRemoveFilter"]

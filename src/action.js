@@ -174,16 +174,16 @@ my.Action = Backbone.Model.extend({
 
     modelsAddFilterActions: {
         filter:     function(model, filter) { model.queryState.setFilter(filter)},
-        selection:  function(model, filter) { model.queryState.addSelection(filter)}
+        selection:  function(model, filter) { model.queryState.setSelection(filter)}
     },
 
     modelsRemoveFilterActions: {
-        filter:     function(model, filter) { console.log(model.queryState); model.queryState.removeFilterByField(filter.field); console.log(model.queryState); },
+        filter:     function(model, filter) { model.queryState.removeFilterByField(filter.field);  },
         selection:  function(model, filter) { throw "modelsRemoveFilterActions not implemented for selection"}
     },
 
     modelsTriggerActions: {
-        filter:     function(model) {console.log("trigger action change on model " + model.attributes.name); model.queryState.trigger("change")},
+        filter:     function(model) { model.queryState.trigger("change")},
         selection:  function(model) { model.queryState.trigger("selection:change")}
     },
 

@@ -276,6 +276,7 @@ my.GenericFilter = Backbone.View.extend({
 			this.addNewFilterControl(this.sourceFields[k]);
 
     this._sourceDataset.records.bind('reset', this.render);
+    this._sourceDataset.queryState.bind('selection:done', this.render);
   },
 
   render: function() {
@@ -286,9 +287,11 @@ my.GenericFilter = Backbone.View.extend({
 	});
 
 	// retrieve filters already set on the model
+    console.log("render");
+      console.log(self._sourceDataset.queryState) ;
 
     //  map them to the correct controlType also retaining their values (start/from/term)
-      _.each(recline.ActionUtility.getActiveFilters(this._actions), function(filter) {
+     _.each(self._sourceDataset.queryState.get('selections'), function(filter) {
           for (var j in tmplData.filters)
           {
               if (tmplData.filters[j].field == filter.field)
@@ -298,6 +301,7 @@ my.GenericFilter = Backbone.View.extend({
               }
           }
       });
+
 
       if (tmplData.filters.length > 0)
 		tmplData.filters[tmplData.filters.length -1].hrVisible = 'none'
