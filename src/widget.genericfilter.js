@@ -158,7 +158,7 @@ my.GenericFilter = Backbone.View.extend({
 			defaultDate: "{{startDate}}", \
 			changeMonth: true, \
 			numberOfMonths: 1, \
-			dateFormat: "DD MM d yyyy", \
+			dateFormat: "D M dd yy", \
 			onSelect: function( selectedDate ) { \
 				$( "#to{{ctrlId}}" ).datepicker( "option", "minDate", selectedDate ); \
 			} \
@@ -167,7 +167,7 @@ my.GenericFilter = Backbone.View.extend({
 			defaultDate: "{{endDate}}", \
 			changeMonth: true, \
 			numberOfMonths: 1, \
-			dateFormat: "DD MM d yyyy", \
+			dateFormat: "D M dd yy", \
 			onSelect: function( selectedDate ) { \
 				$( "#from{{ctrlId}}" ).datepicker( "option", "maxDate", selectedDate ); \
 			} \
