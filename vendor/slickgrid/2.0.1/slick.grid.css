@@ -129,7 +129,7 @@ classes should alter those!
   width: 100%;
 }
 
-.slick-cell, .slick-headerrow-column {
+.slick-cell, .slick-headerrow-column, .slick-footerrow-column {
   position: absolute;
 
   border: 1px solid transparent;
