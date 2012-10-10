@@ -58,6 +58,31 @@ this.recline.Backend.Memory = this.recline.Backend.Memory || {};
       return dfd.promise();
     },
 
+    // selectionType could be "selected" or "unselected"
+    this.applySelections = function(selections, selectionType ) {
+        var self=this;
+        var filters = selections.filters;
+        // register filters
+
+        var isSelected = true;
+        if(selectionType != "selected")
+            isSelected = false;
+
+        // filter records
+        var selectedRecords = _.filter(self.data, function (record) {
+            var passes = _.map(filters, function (filter) {
+                return self.filterFunctions[filter.type](record, filter);
+            });
+            // return only these records that pass all filters
+            return _.all(passes, _.identity);
+        });
+
+        _.each(selectedRecords, function(d) {
+            d["is_selected"] = isSelected;
+        });
+
+    }
+
     this.query = function(queryObj) {
       var dfd = $.Deferred();
       var numRows = queryObj.size || this.data.length;
@@ -91,69 +116,20 @@ this.recline.Backend.Memory = this.recline.Backend.Memory || {};
 
     // in place filtering
     this._applyFilters = function(results, queryObj) {
-        var self=this;
+      var self=this;
       var filters = queryObj.filters;
-      // register filters
-      var filterFunctions = {
-        term         : term,
-        range        : range,
-        geo_distance : geo_distance
-      };
-      var dataParsers = {
-        integer: function (e) { return parseFloat(e, 10); },
-        'float': function (e) { return parseFloat(e, 10); },
-        string : function (e) { return e.toString() },
-        date   : function (e) { return new Date(e).valueOf() },
-        datetime   : function (e) { return new Date(e).valueOf() }
-      };
-      var keyedFields = {};
-      _.each(self.fields, function(field) {
-        keyedFields[field.id] = field;
-      });
-      function getDataParser(filter) {
-        var field = keyedFields[filter.field];
-        var fieldType = 'string';
-
-          if(field == null) {
-                console.log("Warning could not find field " + filter.field + " for dataset " );
-                console.log(self);
-            }
-          else
-            fieldType = field.type;
-        return dataParsers[fieldType];
-      }
 
       // filter records
       return _.filter(results, function (record) {
         var passes = _.map(filters, function (filter) {
-          return filterFunctions[filter.type](record, filter);
+          return self.filterFunctions[filter.type](record, filter);
         });
 
         // return only these records that pass all filters
         return _.all(passes, _.identity);
       });
 
-      // filters definitions
-      function term(record, filter) {
-        var parse = getDataParser(filter);
-        var value = parse(record[filter.field]);
-        var term  = parse(filter.term);
 
-        return (value === term);
-      }
-
-      function range(record, filter) {
-        var parse = getDataParser(filter);
-        var value = parse(record[filter.field]);
-        var start = parse(filter.start);
-        var stop  = parse(filter.stop);
-
-        return (value >= start && value <= stop);
-      }
-
-      function geo_distance() {
-        // TODO code here
-      }
     };
 
     // we OR across fields but AND across terms in query string
@@ -235,6 +211,54 @@ this.recline.Backend.Memory = this.recline.Backend.Memory || {};
       });
       return this.save(toUpdate);
     };
+
+
+      this.getDataParser = function(filter) {
+          var keyedFields = {};
+          _.each(self.fields, function(field) {
+              keyedFields[field.id] = field;
+          });
+
+
+          var field = keyedFields[filter.field];
+          var fieldType = 'string';
+
+          if(field == null) {
+              console.log("Warning could not find field " + filter.field + " for dataset " );
+              console.log(self);
+          }
+          else
+              fieldType = field.type;
+          return this.dataParsers[fieldType];
+      };
+
+    this.filterFunctions = {
+        term: function(record, filter) {
+          var parse = this.getDataParser(filter);
+          var value = parse(record[filter.field]);
+          var term  = parse(filter.term);
+
+          return (value === term);
+      },
+
+      range: function (record, filter) {
+          var parse =  this.getDataParser(filter);
+          var value = parse(record[filter.field]);
+          var start = parse(filter.start);
+          var stop  = parse(filter.stop);
+
+          return (value >= start && value <= stop);
+      }
+
+    };
+
+      this.dataParsers = {
+          integer: function (e) { return parseFloat(e, 10); },
+          'float': function (e) { return parseFloat(e, 10); },
+          string : function (e) { return e.toString() },
+          date   : function (e) { return new Date(e).valueOf() },
+          datetime   : function (e) { return new Date(e).valueOf() }
+      };
   };
 
 }(jQuery, this.recline.Backend.Memory));

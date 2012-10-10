@@ -562,10 +562,14 @@ my.Query = Backbone.Model.extend({
 
   setFilter: function(filter) {
       var filters = this.get('filters');
-      var f = _.find(filters, function(e) { return e.field==filter.field});
-      if(f!=null)
-        f=filter;
-      else
+      var found = false;
+      for(var j=0;j<filters.length;j++) {
+          if (filters[j].field==filter.field) {
+              filters[j] = filter;
+              found = true;
+          }
+      }
+      if(!found)
         filters.push(filter);
 
 

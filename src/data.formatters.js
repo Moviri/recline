@@ -9,9 +9,11 @@ this.recline.Data = this.recline.Data || {};
     my.FormattersMODA = {
         integer : function (e) { return parseInt(e); },
         string : function (e) { return e.toString() },
-        date   : function (e) { return new Date(e)},
+        date   : function (e) { return new Date(e).valueOf() },
         float  : function (e) { return parseFloat(e, 10); }
     };
+
+
     
     my.Format.decimal = d3.format(".00f");
 	

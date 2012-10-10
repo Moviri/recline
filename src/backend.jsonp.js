@@ -66,14 +66,14 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
         var changedOnMemory = false;
 
         // verify if filters on backend are changed since last query
-        if (!isArrayEquals(my.queryStateOnBackend.attributes.filters, tmpQueryStateOnBackend.attributes.filters)) {
+        if (!_.isEqual(my.queryStateOnBackend.attributes.filters, tmpQueryStateOnBackend.attributes.filters)) {
             my.queryStateOnBackend = tmpQueryStateOnBackend;
             changedOnBackend = true;
         }
 
         // verify if filters on memory are changed since last query
         if(dataset.inMemoryQueryFields.length> 0
-            && !isArrayEquals(my.queryStateInMemory.attributes.filters, tmpQueryStateInMemory.attributes.filters))
+            && !_.isEqual(my.queryStateInMemory.attributes.filters, tmpQueryStateInMemory.attributes.filters))
         {
             my.queryStateInMemory = tmpQueryStateInMemory;
             changedOnMemory = true;
