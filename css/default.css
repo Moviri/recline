@@ -82,7 +82,10 @@
 {
   min-height:300px;
 }
-
+#mygrid2
+{
+  min-height:200px;
+}
 #mygrid_hour
 {
   min-height:200px;
