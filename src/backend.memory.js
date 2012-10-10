@@ -58,29 +58,8 @@ this.recline.Backend.Memory = this.recline.Backend.Memory || {};
       return dfd.promise();
     },
 
-    // selectionType could be "selected" or "unselected"
-    this.applySelections = function(selections, selectionType ) {
-        var self=this;
-        var filters = selections.filters;
-        // register filters
-
-        var isSelected = true;
-        if(selectionType != "selected")
-            isSelected = false;
-
-        // filter records
-        var selectedRecords = _.filter(self.data, function (record) {
-            var passes = _.map(filters, function (filter) {
-                return self[filter.type](record, filter);
-            });
-            // return only these records that pass all filters
-            return _.all(passes, _.identity);
-        });
-
-        _.each(selectedRecords, function(d) {
-            d["is_selected"] = isSelected;
-        });
-
+    this._applySelections = function(records, fields, selections) {
+        recline.data.Filters.applySelectionsOnData(selections, data);
     }
 
     this.query = function(queryObj) {
@@ -88,8 +67,9 @@ this.recline.Backend.Memory = this.recline.Backend.Memory || {};
       var numRows = queryObj.size || this.data.length;
       var start = queryObj.from || 0;
       var results = this.data;
-      
-      results = this._applyFilters(results, queryObj);
+
+      recline.Data.Filters.applySelectionsOnData( queryObj.selections, results, this.fields);
+      results = recline.Data.Filters.applyFiltersOnData( queryObj.filters, results, this.fields);
       results = this._applyFreeTextQuery(results, queryObj);
 
       // TODO: this is not complete sorting!
@@ -114,23 +94,7 @@ this.recline.Backend.Memory = this.recline.Backend.Memory || {};
       return dfd.promise();
     };
 
-    // in place filtering
-    this._applyFilters = function(results, queryObj) {
-        var self= this;
-       var filters = queryObj.filters;
 
-      // filter records
-      return _.filter(results, function (record) {
-        var passes = _.map(filters, function (filter) {
-          return self.filterFunctions[filter.type](record, filter, self);
-        });
-
-        // return only these records that pass all filters
-        return _.all(passes, _.identity);
-      });
-
-
-    };
 
     // we OR across fields but AND across terms in query string
     this._applyFreeTextQuery = function(results, queryObj) {
@@ -259,13 +223,7 @@ this.recline.Backend.Memory = this.recline.Backend.Memory || {};
 
 
 
-      my.dataParsers = {
-          integer: function (e) { return parseFloat(e, 10); },
-          'float': function (e) { return parseFloat(e, 10); },
-          string : function (e) { return e.toString() },
-          date   : function (e) { return new Date(e).valueOf() },
-          datetime   : function (e) { return new Date(e).valueOf() }
-      };
+
 
 
 }(jQuery, this.recline.Backend.Memory));

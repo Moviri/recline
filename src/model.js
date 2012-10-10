@@ -241,6 +241,30 @@ my.Dataset = Backbone.Model.extend({
     }
   },
 
+    selection: function(queryObj) {
+        var self = this;
+
+        this.trigger('selection:start');
+
+        if (queryObj) {
+            this.queryState.set(queryObj, {silent: true});
+        }
+        var actualQuery = this.queryState
+
+        // if memory store apply on memory
+        if (this.backend == recline.Backend.Memory) {
+            this.backend.applySelections(this.queryState.selections);
+        }
+
+        // apply on current records
+        // needed cause memory store is not mandatory
+        this._applySelection();
+
+        self.trigger('selection:done');
+
+    },
+
+
   toTemplateJSON: function() {
     var data = this.toJSON();
     data.recordCount = this.recordCount;
@@ -640,30 +664,18 @@ my.Query = Backbone.Model.extend({
           this.set({selections: selections});
           this.trigger('change:selections');
       },
-      setSelection: function(s) {
-        // todo should be optimized in order to make only one cycle on filters
-
-        if(s.constructor == Array) {
-            for(y=0;y<s.length;y++){
-                this._setSingleSelection(s[y]);
-            }
-        } else {
-            this._setSingleSelection(s);
-        }
-
-        this.trigger('change:selections');
-    },
-    _setSingleSelection: function(s) {
-        var selections = this.get('selections');
-        for(x=0;x<selections.length;x++){
-            if(selections[x].field == s.field) {
-                selections[x] = s;
-                return;
+      setSelection: function(filter) {
+        var s = this.get('selections');
+        var found = false;
+        for(var j=0;j<s.length;j++) {
+            if (s[j].field==filter.field) {
+                s[j] = filter;
+                found = true;
             }
         }
-        selections.push(s);
+        if(!found)
+            s.push(filter);
     },
-
 
 
 
