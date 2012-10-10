@@ -1659,6 +1659,7 @@ if (typeof Slick === "undefined") {
       if (!initialized) { return; }
       numberOfRows = getDataLength() +
           (options.enableAddRow ? 1 : 0) +
+		  (options.useInnerChart ? 1 : 0) +
           (options.leaveSpaceForNewRows ? numVisibleRows - 1 : 0);
 
       var oldViewportHasVScroll = viewportHasVScroll;

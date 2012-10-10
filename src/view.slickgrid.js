@@ -27,6 +27,7 @@ my.SlickGrid = Backbone.View.extend({
 
     var state = _.extend({
         hiddenColumns: [],
+        visibleColumns: [],
         columnsOrder: [],
         columnsSort: {},
         columnsWidth: [],
@@ -94,11 +95,30 @@ my.SlickGrid = Backbone.View.extend({
         formatter: Slick.Formatters.TwinBarFormatter
       })
 	}
-	
-    // Restrict the visible columns
-    var visibleColumns = columns.filter(function(column) {
-      return _.indexOf(self.state.get('hiddenColumns'), column.id) == -1;
-    });
+	if (self.state.get('fieldLabels') && self.state.get('fieldLabels').length > 0)
+	{
+		_.each(self.state.get('fieldLabels'), function(newIdAndLabel) {
+			for (var c in columns)
+				if (columns[c].id == newIdAndLabel.id)
+					columns[c].name = newIdAndLabel.label;
+		});
+	}
+	var visibleColumns = [];
+	if (self.state.get('visibleColumns').length > 0)
+	{
+		visibleColumns = columns.filter(function(column) {
+		  return _.indexOf(self.state.get('visibleColumns'), column.id) >= 0;
+		});
+		if (self.state.get('useInnerChart') == true && self.model.records.length > 0)
+			visibleColumns.push(columns[columns.length - 1]); // innerChart field is last one added
+	}
+	else
+	{
+		// Restrict the visible columns
+		visibleColumns = columns.filter(function(column) {
+		  return _.indexOf(self.state.get('hiddenColumns'), column.id) == -1;
+		});
+	}
 
     // Order them if there is ordering info on the state
     if (this.state.get('columnsOrder')){
