@@ -57,7 +57,7 @@ root: ../../
     $(document).ready(function() {
         var url = "http://192.168.100.133:8380/cwwh-iwal-war/cw/wh/ds/AudDemoByGender";
 
-        dataset = new recline.Model.Dataset({
+        var dataset = new recline.Model.Dataset({
             url: url,
             backend: 'jsonp',
             id: "AudDemoByGender",
@@ -68,7 +68,7 @@ root: ../../
 		dataset.bind('query:done query:fail', function() { document.getElementById("loadingImage").style.display = "none";resizeAllElems(); });
 		dataset.bind('query:start', function() { document.getElementById("loadingImage").style.display = "block"; });
 
-            virtualdatasetAge = new recline.Model.VirtualDataset({
+           virtualdatasetAge = new recline.Model.VirtualDataset({
                 dataset: dataset,
                 aggregation: {
                     dimensions: ["age"],
@@ -96,6 +96,14 @@ root: ../../
                     aggregationFunctions: ["sum", "avg"]
                 }
             });
+            virtualdatasetTotal= new recline.Model.VirtualDataset({
+            dataset: dataset,
+            aggregation: {
+            aggregatedFields: ["totalviewed", "price_sum"],
+            aggregationFunctions: ["sum"]
+            }
+            });
+
 
             virtualdatasetDay= new recline.Model.VirtualDataset({
                 dataset: dataset,
@@ -107,27 +115,16 @@ root: ../../
                 }
             });
 
-            virtualdatasetTotal= new recline.Model.VirtualDataset({
-                dataset: dataset,
-                aggregation: {
-                    aggregatedFields: ["totalviewed", "price_sum"],
-                    aggregationFunctions: ["sum"]
-                }
-            });
+            virtualdatasetDay.queryState.attributes.sort = [{field:"daydate"}];
+
+
 			
 		var action_db = new recline.Action({
             filters: {
-                filter_daydate: {type: "range", field: "daydate", fieldType: "date"},
-                filter_age:     {type: "term",  field: "age", fieldType: "number"}
+                filter_daydate: {type: "range", field: "daydate", fieldType: "date"}
             },
             models: [
-                {model: dataset, filters:["filter_daydate", "filter_age"]},
-
-                {model: virtualdatasetAge, filters:["filter_age"]},
-                {model: virtualdatasetDay, filters:["filter_age", "filter_daydate"]},
-                {model: virtualdatasetWeekday, filters:["filter_age"]},
-                {model: virtualdatasetTotal, filters:["filter_age"]},
-                {model: virtualdatasetHour, filters:["filter_age"]}
+                {model: dataset, filters:["filter_daydate"]}
             ],
             type: ["filter"]
         });
@@ -146,8 +143,9 @@ root: ../../
             ],
             type: ["filter"]
         });
+
 		
-         filters = [ {field: "daydate", type: "range", start:new Date(2012,0,01,00,00,00,0), stop:new Date(2012,0,30,00,00,00,0), fieldType: "date" }];
+         var filters = [ {field: "daydate", type: "range", start:new Date(2012,0,01,00,00,00,0), stop:new Date(2012,0,30,00,00,00,0), fieldType: "date" }];
          for(var i=0;i<filters.length;i++)
              dataset.queryState.addFilter(filters[i]);
 
@@ -237,7 +235,6 @@ root: ../../
 
 			var filter = new recline.View.GenericFilter({
                 sourceDataset: dataset,
-				filtersTargetDatasets: [dataset],
                 id: 'filterEditorDB',
                 label: 'DB Filters',
 				sourceFields: [{field: "daydate", controlType: 'range_calendar', type: "range", fieldType: "date" }],
@@ -253,12 +250,9 @@ root: ../../
 
             var filter1 = new recline.View.GenericFilter({
                 sourceDataset: dataset,
-				filtersTargetDatasets: [virtualdatasetDay ],
                 id: 'filterEditor1',
                 label: 'Memory Filters1',
-				sourceFields: [
-								{field: 'daydate', type: "range", controlType: 'month_week_calendar', fieldType: 'date'}
-							],
+				sourceFields: [{field: 'daydate', type: "range", controlType: 'month_week_calendar', fieldType: 'date'}	],
                 actions: [{
                     action: action_db,
                     mapping: [
@@ -285,6 +279,8 @@ root: ../../
                     event: ["onFilterValueChanged", "onListItemClicked", "onRemoveFilter"]
                 }]
             });
+
+
             $('#search_container2').append(filter2.el);
 
             // var facet = new recline.View.FacetViewer({

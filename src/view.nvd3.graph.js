@@ -140,8 +140,8 @@ this.recline.View = this.recline.View || {};
                     break;
                 case "lineWithBrushChart":
                     chart = nv.models.lineWithBrushChart(function(e) {
-                        self.doActions("elementSelection", e);
-                        //alert('x0= '+x[0]+'x1='+x[1]);
+                        //self.doActions("elementSelection", e);
+                        alert('x0= '+x[0]+'x1='+x[1]);
                         });
                     break;
             }

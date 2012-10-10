@@ -66,7 +66,9 @@ my.Action = Backbone.Model.extend({
 
     // action could be add/remove
    _internalDoAction: function(data, action) {
-
+       console.log("actions.internalDoAction");
+       console.log(data);
+       console.log(action);
 
        var self=this;
 
@@ -171,7 +173,7 @@ my.Action = Backbone.Model.extend({
     },
 
     modelsAddFilterActions: {
-        filter:     function(model, filter) { model.queryState.addFilter(filter)},
+        filter:     function(model, filter) { model.queryState.setFilter(filter)},
         selection:  function(model, filter) { model.queryState.addSelection(filter)}
     },
 

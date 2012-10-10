@@ -385,7 +385,8 @@ my.Field = Backbone.Model.extend({
     label: null,
     type: 'string',
     format: null,
-    is_derived: false
+    is_derived: false,
+    is_selected: false
   },
   // ### initialize
   //
@@ -556,40 +557,18 @@ my.Query = Backbone.Model.extend({
 
     },
 
-    _setSingleFilter: function(filter) {
-        var filters = this.get('filters');
-        for(x=0;x<filters.length;x++){
-            if(filters[x].field == filter.field) {
-                if(filters[x] != filter) {
-                    filters[x] = filter;
-                    return 1;
-                } else return 0;
-            }
-        }
-        filters.push(filter);
-        return 1;
-    },
 
     // update or add the selected filter(s), a change event is triggered after the update
 
   setFilter: function(filter) {
+      var filters = this.get('filters');
+      var f = _.find(filters, function(e) { return e.field==filter.field});
+      if(f!=null)
+        f=filter;
+      else
+        filters.push(filter);
 
-      var self = this;
-      // todo should be optimized in order to make only one cycle on filters
 
-      var updatedFilters = 0;
-
-      if(filter.constructor == Array) {
-          for(y=0;y<filter.length;y++){
-              updatedFilters = updatedFilters + this._setSingleFilter(filter[y]);
-          }
-      } else {
-          updatedFilters = this._setSingleFilter(filter);
-      }
-
-      if(updatedFilters > 0) {
-         self.trigger('change');
-      }
   },
 
 
@@ -657,7 +636,7 @@ my.Query = Backbone.Model.extend({
           this.set({selections: selections});
           this.trigger('change:selections');
       },
-        setSelection: function(s) {
+      setSelection: function(s) {
         // todo should be optimized in order to make only one cycle on filters
 
         if(s.constructor == Array) {

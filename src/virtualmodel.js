@@ -35,6 +35,7 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
         	if(type==='filtered'){
         		return this.records;
         	}else {
+                //todo wrong returned data
         		return this._store.data;
         	}
         },
@@ -56,7 +57,9 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
         },
 
         initializeCrossfilter: function() {
-            this.updateCrossfilter(crossfilter(this.attributes.dataset.records.toJSON()));
+            var data = this.attributes.dataset.records.toJSON();
+
+            this.updateCrossfilter(crossfilter(data));
         },
 
         createDimensions: function(crossfilterData) {
@@ -71,9 +74,9 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
                 var by_dimension = crossfilterData.dimension(function(d) {
                     var tmp = "";
                     for(i=0;i<dimensions.length;i++){
-                        if(i>0) { tmp = tmp + "_"; }
+                        if(i>0) { tmp = tmp + "#"; }
 
-                        tmp = tmp + d[dimensions[i]];
+                        tmp = tmp + d[dimensions[i]].valueOf();
                     }
                     return tmp;
                 });
@@ -278,7 +281,13 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
                 }
             }
 
-
+            var dataParsers = {
+                integer: function (e) { return parseFloat(e, 10); },
+                'float': function (e) { return parseFloat(e, 10); },
+                string : function (e) { return e.toString() },
+                date   : function (e) { return new Date(parseInt(e)) },
+                datetime   : function (e) { return new Date(parseInt(e)) }
+            };
 
             // set  results of dataset
             for(var i=0;i<tmpResult.length;i++){
@@ -288,12 +297,21 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
 
                 // if dimensions specified add dimension' fields
                 if(dimensions != null) {
-                    var keyField = tmpResult[i].key.split("_");
+                    var keyField = tmpResult[i].key.split("#");
 
                     tmp = {dimension: tmpResult[i].key, count: tmpResult[i].value.count};
 
                     for(var j=0;j<keyField.length;j++){
-                        tmp[dimensions[j]] = keyField[j];
+                        var field = dimensions[j];
+                        var originalFieldAttributes = this.attributes.dataset.fields.get(field).attributes;
+                        var type = originalFieldAttributes.type;
+                        if(type == "date")
+                            console.log("test2");
+
+                        var parse = dataParsers[type];
+                        var value = parse(keyField[j]);
+
+                        tmp[dimensions[j]] = value;
                     }
                     currentField = tmpResult[i].value;
 
