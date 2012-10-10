@@ -1,12 +1,52 @@
 (function ($, view) {
 	
 	var rowClick = function(actions){
+		
+		var activeRecords = [];
+		
 		return function(row){
 			if(actions.length && row){
-				console.log("rowClick");			
+				//console.log("rowClick");			
 				var ctrlKey = d3.event.ctrlKey;
+				var adding = !d3.select(d3.event.target.parentNode).classed("info");
 				
-				row.classed('info',true);
+				if(adding){
+					d3.select(d3.event.target.parentNode.parentNode).selectAll(".g-tr.info").classed("info",ctrlKey);				
+					d3.select(d3.event.target.parentNode).classed('info',true);			
+				}else{			
+					d3.select(d3.event.target.parentNode.parentNode).selectAll(".g-tr.info").classed("info",ctrlKey);
+					d3.select(d3.event.target.parentNode).classed('info',false);		
+				}
+				
+				if(adding){
+					if(ctrlKey){
+						activeRecords.push(row);
+					}else{
+						activeRecords = [row];
+					}
+				}else{
+					if(ctrlKey){
+						activeRecords = _.difference(activeRecords, [row]);
+					}else{
+						activeRecords = [];
+					}
+				}
+
+				actions.forEach(function(action){
+					
+					var params = [];
+					action.mapping.forEach(function(mapp){
+						var values=[];
+						//{srcField: "daydate", filter: "filter_daydate"}
+						activeRecords.forEach(function(row){
+							values.push(row[mapp.srcField]);
+						});
+						params.push({filter:mapp.filter, value:values});
+					});
+										
+					action.action._internalDoAction(params, "add");
+				});				
+				
 			}		
 		};
 	};
@@ -14,7 +54,6 @@
 	var rowOver = function(actions){
 		return function(row){
 			if(actions.length && row){
-				console.log("rowOver");
 					
 			}
 		};		
@@ -34,13 +73,13 @@
 	var fetchRecordValue = frv = function(record, dimension){
 		var val = null;		
 		dimension.fields.forEach(function(field, i){
-			if(i==0) val = (field.format)?field.format(record.attributes[(field.id)]):record.attributes[(field.id)];
-			else val+=(field.format)?field.format(record.attributes[(field.id)]):record.attributes[(field.id)];
+			if(i==0) val = record.getFieldValue(field);
+			else val+= record.getFieldValue(field);
 		});
 		return val;
 	};
 
-	function sort(rowSize, tableId) {
+	function sort(rowHeight, tableId) {
 	    return function (dimension) {
 	        var dimensionName = dimension.fields[0].id,
 	            descending = d3.select(this)
@@ -85,12 +124,14 @@
 	        })
 	            .duration(750)
 	            .attr("transform", function (record, i) {
-	            return "translate(0," + i * rowSize + ")";
+	            return "translate(0," + i * rowHeight + ")";
 	        });
 	    }
 	}
+	
+	view.d3 = view.d3 || {};
 
-    view.d3Table = Backbone.View.extend({
+    view.d3.table = Backbone.View.extend({
         className: 'recline-table-editor well',
         template: ' \
   				<div id="{{graphId}}" class="g-table g-table-hover g-table-striped"> \
@@ -132,12 +173,12 @@
         },
         initialize: function (options) {
             
-            _.defaults(options.conf,{"row_size": 20, "height":200});
+            _.defaults(options.conf,{"row_height": 20, "height":200});
             options.actions = options.actions || [];
             this.el = $(this.el);
-    		_.bindAll(this, 'render', 'redraw');
+    		_.bindAll(this, 'render', 'redraw', 'refresh');
                      
-            this.rowSize = options.conf.row_size;
+            this.rowHeight = options.conf.row_height;
             
             var clickActions=[], hoverActions=[];
             //processing actions
@@ -158,6 +199,7 @@
             this.model.fields.bind('add', this.render);
             this.model.records.bind('add', this.redraw);
             this.model.records.bind('reset', this.redraw);
+			this.model.queryState.bind('change:selections', this.refresh);
 
 			//create a nuew columns array with default values 
             this.columns = _.map(options.columns, function (column) {
@@ -165,8 +207,7 @@
                     label: "",
                     type: "text",
                     sortable: false,
-                    fields: {},
-                    format: String
+                    fields: {}
                 });
             });
             
@@ -190,11 +231,15 @@
             this.width = options.conf.width;
             //this.render(); 								
         },
+        refresh: function() {
+			//console.log('d3Table.refresh');
+
+        },
         reset: function () {
-            console.log('d3Table.reset');
+            //console.log('d3Table.reset');
         },
         render: function () {
-            console.log('d3Table.render');
+            //console.log('d3Table.render');
                         
             var thead = this.el.find('.g-thead');
             
@@ -222,14 +267,14 @@
             }, this);         
         },
         redraw: function () {        
-            var rowSize = this.rowSize;
+            var rowHeight = this.rowHeight;
             var columns = this.columns;
             var records = this.model.records.models;
 			var charts = {};
 			var chartsField = {};			
             
-            d3.select('#'+this.graphId+' .g-tbody-container div').style('height',(rowSize)*records.length+'px');            
-            d3.select('#'+this.graphId+' .g-tbody-container').classed('g-tbody-container-overflow',(rowSize)*records.length>this.height);
+            d3.select('#'+this.graphId+' .g-tbody-container div').style('height',(rowHeight)*records.length+'px');            
+            d3.select('#'+this.graphId+' .g-tbody-container').classed('g-tbody-container-overflow',(rowHeight)*records.length>this.height);
             			
 			columns.forEach(function (dimension) {
                 if (dimension.scale) {
@@ -252,13 +297,13 @@
                 .append("g")
                 .attr("class", "g-tr")
                 .attr("transform", function (record, i) {
-                return "translate(0," + i * (rowSize) + ")";
+                return "translate(0," + i * (rowHeight) + ")";
             });
 
             row.append("rect")
                 .attr("class", "g-background")
                 .attr("width", "100%")
-                .attr("height", rowSize).on('click', rowClick(this.clickActions)).on('mouseover', rowOver(this.hoverActions));
+                .attr("height", rowHeight).on('click', rowClick(this.clickActions)).on('mouseover', rowOver(this.hoverActions));
                 
 
             row.each(function (record) {
@@ -283,7 +328,7 @@
                 	});
                 	
                 //horizontal lines
-               	d3.select(this).append('line').attr('class', 'g-row-border').attr('y1',rowSize).attr('y2',rowSize).attr('x2','100%');
+               	d3.select(this).append('line').attr('class', 'g-row-border').attr('y1',rowHeight).attr('y2',rowHeight).attr('x2','100%');
                
                 var barChartCell = cell.filter(function (dimension) {           	
                     return dimension.scale && dimension.type === 'barchart';
@@ -297,15 +342,15 @@
                   .append("rect")
                     .attr("class", "g-bar")
                     .attr("width", function (field, index) {
-                    	return field.scale(record.attributes[field.id]);
+                    	return field.scale(record.getFieldValue(field));
                		})
-                    .attr("height", rowSize-1)
+                    .attr("height", rowHeight-1)
                     .attr("transform", function (field, i) {
                     	
                     	charts[field.id]=this;
                     	chartsField[field.id]=field;
                     	
-	                    var translation = Math.ceil((i === 0) ? ((field.computed_width) / 2) - field.scale(record.attributes[field.id]) : i * (field.computed_width) / 2);
+	                    var translation = Math.ceil((i === 0) ? ((field.computed_width) / 2) - field.scale(record.getFieldValue(field)) : i * (field.computed_width) / 2);
 	
 	                    if (i == 0) {
 	                        return "translate(" + translation + ")";
@@ -330,10 +375,10 @@
                 })
                     .attr("dy", ".35em")
                     .classed("g-na", function (dimension) {
-                    return record.attributes[dimension.name] === undefined;
+                    return record.getFieldValue({id:dimension.name}) === undefined;
                 })
                     .text(function (dimension) {
-                    return dimension.format(frv(record, dimension));
+                    return frv(record, dimension);
                 })
                     .attr("clip-path", function (dimension) {
                     return (dimension.clipped = this.getComputedTextLength() > ((dimension.computed_width))-20) ? "url(#g-clip-cell)" : null;
@@ -347,13 +392,13 @@
                     	return dimension.hwidth;
                 	})
                     .attr("width", 20)
-                    .attr("height", rowSize);
+                    .attr("height", rowHeight);
             });
             
             //axis management
             {
 				var axisRow = d3.select('#'+this.graphId+' .g-tfoot').append("g")
-	                .attr("class", "g-tfoot-row");//.attr("transform", function (record, i) { return "translate(0," + records.length * (rowSize+1) + ")"});
+	                .attr("class", "g-tfoot-row");
 	            
 	            var cell = axisRow.selectAll('.g-td').data(columns).enter().append('g')
 	                    .attr("class", "g-td")
@@ -398,7 +443,7 @@
 			//add sorting
             d3.selectAll('#'+this.graphId+' .g-thead .g-th.g-sortable')
                 .data(columns)
-                .on("click", sort(rowSize, this.graphId));    
+                .on("click", sort(rowHeight, this.graphId));    
                 
             //vertical lines
             {

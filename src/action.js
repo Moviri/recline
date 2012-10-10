@@ -208,6 +208,17 @@ my.Action = Backbone.Model.extend({
             filter["start"] = data[0];
             filter["stop"]  = data[1];
             return filter;
+        },
+        list: function(filter, data) {
+
+            if(data.length < 1) {
+                
+                throw "Data passed for filtertype list not valid. Data lenght should be greater than 1 but is " + data.length;
+            }
+
+            filter["list"] = data;
+            
+            return filter;
         }
     }
 
