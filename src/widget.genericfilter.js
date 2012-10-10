@@ -158,6 +158,7 @@ my.GenericFilter = Backbone.View.extend({
 			defaultDate: "{{startDate}}", \
 			changeMonth: true, \
 			numberOfMonths: 1, \
+			dateFormat: "D M dd yy", \
 			onSelect: function( selectedDate ) { \
 				$( "#to{{ctrlId}}" ).datepicker( "option", "minDate", selectedDate ); \
 			} \
@@ -166,6 +167,7 @@ my.GenericFilter = Backbone.View.extend({
 			defaultDate: "{{endDate}}", \
 			changeMonth: true, \
 			numberOfMonths: 1, \
+			dateFormat: "D M dd yy", \
 			onSelect: function( selectedDate ) { \
 				$( "#from{{ctrlId}}" ).datepicker( "option", "maxDate", selectedDate ); \
 			} \
@@ -477,7 +479,7 @@ my.GenericFilter = Backbone.View.extend({
 
     dateConvert: function(d) {
         var dd= new Date(d);
-        return dd.toLocaleDateString();
+        return dd.toDateString();
     },
 
 	dateConvertBack : function(d) { 
@@ -523,7 +525,7 @@ my.GenericFilter = Backbone.View.extend({
 		{
 			case "range": from = fromObj.val();to = toObj.val();break;
 			case "range_slider": from = fromObj.slider("values", 0);to = toObj.slider("values", 1);break;
-			case "range_calendar": from = this.dateConvertBack(fromObj.val());to = this.dateConvertBack(toObj.val());break;
+			case "range_calendar": from = new Date(fromObj.val());to = new Date(toObj.val());break;
 		}
         this.doAction("onFilterValueChanged", fieldId, [from, to], "add");
 	}

@@ -1,0 +1,302 @@
+// Bootswatch
+// Swatch: 
+// Version: 2.1.1
+// -----------------------------------------------------
+
+// TYPOGRAPHY
+// -----------------------------------------------------
+
+// SCAFFOLDING
+// -----------------------------------------------------
+
+// NAVBAR
+// -----------------------------------------------------
+
+// NAV
+// -----------------------------------------------------
+
+// BUTTONS
+// -----------------------------------------------------
+
+// TABLES
+// -----------------------------------------------------
+
+//
+// Tables
+// --------------------------------------------------
+
+
+// BASE TABLES
+// -----------------
+
+div.s-table {
+  max-width: 100%;
+  background-color: @tableBackground;
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+
+// BASELINE STYLES
+// ---------------
+
+.s-table {
+  width: 100%;
+  margin-bottom: @baseLineHeight;
+  // Cells
+  div.s-th,
+  div.s-td {
+    padding: 8px;
+    line-height: @baseLineHeight;
+    text-align: left;
+    vertical-align: top;
+    border-top: 1px solid @tableBorder;
+  }
+  div.s-th {
+    font-weight: bold;
+  }
+  // Bottom align for column headings
+  div.s-thead div.s-th {
+    vertical-align: bottom;
+  }
+  // Remove top border from div.s-thead by default
+  caption + div.s-thead div.s-tr:first-child div.s-th,
+  caption + div.s-thead div.s-tr:first-child div.s-td,
+  colgroup + div.s-thead div.s-tr:first-child div.s-th,
+  colgroup + div.s-thead div.s-tr:first-child div.s-td,
+  div.s-thead:first-child div.s-tr:first-child div.s-th,
+  div.s-thead:first-child div.s-tr:first-child div.s-td {
+    border-top: 0;
+  }
+  // Account for multiple div.s-tbody instances
+  div.s-tbody + div.s-tbody {
+    border-top: 2px solid @tableBorder;
+  }
+}
+
+
+
+// CONDENSED TABLE W/ HALF PADDING
+// -------------------------------
+
+.s-table-condensed {
+  div.s-th,
+  div.s-td {
+    padding: 4px;
+  }
+}
+
+
+// BORDERED VERSION
+// ----------------
+
+.s-table-bordered {
+  border: 1px solid @tableBorder;
+  border-collapse: separate; // Done so we can round those corners!
+  *border-collapse: collapse; // IE7 can't round corners anyway
+  border-left: 0;
+  .border-radius(4px);
+  div.s-th,
+  div.s-td {
+    border-left: 1px solid @tableBorder;
+  }
+  // Prevent a double border
+  caption + div.s-thead div.s-tr:first-child div.s-th,
+  caption + div.s-tbody div.s-tr:first-child div.s-th,
+  caption + div.s-tbody div.s-tr:first-child div.s-td,
+  colgroup + div.s-thead div.s-tr:first-child div.s-th,
+  colgroup + div.s-tbody div.s-tr:first-child div.s-th,
+  colgroup + div.s-tbody div.s-tr:first-child div.s-td,
+  div.s-thead:first-child div.s-tr:first-child div.s-th,
+  div.s-tbody:first-child div.s-tr:first-child div.s-th,
+  div.s-tbody:first-child div.s-tr:first-child div.s-td {
+    border-top: 0;
+  }
+  // For first div.s-th or div.s-td in the first row in the first div.s-thead or div.s-tbody
+  div.s-thead:first-child div.s-tr:first-child div.s-th:first-child,
+  div.s-tbody:first-child div.s-tr:first-child div.s-td:first-child {
+    -webkit-border-top-left-radius: 4px;
+            border-top-left-radius: 4px;
+        -moz-border-radius-topleft: 4px;
+  }
+  div.s-thead:first-child div.s-tr:first-child div.s-th:last-child,
+  div.s-tbody:first-child div.s-tr:first-child div.s-td:last-child {
+    -webkit-border-top-right-radius: 4px;
+            border-top-right-radius: 4px;
+        -moz-border-radius-topright: 4px;
+  }
+  // For first div.s-th or div.s-td in the first row in the first div.s-thead or div.s-tbody
+  div.s-thead:last-child div.s-tr:last-child div.s-th:first-child,
+  div.s-tbody:last-child div.s-tr:last-child div.s-td:first-child,
+  tfoot:last-child div.s-tr:last-child div.s-td:first-child {
+    .border-radius(0 0 0 4px);
+    -webkit-border-bottom-left-radius: 4px;
+            border-bottom-left-radius: 4px;
+        -moz-border-radius-bottomleft: 4px;
+  }
+  div.s-thead:last-child div.s-tr:last-child div.s-th:last-child,
+  div.s-tbody:last-child div.s-tr:last-child div.s-td:last-child,
+  tfoot:last-child div.s-tr:last-child div.s-td:last-child {
+    -webkit-border-bottom-right-radius: 4px;
+            border-bottom-right-radius: 4px;
+        -moz-border-radius-bottomright: 4px;
+  }
+
+  // Special fixes to round the left border on the first div.s-td/div.s-th
+  caption + div.s-thead div.s-tr:first-child div.s-th:first-child,
+  caption + div.s-tbody div.s-tr:first-child div.s-td:first-child,
+  colgroup + div.s-thead div.s-tr:first-child div.s-th:first-child,
+  colgroup + div.s-tbody div.s-tr:first-child div.s-td:first-child {
+    -webkit-border-top-left-radius: 4px;
+            border-top-left-radius: 4px;
+        -moz-border-radius-topleft: 4px;
+  }
+  caption + div.s-thead div.s-tr:first-child div.s-th:last-child,
+  caption + div.s-tbody div.s-tr:first-child div.s-td:last-child,
+  colgroup + div.s-thead div.s-tr:first-child div.s-th:last-child,
+  colgroup + div.s-tbody div.s-tr:first-child div.s-td:last-child {
+    -webkit-border-top-right-radius: 4px;
+            border-top-right-radius: 4px;
+         -moz-border-radius-topleft: 4px;
+  }
+
+}
+
+
+
+
+// ZEBRA-STRIPING
+// --------------
+
+// Default zebra-stripe styles (alternating gray and transparent backgrounds)
+.table-striped {
+  tbody {
+    tr:nth-child(even) td,
+    tr:nth-child(even) th {
+      background-color: @tableBackground;
+    }
+  }
+}
+
+
+.s-table-striped {
+  div.s-tbody {
+    div.s-tr:nth-child(odd) div.s-td,
+    div.s-tr:nth-child(odd) div.s-th {
+      background-color: @tableBackgroundAccent;
+    }
+  }
+}
+
+.s-table-striped {
+  div.s-tbody {
+    div.s-tr:nth-child(even) div.s-td,
+    div.s-tr:nth-child(even) div.s-th {
+      background-color: @tableBackground;
+    }
+  }
+}
+
+// HOVER EFFECT
+// ------------
+// Placed here since it has to come after the potential zebra striping
+.s-table-hover {
+  div.s-tbody {
+    div.s-tr:hover div.s-td,
+    div.s-tr:hover div.s-th {
+      background-color: @tableBackgroundHover;
+    }
+  }
+}
+
+
+// TABLE CELL SIZING
+// -----------------
+
+// Reset default grid behavior
+table [class*=span],
+.row-fluid table [class*=span] {
+  display: table-cell;
+  float: none; // undo default grid column styles
+  margin-left: 0; // undo default grid column styles
+}
+
+// Change the column widths to account for div.s-td/div.s-th padding
+.s-table {
+  .span1     { .tableColumns(1); }
+  .span2     { .tableColumns(2); }
+  .span3     { .tableColumns(3); }
+  .span4     { .tableColumns(4); }
+  .span5     { .tableColumns(5); }
+  .span6     { .tableColumns(6); }
+  .span7     { .tableColumns(7); }
+  .span8     { .tableColumns(8); }
+  .span9     { .tableColumns(9); }
+  .span10    { .tableColumns(10); }
+  .span11    { .tableColumns(11); }
+  .span12    { .tableColumns(12); }
+  .span13    { .tableColumns(13); }
+  .span14    { .tableColumns(14); }
+  .span15    { .tableColumns(15); }
+  .span16    { .tableColumns(16); }
+  .span17    { .tableColumns(17); }
+  .span18    { .tableColumns(18); }
+  .span19    { .tableColumns(19); }
+  .span20    { .tableColumns(20); }
+  .span21    { .tableColumns(21); }
+  .span22    { .tableColumns(22); }
+  .span23    { .tableColumns(23); }
+  .span24    { .tableColumns(24); }
+}
+
+
+
+// TABLE BACKGROUNDS
+// -----------------
+// Exact selectors below required to override .s-table-striped
+
+.s-table div.s-tbody div.s-tr {
+  &.success div.s-td {
+    background-color: @successBackground;
+  }
+  &.error div.s-td {
+    background-color: @errorBackground;
+  }
+  &.warning div.s-td {
+    background-color: @warningBackground;
+  }
+  &.info div.s-td {
+    background-color: @infoBackground;
+  }
+}
+
+// Hover states for .s-table-hover
+.s-table-hover div.s-tbody div {
+  &.success:hover div.s-td {
+    background-color: darken(@successBackground, 5%);
+  }
+  &.error:hover div.s-td {
+    background-color: darken(@errorBackground, 5%);
+  }
+  &.warning:hover div.s-td {
+    background-color: darken(@warningBackground, 5%);
+  }
+  &.info:hover div.s-td {
+    background-color: darken(@infoBackground, 5%);
+  }
+}
+
+
+// FORMS
+// -----------------------------------------------------
+
+// DROPDOWNS
+// -----------------------------------------------------
+
+// ALERTS, LABELS, BADGES
+// -----------------------------------------------------
+
+// MISC
+// -----------------------------------------------------
+
+// MEDIA QUERIES
+// -----------------------------------------------------
