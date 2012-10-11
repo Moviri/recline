@@ -266,7 +266,8 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
               return getDate(tmp);
 
               // return new Date(e).valueOf()
-          }
+          },
+          integer : function(e) { return parseInt(e); }
       };
 
       for(var i=0; i<filters.length;i++) {
