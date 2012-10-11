@@ -6,7 +6,7 @@ root: ../../
 ---
 
 <div id="loadingImage" style="display:none">
-	<div style="position:absolute;top:45%;left:45%;width:150px;height:80px;border:1px solid grey;background-color: #E0E0E0;color: black">
+	<div style="position:absolute;top:45%;left:45%;width:150px;height:80px;border:1px solid grey;background-color: #E0E0E0;color: black;z-index:100">
 		<p class="centered">
 			Loading...
 			<br>
@@ -41,6 +41,11 @@ root: ../../
                     <div id="mygrid"style="overflow:auto"></div>
                 </div>
             </div>
+            <!--div class="row-fluid" style="height:20%">
+                <div class="span12" >
+                    <div id="mygrid2"style="overflow:auto"></div>
+                </div>
+            </div-->
             <div class="row-fluid" style="height:30%">
                 <div class="span12"><div id="mygraph2" ></div></div>
             </div>
@@ -159,6 +164,16 @@ root: ../../
 											}); 
             grid.visible = true;
             grid.render();
+
+		   // $el = $('#mygrid2');
+		   // var grid2 = new recline.View.SlickGrid(
+											// {model: dataset, el: $el, 
+												// state: {
+													// fitColumns:true, 
+												// }
+											// }); 
+            // grid2.visible = true;
+            // grid2.render();
 
             var graph2 = new recline.View.NVD3Graph({
                 model: virtualdatasetDay,

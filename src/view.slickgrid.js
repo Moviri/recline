@@ -191,6 +191,8 @@ my.SlickGrid = Backbone.View.extend({
     });
 
     this.grid = new Slick.Grid(this.el, data, visibleColumns, options);
+	
+	this.grid.setSelectionModel(new Slick.RowSelectionModel());
 
     // Column sorting
     var sortInfo = this.model.queryState.get('sort');

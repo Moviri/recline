@@ -53,7 +53,6 @@ div.s-table {
   }
   div.s-th {
     font-weight: bold;
-    text-align: center;
   }
   // Bottom align for column headings
   div.s-thead div.s-th {
@@ -197,13 +196,6 @@ div.s-table {
   }
 }
 
-.s-table-striped {
-  div.s-tbody {
-	div.s-tr div.s-td.selected {
-		background-color: @errorBackground;
-  }
-}
-
 // HOVER EFFECT
 // ------------
 // Placed here since it has to come after the potential zebra striping
@@ -216,13 +208,6 @@ div.s-table {
   }
 }
 
-.s-table-hover {
-  div.s-tbody {
-	div.s-tr:hover div.s-td.selected {
-		background-color: darken(@errorBackground, 5%);
-	}
-  }
-}
 
 // TABLE CELL SIZING
 // -----------------
