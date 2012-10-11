@@ -4,7 +4,8 @@ this.recline = this.recline || {};
 
     my.ActionUtility = {};
 
-my.ActionUtility.doAction =    function(actions, eventType, eventData, actionType) {
+
+        my.ActionUtility.doAction =    function(actions, eventType, eventData, actionType) {
 
         // find all actions configured for eventType
         var targetActions = _.filter(actions, function(d) {
@@ -63,6 +64,23 @@ my.Action = Backbone.Model.extend({
    initialize: function(){
 
    },
+
+	doAction: function(records, mapping) {
+		var params = [];
+		mapping.forEach(function(mapp) {
+			var values = [];
+			//{srcField: "daydate", filter: "filter_daydate"}
+			records.forEach(function(row) {
+				values.push(row.getFieldValueUnrendered({id:mapp.srcField}));
+			});
+			params.push({
+				filter : mapp.filter,
+				value : values
+			});
+		});
+		this._internalDoAction(params, "add");
+	},
+
 
     // action could be add/remove
    _internalDoAction: function(data, action) {

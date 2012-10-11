@@ -241,7 +241,7 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
             }
 
             // set of fields array
-            fields.push( {id: "count", type: "number"});
+            fields.push( {id: "count", type: "integer"});
 
             // defining fields based on aggreagtion functions
             for(var j=0;j<aggregationFunctions.length;j++){
@@ -253,7 +253,7 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
                     tempValue = tmpField[aggregationFunctions[j]];
 
                 for (var x in tempValue) {
-                    fields.push( {id: x + "_" + aggregationFunctions[j], type: "number"});
+                    fields.push( {id: x + "_" + aggregationFunctions[j], type: "float"});
                 }
             }
 
@@ -267,7 +267,7 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
                         tempValue = tmpField.partitions[aggregationFunctions[j]];
 
                     for (var x in tempValue) {
-                        fields.push( {id: x + "_" + aggregationFunctions[j], type: "number"});
+                        fields.push( {id: x + "_" + aggregationFunctions[j], type: "float"});
                     }
                 }
             }
@@ -281,14 +281,6 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
 
                 }
             }
-
-            var dataParsers = {
-                integer: function (e) { return parseFloat(e, 10); },
-                'float': function (e) { return parseFloat(e, 10); },
-                string : function (e) { return e.toString() },
-                date   : function (e) { return new Date(parseInt(e)) },
-                datetime   : function (e) { return new Date(parseInt(e)) }
-            };
 
             // set  results of dataset
             for(var i=0;i<tmpResult.length;i++){
@@ -309,7 +301,8 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
                         //if(type == "date")
                         //    console.log("test2");
 
-                        var parse = dataParsers[type];
+
+                        var parse = recline.Data.FormattersMODA[type];
                         var value = parse(keyField[j]);
 
                         tmp[dimensions[j]] = value;
@@ -389,7 +382,7 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
 
             this._store = new recline.Backend.Memory.Store(result, fields);
 
-            this.fields.reset(fields);
+            this.fields.reset(fields, {renderer: recline.Data.Renderers});
             this.query();
 
 
