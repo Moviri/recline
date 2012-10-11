@@ -19,7 +19,7 @@ my.Filters = {};
         });
     };
 
-    // data should be {records:[], fields:[]}
+    // data should be {records:[model], fields:[model]}
     my.Filters.applySelectionsOnData = function(selections, records, fields) {
         _.each(records, function(currentRecord) {
             currentRecord.setRecordSelection(false);
