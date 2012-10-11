@@ -82,7 +82,20 @@ my.Filters = {};
             var stop  = parse(filter.stop);
 
             return (value >= start && value <= stop);
+        },
+
+        list: function (record, filter, fields) {
+
+            var parse =  recline.Data.Filters._getDataParser(filter, fields);
+            var value = parse(record[filter.field]);
+            var list  = filter.list;
+            _.each(list, function(data, index) {
+                list[index] = parse(data);
+            });
+
+            return (_.contains(list, value));
         }
+
 
     },
 

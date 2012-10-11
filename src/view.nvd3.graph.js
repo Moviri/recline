@@ -139,10 +139,16 @@ this.recline.View = this.recline.View || {};
                     chart = nv.models.multiBarChart().stacked(true).showControls(false);
                     break;
                 case "lineWithBrushChart":
-                    chart = nv.models.lineWithBrushChart(function(e) {
+                    chart = nv.models.lineWithBrushChart({'callback': function(x) {
                         //self.doActions("elementSelection", e);
                         alert('x0= '+x[0]+'x1='+x[1]);
-                        });
+                        }, 'trendlines': true, 'minmax': true});
+                    break;
+                case "multiBarWithBrushChart":
+                    chart = nv.models.multiBarWithBrushChart(function(x) {
+                        //self.doActions("elementSelection", e);
+                        alert(x);
+                    });
                     break;
             }
 
