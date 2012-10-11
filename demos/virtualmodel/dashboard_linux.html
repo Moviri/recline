@@ -138,7 +138,7 @@ root: ../../
             models: [
                 {model: virtualdatasetAge, filters:["filter_age"]}
             ],
-            type: ["filter"]
+            type: ["selection"]
         });
 
 		
@@ -160,7 +160,15 @@ root: ../../
 													innerChartSerie2:'totalviewed_by_gender_Female_sum', 
 													innerChartHeader:'Views by Gender',
 													fieldLabels: [{id: "totalviewed_sum", label: "Views"}, {id: "price_sum_sum", label: "Revenues"}]
-												}
+												},
+												actions : [{
+													action : action_vmodel,
+													mapping : [{
+														srcField : "age",
+														filter : "filter_age"
+													}],
+													event : ["onSelectedRangesChanged"]
+												}]
 											}); 
             grid.visible = true;
             grid.render();

@@ -19,6 +19,8 @@ my.SlickGrid = Backbone.View.extend({
     this.el = $(this.el);
     this.el.addClass('recline-slickgrid');
     _.bindAll(this, 'render');
+    _.bindAll(this, 'onSelectionChanged');
+	
     this.model.records.bind('add', this.render);
     this.model.records.bind('reset', this.render);
     this.model.records.bind('remove', this.render);
@@ -39,7 +41,6 @@ my.SlickGrid = Backbone.View.extend({
 
   events: {
   },
-
   render: function() {
     var self = this;
 
@@ -175,24 +176,33 @@ my.SlickGrid = Backbone.View.extend({
 		options.innerChartMax = max;
 	}
     var data = [];
-
+	var rowsToSelect = [];
+	var jj = 0;
     this.model.records.each(function(doc){
-      var row = {};
+      if (doc.is_selected)
+		rowsToSelect.push(jj);
+		
+	  var row = {};
 
       self.model.fields.each(function(field){
-
         row[field.id] = doc.getFieldValue(field);
-
       });
+	  
 	  if (self.state.get('useInnerChart') == true && self.state.get('innerChartSerie1') != null && self.state.get('innerChartSerie2') != null)
 		row['innerChart'] = [ row[self.state.get('innerChartSerie1')], row[self.state.get('innerChartSerie2')], max ];
-
+		
       data.push(row);
+		jj++;
     });
 
     this.grid = new Slick.Grid(this.el, data, visibleColumns, options);
 	
 	this.grid.setSelectionModel(new Slick.RowSelectionModel());
+	this.grid.getSelectionModel().setSelectedRows(rowsToSelect);
+	
+    this.grid.onSelectedRowsChanged.subscribe(function(e, args){
+		self.onSelectionChanged(args.rows)
+	});
 
     // Column sorting
     var sortInfo = this.model.queryState.get('sort');
@@ -240,7 +250,21 @@ my.SlickGrid = Backbone.View.extend({
 
     return this;
  },
-
+   onSelectionChanged: function(rows) {
+	//console.log("onSelectionChanged")
+	var self = this;
+	var selectedRecords = [];
+	_.each(rows, function(row) {
+		selectedRecords.push(self.model.records.models[row]);
+	});
+	var actions = this.options.actions;
+	actions.forEach(function(currAction){				
+		//console.log(selectedRecords.length);
+		//console.log(selectedRecords);
+		//console.log(currAction.mapping);
+		currAction.action.doAction(selectedRecords, currAction.mapping);
+	});
+  },
   show: function() {
     // If the div is hidden, SlickGrid will calculate wrongly some
     // sizes so we must render it explicitly when the view is visible
