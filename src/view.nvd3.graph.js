@@ -263,7 +263,7 @@ this.recline.View = this.recline.View || {};
          _.each(records, function(doc, index) {
              //console.log(doc);
 
-             var key = doc.getFieldValue(seriesNameField);
+             var key = doc.getFieldValueUnrendered(seriesNameField);
              var tmpS;
 
              if(seriesTmp[key] != null ) { tmpS = seriesTmp[key]  }
@@ -274,8 +274,8 @@ this.recline.View = this.recline.View || {};
 
 
              var points = [];
-             var x = doc.getFieldValue(xfield);
-             var y = doc.getFieldValue(seriesValues);
+             var x = doc.getFieldValueUnrendered(xfield);
+             var y = doc.getFieldValueUnrendered(seriesValues);
              tmpS["values"].push([x, y]);
 
              //console.log("xfield: " + xfield + " seriesvalue: " + seriesValues + " seriesNameField: " + seriesNameField + " key: " + key + " x: "+ x + " y: "+ y);
@@ -299,11 +299,11 @@ this.recline.View = this.recline.View || {};
 
           _.each(records, function(doc, index) {
 
-              var x = doc.getFieldValue(xfield);
+              var x = doc.getFieldValueUnrendered(xfield);
 
               try {
               var yfield = self.model.fields.get(field);
-              var y = doc.getFieldValue(yfield);
+              var y = doc.getFieldValueUnrendered(yfield);
 
               var isDateTime = xfield.get('type') === 'date';
 
