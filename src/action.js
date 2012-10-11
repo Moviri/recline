@@ -4,7 +4,8 @@ this.recline = this.recline || {};
 
     my.ActionUtility = {};
 
-my.ActionUtility.doAction =    function(actions, eventType, eventData, actionType) {
+
+        my.ActionUtility.doAction =    function(actions, eventType, eventData, actionType) {
 
         // find all actions configured for eventType
         var targetActions = _.filter(actions, function(d) {

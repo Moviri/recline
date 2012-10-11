@@ -86,7 +86,7 @@ my.Dataset = Backbone.Model.extend({
 
         }
 
-        self.fields.reset(out.fields);
+        self.fields.reset(out.fields, {renderer: recline.Data.Renderers});
 
         self.query()
         .done(function() {

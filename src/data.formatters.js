@@ -13,7 +13,6 @@ this.recline.Data = this.recline.Data || {};
         float  : function (e) { return parseFloat(e, 10); }
     };
 
-
     
     my.Format.decimal = d3.format(".00f");
 	
@@ -58,14 +57,25 @@ this.recline.Data = this.recline.Data || {};
 			return ret;
 		};
 	};
-    
+
+    my.Renderers = function(val, field, doc)   {
+        var r = my.RenderersImpl[field.attributes.type];
+        if(r==null) {
+            throw "No renderers defined for field type " + field.attributes.type;
+        }
+
+        return r(val, field, doc);
+    };
 
     // renderers use fieldtype and fieldformat to generate output for getFieldValue
-    my.Renderers = {
+    my.RenderersImpl = {
         object: function(val, field, doc) {
             return JSON.stringify(val);
         },
-        data: function(val, field, doc) {
+        integer: function(val, field, doc) {
+            return val;
+        },
+        date: function(val, field, doc) {
             var format = field.get('format');
             if(format == null || format == "date")
                 return val;
@@ -80,7 +90,12 @@ this.recline.Data = this.recline.Data || {};
             if (format === 'percentage') {
                 return val + '%';
             }
-            return val;
+            try {
+                return parseFloat(val.toFixed(2));
+            }
+            catch(err) {
+                console.log("Error in conferting val " + val + " toFixed");
+            }
         },
         'string': function(val, field, doc) {
             var format = field.get('format');

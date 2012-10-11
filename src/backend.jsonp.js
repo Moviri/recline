@@ -185,9 +185,6 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
        if(data.hits == null)
            var fields = _handleFieldDescription(data.description);
 
-            _.each(fields, function(f) { f.renderer = recline.Data.Renderers;});
-
-
             if(data.data == null) {
             my.memoryFields = fields;
             return {
@@ -198,7 +195,6 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
         else
             {
                var fields =my.memoryFields;
-                _.each(fields, function(f) { f.renderer = recline.Data.Renderers;});
 
                 return {
                     hits: _normalizeRecords(data.data,fields ),
@@ -366,9 +362,6 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
 
               res.push({id: k, type: dataMapping[description[k]]});
         }
-
-      // use custom renderer
-      res.options = {renderer: recline.Data.Renderers};
 
       return res;
     }
