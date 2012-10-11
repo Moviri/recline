@@ -157,11 +157,11 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
 
   };
 
-    my.applySelections = function(selections) {
+    /*my.applySelections = function(selections) {
         if(my.inMemoryStore != null)
             recline.Data.Filters.applySelectionsOnData(selections,  my.inMemoryStore.data, my.inMemoryStore.fields);
 
-    };
+    };*/
 
     function applyInMemoryFilters() {
 

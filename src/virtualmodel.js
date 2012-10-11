@@ -475,7 +475,7 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
                 return _doc;
             });
 
-            recline.Data.Filters.applySelectionsOnData(self.queryState.get('selections'), docs, self.fields);
+            //recline.Data.Filters.applySelectionsOnData(self.queryState.get('selections'), docs, self.fields);
             self.records.reset(docs);
 
         },

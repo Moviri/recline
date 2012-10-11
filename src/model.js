@@ -376,10 +376,11 @@ my.Record = Backbone.Model.extend({
 
   isRecordSelected: function() {
     var self=this;
-      return self.is_selected;
+      return self["is_selected"];
   },
   setRecordSelection: function(sel) {
-      this["is_selected"] = sel;
+      var self=this;
+      self["is_selected"] = sel;
   },
 
   // ### summary
