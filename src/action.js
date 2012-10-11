@@ -64,6 +64,23 @@ my.Action = Backbone.Model.extend({
 
    },
 
+	doAction: function(records, mapping) {
+		var params = [];
+		mapping.forEach(function(mapp) {
+			var values = [];
+			//{srcField: "daydate", filter: "filter_daydate"}
+			records.forEach(function(row) {
+				values.push(row.getFieldValueUnrendered({id:mapp.srcField}));
+			});
+			params.push({
+				filter : mapp.filter,
+				value : values
+			});
+		});
+		this._internalDoAction(params, "add");
+	},
+
+
     // action could be add/remove
    _internalDoAction: function(data, action) {
        var self=this;
