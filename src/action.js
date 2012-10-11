@@ -83,7 +83,7 @@ my.Action = Backbone.Model.extend({
 
 
     // action could be add/remove
-   _internalDoAction: function(data, action) {
+   _internalDoAction: function(data) {
        var self=this;
 
        var filters = this.attributes.filters;
@@ -119,17 +119,10 @@ my.Action = Backbone.Model.extend({
                        // verify if filter is associated with current model
                        if(_.find(m.filters, function(x) {return x == f.name;}) != null) {
                             // if associated add the filter
-                           if(action == "add")
-                           {
 
                             self.modelsAddFilterActions[type](m.model, f);
                                modified = true;
-                           }
-                             else if(action == "remove") {
-
-                                self.modelsRemoveFilterActions[type](m.model, f);
-                               modified = true;
-                           }
+                           
                        }
                    });
 
@@ -191,11 +184,7 @@ my.Action = Backbone.Model.extend({
         selection:  function(model, filter) { model.queryState.setSelection(filter)}
     },
 
-    modelsRemoveFilterActions: {
-        filter:     function(model, filter) { model.queryState.removeFilterByField(filter.field);  },
-        selection:  function(model, filter) { throw "modelsRemoveFilterActions not implemented for selection"}
-    },
-
+ 
     modelsTriggerActions: {
         filter:     function(model) { model.queryState.trigger("change")},
         selection:  function(model) { model.queryState.trigger("selection:change")}
@@ -204,33 +193,49 @@ my.Action = Backbone.Model.extend({
     filters: {
         term: function(filter, data) {
 
-            if(data.length > 1) {
-                console.log(data);
+			if(data.length===0){
+				//empty list
+				filter["term"] = null;
+			} else if(data===null){
+				//null list
+				filter["remove"] = true;
+			} else if(data.length===1){
+				filter["term"] = data[0];
+			} else {
                 throw "Data passed for filtertype term not valid. Data lenght should be 1 or empty but is " + data.length;
-            }
-
-            filter["term"] = data[0];
+			}            
+            
             return filter;
         },
         range: function(filter, data) {
 
-            if(data.length != 2) {
-                console.log(data);
-                throw "Data passed for filtertype range not valid. Data lenght should be 2 but is " + data.length;
-            }
+           if(data.length===0){
+				//empty list
+            	filter["start"] = null;
+            	filter["stop"]  = null;			
+			} else if(data===null){
+				//null list
+				filter["remove"] = true;
+			} else if(data.length===2){
+           		filter["start"] = data[0];
+            	filter["stop"]  = data[1];
+			} else {
+				throw "Data passed for filtertype range not valid. Data lenght should be 2 but is " + data.length;
+			}
 
-            filter["start"] = data[0];
-            filter["stop"]  = data[1];
             return filter;
         },
         list: function(filter, data) {
 
-            if(data.length < 1) {
-                
-                throw "Data passed for filtertype list not valid. Data lenght should be greater than 1 but is " + data.length;
-            }
-
-            filter["list"] = data;
+           if(data.length===0){
+				//empty list
+            	filter["list"] = null;		
+			} else if(data===null){
+				//null list
+				filter["remove"] = true;
+			} else {
+           		filter["list"] = data;
+			}
             
             return filter;
         }
