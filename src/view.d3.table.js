@@ -23,17 +23,7 @@ var ciccio;
 						
 				var ctrlKey = d3.event.ctrlKey;
 				var adding = !d3.select(d3.event.target.parentNode).classed("info");
-				
-				/*
-				if(adding){
-					d3.select(d3.event.target.parentNode.parentNode).selectAll(".g-tr.info").classed("info",ctrlKey);				
-					d3.select(d3.event.target.parentNode).classed('info',true);			
-				}else{			
-					d3.select(d3.event.target.parentNode.parentNode).selectAll(".g-tr.info").classed("info",ctrlKey);
-					d3.select(d3.event.target.parentNode).classed('info',false);		
-				}
-				*/
-				
+
 				if(adding){
 					if(ctrlKey){
 						activeRecords.push(row);
@@ -48,8 +38,8 @@ var ciccio;
 					}
 				}
 				
-				actions.forEach(function(action){				
-					action.action.doAction(activeRecords, action.mapping);
+				actions.forEach(function(actioncontainer){				
+					actioncontainer.action.doAction(activeRecords, actioncontainer.mapping);
 				});
 								
 				
@@ -364,7 +354,7 @@ var ciccio;
                	  			return "translate(" + trans + ")";
                 		})
                	  .each(function(field, i){
-               	  		var axis = d3.svg.axis().scale(field.axisScale).ticks(Math.abs(field.axisScale.range()[1] - field.axisScale.range()[0]) / 50).orient("bottom");
+               	  		var axis = d3.svg.axis().scale(field.axisScale).ticks(Math.abs(field.axisScale.range()[1] - field.axisScale.range()[0]) / 80).orient("bottom");
                	  		d3.select(this).call(axis);
                	  	});
                              	  	
@@ -559,7 +549,7 @@ var ciccio;
                	  			return "translate(" + trans + ")";
                 		})
                	  .each(function(field, i){
-               	  		var axis = d3.svg.axis().scale(field.axisScale).ticks(Math.abs(field.axisScale.range()[1] - field.axisScale.range()[0]) / 50).orient("bottom");
+               	  		var axis = d3.svg.axis().scale(field.axisScale).ticks(Math.abs(field.axisScale.range()[1] - field.axisScale.range()[0]) / 80).orient("bottom");
                	  		d3.select(this).call(axis);
                	  	});        
                	  	

@@ -602,18 +602,21 @@ my.Query = Backbone.Model.extend({
     // update or add the selected filter(s), a change event is triggered after the update
 
   setFilter: function(filter) {
-      var filters = this.get('filters');
-      var found = false;
-      for(var j=0;j<filters.length;j++) {
-          if (filters[j].field==filter.field) {
-              filters[j] = filter;
-              found = true;
-          }
-      }
-      if(!found)
-        filters.push(filter);
-
-
+  	  if(filter["remove"]) {
+  	  	removeFilterByField(filter.field);
+  	  }else{
+  	
+		var filters = this.get('filters');
+		var found = false;
+		for(var j=0;j<filters.length;j++) {
+			if (filters[j].field==filter.field) {
+				filters[j] = filter;
+				found = true;
+			}
+		}
+		if(!found)
+			filters.push(filter);
+		}
   },
 
 
@@ -635,9 +638,7 @@ my.Query = Backbone.Model.extend({
 	{
 		if (filters[j].field == field)
 		{
-			filters.splice(j, 1);
-			this.set({filters: filters});
-			break;
+			removeFilter(j);
 		}
 	}
   },
@@ -681,7 +682,22 @@ my.Query = Backbone.Model.extend({
           this.set({selections: selections});
           this.trigger('change:selections');
       },
+       removeSelectionByField: function(field) {
+    var selections = this.get('selections');
+	for (var j in filters)
+	{
+		if (selections[j].field == field)
+		{
+			removeSelection(j);
+		}
+	}
+  },
       setSelection: function(filter) {
+      	  if(filter["remove"]) {
+  	  	removeSelectionByField(filter.field);
+  	  }else{
+  	
+  	
         var s = this.get('selections');
         var found = false;
         for(var j=0;j<s.length;j++) {
@@ -692,6 +708,7 @@ my.Query = Backbone.Model.extend({
         }
         if(!found)
             s.push(filter);
+           }
     },
 
 

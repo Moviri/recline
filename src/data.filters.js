@@ -11,7 +11,7 @@ my.Filters = {};
         // filter records
         return _.filter(records, function (record) {
             var passes = _.map(filters, function (filter) {
-                return recline.Data.Filters._filterFunctions[filter.type](record, filter, fields);
+            	return recline.Data.Filters._isNullFilter[filter.type](filter) || recline.Data.Filters._filterFunctions[filter.type](record, filter, fields);
             });
 
             // return only these records that pass all filters
@@ -25,7 +25,8 @@ my.Filters = {};
             currentRecord.setRecordSelection(false);
 
             _.each(selections, function(sel) {
-                if(recline.Data.Filters._filterFunctions[sel.type](currentRecord.attributes, sel, fields)) {
+                if(!recline.Data.Filters._isNullFilter[sel.type](sel) &&
+                	recline.Data.Filters._filterFunctions[sel.type](currentRecord.attributes, sel, fields)) {
                     currentRecord.setRecordSelection(true);
                 }
             });
@@ -63,11 +64,26 @@ my.Filters = {};
         }
         return recline.Data.Filters._dataParsers[fieldType];
     },
+    
+    my.Filters._isNullFilter = {
+    	term: function(filter){
+    		return !filter["term"];
+    	},
+    	
+    	range: function(filter){
+    		return !(filter["start"] && filter["stop"]);
+    		
+    	},
+    	
+    	list: function(filter){
+    		return !filter["list"];
+    		
+    	}
+    },
 
     my.Filters._filterFunctions = {
         term: function(record, filter, fields) {
-
-            var parse = recline.Data.Filters._getDataParser(filter, fields);
+			var parse = recline.Data.Filters._getDataParser(filter, fields);
             var value = parse(record[filter.field]);
             var term  = parse(filter.term);
 
