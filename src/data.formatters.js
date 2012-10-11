@@ -9,7 +9,7 @@ this.recline.Data = this.recline.Data || {};
     my.FormattersMODA = {
         integer : function (e) { return parseInt(e); },
         string : function (e) { return e.toString() },
-        date   : function (e) { return new Date(e).valueOf() },
+        date   : function (e) { return new Date(parseInt(e)).valueOf() },
         float  : function (e) { return parseFloat(e, 10); }
     };
 
