@@ -87,7 +87,8 @@ if (typeof Slick === "undefined") {
       fullWidthRows: false,
       multiColumnSort: false,
       defaultFormatter: defaultFormatter,
-      forceSyncScrolling: false
+      forceSyncScrolling: false,
+	  trackMouseHover: false
     };
 
     var columnDefaults = {
@@ -222,11 +223,7 @@ if (typeof Slick === "undefined") {
           .css("overflow", "hidden")
           .css("outline", 0)
           .addClass(uid)
-		  .addClass("s-table")
-		  .addClass("s-table-hover")
-		  .addClass("s-table-striped")
-		  .addClass("s-table-condensed")
-          //.addClass("ui-widget");
+          .addClass("ui-widget");
 
       // set up a positioning container if needed
       if (!/relative|absolute|fixed/.test($container.css("position"))) {
@@ -329,9 +326,12 @@ if (typeof Slick === "undefined") {
             .bind("dragend", handleDragEnd)
             .delegate(".slick-cell", "mouseenter", handleMouseEnter)
             .delegate(".slick-cell", "mouseleave", handleMouseLeave);
+		
+		if (options.trackMouseHover)
+            $canvas.delegate(".slick-row", "mouseenter", handleRowMouseEnter);
       }
     }
-
+	
     function registerPlugin(plugin) {
       plugins.unshift(plugin);
       plugin.init(self);
@@ -348,6 +348,14 @@ if (typeof Slick === "undefined") {
         }
       }
     }
+
+	function addClassesToGrid(classes) {
+		_.each(classes, function(currClass) { $container.addClass(currClass); });
+	}
+	
+	function removeClassesFromGrid(classes) {
+		_.each(classes, function(currClass) { $container.removeClass(currClass); });
+	}
 
     function setSelectionModel(model) {
       if (selectionModel) {
@@ -1440,7 +1448,7 @@ if (typeof Slick === "undefined") {
       }
       return item[columnDef.field];
     }
-
+	
     function appendRowHtml(stringArray, row, range) {
       var d = getDataItem(row);
       var dataLoading = row < getDataLength() && !d;
@@ -1454,8 +1462,7 @@ if (typeof Slick === "undefined") {
       if (metadata && metadata.cssClasses) {
         rowCss += " " + metadata.cssClasses;
       }
-
-      stringArray.push("<div class='"/*ui-widget-content "*/ + rowCss + "' style='top:" + (options.rowHeight * row - offset) + "px'>");
+      stringArray.push("<div class='"/*ui-widget-content "*/ + rowCss + "' style='top:" + (options.rowHeight * row - offset) + "px' rowNum='"+row+"'>");
 
       var colspan, m;
       for (var i = 0, ii = columns.length; i < ii; i++) {
@@ -1947,6 +1954,8 @@ if (typeof Slick === "undefined") {
         activeCellNode = getCellNode(activeRow, activeCell);
       }
     }
+	
+	
 
     function startPostProcessing() {
       if (!options.enableAsyncPostRender) {
@@ -2366,6 +2375,12 @@ if (typeof Slick === "undefined") {
 
     function handleMouseLeave(e) {
       trigger(self.onMouseLeave, {}, e);
+    }
+
+	function handleRowMouseEnter(e) {
+	  console.log(e.currentTarget.attributes.rowNum)
+	  if (options.trackMouseHover)
+		trigger(self.onRowHoverIn, {row:e.currentTarget.attributes.rowNum.value}, e);
     }
 
     function cellExists(row, cell) {
@@ -3247,6 +3262,7 @@ if (typeof Slick === "undefined") {
       "onDragEnd": new Slick.Event(),
       "onSelectedRowsChanged": new Slick.Event(),
       "onCellCssStylesChanged": new Slick.Event(),
+      "onRowHoverIn": new Slick.Event(),
 
       // Methods
       "registerPlugin": registerPlugin,
@@ -3267,6 +3283,8 @@ if (typeof Slick === "undefined") {
       "setData": setData,
       "getSelectionModel": getSelectionModel,
       "setSelectionModel": setSelectionModel,
+      "addClassesToGrid": addClassesToGrid,
+      "removeClassesFromGrid": removeClassesFromGrid,
       "getSelectedRows": getSelectedRows,
       "setSelectedRows": setSelectedRows,
 
