@@ -1529,7 +1529,7 @@ legend + .control-group {
 }
 table {
   max-width: 100%;
-  background-color: transparent;
+  background-color: #ffffff;
   border-collapse: collapse;
   border-spacing: 0;
 }
@@ -1641,7 +1641,7 @@ table {
 }
 .table-striped tbody tr:nth-child(even) td,
 .table-striped tbody tr:nth-child(even) th {
-  background-color: transparent;
+  background-color: #ffffff;
 }
 .table-hover tbody tr:hover td,
 .table-hover tbody tr:hover th {
@@ -1773,7 +1773,6 @@ table [class*=span],
   width: 1884px;
   margin-left: 0;
 }
-
 .table tbody tr.success td {
   background-color: #dff0d8;
 }
@@ -4886,7 +4885,7 @@ a.badge:hover {
 }
 div.s-table {
   max-width: 100%;
-  background-color: transparent;
+  background-color: #ffffff;
   border-collapse: collapse;
   border-spacing: 0;
 }
@@ -4999,7 +4998,7 @@ div.s-table {
 }
 .s-table-striped div.s-tbody div.s-tr:nth-child(even) div.s-td,
 .s-table-striped div.s-tbody div.s-tr:nth-child(even) div.s-th {
-  background-color: transparent;
+  background-color: #ffffff;
 }
 .s-table-striped div.s-tbody div.s-tr div.s-td.selected {
   background-color: #f2dede;
