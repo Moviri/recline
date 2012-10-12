@@ -264,9 +264,6 @@ my.Dataset = Backbone.Model.extend({
         // needed cause memory store is not mandatory
         recline.Data.Filters.applySelectionsOnData(self.queryState.get('selections'), self.records.models, self.fields);
 
-        console.log("selection done");
-        console.log(self);
-
         self.queryState.trigger('selection:done');
 
     },

@@ -72,6 +72,18 @@ this.recline.View = this.recline.View || {};
     return this;
   },
 
+  getAcionsForEvent: function(eventType) {
+      var self=this;
+      var actions = [];
+
+      _.each(self.options.actions, function(d) {
+          if( _.contains(d.event, eventType))
+            actions.push(d);
+          });
+
+      return actions;
+  },
+
   redraw: function() {
 
     var self=this;
@@ -131,8 +143,11 @@ this.recline.View = this.recline.View || {};
                         .tooltips(false)
                         .showValues(true);
 
+                    var actions = self.getAcionsForEvent("click");
+
+                    if(actions.length > 0)
                         chart.discretebar.dispatch.on('elementClick', function(e) {
-                            self.doActions("elementClick", e);
+                            self.doActions(actions, [e.point.record]);
                         });
                 break;
                 case "multiBarChart":
@@ -141,7 +156,7 @@ this.recline.View = this.recline.View || {};
                 case "lineWithBrushChart":
                     chart = nv.models.lineWithBrushChart({'callback': function(x) {
                         //self.doActions("elementSelection", e);
-                        alert('x0= '+x[0]+'x1='+x[1]);
+                        alert(x);
                         }, 'trendlines': true, 'minmax': true});
                     break;
                 case "multiBarWithBrushChart":
@@ -152,8 +167,8 @@ this.recline.View = this.recline.View || {};
                     break;
             }
 
-            chart.x(function(d) { return d[0] })
-                .y(function(d) { return d[1] });
+            chart.x(function(d)    { return d.x; })
+                    .y(function(d) { return d.y; });
 
 			var xfield =  model.fields.get(state.attributes.group);
 			xfield.set('type', xfield.get('type').toLowerCase());
@@ -186,9 +201,10 @@ this.recline.View = this.recline.View || {};
 
 
   		d3.select('#nvd3chart_' +viewId + '  svg')
-      		.datum(seriesNVD3)
-    		.transition().duration(500)
-      		.call(chart);
+      		    .datum(seriesNVD3)
+    		    .transition()
+                .duration(500)
+      		    .call(chart);
 
         nv.utils.windowResize(chart.update);
 
@@ -206,36 +222,11 @@ this.recline.View = this.recline.View || {};
     }
   },
 
-  doActions: function(eventType, event) {
+  doActions: function(actions, records) {
 
-      var self = this;
-      var actions = this.options.actions;
-
-      var seriesNameField = self.state.attributes.seriesNameField;
-
-      var eventData = {};
-
-      switch (eventType)   {
-        case "elementClick":
-            // if seriesaname is not defined click means selection of single data
-            if(seriesNameField == null ){
-                var seriesFieldName = event.series.key;
-                eventData[seriesFieldName] = [event.value]; }
-            else {
-                eventData[ seriesNameField[0] ] = [event.series.key];
-            };
-            break;
-          case "elementSelection":
-              eventData[self.state.attributes.group] = [event[0], event[1]];
-              console.log(eventData);
-              break;
-          throw "Error eventype " + eventType + " not implemented"
-      }
-
-
-
-
-      recline.ActionUtility.doAction(actions, eventType, eventData, "add");
+      _.each(actions, function(d) {
+          d.action.doAction(records, d.mapping);
+      });
 
   },
 
@@ -258,15 +249,17 @@ this.recline.View = this.recline.View || {};
 
       var color = 0;
 
+      // series are calculated on data, data should be analyzed in order to create series
      if(seriesNameField != null) {
 
          _.each(records, function(doc, index) {
-             //console.log(doc);
 
+             // key is the field that identiy the value that "build" series
              var key = doc.getFieldValueUnrendered(seriesNameField);
              var tmpS;
 
-             if(seriesTmp[key] != null ) { tmpS = seriesTmp[key]  }
+             // verify if the serie is already been initialized
+             if(series[key] == null ) { tmpS = seriesTmp[key]  }
              else {
                  tmpS = {key: key, values: [], color:  colors[color]}
                  color=color+1;
@@ -276,9 +269,8 @@ this.recline.View = this.recline.View || {};
              var points = [];
              var x = doc.getFieldValueUnrendered(xfield);
              var y = doc.getFieldValueUnrendered(seriesValues);
-             tmpS["values"].push([x, y]);
+             tmpS["values"].push({x: x, y: y, record: doc});
 
-             //console.log("xfield: " + xfield + " seriesvalue: " + seriesValues + " seriesNameField: " + seriesNameField + " key: " + key + " x: "+ x + " y: "+ y);
              seriesTmp[key] = tmpS;
 
          });
@@ -286,7 +278,6 @@ this.recline.View = this.recline.View || {};
          for (var j in seriesTmp) {
              series.push(seriesTmp[j]);
          }
-         //console.log(seriesTmp);
 
      }
       else {
@@ -302,16 +293,16 @@ this.recline.View = this.recline.View || {};
               var x = doc.getFieldValueUnrendered(xfield);
 
               try {
-              var yfield = self.model.fields.get(field);
-              var y = doc.getFieldValueUnrendered(yfield);
+                var yfield = self.model.fields.get(field);
+                var y = doc.getFieldValueUnrendered(yfield);
 
-              var isDateTime = xfield.get('type') === 'date';
+                var isDateTime = xfield.get('type') === 'date';
 
-              if (isDateTime) {
-                  xAxisIsDate = true;
-              }
+                if (isDateTime) {
+                    xAxisIsDate = true;
+                }
 
-                points.push([x,y]);
+                points.push({x: x, y: y, record: doc});
 
               }
               catch(err) {

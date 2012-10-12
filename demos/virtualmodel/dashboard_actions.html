@@ -69,7 +69,7 @@ root: ../../
             backend: 'jsonp',
             id: "AudDemoByGender",
             fieldLabels: [{id: "age", label: "age_label"}, {id: "gender", label: "gender_label"}],
-            inMemoryQueryFields: ["age"]
+            inMemoryQueryFields: ["age", "dayhour"]
        });
 
 		dataset.bind('query:done query:fail', function() { document.getElementById("loadingImage").style.display = "none";resizeAllElems(); });
@@ -162,6 +162,16 @@ root: ../../
             type: ["selection"]
         });
 
+        var action_dayhour = new recline.Action({
+            filters: {
+                filter1:     {type: "term",  field: "dayhour", fieldType: "integer"}
+            },
+            models: [
+                {model: dataset, filters:[ "filter1" ]},
+            ],
+            type: ["filter"]
+        });
+
 
 
             var graph2 = new recline.View.NVD3Graph({
@@ -192,7 +202,7 @@ root: ../../
                 mapping: [
                     {srcField: "daydate", filter: "filter_daydate"}
                 ],
-                event: ["elementSelection"]
+                event: ["rangeselected"]
             }]
 
 
@@ -238,9 +248,16 @@ root: ../../
                     //seriesNameField: ["gender"],
                     seriesValues: ["totalviewed_by_gender_Male_avg", "totalviewed_by_gender_Female_avg"],
                     colors: ["DarkTurquoise", "DodgerBlue", "LightBlue"],
-                    graphType: "multiBarChart",
+                    graphType: "discreteBarChart",
                     id: "4"
-                }
+                },
+                actions: [{
+                    action: action_dayhour,
+                    mapping: [
+                        {srcField: "dayhour", filter: "filter1"}
+                    ],
+                    event: ["click"]
+                }]
             })
             $('#mygraph4').append(graph4.el);
 
