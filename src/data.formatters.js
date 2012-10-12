@@ -73,6 +73,11 @@ this.recline.Data = this.recline.Data || {};
             return JSON.stringify(val);
         },
         integer: function(val, field, doc) {
+            var format = field.get('format');
+            if(format === "currency_euro") {
+                return "€ " + val;
+            }
+
             return val;
         },
         date: function(val, field, doc) {
@@ -89,13 +94,18 @@ this.recline.Data = this.recline.Data || {};
             var format = field.get('format');
             if (format === 'percentage') {
                 return val + '%';
+            } else if(format === "currency_euro") {
+                return "€ " + val;
             }
+
             try {
                 return parseFloat(val.toFixed(2));
             }
             catch(err) {
                 console.log("Error in conferting val " + val + " toFixed");
             }
+
+
         },
         'string': function(val, field, doc) {
             var format = field.get('format');

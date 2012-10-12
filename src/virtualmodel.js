@@ -262,11 +262,23 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
 
 
             // if labels are declared in dataset properties merge it;
+            if(this.attributes.fieldLabels) {
             _.each(this.attributes.fieldLabels, function(d) {
                 var field = _.find(fields, function(f) {return d.id === f.id });
                 if(field != null)
                     field.label = d.label;
             });
+            }
+
+            // if format is declared in dataset properties merge it;
+            if(this.attributes.fieldsFormat) {
+            _.each(this.attributes.fieldsFormat, function(d) {
+                var field = _.find(fields, function(f) {return d.id === f.id });
+                if(field != null)
+                    field.format = d.format;
+            })
+            }
+
 
             // set  results of dataset
             for(var i=0;i<tmpResult.length;i++){

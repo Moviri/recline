@@ -162,11 +162,10 @@ this.recline.View = this.recline.View || {};
 
                             // selection is done on x axis so I need to take the record with range [min_x, max_x]
                             // is the group attribute
-
                             var record_min = _.min(x, function(d) { return d.min.x }) ;
                             var record_max = _.max(x, function(d) { return d.max.x });
 
-                            self.doActions(actions, [record_min, record_max]);
+                            self.doActions(actions, [record_min.min.record, record_max.min.record]);
 
                         }});
 
@@ -179,13 +178,13 @@ this.recline.View = this.recline.View || {};
                     chart = nv.models.multiBarWithBrushChart(function(x) {
                         //self.doActions("elementSelection", e);
 
-                        console.log(x);
+
                     });
                     break;
             }
 
-            chart.x(function(d)    { return d.x; })
-                    .y(function(d) { return d.y; });
+            //chart.x(function(d)    { return d.x; })
+            //        .y(function(d) { return d.y; });
 
 			var xfield =  model.fields.get(state.attributes.group);
 			xfield.set('type', xfield.get('type').toLowerCase());
