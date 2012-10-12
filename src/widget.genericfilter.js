@@ -253,7 +253,7 @@ my.GenericFilter = Backbone.View.extend({
   _ctrlId : 0,
   _sourceDataset: null,
   _activeFilters: [],
-  _selectedClassName : "error", // use bootstrap ready-for-use classes to highlight list item selection (avail classes are success, warning, info & error)
+  _selectedClassName : "info", // use bootstrap ready-for-use classes to highlight list item selection (avail classes are success, warning, info & error)
   initialize: function(args) {
     this.el = $(this.el);
     _.bindAll(this, 'render');
@@ -434,9 +434,9 @@ my.GenericFilter = Backbone.View.extend({
 		$combo = $target;
 		$table = $combo.parent().find(".table");
 	}
-	this.handleListItemClicked($targetTD, $table, $combo);
+	this.handleListItemClicked($targetTD, $table, $combo, e.ctrlKey);
   },
-  handleListItemClicked: function($targetTD, $table, $combo) {
+  handleListItemClicked: function($targetTD, $table, $combo, ctrlKey) {
 	var fieldId = $table.attr('data-filter-field');
 	var type = $table.attr('data-filter-type');
 	if (type == "range" && typeof $targetTD == "undefined")
@@ -451,12 +451,21 @@ my.GenericFilter = Backbone.View.extend({
 	if (typeof $targetTD != "undefined")
 	{
 		// user clicked on table
-		
-		$table.find('tr').each(function() { 
-							$(this).removeClass(this._selectedClassName); 
-						});
-		
+		if (!ctrlKey)
+		{
+			$table.find('tr').each(function() { 
+				$(this).removeClass(this._selectedClassName); 
+			});
+		}
 		$targetTD.parent().addClass(this._selectedClassName);
+		var listaValori = [];
+		if (type == "list")
+		{
+			$table.find('tr.'+this._selectedClassName+" td").each(function() {
+				listaValori.push($(this).text());
+			});
+		}
+
 		if (type == "range")
 		{
 			// case month_week_calendar 
@@ -469,7 +478,11 @@ my.GenericFilter = Backbone.View.extend({
 				
 			this.doAction("onListItemClicked", fieldId, [startDate, endDate], "add");
 		}
-		else
+		else if (type == "list")
+		{
+			this.doAction("onListItemClicked", fieldId, listaValori, "add");
+		}
+		else if (type == "term")
 		{
             this.doAction("onListItemClicked", fieldId, [$targetTD.text()], "add");
 		}
