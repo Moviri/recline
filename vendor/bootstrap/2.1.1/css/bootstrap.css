@@ -1639,6 +1639,10 @@ table {
 .table-striped tbody tr:nth-child(odd) th {
   background-color: #f9f9f9;
 }
+.table-striped tbody tr:nth-child(even) td,
+.table-striped tbody tr:nth-child(even) th {
+  background-color: transparent;
+}
 .table-hover tbody tr:hover td,
 .table-hover tbody tr:hover th {
   background-color: #f5f5f5;
@@ -1769,6 +1773,7 @@ table [class*=span],
   width: 1884px;
   margin-left: 0;
 }
+
 .table tbody tr.success td {
   background-color: #dff0d8;
 }
@@ -4987,10 +4992,6 @@ div.s-table {
   -webkit-border-top-right-radius: 4px;
   border-top-right-radius: 4px;
   -moz-border-radius-topleft: 4px;
-}
-.table-striped tbody tr:nth-child(even) td,
-.table-striped tbody tr:nth-child(even) th {
-  background-color: transparent;
 }
 .s-table-striped div.s-tbody div.s-tr:nth-child(odd) div.s-td,
 .s-table-striped div.s-tbody div.s-tr:nth-child(odd) div.s-th {

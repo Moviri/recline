@@ -21,6 +21,16 @@
 // TABLES
 // -----------------------------------------------------
 
+// Default zebra-stripe styles (alternating gray and transparent backgrounds)
+.table-striped {
+  tbody {
+    tr:nth-child(even) td,
+    tr:nth-child(even) th {
+      background-color: @tableBackground;
+    }
+  }
+}
+
 //
 // Tables
 // --------------------------------------------------
@@ -167,17 +177,6 @@ div.s-table {
 
 // ZEBRA-STRIPING
 // --------------
-
-// Default zebra-stripe styles (alternating gray and transparent backgrounds)
-.table-striped {
-  tbody {
-    tr:nth-child(even) td,
-    tr:nth-child(even) th {
-      background-color: @tableBackground;
-    }
-  }
-}
-
 
 .s-table-striped {
   div.s-tbody {
