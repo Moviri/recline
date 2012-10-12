@@ -195,7 +195,18 @@ my.SlickGrid = Backbone.View.extend({
 		jj++;
     });
 
+	if (this.options.actions != null && typeof this.options.actions != "undefined")
+	{
+		_.each(this.options.actions, function(currAction) {
+			if (_.indexOf(currAction.event, "hover") >= 0)
+				options.trackMouseHover = true;
+		});
+	}
+
     this.grid = new Slick.Grid(this.el, data, visibleColumns, options);
+	
+	this.grid.addClassesToGrid(["s-table", "s-table-hover", "s-table-striped", "s-table-condensed"]);
+	this.grid.removeClassesFromGrid(["ui-widget"]);
 	
 	this.grid.setSelectionModel(new Slick.RowSelectionModel());
 	this.grid.getSelectionModel().setSelectedRows(rowsToSelect);
@@ -237,6 +248,16 @@ my.SlickGrid = Backbone.View.extend({
         self.state.set({columnsWidth:columnsWidth});
     });
 
+    this.grid.onRowHoverIn.subscribe(function(e, args){
+		console.log("HoverIn "+args.row)
+		var selectedRecords = [];
+		selectedRecords.push(self.model.records.models[args.row]);
+		var actions = self.options.actions;
+		actions.forEach(function(currAction){				
+			currAction.action.doAction(selectedRecords, currAction.mapping);
+		});
+    });
+	
     var columnpicker = new Slick.Controls.ColumnPicker(columns, this.grid,
                                                        _.extend(options,{state:this.state}));
 
@@ -251,7 +272,6 @@ my.SlickGrid = Backbone.View.extend({
     return this;
  },
    onSelectionChanged: function(rows) {
-	//console.log("onSelectionChanged")
 	var self = this;
 	var selectedRecords = [];
 	_.each(rows, function(row) {
@@ -259,9 +279,6 @@ my.SlickGrid = Backbone.View.extend({
 	});
 	var actions = this.options.actions;
 	actions.forEach(function(currAction){				
-		//console.log(selectedRecords.length);
-		//console.log(selectedRecords);
-		//console.log(currAction.mapping);
 		currAction.action.doAction(selectedRecords, currAction.mapping);
 	});
   },
