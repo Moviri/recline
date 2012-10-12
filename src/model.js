@@ -181,6 +181,16 @@ my.Dataset = Backbone.Model.extend({
     });
   },
 
+    getRecords: function(type) {
+        var self=this;
+
+        if(type==='filtered'){
+            return self.records.models;
+        }else {
+            throw "Model.js: accessing to data for type " + type + " not implemented"
+        }
+    },
+
   // ### query
   //
   // AJAX method with promise API to get records from the backend.

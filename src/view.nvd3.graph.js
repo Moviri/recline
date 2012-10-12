@@ -262,7 +262,7 @@ this.recline.View = this.recline.View || {};
 
       var resultType = "filtered";
       if(self.options.useFilteredData !== null && self.options.useFilteredData === false)
-        resultType = "notfiltered";
+        resultType = "original";
 
       var records = self.model.getRecords(resultType);  //self.model.records.models;
 
