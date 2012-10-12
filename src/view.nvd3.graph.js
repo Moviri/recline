@@ -72,7 +72,7 @@ this.recline.View = this.recline.View || {};
     return this;
   },
 
-  getAcionsForEvent: function(eventType) {
+   getActionsForEvent: function(eventType) {
       var self=this;
       var actions = [];
 
@@ -143,7 +143,7 @@ this.recline.View = this.recline.View || {};
                         .tooltips(false)
                         .showValues(true);
 
-                    var actions = self.getAcionsForEvent("click");
+                    var actions = self.getActionsForEvent("selection");
 
                     if(actions.length > 0)
                         chart.discretebar.dispatch.on('elementClick', function(e) {
@@ -154,21 +154,37 @@ this.recline.View = this.recline.View || {};
                     chart = nv.models.multiBarChart().stacked(true).showControls(false);
                     break;
                 case "lineWithBrushChart":
-                    chart = nv.models.lineWithBrushChart({'callback': function(x) {
-                        //self.doActions("elementSelection", e);
-                        alert(x);
-                        }, 'trendlines': true, 'minmax': true});
+                    var actions = self.getActionsForEvent("selection");
+
+                    if(actions.length > 0) {
+                        chart = nv.models.lineWithBrushChart(
+                            {callback: function(x) {
+
+                            // selection is done on x axis so I need to take the record with range [min_x, max_x]
+                            // is the group attribute
+                            var record_min = _.min(x, function(d) { return d.min.x }) ;
+                            var record_max = _.max(x, function(d) { return d.max.x });
+
+                            self.doActions(actions, [record_min.min.record, record_max.min.record]);
+
+                        }});
+
+                    } else {
+                        chart = nv.models.lineWithBrushChart();
+                    }
+
                     break;
                 case "multiBarWithBrushChart":
                     chart = nv.models.multiBarWithBrushChart(function(x) {
                         //self.doActions("elementSelection", e);
-                        alert(x);
+
+
                     });
                     break;
             }
 
-            chart.x(function(d)    { return d.x; })
-                    .y(function(d) { return d.y; });
+            //chart.x(function(d)    { return d.x; })
+            //        .y(function(d) { return d.y; });
 
 			var xfield =  model.fields.get(state.attributes.group);
 			xfield.set('type', xfield.get('type').toLowerCase());
@@ -242,7 +258,13 @@ this.recline.View = this.recline.View || {};
 
       var xAxisIsDate = false;
 
-      var records = self.model.records.models;
+
+      var resultType = "filtered";
+      if(self.options.useFilteredData !== null && self.options.useFilteredData === false)
+        resultType = "original";
+
+      var records = self.model.getRecords(resultType);  //self.model.records.models;
+
       var xfield =  self.model.fields.get(self.state.attributes.group);
 
       var seriesTmp = {};

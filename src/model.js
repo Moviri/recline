@@ -86,6 +86,15 @@ my.Dataset = Backbone.Model.extend({
 
         }
 
+        if(self.attributes.fieldsFormat) {
+        // if format is declared in dataset properties merge it;
+        _.each(self.attributes.fieldsFormat, function(d) {
+            var field = _.find(out.fields, function(f) {return d.id === f.id });
+            if(field != null)
+                field.format = d.format;
+        })
+        }
+
         self.fields.reset(out.fields, {renderer: recline.Data.Renderers});
 
         self.query()
@@ -180,6 +189,16 @@ my.Dataset = Backbone.Model.extend({
       self.trigger('recline:flash', {message: "Records updated successfully"});
     });
   },
+
+    getRecords: function(type) {
+        var self=this;
+
+        if(type==='filtered'){
+            return self.records.models;
+        }else {
+            throw "Model.js: accessing to data for type " + type + " not implemented"
+        }
+    },
 
   // ### query
   //

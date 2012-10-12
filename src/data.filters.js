@@ -110,9 +110,27 @@ my.Filters = {};
             });
 
             return (_.contains(list, value));
+        },
+
+        termAdvanced: function(record, filter, fields) {
+            var parse =  recline.Data.Filters._getDataParser(filter, fields);
+            var value = parse(record[filter.field]);
+            var value = parse(record[filter.field]);
+
+            var operator = filter.operator;
+
+            var operation = {
+                ne: function(value, term) { return value !== term },
+                eq: function(value, term) { return value === term },
+                lt: function(value, term) { return value < term },
+                lte: function(value, term) { return value <= term },
+                gt: function(value, term) { return value > term },
+                gte: function(value, term) { return value >= term },
+                bw: function(value, term) { return _.contains(term, value) }
+            };
+
+            return operation[operator](valuem, term);
         }
-
-
     },
 
     my.Filters._dataParsers = {
