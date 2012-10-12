@@ -83,7 +83,8 @@ root: ../../
                     aggregatedFields: ["totalviewed", "price_sum"],
                     partitions: ["gender"],
                     aggregationFunctions: ["sum", "avg"]
-                }
+                },
+                fieldLabels: [{id: "count", label: "Numero"}]
             });
 
             virtualdatasetWeekday= new recline.Model.VirtualDataset({
@@ -167,7 +168,7 @@ root: ../../
                 filter1:     {type: "term",  field: "dayhour", fieldType: "integer"}
             },
             models: [
-                {model: dataset, filters:[ "filter1" ]},
+                {model: dataset, filters:[ "filter1" ]}
             ],
             type: ["filter"]
         });
@@ -195,14 +196,16 @@ root: ../../
                 seriesValues: ["totalviewed_by_gender_Male_sum", "totalviewed_by_gender_Female_sum"],
                 colors: ["DarkTurquoise", "DodgerBlue", "LightBlue"],
                 graphType: "lineWithBrushChart",
-                id: "2brush"
+                id: "2brush",
+                trendline: true,
+                minmax: true
             },
             actions: [{
                 action: action_db,
                 mapping: [
-                    {srcField: "daydate", filter: "filter_daydate"}
+                    {srcField: "daydate", filter: "filter_daydate", fieldType: "date"}
                 ],
-                event: ["rangeselected"]
+                event: ["selection"]
             }]
 
 

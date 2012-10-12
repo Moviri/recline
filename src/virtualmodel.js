@@ -33,35 +33,31 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
         },
         
         getRecords: function(type) {
+            var self=this;
+
         	if(type==='filtered'){
-        		return this.records;
+        		return self.records.models;
         	}else {
-                //todo wrong returned data
-        		return this._store.data;
+                if(self._store.data == null) {
+                    throw "VirtualModel: unable to retrieve not filtered data, store has not been initialized";
+                }
+
+                var docs = _.map(self._store.data, function(hit) {
+                    var _doc = new my.Record(hit);
+                    _doc.fields = self.fields;
+                    return _doc;
+                });
+
+                return docs;
         	}
         },
 
-        modifyGrouping: function(dimensions, aggregationField)
-        {
-            this.attributes.aggregation.aggregatedFields = aggregationField;
-            this.attributes.aggregation.dimensions = dimensions;
-            updateCrossfilter(this);
-        },
-        addDimension: function(dimension)
-        {
-            this.attributes.aggregation.dimensions.push = dimension;
-            updateCrossfilter(this);
-        },
-        addAggregationField: function(field) {
-            this.attributes.aggregation.aggregatedFields.push(field);
-            updateCrossfilter(this);
-        },
-
         initializeCrossfilter: function() {
-            var data = this.attributes.dataset.records.toJSON();
-
-            this.updateCrossfilter(crossfilter(data));
-        },
+            this.updateStore(
+                this.reduce(
+                    this.createDimensions(
+                                crossfilter(this.attributes.dataset.records.toJSON()))));
+     },
 
         createDimensions: function(crossfilterData) {
             var dimensions = this.attributes.aggregation.dimensions;
@@ -87,22 +83,6 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
             return group;
         },
 
-        updateCrossfilter: function(crossfilterData) {
-            // TODO optimization has to be done in order to limit the number of cycles on data
-            // TODO has sense to recreate dimension if nothing is changed?, and in general, is better to use a new dimension if added instead of recreate all
-            // TODO verify if saving crossfilter data is useful (perhaps no unless we use crossfilterstore to make aggregaation and filtering)
-            // TODO structure defined in initialize could be the same as the one provided to records in order to avoid the cycle inside updatestore?
-
-            var start = new Date().getTime();
-
-
-            this.updateStore(this.reduce(this.createDimensions(crossfilterData)));
-
-            var end = new Date().getTime();
-            var time = end - start;
-
-            //console.log("updateCrossfilter - exec time: " + time);
-        },
 
         reduce: function(group) {
             var aggregatedFields = this.attributes.aggregation.aggregatedFields;
@@ -197,9 +177,6 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
         },
 
         updateStore: function(reducedGroup) {
-
-
-
             var dimensions = this.attributes.aggregation.dimensions;
             var aggregationFunctions =    this.attributes.aggregation.aggregationFunctions;
             var aggregatedFields = this.attributes.aggregation.aggregatedFields;
@@ -240,7 +217,8 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
 
             }
 
-            // set of fields array
+            // creation of fields
+
             fields.push( {id: "count", type: "integer"});
 
             // defining fields based on aggreagtion functions
@@ -281,6 +259,14 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
 
                 }
             }
+
+
+            // if labels are declared in dataset properties merge it;
+            _.each(this.attributes.fieldLabels, function(d) {
+                var field = _.find(fields, function(f) {return d.id === f.id });
+                if(field != null)
+                    field.label = d.label;
+            });
 
             // set  results of dataset
             for(var i=0;i<tmpResult.length;i++){
