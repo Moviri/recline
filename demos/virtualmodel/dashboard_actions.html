@@ -69,7 +69,8 @@ root: ../../
             backend: 'jsonp',
             id: "AudDemoByGender",
             fieldLabels: [{id: "age", label: "age_label"}, {id: "gender", label: "gender_label"}],
-            inMemoryQueryFields: ["age"]
+            fieldsFormat: [{id: "age", format: "currency_euro"}],
+            inMemoryQueryFields: ["age", "dayhour"]
        });
 
 		dataset.bind('query:done query:fail', function() { document.getElementById("loadingImage").style.display = "none";resizeAllElems(); });
@@ -83,7 +84,9 @@ root: ../../
                     aggregatedFields: ["totalviewed", "price_sum"],
                     partitions: ["gender"],
                     aggregationFunctions: ["sum", "avg"]
-                }
+                },
+                fieldLabels: [{id: "count", label: "Numero"}],
+                fieldsFormat: [{id: "price_sum_avg", format: "currency_euro"}]
             });
 
             virtualdatasetWeekday= new recline.Model.VirtualDataset({
@@ -136,7 +139,17 @@ root: ../../
         dataset.fetch(); // needed to populate filter list
 		
            var $el = $('#mygrid');
-		   var grid = new recline.View.SlickGrid({model: virtualdatasetAge, el: $el, state: {fitColumns:true, useInnerChart:true, innerChartSerie1:'totalviewed_by_gender_Male_sum', innerChartSerie2:'totalviewed_by_gender_Female_sum', innerChartHeader:'Views by Gender'}});
+		   var grid = new recline.View.SlickGrid({
+               model: virtualdatasetAge,
+               el: $el,
+               state: {
+                   fitColumns:true,
+                   useInnerChart:true,
+                   innerChartSerie1:'totalviewed_by_gender_Male_sum',
+                   innerChartSerie2:'totalviewed_by_gender_Female_sum',
+                   innerChartHeader:'Views by Gender'
+               }
+           });
             grid.visible = true;
 
         var action_db = new recline.Action({
@@ -162,6 +175,16 @@ root: ../../
             type: ["selection"]
         });
 
+        var action_dayhour = new recline.Action({
+            filters: {
+                filter1:     {type: "term",  field: "dayhour", fieldType: "integer"}
+            },
+            models: [
+                {model: dataset, filters:[ "filter1" ]}
+            ],
+            type: ["filter"]
+        });
+
 
 
             var graph2 = new recline.View.NVD3Graph({
@@ -185,14 +208,16 @@ root: ../../
                 seriesValues: ["totalviewed_by_gender_Male_sum", "totalviewed_by_gender_Female_sum"],
                 colors: ["DarkTurquoise", "DodgerBlue", "LightBlue"],
                 graphType: "lineWithBrushChart",
-                id: "2brush"
+                id: "2brush",
+                trendline: true,
+                minmax: true
             },
             actions: [{
                 action: action_db,
                 mapping: [
-                    {srcField: "daydate", filter: "filter_daydate"}
+                    {srcField: "daydate", filter: "filter_daydate", fieldType: "date"}
                 ],
-                event: ["elementSelection"]
+                event: ["selection"]
             }]
 
 
@@ -238,9 +263,16 @@ root: ../../
                     //seriesNameField: ["gender"],
                     seriesValues: ["totalviewed_by_gender_Male_avg", "totalviewed_by_gender_Female_avg"],
                     colors: ["DarkTurquoise", "DodgerBlue", "LightBlue"],
-                    graphType: "multiBarChart",
+                    graphType: "discreteBarChart",
                     id: "4"
-                }
+                },
+                actions: [{
+                    action: action_dayhour,
+                    mapping: [
+                        {srcField: "dayhour", filter: "filter1"}
+                    ],
+                    event: ["click"]
+                }]
             })
             $('#mygraph4').append(graph4.el);
 

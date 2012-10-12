@@ -133,12 +133,13 @@ root: ../../
 		
 		var action_vmodel = new recline.Action({
             filters: {
-                filter_age:     {type: "term",  field: "age", fieldType: "number"}
+                filter_age:     {type: "list",  field: "age", fieldType: "number"}
             },
             models: [
-                {model: virtualdatasetAge, filters:["filter_age"]}
+                {model: virtualdatasetAge, filters:["filter_age"]},
+				{model: dataset, filters:["filter_age"]}
             ],
-            type: ["filter"]
+            type: ["selection"]
         });
 
 		
@@ -160,7 +161,15 @@ root: ../../
 													innerChartSerie2:'totalviewed_by_gender_Female_sum', 
 													innerChartHeader:'Views by Gender',
 													fieldLabels: [{id: "totalviewed_sum", label: "Views"}, {id: "price_sum_sum", label: "Revenues"}]
-												}
+												},
+												actions : [{
+													action : action_vmodel,
+													mapping : [{
+														srcField : "age",
+														filter : "filter_age"
+													}],
+													event : ["onSelectedRangesChanged"]
+												}]
 											}); 
             grid.visible = true;
             grid.render();
@@ -197,6 +206,7 @@ root: ../../
 
             var graph3 = new recline.View.NVD3Graph({
                 model: virtualdatasetWeekday,
+                useFilteredData: false,
                 state: {
                     group: "dayofweek",
 					yLabel: "Total Viewed AVG",
@@ -283,12 +293,12 @@ root: ../../
             $('#search_container1').append(filter1.el);
 
             var filter2 = new recline.View.GenericFilter({
-                sourceDataset: dataset,
+                sourceDataset: virtualdatasetAge,
 				id: 'filterEditor2',
                 label: 'Memory Filters2',
 				sourceFields: [
 								{field: 'age', controlType: 'list', fieldType: 'number'}//,
-								//{field: 'totalviewed_sum', controlType: 'range_slider', fieldType: 'number'}
+								//{field: 'age', controlType: 'range_slider', fieldType: 'number'}
 							],
                 actions: [{
                     action: action_vmodel,
