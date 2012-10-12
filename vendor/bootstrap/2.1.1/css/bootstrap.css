@@ -1529,7 +1529,7 @@ legend + .control-group {
 }
 table {
   max-width: 100%;
-  background-color: transparent;
+  background-color: #ffffff;
   border-collapse: collapse;
   border-spacing: 0;
 }
@@ -1638,6 +1638,10 @@ table {
 .table-striped tbody tr:nth-child(odd) td,
 .table-striped tbody tr:nth-child(odd) th {
   background-color: #f9f9f9;
+}
+.table-striped tbody tr:nth-child(even) td,
+.table-striped tbody tr:nth-child(even) th {
+  background-color: #ffffff;
 }
 .table-hover tbody tr:hover td,
 .table-hover tbody tr:hover th {
@@ -4881,7 +4885,7 @@ a.badge:hover {
 }
 div.s-table {
   max-width: 100%;
-  background-color: transparent;
+  background-color: #ffffff;
   border-collapse: collapse;
   border-spacing: 0;
 }
@@ -4988,17 +4992,13 @@ div.s-table {
   border-top-right-radius: 4px;
   -moz-border-radius-topleft: 4px;
 }
-.table-striped tbody tr:nth-child(even) td,
-.table-striped tbody tr:nth-child(even) th {
-  background-color: transparent;
-}
 .s-table-striped div.s-tbody div.s-tr:nth-child(odd) div.s-td,
 .s-table-striped div.s-tbody div.s-tr:nth-child(odd) div.s-th {
   background-color: #f9f9f9;
 }
 .s-table-striped div.s-tbody div.s-tr:nth-child(even) div.s-td,
 .s-table-striped div.s-tbody div.s-tr:nth-child(even) div.s-th {
-  background-color: transparent;
+  background-color: #ffffff;
 }
 .s-table-striped div.s-tbody div.s-tr div.s-td.selected {
   background-color: #f2dede;

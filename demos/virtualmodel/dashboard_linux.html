@@ -133,10 +133,11 @@ root: ../../
 		
 		var action_vmodel = new recline.Action({
             filters: {
-                filter_age:     {type: "term",  field: "age", fieldType: "number"}
+                filter_age:     {type: "list",  field: "age", fieldType: "number"}
             },
             models: [
-                {model: virtualdatasetAge, filters:["filter_age"]}
+                {model: virtualdatasetAge, filters:["filter_age"]},
+				{model: dataset, filters:["filter_age"]}
             ],
             type: ["selection"]
         });
@@ -292,7 +293,7 @@ root: ../../
             $('#search_container1').append(filter1.el);
 
             var filter2 = new recline.View.GenericFilter({
-                sourceDataset: dataset,
+                sourceDataset: virtualdatasetAge,
 				id: 'filterEditor2',
                 label: 'Memory Filters2',
 				sourceFields: [

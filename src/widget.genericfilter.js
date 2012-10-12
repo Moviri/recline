@@ -338,7 +338,7 @@ my.GenericFilter = Backbone.View.extend({
 	  for (var i in this.tmpValues)
 	  {
 		var v = this.tmpValues[i];
-		this.values.push({val: v, selected: (this.term == v ? self._selectedClassName : "")});
+		this.values.push({val: v, selected: (this.term == v || self._sourceDataset.records.models[i].is_selected ? self._selectedClassName : "")});
 		if (v > this.max)
 			this.max = v;
 			
