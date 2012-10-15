@@ -103,6 +103,7 @@ this.recline.Data = this.recline.Data || {};
             }
             catch(err) {
                 console.log("Error in conferting val " + val + " toFixed");
+                return "N.A.";
             }
 
 

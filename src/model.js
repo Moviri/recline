@@ -443,7 +443,10 @@ my.Field = Backbone.Model.extend({
     label: null,
     type: 'string',
     format: null,
-    is_derived: false
+    is_derived: false,
+    is_partitioned: false,
+    partitionValue: null,
+    partitionField: null
   },
   // ### initialize
   //
