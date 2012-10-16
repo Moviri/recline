@@ -246,7 +246,7 @@ my.GenericFilter = Backbone.View.extend({
         <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}"> \
             <legend>{{field}}</legend>  \
 			{{#values}} \
-			<div class="legend-item {{notSelected}}" myValue={{val}} style="background-color:{{color}}"><div style="padding-left:25px;color: {{color}}"><p style="font-weight:bold;text-shadow: black 1px 1px, black -1px -1px, black -1px 1px, black 1px -1px">{{val}}</p></div></div> \
+			<div class="legend-item {{notSelected}}" myValue={{val}} style="background-color:{{color}}"><div style="padding-left:25px;color: {{color}}"><p style="text-shadow: black 1px 1px, black -1px -1px, black -1px 1px, black 1px -1px, black 0px 1px, black 0px -1px, black 1px 0px, black -1px 0px">{{val}}</p></div></div> \
 			{{/values}} \
 	    </fieldset> \
       </div> \
