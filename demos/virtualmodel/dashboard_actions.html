@@ -136,6 +136,15 @@ root: ../../
         for(var i=0;i<filters.length;i++)
             dataset.queryState.addFilter(filters[i]);
 
+        dataset.queryState.attributes["facets"] = [
+            {
+                terms:
+                {
+                    field: "gender"
+                }
+            }
+        ];
+
         dataset.fetch(); // needed to populate filter list
 		
            var $el = $('#mygrid');

@@ -96,6 +96,8 @@ my.Dataset = Backbone.Model.extend({
         })
         }
 
+
+
         // assignment of color schema to fields
         if(self.attributes.colorSchema) {
             _.each(self.attributes.colorSchema, function(d) {
@@ -104,7 +106,6 @@ my.Dataset = Backbone.Model.extend({
                     field.colorSchema = d.schema;
             })
         }
-
 
         self.fields.reset(out.fields, {renderer: recline.Data.Renderers});
 
@@ -118,6 +119,17 @@ my.Dataset = Backbone.Model.extend({
     }
 
     return dfd.promise();
+  },
+
+  setColorSchema: function() {
+      var self=this;
+      _.each(self.attributes.colorSchema, function(d) {
+          var field = _.find(self.fields.models, function(f) {
+              return d.field === f.id
+          });
+          if(field != null)
+              field.attributes.colorSchema = d.schema;
+      })
   },
 
   // ### _normalizeRecordsAndFields

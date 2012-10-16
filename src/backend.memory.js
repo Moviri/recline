@@ -68,7 +68,6 @@ this.recline.Backend.Memory = this.recline.Backend.Memory || {};
       var start = queryObj.from || 0;
       var results = this.data;
 
-      //recline.Data.Filters.applySelectionsOnData( queryObj.selections, results, this.fields);
       results = recline.Data.Filters.applyFiltersOnData( queryObj.filters, results, this.fields);
       results = this._applyFreeTextQuery(results, queryObj);
 

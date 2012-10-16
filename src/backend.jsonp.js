@@ -40,13 +40,10 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
 
 
 
-        if(dataset.inMemoryQueryFields == null) {
+        if(dataset.inMemoryQueryFields == null && !queryObj.facets) {
             dataset.inMemoryQueryFields = [];
-
         } else
             my.inMemoryQuery = true;
-
-
 
         var filters =  queryObj.filters;
         for(var i=0;i<filters.length;i++){
@@ -72,10 +69,15 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
         }
 
         // verify if filters on memory are changed since last query
-        if(dataset.inMemoryQueryFields.length> 0
+        if(queryObj.facets ||
+            (dataset.inMemoryQueryFields.length> 0
             && !_.isEqual(my.queryStateInMemory.attributes.filters, tmpQueryStateInMemory.attributes.filters))
+            )
         {
             my.queryStateInMemory = tmpQueryStateInMemory;
+            if(queryObj.facets)
+                my.queryStateInMemory.attributes.facets = queryObj.facets;
+
             changedOnMemory = true;
         }
 
@@ -145,10 +147,8 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
           // check if is the first time I use the memory store
           my.inMemoryStore = new recline.Backend.Memory.Store(result.data, _handleFieldDescription(result.description));
 
-          if(my.queryStateInMemory && my.queryStateInMemory.get("filters").length > 0)
-            return applyInMemoryFilters();
-          else
-            return prepareReturnedData(result);
+          return applyInMemoryFilters();
+
       }
       else {
           // no need to query on memory, return json data
@@ -157,14 +157,8 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
 
   };
 
-    /*my.applySelections = function(selections) {
-        if(my.inMemoryStore != null)
-            recline.Data.Filters.applySelectionsOnData(selections,  my.inMemoryStore.data, my.inMemoryStore.fields);
-
-    };*/
 
     function applyInMemoryFilters() {
-
 
         var tmpValue;
 
@@ -186,7 +180,7 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
            var fields = _handleFieldDescription(data.description);
 
             if(data.data == null) {
-            my.memoryFields = fields;
+                my.memoryFields = fields;
             return {
                 fields: fields,
                 useMemoryStore: false

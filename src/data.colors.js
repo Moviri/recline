@@ -33,6 +33,13 @@ this.recline.Data.ColorSchema = this.recline.Data.ColorSchema || {};
         setDataset: function(ds, field) {
             var self=this;
             self.attributes.dataset = {dataset: ds, field: field};
+            if(!ds.attributes["colorSchema"])
+                ds.attributes["colorSchema"] = [];
+
+            ds.attributes["colorSchema"].push({schema:self, field: field});
+
+            ds.setColorSchema();
+
             self.bindToDataset();
         },
 
@@ -40,6 +47,8 @@ this.recline.Data.ColorSchema = this.recline.Data.ColorSchema || {};
             var self=this;
             var data =  this.getRecordsArray();
             self._generateLimits(data);
+            console.log("generated");
+            console.log(self);
         },
 
         _generateLimits: function(data) {

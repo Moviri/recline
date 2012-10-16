@@ -82,10 +82,11 @@ this.recline.View = this.recline.View || {};
 
                 layer.style(
                     "fill", function (d) {
-                        var value = filteredResults[d[currentMapping["destAttribute"]]];
+                        var res = filteredResults[d[currentMapping["destAttribute"]]];
 
-                         if(value != null)
-                            return colors.getColor(value);
+                        // check if current shape is present into results
+                           if(res != null)
+                                return res.color;
                     });
             });
 
@@ -107,9 +108,9 @@ this.recline.View = this.recline.View || {};
 
             var res = {};
             _.each(records, function (d) {
-                //console.log(d.getFieldValueUnrendered(srcShapef) + " == " + attributeValue);
+
                 if(_.contains(paths, d.getFieldValueUnrendered(srcShapef)))
-                  res[d.getFieldValueUnrendered(srcShapef)] =  d.getFieldValueUnrendered(srcValuef);
+                  res[d.getFieldValueUnrendered(srcShapef)] =  {record: d, field: srcValuef, color:d.getFieldColor(srcValuef), value:d.getFieldValueUnrendered(srcValuef) };
             });
 
             return res;

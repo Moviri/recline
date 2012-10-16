@@ -468,11 +468,6 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
             }
             var actualQuery = self.queryState
 
-            // if memory store apply on memory
-            /*if (self.backend == recline.Backend.Memory
-             || self.backend == recline.Backend.Jsonp) {
-             self.backend.applySelections(this.queryState.get('selections'));
-             }*/
 
             // apply on current records
             // needed cause memory store is not mandatory
@@ -491,7 +486,6 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
                 return _doc;
             });
 
-            //recline.Data.Filters.applySelectionsOnData(self.queryState.get('selections'), docs, self.fields);
             self.records.reset(docs);
 
         },
