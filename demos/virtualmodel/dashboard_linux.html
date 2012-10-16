@@ -24,6 +24,9 @@ root: ../../
                 <div id="search_container1"></div>
             </div>
             <div class="row-fluid">
+                <div id="search_container3"></div>
+            </div>
+            <div class="row-fluid">
                 <div id="search_container2"></div>
             </div>
         </div>
@@ -62,12 +65,13 @@ root: ../../
     $(document).ready(function() {
         var url = "http://192.168.100.133:8380/cwwh-iwal-war/cw/wh/ds/AudDemoByGender";
 
-        var dataset = new recline.Model.Dataset({
+        dataset = new recline.Model.Dataset({
             url: url,
             backend: 'jsonp',
             id: "AudDemoByGender",
             fieldLabels: [{id: "age", label: "Age (bin)"}, {id: "gender", label: "Gender"}],
-            inMemoryQueryFields: ["age"]
+            inMemoryQueryFields: ["age", "gender"],
+			colors: ["DarkTurquoise", "DodgerBlue", "LightBlue"]
         });
 
 		dataset.bind('query:done query:fail', function() { document.getElementById("loadingImage").style.display = "none";resizeAllElems(); });
@@ -80,7 +84,8 @@ root: ../../
                     aggregatedFields: ["totalviewed", "price_sum"],
                     partitions: ["gender"],
                     aggregationFunctions: ["sum", "avg"]
-                }
+                },
+				colors: dataset.attributes.colors
             });
 
             virtualdatasetWeekday= new recline.Model.VirtualDataset({
@@ -90,7 +95,8 @@ root: ../../
                     aggregatedFields: ["totalviewed"],
                     partitions: ["gender"],
                     aggregationFunctions: ["sum", "avg"]
-                }
+                },
+				colors: dataset.attributes.colors
             });
             virtualdatasetHour= new recline.Model.VirtualDataset({
                 dataset: dataset,
@@ -99,16 +105,17 @@ root: ../../
                     aggregatedFields: ["totalviewed"],
                     partitions: ["gender"],
                     aggregationFunctions: ["sum", "avg"]
-                }
+                },
+				colors: dataset.attributes.colors
             });
             virtualdatasetTotal= new recline.Model.VirtualDataset({
-            dataset: dataset,
-            aggregation: {
-            aggregatedFields: ["totalviewed", "price_sum"],
-            aggregationFunctions: ["sum"]
-            }
+				dataset: dataset,
+				aggregation: {
+				aggregatedFields: ["totalviewed", "price_sum"],
+				aggregationFunctions: ["sum"]
+				},
+				colors: dataset.attributes.colors
             });
-
 
             virtualdatasetDay= new recline.Model.VirtualDataset({
                 dataset: dataset,
@@ -117,7 +124,8 @@ root: ../../
                     aggregatedFields: ["totalviewed", "price_sum"],
                     partitions: ["gender"],
                     aggregationFunctions: ["sum", "avg"]
-                }
+                },
+				colors: dataset.attributes.colors
             });
             virtualdatasetDay.queryState.attributes.sort = [{field:"daydate"}];
 			
@@ -127,6 +135,16 @@ root: ../../
             },
             models: [
                 {model: dataset, filters:["filter_daydate"]}
+            ],
+            type: ["filter"]
+        });
+		
+		var action_db2 = new recline.Action({
+            filters: {
+                filter_gender: {type: "list", field: "gender", fieldType: "string"}
+            },
+            models: [
+                {model: dataset, filters:["filter_gender"]}
             ],
             type: ["filter"]
         });
@@ -190,8 +208,8 @@ root: ../../
                     group: "daydate",
 					yLabel: "Total Viewed",
                     seriesValues: ["totalviewed_by_gender_Male_sum", "totalviewed_by_gender_Female_sum"],
-                    colors: ["DarkTurquoise", "DodgerBlue", "LightBlue"],
                     graphType: "lineChart",
+					colors: virtualdatasetDay.attributes.colors,
                     id: "2"
                 },
 				actions: [{
@@ -212,7 +230,7 @@ root: ../../
 					yLabel: "Total Viewed AVG",
                     //seriesNameField: ["gender"],
                     seriesValues: ["totalviewed_by_gender_Male_avg", "totalviewed_by_gender_Female_avg"],
-                    colors: ["DarkTurquoise", "DodgerBlue", "LightBlue"],
+                    colors: virtualdatasetWeekday.attributes.colors,
                     graphType: "multiBarChart",
                     id: "3"
                 }
@@ -229,7 +247,7 @@ root: ../../
 					yLabel: "Total Viewed AVG",
                     //seriesNameField: ["gender"],
                     seriesValues: ["totalviewed_by_gender_Male_avg", "totalviewed_by_gender_Female_avg"],
-                    colors: ["DarkTurquoise", "DodgerBlue", "LightBlue"],
+                    colors: virtualdatasetHour.attributes.colors,
                     graphType: "multiBarChart",
                     id: "4"
                 }
@@ -308,9 +326,25 @@ root: ../../
                     event: ["onFilterValueChanged", "onListItemClicked", "onRemoveFilter"]
                 }]
             });
-
-
             $('#search_container2').append(filter2.el);
+
+            var filter3 = new recline.View.GenericFilter({
+                sourceDataset: dataset,
+				id: 'filterEditor3',
+                label: 'Memory Filters3',
+				sourceFields: [
+								{field: 'gender', controlType: 'legend', fieldType: 'list'}
+							],
+                actions: [{
+                    action: action_db2,
+                    mapping: [
+                        {srcField: "gender", filter: "filter_gender"}
+                    ],
+                    event: ["onLegendItemClicked"]
+                }]
+            });
+            $('#search_container3').append(filter3.el);
+
 
             // var facet = new recline.View.FacetViewer({
 				// model: virtualdatasetAge
