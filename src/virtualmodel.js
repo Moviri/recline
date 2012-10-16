@@ -24,8 +24,11 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
             this.recordCount = null;
             this.queryState = new my.Query();
 
-            this.attributes.dataset.records.bind('add',     function() { self.initializeCrossfilter(); });
-            this.attributes.dataset.records.bind('reset',   function() { self.initializeCrossfilter(); });
+            this.attributes.dataset.bind('query:done', function() { self.initializeCrossfilter(); })
+
+            //this.attributes.dataset.records.bind('add',     function() { self.initializeCrossfilter(); });
+            //this.attributes.dataset.records.bind('reset',   function() { self.initializeCrossfilter(); });
+
             this.queryState.bind('change',                  function() { self.query(); });
             this.queryState.bind('selection:change',        function() { self.selection(); });
 
@@ -140,14 +143,13 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
                                     currentAggregationFunction(
                                         p.partitions[aggregationFunctions[j]][fieldName]["value"],
                                         v[aggregatedFields[i]]);
-
-                                if(p.partitions.count[partitionName] == null) {
-                                    p.partitions.count[partitionName] = {value: 0, partition: partitionValue};
-                                }
-                                else
-                                    p.partitions.count[partitionName]["value"] += 1;
-
                             }
+
+                            if(p.partitions.count[fieldName] == null) {
+                                p.partitions.count[fieldName] = {value: 1, partition: partitionValue};
+                            }
+                            else
+                                p.partitions.count[fieldName]["value"] += 1;
                         }
                     }
 
@@ -259,7 +261,6 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
                 _.each(_.keys(partitionFields), function(d)  {
                     fields.push( {id: d + "_" + aggregationFunctions[j], type: "float", is_partitioned: true, partitionField:partitionFields[d].field, partitionValue: partitionFields[d].value});
                 });
-
 
             }
 

@@ -56,7 +56,12 @@ this.recline.Data = this.recline.Data || {};
 
                     var map = {};
                     for (var j=0;j<part.length;j++) {
-                        map[part[j]] = resultData.partitions.sum[part[j]] / resultData.partitions.count[part[j]];
+                        if(resultData.partitions.sum[part[j]])   {
+                            map[part[j]] = {
+                                value: resultData.partitions.sum[part[j]].value / resultData.partitions.count[part[j]].value,
+                                partition: resultData.partitions.sum[part[j]].partition
+                            };
+                        }
                     }
                     return map;
                 }

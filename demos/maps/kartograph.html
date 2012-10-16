@@ -30,6 +30,29 @@ root: ../../
 
 
 
+
+
+    var dscolor =   new recline.Model.Dataset({
+        records: [
+            {id:0, date: '2011-01-01', gender: "M", y: 1, z: 3, region: 'Trentino', title: 'first', lat:52.56, lon:13.40},
+            {id:1, date: '2011-01-01', gender: "F", y: 1, z: 24, region: 'Toscana', title: 'second', lat:54.97, lon:-1.60},
+            {id:2, date: '2011-01-01', gender: "M", y: 1, z: 100, region: 'Aosta', title: 'first', lat:52.56, lon:13.40},
+            {id:3, date: '2011-01-01', gender: "M", y: 2, z: 5, region: 'Umbria', title: 'first', lat:52.56, lon:13.40},
+            {id:4, date: '2011-01-01', gender: "M", y: 3, z: 3, region: 'Molise', title: 'first', lat:52.56, lon:13.40},
+            {id:5, date: '2011-01-01', gender: "F", y: 4, z: 3, region: 'Trentino', title: 'first', lat:52.56, lon:13.40},
+            {id:6, date: '2011-01-01', gender: "M", y: 5, z: 0, region: 'Trentino', title: 'first', lat:52.56, lon:13.40}
+        ]});
+
+    // 3 ways of init
+    //data: [] -> provides inline dataset
+    //dataset: {dataset: instance, field: "name"}
+    //nothing, will be bound to dataset throw setDataset
+
+    mycolorschema = new recline.Data.ColorSchema({
+        type: "scaleWithDistinctData",
+        colors: ['#F7E1C5', '#6A000B']
+    });
+
     var dataset =   new recline.Model.Dataset({
         records: [
             {id:0, date: '2011-01-01', gender: "M", y: 1, z: 3, region: 'Trentino', title: 'first', lat:52.56, lon:13.40},
@@ -39,7 +62,6 @@ root: ../../
             {id:4, date: '2011-01-01', gender: "M", y: 3, z: 3, region: 'Molise', title: 'first', lat:52.56, lon:13.40},
             {id:5, date: '2011-01-01', gender: "F", y: 4, z: 3, region: 'Trentino', title: 'first', lat:52.56, lon:13.40},
             {id:6, date: '2011-01-01', gender: "M", y: 5, z: 0, region: 'Trentino', title: 'first', lat:52.56, lon:13.40}
-
         ],
         // let's be really explicit about fields
         // Plus take opportunity to set date to be a date field and set some labels
@@ -53,9 +75,11 @@ root: ../../
             {id: 'title', 'label': 'Title'},
             {id: 'lat'},
             {id: 'lon'}
-        ]});
+        ],
+        colorSchema: [{field: "region", schema: mycolorschema}]
+    });
 
-
+    mycolorschema.setDataset(dataset, "region");
 
     vdataset = new recline.Model.VirtualDataset({
         dataset: dataset,
@@ -64,9 +88,11 @@ root: ../../
             dimensions: ["region"],
             aggregatedFields: ["y"],
             partitions: ["gender"],
-            aggregationFunctions: ["sum"]
+            aggregationFunctions: ["sum", "avg"]
         }
     });
+
+
 
     var $el = $('#mygrid');
     var grid = new recline.View.Grid({

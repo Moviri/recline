@@ -86,6 +86,7 @@ my.Dataset = Backbone.Model.extend({
 
         }
 
+        // if format is desclared is updated
         if(self.attributes.fieldsFormat) {
         // if format is declared in dataset properties merge it;
         _.each(self.attributes.fieldsFormat, function(d) {
@@ -94,6 +95,16 @@ my.Dataset = Backbone.Model.extend({
                 field.format = d.format;
         })
         }
+
+        // assignment of color schema to fields
+        if(self.attributes.colorSchema) {
+            _.each(self.attributes.colorSchema, function(d) {
+                var field = _.find(out.fields, function(f) {return d.field === f.id });
+                if(field != null)
+                    field.colorSchema = d.schema;
+            })
+        }
+
 
         self.fields.reset(out.fields, {renderer: recline.Data.Renderers});
 
@@ -221,7 +232,7 @@ my.Dataset = Backbone.Model.extend({
     }
     var actualQuery = this.queryState.toJSON();
 
-    console.log("Query on model ]" + self.attributes.id + "] query [" + JSON.stringify(actualQuery) + "]");
+    console.log("Query on model [" + self.attributes.id + "] query [" + JSON.stringify(actualQuery) + "]");
 
     this._store.query(actualQuery, this.toJSON())
       .done(function(queryResult) {
@@ -390,6 +401,18 @@ my.Record = Backbone.Model.extend({
     return val;
   },
 
+    getFieldColor: function(field) {
+        var val = this.get(field.id);
+        if(!field.attributes.colorSchema)
+            return null;
+
+        if(field.attributes.is_partitioned)
+            return field.attributes.colorSchema.getColorFor(field.attributes.partitionValue);
+        else
+            return field.attributes.colorSchema.getColorFor( this.get(field.id));
+
+    },
+
   isRecordSelected: function() {
     var self=this;
       return self["is_selected"];
@@ -446,7 +469,8 @@ my.Field = Backbone.Model.extend({
     is_derived: false,
     is_partitioned: false,
     partitionValue: null,
-    partitionField: null
+    partitionField: null,
+    colorSchema: null
   },
   // ### initialize
   //
