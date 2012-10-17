@@ -51,14 +51,14 @@
       return "";
     }
 	
-    var colors = ["DarkTurquoise", "DodgerBlue", "lightblue"];
+    var colors = dataContext.schema_colors;
 	var max = parseFloat(values[2]);
 	var val1 = Math.abs(parseFloat(values[0]))/max*50;
 	var val2 = Math.abs(parseFloat(values[1]))/max*50;
 	
 	var bar0 = "<span class='percent-complete-bar' style='background:transparent;width:" + (50 - val1) + "%'></span>";
-	var bar1 = "<span class='percent-complete-bar' style='background:" + colors[1] + ";width:" + val1 + "%'></span>";
-	var bar2 = "<span class='percent-complete-bar' style='background:" + colors[2] + ";width:" + val2 + "%'></span>";
+	var bar1 = "<span class='percent-complete-bar' style='background:" + colors[0] + ";width:" + val1 + "%'></span>";
+	var bar2 = "<span class='percent-complete-bar' style='background:" + colors[1] + ";width:" + val2 + "%'></span>";
 
     return bar0+bar1+bar2;
   }

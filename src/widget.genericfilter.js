@@ -321,7 +321,7 @@ my.GenericFilter = Backbone.View.extend({
 	
     tmplData.fields = this._sourceDataset.fields.toJSON();
 	tmplData.records = _.pluck(this._sourceDataset.records.models, "attributes");
-	tmplData.colors = this._sourceDataset.attributes.colors;
+	//tmplData.colorSchemas = this._sourceDataset.attributes.colorSchema;
 	tmplData.filterLabel = this.filterDialogLabel;
 	tmplData.dateConvert = self.dateConvert;
     tmplData.filterRender = function() {
@@ -329,8 +329,10 @@ my.GenericFilter = Backbone.View.extend({
 	  this.tmpValues = [];
 	  // add value list to selected filter or templating of record values will not work
 	  if (this.controlType === 'list' || this.controlType.indexOf('slider') >= 0 || this.controlType.indexOf('legend') >= 0)
-		this.tmpValues = _.uniq(_.pluck(tmplData.records, this.field));
-		
+	  {
+	      this.facet = self._sourceDataset.getFacetByFieldId(this.field);
+		  this.tmpValues = _.pluck(this.facet.attributes.terms, "term"); // _.uniq(_.pluck(tmplData.records, this.field));
+	  }
 	  this.values = new Array();
 	  if (this.start)
 		this.startDate = tmplData.dateConvert(this.start);
@@ -355,6 +357,16 @@ my.GenericFilter = Backbone.View.extend({
 			  this.origLegend = this.tmpValues;
 			  this.legend = this.origLegend;
 		  }
+//		  // locate correct colorschema for current field
+//		  var colorSchema = null
+//		  for (var i in tmplData.colorSchemas)
+//		  {
+//			  if (tmplData.colorSchemas[i].field == this.field)
+//			  {
+//				  colorSchema = tmplData.colorSchemas[i].schema;
+//				  break;
+//			  }
+//		  }
 		  this.tmpValues = this.origLegend; 
 		  var legendSelection = this.legend;
 		  for (var i in this.tmpValues)
@@ -364,7 +376,7 @@ my.GenericFilter = Backbone.View.extend({
 			if (legendSelection.indexOf(v) < 0)
 				notSelected = "not-selected";
 			
-			this.values.push({val: v, notSelected: notSelected, color: tmplData.colors[i % tmplData.colors.length]});
+			this.values.push({val: v, notSelected: notSelected, color: this.facet.attributes.terms[i].color});
 		  }		
 	  }
 	  else

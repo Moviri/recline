@@ -288,7 +288,6 @@ my.Dataset = Backbone.Model.extend({
       self.facets.reset(facets);
     }
   },
-
     addColorsToTerms: function(field, terms) {
         var self=this;
         _.each(terms, function(t) {
@@ -302,8 +301,6 @@ my.Dataset = Backbone.Model.extend({
             }
             });
         },
-
-
     selection: function(queryObj) {
         var self = this;
 
@@ -381,7 +378,12 @@ my.Dataset = Backbone.Model.extend({
       });
     }
     return backend;
-  }
+  },
+  getFacetByFieldId: function(fieldId) {
+  	  return _.find(this.facets.models, function(facet) {
+  		  return facet.id == fieldId;
+  	  });
+  }  
 });
 
 
@@ -433,13 +435,13 @@ my.Record = Backbone.Model.extend({
 
     getFieldColor: function(field) {
         var val = this.get(field.id);
-        if(!field.colorSchema)
+        if(!field.attributes.colorSchema)
             return null;
 
-        if(field.is_partitioned)
-            return field.colorSchema.getColorFor(field.partitionValue);
+        if(field.attributes.is_partitioned)
+            return field.attributes.colorSchema.getColorFor(field.attributes.partitionValue);
         else
-            return field.colorSchema.getColorFor( this.get(field.id));
+            return field.attributes.colorSchema.getColorFor( this.get(field.id));
 
     },
 
@@ -826,8 +828,6 @@ my.Query = Backbone.Model.extend({
     this.set({facets: facets}, {silent: true});
 
   }
-
-
 });
 
 

@@ -527,6 +527,11 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
 
 
         },
+        getFacetByFieldId: function(fieldId) {
+      	  return _.find(this.facets.models, function(facet) {
+      		  return facet.id == fieldId;
+      	  });
+        }, 
 
         toTemplateJSON: function() {
             var data = this.records.toJSON();

@@ -250,7 +250,7 @@ this.recline.View = this.recline.View || {};
 
       var self = this;
       var series = [];
-      var colors = this.state.get("colors") ;
+      //var colors = this.state.get("colors") ;
       var seriesNameField = self.model.fields.get(this.state.attributes.seriesNameField) ;
       var seriesValues = self.model.fields.get(this.state.attributes.seriesValues);
       if(seriesValues == null)
@@ -269,7 +269,6 @@ this.recline.View = this.recline.View || {};
 
       var seriesTmp = {};
 
-      var color = 0;
 
       // series are calculated on data, data should be analyzed in order to create series
      if(seriesNameField != null) {
@@ -283,8 +282,7 @@ this.recline.View = this.recline.View || {};
              // verify if the serie is already been initialized
              if(series[key] == null ) { tmpS = seriesTmp[key]  }
              else {
-                 tmpS = {key: key, values: [], color:  colors[color]}
-                 color=color+1;
+                 tmpS = {key: key, values: [], color: doc.getFieldColor(seriesValues)}
              };
 
 
@@ -306,7 +304,6 @@ this.recline.View = this.recline.View || {};
          // todo this has to be merged with above, only one branch has to be present
          //console.log(seriesValues);
        _.each(seriesValues, function(field) {
-           color=color+1;
 
           var points = [];
 
@@ -324,7 +321,7 @@ this.recline.View = this.recline.View || {};
                     xAxisIsDate = true;
                 }
 
-                points.push({x: x, y: y, record: doc});
+                points.push({x: x, y: y, record: doc, color: doc.getFieldColor(yfield)});
 
               }
               catch(err) {
@@ -333,7 +330,7 @@ this.recline.View = this.recline.View || {};
           });
 
            if(points.length>0)
-            series.push({values: points, key: field, color:  colors[color]});
+            series.push({values: points, key: field, color: points[0].color });
        });
      }
 
