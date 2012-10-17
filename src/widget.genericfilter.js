@@ -288,7 +288,7 @@ my.GenericFilter = Backbone.View.extend({
 		for (var k in this.sourceFields)
 			this.addNewFilterControl(this.sourceFields[k]);
 
-    this._sourceDataset.records.bind('reset', this.render);
+    this._sourceDataset.bind('query:done', this.render);
     this._sourceDataset.queryState.bind('selection:done', this.render);
   },
 

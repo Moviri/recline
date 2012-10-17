@@ -280,11 +280,29 @@ my.Dataset = Backbone.Model.extend({
     if (queryResult.facets) {
       var facets = _.map(queryResult.facets, function(facetResult, facetId) {
         facetResult.id = facetId;
-        return new my.Facet(facetResult);
+        var result =  new my.Facet(facetResult);
+        self.addColorsToTerms(facetId, result.attributes.terms);
+
+        return result;
       });
       self.facets.reset(facets);
     }
   },
+
+    addColorsToTerms: function(field, terms) {
+        var self=this;
+        _.each(terms, function(t) {
+
+            // assignment of color schema to fields
+            if(self.attributes.colorSchema) {
+                _.each(self.attributes.colorSchema, function(d) {
+                    if(d.field===field)
+                        t.color = d.schema.getColorFor(t.term);
+                })
+            }
+            });
+        },
+
 
     selection: function(queryObj) {
         var self = this;

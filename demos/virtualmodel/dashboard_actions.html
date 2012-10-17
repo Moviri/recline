@@ -64,14 +64,23 @@ root: ../../
         var url = "http://192.168.100.133:8380/cwwh-iwal-war/cw/wh/ds/AudDemoByGender";
         //var url ="http://localhost/AudDemoByGender.xml";
 
-       var  dataset = new recline.Model.Dataset({
+
+        colorSchema = new recline.Data.ColorSchema({
+            type: "scaleWithDistinctData",
+            colors: ["#0000FF", "#FF0000"]
+        });
+
+        var  dataset = new recline.Model.Dataset({
             url: url,
             backend: 'jsonp',
             id: "AudDemoByGender",
             fieldLabels: [{id: "age", label: "age_label"}, {id: "gender", label: "gender_label"}],
             fieldsFormat: [{id: "age", format: "currency_euro"}],
-            inMemoryQueryFields: ["age", "dayhour"]
+            inMemoryQueryFields: ["age", "dayhour"],
+
        });
+
+        colorSchema.setDataset(dataset, "gender");
 
 		dataset.bind('query:start', function() { document.getElementById("loadingImage").style.display = "block"; });
 

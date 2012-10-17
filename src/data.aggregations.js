@@ -30,6 +30,13 @@ this.recline.Data = this.recline.Data || {};
         min         : function () {}
     };
 
+    my.Aggregations.resultingDataType = {
+        sum         : function (original) { return original },
+        avg         : function (original) { return "float"},
+        max         : function (original) { return original},
+        min         : function (original) { return original}
+    },
+
     my.Aggregations.finalizeFunctions = {
         sum         : function () {},
         avg         : function (resultData, aggregatedFields, partitionsFields) {

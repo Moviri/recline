@@ -206,6 +206,7 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
         },
 
         updateStore: function(results) {
+            var self=this;
             var reducedResult = results.reducedResult;
             // partitionFields = {fieldName: fieldValue}
             var partitionFields = results.partitionFields;
@@ -253,13 +254,33 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
                 else
                     tempValue = tmpField[aggregationFunctions[j]];
 
+                // todo type should be determined by aggregation function
                 for (var x in tempValue) {
-                    fields.push( {id: x + "_" + aggregationFunctions[j], type: "float"});
+                    var originalFieldAttributes = this.attributes.dataset.fields.get(x).attributes;
+                    var newType = recline.Data.Aggregations.resultingDataType[aggregationFunctions[j]](originalFieldAttributes.type);
+
+                    fields.push( {
+                        id: x + "_" + aggregationFunctions[j],
+                        type: newType,
+                        is_partitioned: false,
+                        colorSchema: originalFieldAttributes.colorSchema
+                    });
                 }
 
                 // add partition fields
                 _.each(_.keys(partitionFields), function(d)  {
-                    fields.push( {id: d + "_" + aggregationFunctions[j], type: "float", is_partitioned: true, partitionField:partitionFields[d].field, partitionValue: partitionFields[d].value});
+                    var originalFieldAttributes = self.attributes.dataset.fields.get(partitionFields[d].field).attributes;
+                    var newType = recline.Data.Aggregations.resultingDataType[aggregationFunctions[j]](originalFieldAttributes.type);
+
+                    fields.push( {
+                        id: d + "_" + aggregationFunctions[j],
+                        type: newType,
+                        is_partitioned: true,
+                        partitionField: partitionFields[d].field,
+                        partitionValue: partitionFields[d].value,
+                        colorSchema: originalFieldAttributes.colorSchema
+                        }
+                    );
                 });
 
             }
@@ -268,12 +289,13 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
             if(dimensions != null) {
                 fields.push( {id: "dimension"});
                 for(var i=0;i<dimensions.length;i++){
-                    var originalFieldAttributes = this.attributes.dataset.fields.get(dimensions[i]).attributes;;
+                    var originalFieldAttributes = this.attributes.dataset.fields.get(dimensions[i]).attributes;
                     fields.push( {
                         id: dimensions[i],
                         type: originalFieldAttributes.type,
                         label: originalFieldAttributes.label,
-                        format: originalFieldAttributes.format
+                        format: originalFieldAttributes.format,
+                        colorSchema: originalFieldAttributes.colorSchema
                     });
 
                 }
