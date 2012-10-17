@@ -461,7 +461,11 @@ my.GenericFilter = Backbone.View.extend({
 		if (!$(this).hasClass("not-selected"))
 			listaValori.push($(this).attr("myValue"));
 	});
+		
 	this.findActiveFilterByField(fieldId).legend = listaValori;
+
+	if (listaValori.length == 0)
+		listaValori = null
 	
 	this.doAction("onLegendItemClicked", fieldId, listaValori, "add");
   },

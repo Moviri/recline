@@ -70,12 +70,19 @@ root: ../../
             backend: 'jsonp',
             id: "AudDemoByGender",
             fieldLabels: [{id: "age", label: "Age (bin)"}, {id: "gender", label: "Gender"}],
-            inMemoryQueryFields: ["age", "gender"],
+            inMemoryQueryFields: ["age", "gender"]//,
 			colors: ["DarkTurquoise", "DodgerBlue", "LightBlue"]
         });
+        
+        colorSchema = new recline.Data.ColorSchema({   
+            type: "scaleWithDistinctData",   
+            colors: ["DarkTurquoise", "DodgerBlue"],   
+            dataset: {dataset: dataset, field: "gender"}   
+        });  
 
-		dataset.bind('query:done query:fail', function() { document.getElementById("loadingImage").style.display = "none";resizeAllElems(); });
-		dataset.bind('query:start', function() { document.getElementById("loadingImage").style.display = "block"; });
+   		dataset.bind('query:start', function() { document.getElementById("loadingImage").style.display = "block"; });
+
+   		dataset.queryState.addFacet("gender");
 
            virtualdatasetAge = new recline.Model.VirtualDataset({
                 dataset: dataset,
@@ -88,7 +95,7 @@ root: ../../
 				colors: dataset.attributes.colors
             });
 
-            virtualdatasetWeekday= new recline.Model.VirtualDataset({
+   		virtualdatasetWeekday= new recline.Model.VirtualDataset({
                 dataset: dataset,
                 aggregation: {
                     dimensions: ["dayofweek"],
@@ -96,7 +103,7 @@ root: ../../
                     partitions: ["gender"],
                     aggregationFunctions: ["sum", "avg"]
                 },
-				colors: dataset.attributes.colors
+				colors: colorSchema.getRecordsArray()
             });
             virtualdatasetHour= new recline.Model.VirtualDataset({
                 dataset: dataset,
@@ -128,6 +135,8 @@ root: ../../
 				colors: dataset.attributes.colors
             });
             virtualdatasetDay.queryState.attributes.sort = [{field:"daydate"}];
+
+            virtualdatasetDay.bind('query:done query:fail', function() { document.getElementById("loadingImage").style.display = "none";resizeAllElems(); });
 			
 		var action_db = new recline.Action({
             filters: {
@@ -165,6 +174,8 @@ root: ../../
          for(var i=0;i<filters.length;i++)
              dataset.queryState.addFilter(filters[i]);
 
+        // dataset.queryState.facets = [{terms: {field: "gender"}}];
+         
         dataset.fetch(); // needed to populate filter list
 		
            var $el = $('#mygrid');
@@ -358,6 +369,7 @@ root: ../../
 		$(window).resize(resizeAllElems);
 		
 		function resizeAllElems() {
+			//console.log("resize all elems")
 			_.each([{el:"mygrid", obj:grid}, {el:"mygraph2", obj:graph2}, {el:"mygraph3", obj:graph3}, {el:"mygraph4", obj:graph4}], function(eo) { 
 							resizeElem(eo.el, eo.obj)
 					});
