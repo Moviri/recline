@@ -95,6 +95,8 @@ root: ../../
 				colors: dataset.attributes.colors
             });
 
+        virtualdatasetAge.queryState.addFacet("age");
+
    		virtualdatasetWeekday= new recline.Model.VirtualDataset({
                 dataset: dataset,
                 aggregation: {

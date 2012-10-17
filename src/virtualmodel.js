@@ -21,6 +21,7 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
             this.backend = recline.Backend.Memory;
             this.fields = new my.FieldList();
             this.records = new my.RecordList();
+            this.facets = new my.FacetList();
             this.recordCount = null;
             this.queryState = new my.Query();
 
@@ -38,6 +39,7 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
 
             // TODO verify if is better to use a new backend (crossfilter) to manage grouping and filtering instead of using it inside the model
             // TODO OPTIMIZATION use a structure for the reduce function that doesn't need any translation to records/arrays
+            // TODO USE crossfilter as backend memory
         },
         
         getRecords: function(type) {
@@ -509,6 +511,20 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
             });
 
             self.records.reset(docs);
+
+            if (queryResult.facets) {
+                var facets = _.map(queryResult.facets, function(facetResult, facetId) {
+                    facetResult.id = facetId;
+                    var result =  new my.Facet(facetResult);
+
+                    // todo set color to facet
+                    //self.addColorsToTerms(facetId, result.attributes.terms);
+
+                    return result;
+                });
+                self.facets.reset(facets);
+            }
+
 
         },
 

@@ -97,6 +97,8 @@ root: ../../
                 fieldsFormat: [{id: "price_sum_avg", format: "currency_euro"}]
             });
 
+        virtualdatasetAge.queryState.addFacet("age");
+
             virtualdatasetWeekday= new recline.Model.VirtualDataset({
                 dataset: dataset,
                 name: "virtualdatasetWeekday",
