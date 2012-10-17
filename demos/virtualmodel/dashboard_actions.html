@@ -136,19 +136,10 @@ root: ../../
         for(var i=0;i<filters.length;i++)
             dataset.queryState.addFilter(filters[i]);
 
-        dataset.queryState.addFacet("gender");
-        /*
-        dataset.queryState.attributes["facets"] = [
-            {
-                terms:
-                {
-                    field: "gender"
-                }
-            }
-        ];*/
+        dataset.queryState.addFacetNoEvent("gender");
 
-        dataset.fetch(); // needed to populate filter list
-		
+        dataset.fetch();
+
            var $el = $('#mygrid');
 		   var grid = new recline.View.SlickGrid({
                model: virtualdatasetAge,
