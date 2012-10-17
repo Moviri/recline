@@ -774,6 +774,12 @@ my.Query = Backbone.Model.extend({
   //
   // See <http://www.elasticsearch.org/guide/reference/api/search/facets/>
   addFacet: function(fieldId) {
+      addFacetNoEvent(fieldId);
+      this.trigger('facet:add', this);
+    },
+
+
+  addFacetNoEvent: function(fieldId) {
     var facets = this.get('facets');
     // Assume id and fieldId should be the same (TODO: this need not be true if we want to add two different type of facets on same field)
     if (_.contains(_.keys(facets), fieldId)) {
@@ -783,9 +789,15 @@ my.Query = Backbone.Model.extend({
       terms: { field: fieldId }
     };
     this.set({facets: facets}, {silent: true});
-    this.trigger('facet:add', this);
+
   },
-  addHistogramFacet: function(fieldId) {
+
+    addHistogramFacet: function(fieldId){
+        addHistogramFacet(fieldId);
+        this.trigger('facet:add', this);
+    },
+
+  addHistogramFacetNoEvent: function(fieldId) {
     var facets = this.get('facets');
     facets[fieldId] = {
       date_histogram: {
@@ -794,8 +806,10 @@ my.Query = Backbone.Model.extend({
       }
     };
     this.set({facets: facets}, {silent: true});
-    this.trigger('facet:add', this);
+
   }
+
+
 });
 
 

@@ -22,12 +22,6 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
 
         console.log("Fetching data structure " + dataset.url);
 
-        if(dataset.inMemoryQueryFields == null) {
-            dataset.inMemoryQueryFields = [];
-       }
-        else
-            my.inMemoryQuery = true;
-
         var data = {onlydesc: "true"};
         return requestJson(dataset, data);
 
@@ -37,7 +31,6 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
 
         var tmpQueryStateInMemory  = new recline.Model.Query();
         var tmpQueryStateOnBackend = new recline.Model.Query();
-
 
 
         if(dataset.inMemoryQueryFields == null && !queryObj.facets) {
@@ -61,24 +54,29 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
 
         var changedOnBackend = false;
         var changedOnMemory = false;
+        var changedFacets = false;
 
         // verify if filters on backend are changed since last query
-        if (!_.isEqual(my.queryStateOnBackend.attributes.filters, tmpQueryStateOnBackend.attributes.filters)) {
+        if (my.firstFetchExecuted == null ||
+            !_.isEqual(my.queryStateOnBackend.attributes.filters, tmpQueryStateOnBackend.attributes.filters)) {
             my.queryStateOnBackend = tmpQueryStateOnBackend;
             changedOnBackend = true;
+            my.firstFetchExecuted = true;
         }
 
         // verify if filters on memory are changed since last query
-        if(queryObj.facets ||
-            (dataset.inMemoryQueryFields.length> 0
+        if((dataset.inMemoryQueryFields.length> 0
             && !_.isEqual(my.queryStateInMemory.attributes.filters, tmpQueryStateInMemory.attributes.filters))
             )
         {
             my.queryStateInMemory = tmpQueryStateInMemory;
-            if(queryObj.facets)
-                my.queryStateInMemory.attributes.facets = queryObj.facets;
-
             changedOnMemory = true;
+        }
+
+        // verify if facets are changed
+        if(queryObj.facets && !_.isEqual(my.queryStateInMemory.attributes.facets, queryObj.facets)) {
+            my.queryStateInMemory.attributes.facets = queryObj.facets;
+            changedFacets = true;
         }
 
 

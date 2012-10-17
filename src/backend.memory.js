@@ -58,10 +58,6 @@ this.recline.Backend.Memory = this.recline.Backend.Memory || {};
       return dfd.promise();
     },
 
-    /*this._applySelections = function(records, fields, selections) {
-        recline.data.Filters.applySelectionsOnData(selections, data);
-    }*/
-
     this.query = function(queryObj) {
       var dfd = $.Deferred();
       var numRows = queryObj.size || this.data.length;
