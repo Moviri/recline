@@ -136,6 +136,8 @@ root: ../../
         for(var i=0;i<filters.length;i++)
             dataset.queryState.addFilter(filters[i]);
 
+        dataset.queryState.addFacet("gender");
+        /*
         dataset.queryState.attributes["facets"] = [
             {
                 terms:
@@ -143,7 +145,7 @@ root: ../../
                     field: "gender"
                 }
             }
-        ];
+        ];*/
 
         dataset.fetch(); // needed to populate filter list
 		
