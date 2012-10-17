@@ -415,13 +415,13 @@ my.Record = Backbone.Model.extend({
 
     getFieldColor: function(field) {
         var val = this.get(field.id);
-        if(!field.attributes.colorSchema)
+        if(!field.colorSchema)
             return null;
 
-        if(field.attributes.is_partitioned)
-            return field.attributes.colorSchema.getColorFor(field.attributes.partitionValue);
+        if(field.is_partitioned)
+            return field.colorSchema.getColorFor(field.partitionValue);
         else
-            return field.attributes.colorSchema.getColorFor( this.get(field.id));
+            return field.colorSchema.getColorFor( this.get(field.id));
 
     },
 
@@ -774,7 +774,7 @@ my.Query = Backbone.Model.extend({
   //
   // See <http://www.elasticsearch.org/guide/reference/api/search/facets/>
   addFacet: function(fieldId) {
-      addFacetNoEvent(fieldId);
+      this.addFacetNoEvent(fieldId);
       this.trigger('facet:add', this);
     },
 
