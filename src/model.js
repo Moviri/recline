@@ -381,7 +381,9 @@ my.Dataset = Backbone.Model.extend({
       });
     }
     return backend;
-  }
+  },
+
+    isFieldPartitioned: function(field) { return false }
 });
 
 
@@ -431,15 +433,16 @@ my.Record = Backbone.Model.extend({
     return val;
   },
 
+
     getFieldColor: function(field) {
-        var val = this.get(field.id);
-        if(!field.colorSchema)
+        if(!field.attributes.colorSchema)
             return null;
 
-        if(field.is_partitioned)
-            return field.colorSchema.getColorFor(field.partitionValue);
+        if(field.attributes.is_partitioned) {
+            return field.attributes.colorSchema.getTwoDimensionalColor(field.attributes.partitionValue, this.getFieldValueUnrendered(field) );
+        }
         else
-            return field.colorSchema.getColorFor( this.get(field.id));
+            return field.attributes.colorSchema.getColorFor( this.getFieldValueUnrendered(field));
 
     },
 
@@ -498,9 +501,19 @@ my.Field = Backbone.Model.extend({
     format: null,
     is_derived: false,
     is_partitioned: false,
-    partitionValue: null,
-    partitionField: null,
     colorSchema: null
+  },
+  virtualModelFields: {
+      label: null,
+      type: 'string',
+      format: null,
+      is_derived: false,
+      is_partitioned: false,
+      partitionValue: null,
+      partitionField: null,
+      originalField: null,
+      colorSchema: null,
+      aggregationFunction: null
   },
   // ### initialize
   //
@@ -523,6 +536,13 @@ my.Field = Backbone.Model.extend({
       this.renderer = this.defaultRenderers[this.get('type')];
     }
     this.facets = new my.FacetList();
+  },
+  getColorForPartition: function() {
+
+      if(!this.attributes.colorSchema || !this.attributes.is_partitioned)
+          return null;
+
+      return this.attributes.colorSchema.getColorFor(this.attributes.partitionValue);
   },
   defaultRenderers: {
     object: function(val, field, doc) {

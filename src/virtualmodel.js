@@ -130,7 +130,8 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
                         for(x=0;x<partitions.length;x++){
                             var partitionName = partitions[x];
                             var partitionValue = v[partitions[x]];
-                            var fieldName = aggregatedFields[i] + "_by_" + partitionName + "_" + partitionValue;
+                            var aggregatedField = aggregatedFields[i];
+                            var fieldName = aggregatedField + "_by_" + partitionName + "_" + partitionValue;
 
 
                             // for each aggregation function evaluate results
@@ -138,8 +139,16 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
                                 var currentAggregationFunction = this.recline.Data.Aggregations.aggregationFunctions[aggregationFunctions[j]];
 
                                 if( p.partitions[aggregationFunctions[j]][fieldName] == null)  {
-                                    p.partitions[aggregationFunctions[j]][fieldName] = {value: null, partition: partitionValue};
-                                    partitionFields[fieldName] = {field: partitionName, value: partitionValue}; // i need partition name but also original field value
+                                    p.partitions[aggregationFunctions[j]][fieldName] = {
+                                        value: null,
+                                        partition: partitionValue,
+                                        originalField: aggregatedField,
+                                        aggregationFunction: currentAggregationFunction};
+                                    partitionFields[fieldName] = {
+                                        field: partitionName,
+                                        value: partitionValue,
+                                        originalField: aggregatedField,
+                                        aggregationFunction: currentAggregationFunction}; // i need partition name but also original field value
                                 }
                                 p.partitions[aggregationFunctions[j]][fieldName]["value"] =
                                     currentAggregationFunction(
@@ -148,7 +157,12 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
                             }
 
                             if(p.partitions.count[fieldName] == null) {
-                                p.partitions.count[fieldName] = {value: 1, partition: partitionValue};
+                                p.partitions.count[fieldName] = {
+                                    value: 1,
+                                    partition: partitionValue,
+                                    originalField: aggregatedField,
+                                    aggregationFunction: "count"
+                                };
                             }
                             else
                                 p.partitions.count[fieldName]["value"] += 1;
@@ -265,7 +279,9 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
                         id: x + "_" + aggregationFunctions[j],
                         type: newType,
                         is_partitioned: false,
-                        colorSchema: originalFieldAttributes.colorSchema
+                        colorSchema: originalFieldAttributes.colorSchema,
+                        originalField: x,
+                        aggregationFunction: aggregationFunctions[j]
                     });
                 }
 
@@ -275,12 +291,14 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
                     var newType = recline.Data.Aggregations.resultingDataType[aggregationFunctions[j]](originalFieldAttributes.type);
 
                     fields.push( {
-                        id: d + "_" + aggregationFunctions[j],
-                        type: newType,
-                        is_partitioned: true,
-                        partitionField: partitionFields[d].field,
-                        partitionValue: partitionFields[d].value,
-                        colorSchema: originalFieldAttributes.colorSchema
+                            id: d + "_" + aggregationFunctions[j],
+                            type: newType,
+                            is_partitioned: true,
+                            partitionField: partitionFields[d].field,
+                            partitionValue: partitionFields[d].value,
+                            colorSchema: originalFieldAttributes.colorSchema,  // the schema is the one used to specify partition
+                            originalField: partitionFields[d].originalField,
+                            aggregationFunction: aggregationFunctions[j]
                         }
                     );
                 });
@@ -560,8 +578,34 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
                 dfd.resolve(queryResult);
             });
             return dfd.promise();
+        },
+
+        // Retrieve the list of partitioned field for the specified aggregated field
+        getPartitionedFields: function(fieldName) {
+            var field = this.fields.get(fieldName);
+
+            var fields = _.filter(this.fields.models, function(d) {
+               return (
+                   d.attributes.aggregationFunction == field.attributes.aggregationFunction
+                   && d.attributes.originalField == field.attributes.originalField
+                   );
+            });
+
+            if(fields == null)
+                field = [];
+
+            fields.push(field);
+
+            return fields;
+
+        },
+
+        isFieldPartitioned: function(fieldName) {
+          return  this.fields.get(fieldName).attributes.aggregationFunction
+              && this.attributes.aggregation.partitions;
         }
-    });
+
+});
 
 
 

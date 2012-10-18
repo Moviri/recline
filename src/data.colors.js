@@ -9,6 +9,8 @@ this.recline.Data.ColorSchema = this.recline.Data.ColorSchema || {};
             Backbone.Model.prototype.constructor.apply(this, arguments);
         },
 
+
+        //TODO REMOVE DUPLICATE FUNCTIONS
         // ### initialize
         initialize: function() {
             var self=this;
@@ -17,8 +19,16 @@ this.recline.Data.ColorSchema = this.recline.Data.ColorSchema || {};
             if(this.attributes.data) {
                 var data = this.attributes.data;
                 self._generateLimits(data);
-            } else if(this.attributes.dataset != null) {
+            } else if(this.attributes.dataset)
+                { this.bindToDataset();}
 
+            if(this.attributes.twoDimensionalVariation) {
+                if(this.attributes.data) {
+                    var data = this.attributes.twoDimensionalVariation.data;
+                    self._generateVariationLimits(data);
+                }else if(this.attributes.twoDimensionalVariation.dataset)  {
+                    this.bindToVariationDataset();
+                }
             }
         },
 
@@ -27,6 +37,14 @@ this.recline.Data.ColorSchema = this.recline.Data.ColorSchema || {};
             self.attributes.dataset.dataset.records.bind('reset',   function() { self._generateFromDataset(); });
             if(self.attributes.dataset.dataset.records.models.length > 0) {
                 self._generateFromDataset();
+            }
+        },
+
+        bindToVariationDataset: function() {
+            var self=this;
+            self.attributes.twoDimensionalVariation.dataset.dataset.records.bind('reset',   function() { self._generateFromVariationDataset(); });
+            if(self.attributes.twoDimensionalVariation.dataset.dataset.records.models.length > 0) {
+                self._generateFromVariationDataset();
             }
         },
 
@@ -43,12 +61,26 @@ this.recline.Data.ColorSchema = this.recline.Data.ColorSchema || {};
             self.bindToDataset();
         },
 
+        setVariationDataset: function(ds, field) {
+            var self=this;
+            self.attributes.twoDimensionalVariation.dataset = {dataset: ds, field: field};
+
+            self.bindToVariationDataset();
+        },
+
         _generateFromDataset: function() {
             var self=this;
-            var data =  this.getRecordsArray();
+            var data =  this.getRecordsArray(self.attributes.dataset);
             self._generateLimits(data);
-            console.log("generated");
-            console.log(self);
+
+        },
+
+        _generateFromVariationDataset: function() {
+            var self=this;
+            var data =  this.getRecordsArray(self.attributes.twoDimensionalVariation.dataset);
+            self._generateVariationLimits(data);
+
+
         },
 
         _generateLimits: function(data) {
@@ -71,26 +103,71 @@ this.recline.Data.ColorSchema = this.recline.Data.ColorSchema || {};
             }
         },
 
-        getColorFor: function(value) {
+        _generateVariationLimits: function(data) {
+            var self=this;
+            self.variationLimits = this.limits["minMax"](data);
+        },
 
+        getColorFor: function(fieldValue) {
+            var self=this;
             if(this.schema == null)
                 throw "data.colors.js: colorschema not yet initialized, datasource not fetched?"
 
-            var self=this;
-            return this.schema.getColor(self.getFieldValue(value)) ;
+
+            return this.schema.getColor(this.getFieldHash(fieldValue)) ;
         },
 
-        getRecordsArray: function() {
+        getTwoDimensionalColor: function(startingvalue, variation) {
+            if(this.schema == null)
+                throw "data.colors.js: colorschema not yet initialized, datasource not fetched?"
+
+            if(this.attributes.twoDimensionalVariation == null)
+                return this.getColorFor(startingvalue);
+
+            var endColor = '#000000';
+            if(this.attributes.twoDimensionalVariation.type == "toLight")
+                endColor = '#ffffff';
+
+
             var self=this;
-            var selfds = self.attributes.dataset;
-            var ret = []
-            _.each(selfds.dataset.records.models, function(d) {
-                ret.push(self.getFieldValue(d.attributes[selfds.field]));
+
+            var tempSchema = new chroma.ColorScale({
+                colors: [self.getColorFor(startingvalue), endColor],
+                limits: self.variationLimits,
+                mode: 'hsl'
             });
+
+            return tempSchema.getColor(variation);
+
+        },
+
+        getRecordsArray: function(dataset) {
+            var self=this;
+            var ret = [];
+
+            if(dataset.dataset.isFieldPartitioned(dataset.field))   {
+                var fields = dataset.dataset.getPartitionedFields(dataset.field);
+            _.each(dataset.dataset.records.models, function(d) {
+                _.each(fields, function (field) {
+                    ret.push(self.getFieldHash(d.attributes[field.id]));
+                });
+            });
+            }
+            else{
+                var  fields = [dataset.field];;
+                _.each(dataset.dataset.records.models, function(d) {
+                    _.each(fields, function (field) {
+                        ret.push(self.getFieldHash(d.attributes[field]));
+                    });
+                });
+            }
+
+
+
             return ret;
         },
 
-        getFieldValue: function(value) {
+        getFieldHash: function(value) {
             var self=this;
             if(isNaN(value))
                return  self.hashCode(value);
