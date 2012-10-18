@@ -245,13 +245,20 @@ my.GenericFilter = Backbone.View.extend({
       <div class="filter-{{type}} filter"> \
         <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}"> \
             <legend>{{field}}</legend>  \
+			<table style="width:100%;background-color:transparent">\
 			{{#values}} \
-			<div class="legend-item {{notSelected}}" myValue={{val}} style="background-color:{{color}}"><div style="padding-left:25px;color: {{color}}"><p style="text-shadow: black 1px 1px, black -1px -1px, black -1px 1px, black 1px -1px, black 0px 1px, black 0px -1px, black 1px 0px, black -1px 0px">{{val}}</p></div></div> \
-			{{/values}} \
+				<tr> \
+				<td style="width:25px"><div class="legend-item {{notSelected}}" myValue={{val}} style="background-color:{{color}}"></td> \
+				<td style="vertical-align:middle"><label style="color:{{color}};text-shadow: black 1px 1px, black -1px -1px, black -1px 1px, black 1px -1px, black 0px 1px, black 0px -1px, black 1px 0px, black -1px 0px">{{val}}</label></td>\
+				<td><label style="text-align:right">[{{count}}]</label></td>\
+				</tr>\
+			{{/values}}\
+			</table> \
 	    </fieldset> \
       </div> \
 	'
-  },  events: {
+  },
+  events: {
     'click .js-remove-filter': 'onRemoveFilter',
     'click .js-add-filter': 'onAddFilterShow',
     'click #addFilterButton': 'onAddFilter',
@@ -321,7 +328,6 @@ my.GenericFilter = Backbone.View.extend({
 	
     tmplData.fields = this._sourceDataset.fields.toJSON();
 	tmplData.records = _.pluck(this._sourceDataset.records.models, "attributes");
-	//tmplData.colorSchemas = this._sourceDataset.attributes.colorSchema;
 	tmplData.filterLabel = this.filterDialogLabel;
 	tmplData.dateConvert = self.dateConvert;
     tmplData.filterRender = function() {
@@ -331,7 +337,7 @@ my.GenericFilter = Backbone.View.extend({
 	  if (this.controlType === 'list' || this.controlType.indexOf('slider') >= 0 || this.controlType.indexOf('legend') >= 0)
 	  {
 	      this.facet = self._sourceDataset.getFacetByFieldId(this.field);
-		  this.tmpValues = _.pluck(this.facet.attributes.terms, "term"); // _.uniq(_.pluck(tmplData.records, this.field));
+		  this.tmpValues = _.pluck(this.facet.attributes.terms, "term");
 	  }
 	  this.values = new Array();
 	  if (this.start)
@@ -357,16 +363,6 @@ my.GenericFilter = Backbone.View.extend({
 			  this.origLegend = this.tmpValues;
 			  this.legend = this.origLegend;
 		  }
-//		  // locate correct colorschema for current field
-//		  var colorSchema = null
-//		  for (var i in tmplData.colorSchemas)
-//		  {
-//			  if (tmplData.colorSchemas[i].field == this.field)
-//			  {
-//				  colorSchema = tmplData.colorSchemas[i].schema;
-//				  break;
-//			  }
-//		  }
 		  this.tmpValues = this.origLegend; 
 		  var legendSelection = this.legend;
 		  for (var i in this.tmpValues)
@@ -376,7 +372,19 @@ my.GenericFilter = Backbone.View.extend({
 			if (legendSelection.indexOf(v) < 0)
 				notSelected = "not-selected";
 			
-			this.values.push({val: v, notSelected: notSelected, color: this.facet.attributes.terms[i].color});
+// 			NEW code. Will work when facet will be returned correctly even after filtering 
+//			var color;
+//			var currTerm = _.find(this.facet.attributes.terms, function(currT) { return currT.term == v; });
+//			if (typeof currTerm != "undefined" && currTerm != null)
+//			{
+//				color = currTerm.color;
+//				count = currTerm.count;
+//			}
+//			
+//			this.values.push({val: v, notSelected: notSelected, color: color, count: });
+			
+			// OLD code, somehow working but wrong
+			this.values.push({val: v, notSelected: notSelected, color: this.facet.attributes.terms[i].color, count: this.facet.attributes.terms[i].count});
 		  }		
 	  }
 	  else
@@ -463,7 +471,7 @@ my.GenericFilter = Backbone.View.extend({
   onLegendItemClicked: function(e) {
     e.preventDefault();
     var $target = $(e.currentTarget);
-	var $fieldSet = $target.parent(); //.parent().parent().parent();
+	var $fieldSet = $target.parent().parent().parent().parent().parent();
 	var type  = $fieldSet.attr('data-filter-type');
 	var fieldId  = $fieldSet.attr('data-filter-field');
 
@@ -474,12 +482,13 @@ my.GenericFilter = Backbone.View.extend({
 			listaValori.push($(this).attr("myValue"));
 	});
 		
-	this.findActiveFilterByField(fieldId).legend = listaValori;
-
-	if (listaValori.length == 0)
-		listaValori = null
-	
-	this.doAction("onLegendItemClicked", fieldId, listaValori, "add");
+	// make sure at least one value is selected
+	if (listaValori.length > 0)
+	{
+		this.findActiveFilterByField(fieldId).legend = listaValori;
+		this.doAction("onLegendItemClicked", fieldId, listaValori, "add");
+	}
+	else $target.toggleClass("not-selected"); // reselect the item and exit
   },
   onListItemClicked: function(e) {
     e.preventDefault();
