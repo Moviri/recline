@@ -384,6 +384,12 @@ my.Dataset = Backbone.Model.extend({
   },
 
     isFieldPartitioned: function(field) { return false }
+  },
+  getFacetByFieldId: function(fieldId) {
+  	  return _.find(this.facets.models, function(facet) {
+  		  return facet.id == fieldId;
+  	  });
+  }  
 });
 
 
@@ -432,7 +438,6 @@ my.Record = Backbone.Model.extend({
     }
     return val;
   },
-
 
     getFieldColor: function(field) {
         if(!field.attributes.colorSchema)
@@ -501,6 +506,8 @@ my.Field = Backbone.Model.extend({
     format: null,
     is_derived: false,
     is_partitioned: false,
+    partitionValue: null,
+    partitionField: null,
     colorSchema: null
   },
   virtualModelFields: {

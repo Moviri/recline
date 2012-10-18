@@ -65,24 +65,23 @@ root: ../../
     $(document).ready(function() {
         var url = "http://192.168.100.133:8380/cwwh-iwal-war/cw/wh/ds/AudDemoByGender";
 
+        colorSchema = new recline.Data.ColorSchema({   
+            type: "scaleWithDistinctData",   
+            colors:/* ["#FF0", "#F0F"]*/ ['#00CED1', '#1E90FF'] //["DarkTurquoise", "DodgerBlue"]   
+        });
+        
         dataset = new recline.Model.Dataset({
             url: url,
             backend: 'jsonp',
             id: "AudDemoByGender",
             fieldLabels: [{id: "age", label: "Age (bin)"}, {id: "gender", label: "Gender"}],
             inMemoryQueryFields: ["age", "gender"]//,
-			colors: ["DarkTurquoise", "DodgerBlue", "LightBlue"]
+            //colorSchema: colorSchema
         });
         
-        colorSchema = new recline.Data.ColorSchema({   
-            type: "scaleWithDistinctData",   
-            colors: ["DarkTurquoise", "DodgerBlue"],   
-            dataset: {dataset: dataset, field: "gender"}   
-        });  
-
+        colorSchema.setDataset(dataset, "gender"); 
+        
    		dataset.bind('query:start', function() { document.getElementById("loadingImage").style.display = "block"; });
-
-   		dataset.queryState.addFacet("gender");
 
            virtualdatasetAge = new recline.Model.VirtualDataset({
                 dataset: dataset,
@@ -91,11 +90,11 @@ root: ../../
                     aggregatedFields: ["totalviewed", "price_sum"],
                     partitions: ["gender"],
                     aggregationFunctions: ["sum", "avg"]
-                },
-				colors: dataset.attributes.colors
+                }//,
+                //colorSchema: colorSchema
             });
 
-        virtualdatasetAge.queryState.addFacet("age");
+        virtualdatasetAge.queryState.addFacetNoEvent("age");
 
    		virtualdatasetWeekday= new recline.Model.VirtualDataset({
                 dataset: dataset,
@@ -104,8 +103,8 @@ root: ../../
                     aggregatedFields: ["totalviewed"],
                     partitions: ["gender"],
                     aggregationFunctions: ["sum", "avg"]
-                },
-				colors: colorSchema.getRecordsArray()
+                }//,
+                //colorSchema: colorSchema
             });
             virtualdatasetHour= new recline.Model.VirtualDataset({
                 dataset: dataset,
@@ -114,16 +113,16 @@ root: ../../
                     aggregatedFields: ["totalviewed"],
                     partitions: ["gender"],
                     aggregationFunctions: ["sum", "avg"]
-                },
-				colors: dataset.attributes.colors
+                }//,
+                //colorSchema: colorSchema
             });
             virtualdatasetTotal= new recline.Model.VirtualDataset({
 				dataset: dataset,
 				aggregation: {
 				aggregatedFields: ["totalviewed", "price_sum"],
 				aggregationFunctions: ["sum"]
-				},
-				colors: dataset.attributes.colors
+				}//,
+	            //colorSchema: colorSchema
             });
 
             virtualdatasetDay= new recline.Model.VirtualDataset({
@@ -133,8 +132,8 @@ root: ../../
                     aggregatedFields: ["totalviewed", "price_sum"],
                     partitions: ["gender"],
                     aggregationFunctions: ["sum", "avg"]
-                },
-				colors: dataset.attributes.colors
+                }//,
+                //colorSchema: colorSchema
             });
             virtualdatasetDay.queryState.attributes.sort = [{field:"daydate"}];
 
@@ -176,9 +175,10 @@ root: ../../
          for(var i=0;i<filters.length;i++)
              dataset.queryState.addFilter(filters[i]);
 
-        // dataset.queryState.facets = [{terms: {field: "gender"}}];
          
-        dataset.fetch(); // needed to populate filter list
+    	dataset.queryState.addFacetNoEvent("gender");
+
+   		dataset.fetch(); // needed to populate filter list
 		
            var $el = $('#mygrid');
 		   var grid = new recline.View.SlickGrid(
@@ -222,7 +222,7 @@ root: ../../
 					yLabel: "Total Viewed",
                     seriesValues: ["totalviewed_by_gender_Male_sum", "totalviewed_by_gender_Female_sum"],
                     graphType: "lineChart",
-					colors: virtualdatasetDay.attributes.colors,
+					//colors: [colorSchema.getColorFor("Male"), colorSchema.getColorFor("Female")],
                     id: "2"
                 },
 				actions: [{
@@ -243,7 +243,7 @@ root: ../../
 					yLabel: "Total Viewed AVG",
                     //seriesNameField: ["gender"],
                     seriesValues: ["totalviewed_by_gender_Male_avg", "totalviewed_by_gender_Female_avg"],
-                    colors: virtualdatasetWeekday.attributes.colors,
+					//colors: [colorSchema.getColorFor("Male"), colorSchema.getColorFor("Female")],
                     graphType: "multiBarChart",
                     id: "3"
                 }
@@ -260,7 +260,7 @@ root: ../../
 					yLabel: "Total Viewed AVG",
                     //seriesNameField: ["gender"],
                     seriesValues: ["totalviewed_by_gender_Male_avg", "totalviewed_by_gender_Female_avg"],
-                    colors: virtualdatasetHour.attributes.colors,
+					//colors: [colorSchema.getColorFor("Male"), colorSchema.getColorFor("Female")],
                     graphType: "multiBarChart",
                     id: "4"
                 }

@@ -196,7 +196,7 @@ my.GridRow = Backbone.View.extend({
       return {
         field: field.id,
         width: field.get('width'),
-        value: doc.getFieldValue(field)
+        value: doc.getFieldValue(field) + "[" + getFieldColor(field) + "]"
       };
     });
     return { id: this.id, cells: cellData };
