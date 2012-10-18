@@ -284,6 +284,10 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
                         aggregationFunction: aggregationFunctions[j]
                     });
                 }
+                var label = "{originalField}by{partitionFieldName}{partitionFieldValue}{aggregatedFunction}";
+                if(this.attributes.fieldLabelForPartitions)
+                    label = this.attributes.fieldLabelForPartitions;
+
 
                 // add partition fields
                 _.each(_.keys(partitionFields), function(d)  {

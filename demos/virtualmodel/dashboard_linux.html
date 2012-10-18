@@ -65,9 +65,10 @@ root: ../../
     $(document).ready(function() {
         var url = "http://192.168.100.133:8380/cwwh-iwal-war/cw/wh/ds/AudDemoByGender";
 
-        colorSchema = new recline.Data.ColorSchema({   
-            type: "scaleWithDistinctData",   
-            colors:/* ["#FF0", "#F0F"]*/ ['#00CED1', '#1E90FF'] //["DarkTurquoise", "DodgerBlue"]   
+        var colorSchema = new recline.Data.ColorSchema({
+            type: "scaleWithDistinctData",
+            colors: ["#0000FF", "#FFF000"],
+            data: ["Female", "Male"]
         });
         
         dataset = new recline.Model.Dataset({
@@ -75,11 +76,15 @@ root: ../../
             backend: 'jsonp',
             id: "AudDemoByGender",
             fieldLabels: [{id: "age", label: "Age (bin)"}, {id: "gender", label: "Gender"}],
-            inMemoryQueryFields: ["age", "gender"]//,
+            inMemoryQueryFields: ["age", "gender"],
+            colorSchema: [
+                {schema: colorSchema, field: "gender"}
+            ]
+
             //colorSchema: colorSchema
         });
         
-        colorSchema.setDataset(dataset, "gender"); 
+        //colorSchema.setDataset(dataset, "gender");
         
    		dataset.bind('query:start', function() { document.getElementById("loadingImage").style.display = "block"; });
 

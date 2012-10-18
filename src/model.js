@@ -383,8 +383,9 @@ my.Dataset = Backbone.Model.extend({
     return backend;
   },
 
-    isFieldPartitioned: function(field) { return false }
+  isFieldPartitioned: function(field) { return false
   },
+
   getFacetByFieldId: function(fieldId) {
   	  return _.find(this.facets.models, function(facet) {
   		  return facet.id == fieldId;

@@ -4,13 +4,14 @@ this.recline.Data = this.recline.Data || {};
 this.recline.Data.ColorSchema = this.recline.Data.ColorSchema || {};
 
 (function($, my) {
+
+
+
     my.ColorSchema = Backbone.Model.extend({
         constructor: function ColorSchema() {
             Backbone.Model.prototype.constructor.apply(this, arguments);
         },
 
-
-        //TODO REMOVE DUPLICATE FUNCTIONS
         // ### initialize
         initialize: function() {
             var self=this;
@@ -23,7 +24,7 @@ this.recline.Data.ColorSchema = this.recline.Data.ColorSchema || {};
                 { this.bindToDataset();}
 
             if(this.attributes.twoDimensionalVariation) {
-                if(this.attributes.data) {
+                if(this.attributes.twoDimensionalVariation.data) {
                     var data = this.attributes.twoDimensionalVariation.data;
                     self._generateVariationLimits(data);
                 }else if(this.attributes.twoDimensionalVariation.dataset)  {
@@ -114,7 +115,7 @@ this.recline.Data.ColorSchema = this.recline.Data.ColorSchema || {};
                 throw "data.colors.js: colorschema not yet initialized, datasource not fetched?"
 
 
-            return this.schema.getColor(this.getFieldHash(fieldValue)) ;
+            return this.schema.getColor(recline.Data.Transform.getFieldHash(fieldValue)) ;
         },
 
         getTwoDimensionalColor: function(startingvalue, variation) {
@@ -149,7 +150,7 @@ this.recline.Data.ColorSchema = this.recline.Data.ColorSchema || {};
                 var fields = dataset.dataset.getPartitionedFields(dataset.field);
             _.each(dataset.dataset.records.models, function(d) {
                 _.each(fields, function (field) {
-                    ret.push(self.getFieldHash(d.attributes[field.id]));
+                    ret.push(d.attributes[field.id]);
                 });
             });
             }
@@ -157,7 +158,7 @@ this.recline.Data.ColorSchema = this.recline.Data.ColorSchema || {};
                 var  fields = [dataset.field];;
                 _.each(dataset.dataset.records.models, function(d) {
                     _.each(fields, function (field) {
-                        ret.push(self.getFieldHash(d.attributes[field]));
+                        ret.push(d.attributes[field]);
                     });
                 });
             }
@@ -167,13 +168,7 @@ this.recline.Data.ColorSchema = this.recline.Data.ColorSchema || {};
             return ret;
         },
 
-        getFieldHash: function(value) {
-            var self=this;
-            if(isNaN(value))
-               return  self.hashCode(value);
-            else
-                return Number(value);
-        },
+
 
         limits: {
             minMax: function(data) {
@@ -188,20 +183,17 @@ this.recline.Data.ColorSchema = this.recline.Data.ColorSchema || {};
 
                 return limit;
             },
-            distinct: function(data) { return _.uniq(data); }
+            distinct: function(data) {
+                _.each(_.uniq(data), function(d, index) {
+                    data[index]=recline.Data.Transform.getFieldHash(d);
+                });
+                return data;
+            }
 
-        },
+        }
 
-        hashCode: function(data){
-        var hash = 0, i, char;
-        if (data.length == 0) return hash;
-        for (i = 0; i < data.length; i++) {
-            char = data.charCodeAt(i);
-            hash = ((hash<<5)-hash)+char;
-            hash = hash & hash; // Convert to 32bit integer
-        }
-        return hash;
-        }
+
+
 
 
 
