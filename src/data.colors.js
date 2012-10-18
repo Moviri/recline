@@ -64,7 +64,7 @@ this.recline.Data.ColorSchema = this.recline.Data.ColorSchema || {};
 
         setVariationDataset: function(ds, field) {
             var self=this;
-            self.attributes.twoDimensionalVariation.dataset = {dataset: ds, field: field};
+            self.attributes["twoDimensionalVariation"] = {dataset: {dataset: ds, field: field} };
 
             self.bindToVariationDataset();
         },
@@ -80,8 +80,6 @@ this.recline.Data.ColorSchema = this.recline.Data.ColorSchema || {};
             var self=this;
             var data =  this.getRecordsArray(self.attributes.twoDimensionalVariation.dataset);
             self._generateVariationLimits(data);
-
-
         },
 
         _generateLimits: function(data) {
