@@ -30,7 +30,7 @@ this.recline.View = this.recline.View || {};
 
   initialize: function(options) {
     var self = this;
-
+    this.uid = ""+new Date().getTime()+Math.floor(Math.random()*10000); // generating an unique id for the chart
     this.el = $(this.el);
     _.bindAll(this, 'render', 'redraw');
     this.needToRedraw = false;
@@ -62,7 +62,7 @@ this.recline.View = this.recline.View || {};
         var self = this;
 
     var tmplData = this.model.toTemplateJSON();
-    tmplData["viewId"] = this.state.get("id");
+    tmplData["viewId"] = this.uid;
 
 
 
@@ -109,7 +109,7 @@ this.recline.View = this.recline.View || {};
         var seriesNVD3 = this.createSeriesNVD3();
 
         var graphType = this.state.get("graphType") ;
-        var viewId = this.state.get("id");
+        var viewId = this.uid;
         var model = this.model;
 		var state = this.state;
         var xLabel = this.state.get("xLabel");
@@ -232,7 +232,6 @@ this.recline.View = this.recline.View || {};
 
     }
   },
-
     show: function() {
     // because we cannot redraw when hidden we may need to when becoming visible
     if (this.needToRedraw) {
