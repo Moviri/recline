@@ -229,8 +229,7 @@ root: ../../
 					yLabel: "Total Viewed",
                     seriesValues: ["totalviewed_by_gender_Male_sum", "totalviewed_by_gender_Female_sum"],
                     graphType: "lineChart",
-                    id: "2",
-					fieldLabels: [{id: "totalviewed_by_gender_Male_sum", label: "Male"}, {id: "totalviewed_by_gender_Female_sum", label: "Female"}]
+                    id: "2"
                 },
 				actions: [{
 					action: action_db,
@@ -248,12 +247,9 @@ root: ../../
                 state: {
                     group: "dayofweek",
 					yLabel: "Total Viewed AVG",
-                    //seriesNameField: ["gender"],
                     seriesValues: ["totalviewed_by_gender_Male_avg", "totalviewed_by_gender_Female_avg"],
-					//colors: [colorSchema.getColorFor("Male"), colorSchema.getColorFor("Female")],
                     graphType: "multiBarChart",
-                    id: "3",
-   					fieldLabels: [{id: "totalviewed_by_gender_Male_sum", label: "Male"}, {id: "totalviewed_by_gender_Female_sum", label: "Female"}]
+                    id: "3"
                 }
             });
             $('#mygraph3').append(graph3.el);
@@ -266,12 +262,9 @@ root: ../../
                 state: {
                     group: "dayhour",
 					yLabel: "Total Viewed AVG",
-                    //seriesNameField: ["gender"],
                     seriesValues: ["totalviewed_by_gender_Male_avg", "totalviewed_by_gender_Female_avg"],
-					//colors: [colorSchema.getColorFor("Male"), colorSchema.getColorFor("Female")],
                     graphType: "multiBarChart",
-                    id: "4",
-   					fieldLabels: [{id: "totalviewed_by_gender_Male_sum", label: "Male"}, {id: "totalviewed_by_gender_Female_sum", label: "Female"}]
+                    id: "4"
                 }
             })
             $('#mygraph4').append(graph4.el);

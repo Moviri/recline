@@ -306,7 +306,18 @@ this.recline.View = this.recline.View || {};
          // todo this has to be merged with above, only one branch has to be present
          //console.log(seriesValues);
        _.each(seriesValues, function(field) {
+    	   
            var yfield = self.model.fields.get(field);
+           var fieldLabel = field;
+           if (yfield.attributes.is_partitioned)
+        	   fieldLabel = yfield.attributes.partitionValue;
+           
+           if (typeof self.state.attributes.fieldLabels != "undefined" && self.state.attributes.fieldLabels != null)
+           {
+        	   var fieldLabel_alternateObj = _.find(self.state.attributes.fieldLabels, function(fl) {return fl.id == fieldLabel});
+        	   if (typeof fieldLabel_alternateObj != "undefined" && fieldLabel_alternateObj != null)
+        		   fieldLabel = fieldLabel_alternateObj.label;
+           }
 
           var points = [];
 
@@ -333,7 +344,7 @@ this.recline.View = this.recline.View || {};
           });
 
            if(points.length>0)
-            series.push({values: points, key: field, color: yfield.getColorForPartition()});
+            series.push({values: points, key: fieldLabel, color: yfield.getColorForPartition()});
        });
      }
 
