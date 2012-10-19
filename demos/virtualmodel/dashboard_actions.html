@@ -68,7 +68,8 @@ root: ../../
         colorSchema = new recline.Data.ColorSchema({
             type: "scaleWithDistinctData",
             colors: ["#0000FF", "#FF0000"],
-            twoDimensionalVariation: {type: "toDark" }             // optional
+            data: ["Male", "Female"]
+            //twoDimensionalVariation: {type: "toDark" }             // optional
 
         });
 
@@ -78,11 +79,12 @@ root: ../../
             id: "AudDemoByGender",
             fieldLabels: [{id: "age", label: "age_label"}, {id: "gender", label: "gender_label"}],
             fieldsFormat: [{id: "age", format: "currency_euro"}],
-            inMemoryQueryFields: ["age", "dayhour"]
+            inMemoryQueryFields: ["age", "dayhour"],
+            colorSchema: [ {schema: colorSchema, field: "gender"} ]
 
        });
 
-        colorSchema.setDataset(dataset, "gender");
+        //colorSchema.setDataset(dataset, "gender");
 
 
 		dataset.bind('query:start', function() { document.getElementById("loadingImage").style.display = "block"; });
@@ -125,7 +127,7 @@ root: ../../
                 }
             });
 
-        colorSchema.setVariationDataset(virtualdatasetHour, "totalviewed_avg");
+        //colorSchema.setVariationDataset(virtualdatasetHour, "totalviewed_avg");
 
 
             virtualdatasetDay= new recline.Model.VirtualDataset({
