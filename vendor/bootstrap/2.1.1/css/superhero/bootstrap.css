@@ -4865,6 +4865,16 @@ a.badge:hover {
   line-height: 30px;
   color: inherit;
 }
+svg.bstrap {
+  font-family: Georgia, Utopia, Palatino, 'Palatino Linotype', serif !important;
+  font-size: 15px;
+}
+svg.bstrap .nvtooltip {
+  background-color: #d9edf7;
+  border: 1px solid #bce8f1;
+  font-family: Georgia, Utopia, Palatino, 'Palatino Linotype', serif;
+  color: #3a87ad;
+}
 .pull-right {
   float: right;
 }
