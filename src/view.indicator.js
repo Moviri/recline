@@ -24,7 +24,7 @@ this.recline.View = this.recline.View || {};
 		format: 'd',
 	  },
 
-  template: '<div class="recline-graph"> \
+  template: '<div class="recline-indicator"> \
       <div class="panel indicator_{{viewId}}"style="display: block;"> \
         <div id="indicator_{{viewId}}"> \
 			<h3 class="centered">{{label}}</h3> \

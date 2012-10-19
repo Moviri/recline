@@ -4865,16 +4865,6 @@ a.badge:hover {
   line-height: 30px;
   color: inherit;
 }
-svg.bstrap {
-  font-family: Georgia, Utopia, Palatino, 'Palatino Linotype', serif !important;
-  font-size: 15px;
-}
-svg.bstrap .nvtooltip {
-  background-color: #d9edf7;
-  border: 1px solid #bce8f1;
-  font-family: Georgia, Utopia, Palatino, 'Palatino Linotype', serif;
-  color: #3a87ad;
-}
 .pull-right {
   float: right;
 }
@@ -4895,6 +4885,7 @@ svg.bstrap .nvtooltip {
 }
 div.s-table {
   max-width: 100%;
+  min-height: 200px;
   background-color: #3f4956;
   border-collapse: collapse;
   border-spacing: 0;
@@ -5169,6 +5160,9 @@ table [class*=span],
 }
 .s-table-hover div.s-tbody div.info:hover div.s-td {
   background-color: #c4e3f3;
+}
+div.recline-graph {
+  min-height: 250px;
 }
 svg.bstrap {
   font-family: Georgia, Utopia, Palatino, 'Palatino Linotype', serif !important;

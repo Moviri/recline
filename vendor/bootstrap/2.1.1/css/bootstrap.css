@@ -4885,6 +4885,7 @@ a.badge:hover {
 }
 div.s-table {
   max-width: 100%;
+  min-height: 200px;
   background-color: #ffffff;
   border-collapse: collapse;
   border-spacing: 0;
@@ -5159,6 +5160,9 @@ table [class*=span],
 }
 .s-table-hover div.s-tbody div.info:hover div.s-td {
   background-color: #c4e3f3;
+}
+div.recline-graph {
+  min-height: 250px;
 }
 svg.bstrap {
   font-family: "Helvetica Neue", Helvetica, Arial, sans-serif !important;

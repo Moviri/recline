@@ -36,10 +36,10 @@ root: ../../
         <div class="span9">
             <div class="row-fluid" style="height:10%">
                 <div class="span6">
-					<div id="indicator1" class="dashboard-elem"></div>
+					<div id="indicator1"></div>
                 </div>
                 <div class="span6">
-					<div id="indicator2" class="dashboard-elem"></div>
+					<div id="indicator2"></div>
                 </div>
             </div>
             <div class="row-fluid" style="height:30%">
@@ -229,8 +229,8 @@ root: ../../
 					yLabel: "Total Viewed",
                     seriesValues: ["totalviewed_by_gender_Male_sum", "totalviewed_by_gender_Female_sum"],
                     graphType: "lineChart",
-					//colors: [colorSchema.getColorFor("Male"), colorSchema.getColorFor("Female")],
-                    id: "2"
+                    id: "2",
+					fieldLabels: [{id: "totalviewed_by_gender_Male_sum", label: "Male"}, {id: "totalviewed_by_gender_Female_sum", label: "Female"}]
                 },
 				actions: [{
 					action: action_db,
@@ -252,7 +252,8 @@ root: ../../
                     seriesValues: ["totalviewed_by_gender_Male_avg", "totalviewed_by_gender_Female_avg"],
 					//colors: [colorSchema.getColorFor("Male"), colorSchema.getColorFor("Female")],
                     graphType: "multiBarChart",
-                    id: "3"
+                    id: "3",
+   					fieldLabels: [{id: "totalviewed_by_gender_Male_sum", label: "Male"}, {id: "totalviewed_by_gender_Female_sum", label: "Female"}]
                 }
             });
             $('#mygraph3').append(graph3.el);
@@ -269,7 +270,8 @@ root: ../../
                     seriesValues: ["totalviewed_by_gender_Male_avg", "totalviewed_by_gender_Female_avg"],
 					//colors: [colorSchema.getColorFor("Male"), colorSchema.getColorFor("Female")],
                     graphType: "multiBarChart",
-                    id: "4"
+                    id: "4",
+   					fieldLabels: [{id: "totalviewed_by_gender_Male_sum", label: "Male"}, {id: "totalviewed_by_gender_Female_sum", label: "Female"}]
                 }
             })
             $('#mygraph4').append(graph4.el);
