@@ -24,6 +24,9 @@ root: ../../
                 <div id="search_container1"></div>
             </div>
             <div class="row-fluid">
+                <div id="search_container4"></div>
+            </div>
+            <div class="row-fluid">
                 <div id="search_container3"></div>
             </div>
             <div class="row-fluid">
@@ -33,15 +36,15 @@ root: ../../
         <div class="span9">
             <div class="row-fluid" style="height:10%">
                 <div class="span6">
-					<div id="indicator1"></div>
+					<div id="indicator1" class="dashboard-elem"></div>
                 </div>
                 <div class="span6">
-					<div id="indicator2"></div>
+					<div id="indicator2" class="dashboard-elem"></div>
                 </div>
             </div>
             <div class="row-fluid" style="height:30%">
                 <div class="span12" >
-                    <div id="mygrid"style="overflow:auto"></div>
+                    <div id="mygrid"style="overflow:auto" class="dashboard-elem"></div>
                 </div>
             </div>
             <!--div class="row-fluid" style="height:20%">
@@ -49,12 +52,12 @@ root: ../../
                     <div id="mygrid2"style="overflow:auto"></div>
                 </div>
             </div-->
-            <div class="row-fluid" style="height:30%">
-                <div class="span12"><div id="mygraph2" ></div></div>
+            <div class="row-fluid" style="height:30%" >
+                <div class="span12"><div id="mygraph2" class="dashboard-elem"></div></div>
             </div>
             <div class="row-fluid" style="height:30%">
-                <div class="span6" ><div id="mygraph3"></div></div>
-                <div class="span6" ><div id="mygraph4"></div></div>
+                <div class="span6" ><div id="mygraph3" class="dashboard-elem"></div></div>
+                <div class="span6" ><div id="mygraph4" class="dashboard-elem"></div></div>
             </div>
         </div>
     </div>
@@ -65,10 +68,10 @@ root: ../../
     $(document).ready(function() {
         var url = "http://192.168.100.133:8380/cwwh-iwal-war/cw/wh/ds/AudDemoByGender";
 
-        var colorSchema = new recline.Data.ColorSchema({
-            type: "scaleWithDistinctData",
-            colors: ["#0000FF", "#FFF000"],
-            data: ["Female", "Male"]
+        colorSchema = new recline.Data.ColorSchema({   
+            type: "scaleWithDistinctData",   
+            colors:/* ["#FF0", "#F0F"]*/ ['#00CED1', '#1E90FF'], //["DarkTurquoise", "DodgerBlue"]   
+        	data:  ["Female", "Male"]
         });
         
         dataset = new recline.Model.Dataset({
@@ -95,8 +98,8 @@ root: ../../
                     aggregatedFields: ["totalviewed", "price_sum"],
                     partitions: ["gender"],
                     aggregationFunctions: ["sum", "avg"]
-                }//,
-                //colorSchema: colorSchema
+                },
+                colorSchema: colorSchema
             });
 
         virtualdatasetAge.queryState.addFacetNoEvent("age");
@@ -151,7 +154,7 @@ root: ../../
             models: [
                 {model: dataset, filters:["filter_daydate"]}
             ],
-            type: ["filter"]
+            type: ["filter", "selection"]
         });
 		
 		var action_db2 = new recline.Action({
@@ -175,16 +178,15 @@ root: ../../
             type: ["selection"]
         });
 
-		
-         var filters = [ {field: "daydate", type: "range", start:new Date(2012,0,01,00,00,00,0), stop:new Date(2012,0,30,00,00,00,0), fieldType: "date" }];
-         for(var i=0;i<filters.length;i++)
-             dataset.queryState.addFilter(filters[i]);
-
-         
+		var dateFilter = {field: "daydate", type: "range", start:new Date(2012,0,01,00,00,00,0), stop:new Date(2012,0,30,00,00,00,0), fieldType: "date" };
+        dataset.queryState.addFilter(dateFilter);
+        dataset.queryState.addSelection(dateFilter);
+        
     	dataset.queryState.addFacetNoEvent("gender");
 
    		dataset.fetch(); // needed to populate filter list
 		
+   		
            var $el = $('#mygrid');
 		   var grid = new recline.View.SlickGrid(
 											{model: virtualdatasetAge, el: $el, 
@@ -300,8 +302,6 @@ root: ../../
 
 			var filter = new recline.View.GenericFilter({
                 sourceDataset: dataset,
-                id: 'filterEditorDB',
-                label: 'DB Filters',
 				sourceFields: [{field: "daydate", controlType: 'range_calendar', type: "range", fieldType: "date" }],
                 actions: [{
                     action: action_db,
@@ -315,8 +315,6 @@ root: ../../
 
             var filter1 = new recline.View.GenericFilter({
                 sourceDataset: dataset,
-                id: 'filterEditor1',
-                label: 'Memory Filters1',
 				sourceFields: [{field: 'daydate', type: "range", controlType: 'month_week_calendar', fieldType: 'date'}	],
                 actions: [{
                     action: action_db,
@@ -330,8 +328,6 @@ root: ../../
 
             var filter2 = new recline.View.GenericFilter({
                 sourceDataset: virtualdatasetAge,
-				id: 'filterEditor2',
-                label: 'Memory Filters2',
 				sourceFields: [
 								{field: 'age', controlType: 'list', fieldType: 'number'}//,
 								//{field: 'age', controlType: 'range_slider', fieldType: 'number'}
@@ -348,8 +344,6 @@ root: ../../
 
             var filter3 = new recline.View.GenericFilter({
                 sourceDataset: dataset,
-				id: 'filterEditor3',
-                label: 'Memory Filters3',
 				sourceFields: [
 								{field: 'gender', controlType: 'legend', fieldType: 'list'}
 							],
@@ -363,6 +357,20 @@ root: ../../
             });
             $('#search_container3').append(filter3.el);
 
+            var filter4 = new recline.View.GenericFilter({
+                sourceDataset: virtualdatasetAge,
+				sourceFields: [
+								{field: 'age', controlType: 'color_legend', fieldType: 'term'}
+							],
+                actions: [{
+                    action: action_vmodel,
+                    mapping: [
+                        {srcField: "age", filter: "filter_age"}
+                    ],
+                    event: ["onFilterValueChanged", "onListItemClicked", "onRemoveFilter"]
+                }]
+            });
+            $('#search_container4').append(filter4.el);
 
             // var facet = new recline.View.FacetViewer({
 				// model: virtualdatasetAge
@@ -372,13 +380,13 @@ root: ../../
 			
         resizeAllElems(); // force initial resize
 		
-		// then assign handler for heights of grid/charts on window resize events
 		$(window).resize(resizeAllElems);
 		
 		function resizeAllElems() {
 			//console.log("resize all elems")
 			_.each([{el:"mygrid", obj:grid}, {el:"mygraph2", obj:graph2}, {el:"mygraph3", obj:graph3}, {el:"mygraph4", obj:graph4}], function(eo) { 
-							resizeElem(eo.el, eo.obj)
+						resizeElem(eo.el, eo.obj);	
+						//$(this).trigger('element-resize');
 					});
 		}
 		

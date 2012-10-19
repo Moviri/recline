@@ -24,7 +24,7 @@ this.recline.View = this.recline.View || {};
 
   template: '<div class="recline-graph"> \
       <div class="panel nvd3graph_{{viewId}}"style="display: block;"> \
-        <div id="nvd3chart_{{viewId}}"><svg></svg></div>\
+        <div id="nvd3chart_{{viewId}}"><svg class="bstrap"></svg></div>\
       </div> \
     </div> ',
 
