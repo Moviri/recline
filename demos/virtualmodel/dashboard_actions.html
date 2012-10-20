@@ -150,7 +150,7 @@ root: ../../
                 }
             });
 
-            virtualdatasetTotal.bind('query:done query:fail', function() { document.getElementById("loadingImage").style.display = "none";resizeAllElems(); });
+         //   virtualdatasetTotal.bind('query:done query:fail', function() { document.getElementById("loadingImage").style.display = "none";resizeAllElems(); });
 
 
         var filters = [ {field: "daydate", type: "range", start: new Date("2012-01-01T00:00:00"), stop: new Date("2012-01-30T00:00:00"), fieldType: "date" }];
@@ -162,7 +162,7 @@ root: ../../
         dataset.fetch();
 
        <!-- actions -->
-
+        /*
         var action_db = new recline.Action({
             filters: {
                 filter_daydate: {type: "range", field: "daydate", fieldType: "date"},
@@ -213,12 +213,13 @@ root: ../../
          });
          grid.visible = true;
 
+
             var graph2 = new recline.View.NVD3Graph({
                 model: virtualdatasetDay,
                 state: {
                     group: "daydate",
 					yLabel: "Total Viewed",
-                    seriesValues: ["totalviewed_by_gender_Male_sum", "totalviewed_by_gender_Female_sum"],
+                    seriesFieldValues: ["totalviewed_by_gender_Male_sum", "totalviewed_by_gender_Female_sum"],
                     graphType: "lineChart",
                     id: "2"
                 }
@@ -318,32 +319,29 @@ root: ../../
          });
          $('#search_container1').append(filter1.el);
 
-
+           */
             var graph4 = new recline.View.NVD3Graph({
-                model: virtualdatasetHour,
+                model: dataset,
                 state: {
                     group: "dayhour",
 					yLabel: "Total Viewed AVG",
-                    //seriesNameField: ["gender"],
-                    seriesValues: ["totalviewed_by_gender_Male_avg", "totalviewed_by_gender_Female_avg"],
+                    seriesNameField: ["gender"],
+                    seriesValues: ["totalviewed"],
                     graphType: "multiBarChart",
                     id: "4"
-                },
+                }
+                /*,
                 actions: [{
                     action: action_dayhour,
                     mapping: [
                         {srcField: "dayhour", filter: "filter1"}
                     ],
                     event: ["click"]
-                }]
+                }]*/
             })
             $('#mygraph4').append(graph4.el);
 
-
-
-
-
-
+          /*
             var filter2 = new recline.View.GenericFilter({
                 sourceDataset: dataset,
 				filtersTargetDatasets: [virtualdatasetAge, virtualdatasetDay, virtualdatasetWeekday, virtualdatasetTotal, virtualdatasetHour ],
@@ -367,6 +365,8 @@ root: ../../
  });
  }
 
+
+
  function resizeElem(elemName, obj)
  {
  var availH = window.innerHeight-5; // substract 5px for Chrome
@@ -379,7 +379,7 @@ root: ../../
  }
 
 
-
+         */
 			
 
 

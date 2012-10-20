@@ -136,6 +136,10 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
 
                             // for each aggregation function evaluate results
                             for(j=0;j<aggregationFunctions.length;j++){
+
+                                if(partitionFields[aggregationFunctions[j]] == null)
+                                    partitionFields[aggregationFunctions[j]] = {};
+
                                 var currentAggregationFunction = this.recline.Data.Aggregations.aggregationFunctions[aggregationFunctions[j]];
 
                                 if( p.partitions[aggregationFunctions[j]][fieldName] == null)  {
@@ -144,11 +148,17 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
                                         partition: partitionValue,
                                         originalField: aggregatedField,
                                         aggregationFunction: currentAggregationFunction};
-                                    partitionFields[fieldName] = {
+
+                                    // populate partitions description
+
+                                    partitionFields[aggregationFunctions[j]][fieldName] = {
                                         field: partitionName,
                                         value: partitionValue,
                                         originalField: aggregatedField,
-                                        aggregationFunction: currentAggregationFunction}; // i need partition name but also original field value
+                                        aggregationFunction: currentAggregationFunction,
+                                        aggregationFunctionName: aggregationFunctions[j],
+                                        id: fieldName + "_" + aggregationFunctions[j]
+                                    }; // i need partition name but also original field value
                                 }
                                 p.partitions[aggregationFunctions[j]][fieldName]["value"] =
                                     currentAggregationFunction(
@@ -223,10 +233,25 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
 
         updateStore: function(results) {
             var self=this;
+
             var reducedResult = results.reducedResult;
-            // partitionFields = {fieldName: fieldValue}
             var partitionFields = results.partitionFields;
 
+            var fields = self.buildFields(reducedResult, partitionFields);
+            var result = self.buildResult(reducedResult, partitionFields);
+
+            this._store = new recline.Backend.Memory.Store(result, fields);
+            this.partitionFields = partitionFields;
+
+            this.fields.reset(fields, {renderer: recline.Data.Renderers});
+            this.query();
+
+        },
+
+
+
+
+        buildResult: function(reducedResult, partitionFields){
             var dimensions = this.attributes.aggregation.dimensions;
             var aggregationFunctions =    this.attributes.aggregation.aggregationFunctions;
             var aggregatedFields = this.attributes.aggregation.aggregatedFields;
@@ -238,11 +263,6 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
                 partitions = this.attributes.aggregation.partitions;
                 var partitioning = true;
             }
-
-
-
-            var result = [];
-            var fields = [];
 
             var tmpField;
             if(dimensions == null)  {
@@ -256,95 +276,7 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
                     tmpField = {count: 0};
             }
 
-
-            // creation of fields
-
-            fields.push( {id: "count", type: "integer"});
-
-            // defining fields based on aggreagtion functions
-            for(var j=0;j<aggregationFunctions.length;j++){
-
-                var tempValue;
-                if(typeof tmpField[aggregationFunctions[j]] == 'function')
-                    tempValue = tmpField[aggregationFunctions[j]]();
-                else
-                    tempValue = tmpField[aggregationFunctions[j]];
-
-                // todo type should be determined by aggregation function
-                for (var x in tempValue) {
-                    var originalFieldAttributes = this.attributes.dataset.fields.get(x).attributes;
-                    var newType = recline.Data.Aggregations.resultingDataType[aggregationFunctions[j]](originalFieldAttributes.type);
-
-                    fields.push( {
-                        id: x + "_" + aggregationFunctions[j],
-                        type: newType,
-                        is_partitioned: false,
-                        colorSchema: originalFieldAttributes.colorSchema,
-                        originalField: x,
-                        aggregationFunction: aggregationFunctions[j]
-                    });
-                }
-                var label = "{originalField}by{partitionFieldName}{partitionFieldValue}{aggregatedFunction}";
-                if(this.attributes.fieldLabelForPartitions)
-                    label = this.attributes.fieldLabelForPartitions;
-
-
-                // add partition fields
-                _.each(_.keys(partitionFields), function(d)  {
-                    var originalFieldAttributes = self.attributes.dataset.fields.get(partitionFields[d].field).attributes;
-                    var newType = recline.Data.Aggregations.resultingDataType[aggregationFunctions[j]](originalFieldAttributes.type);
-
-                    fields.push( {
-                            id: d + "_" + aggregationFunctions[j],
-                            type: newType,
-                            is_partitioned: true,
-                            partitionField: partitionFields[d].field,
-                            partitionValue: partitionFields[d].value,
-                            colorSchema: originalFieldAttributes.colorSchema,  // the schema is the one used to specify partition
-                            originalField: partitionFields[d].originalField,
-                            aggregationFunction: aggregationFunctions[j]
-                        }
-                    );
-                });
-
-            }
-
-            // adding all dimensions to field list
-            if(dimensions != null) {
-                fields.push( {id: "dimension"});
-                for(var i=0;i<dimensions.length;i++){
-                    var originalFieldAttributes = this.attributes.dataset.fields.get(dimensions[i]).attributes;
-                    fields.push( {
-                        id: dimensions[i],
-                        type: originalFieldAttributes.type,
-                        label: originalFieldAttributes.label,
-                        format: originalFieldAttributes.format,
-                        colorSchema: originalFieldAttributes.colorSchema
-                    });
-
-                }
-            }
-
-
-
-            // if labels are declared in dataset properties merge it;
-            if(this.attributes.fieldLabels) {
-            _.each(this.attributes.fieldLabels, function(d) {
-                var field = _.find(fields, function(f) {return d.id === f.id });
-                if(field != null)
-                    field.label = d.label;
-            });
-            }
-
-            // if format is declared in dataset properties merge it;
-            if(this.attributes.fieldsFormat) {
-            _.each(this.attributes.fieldsFormat, function(d) {
-                var field = _.find(fields, function(f) {return d.id === f.id });
-                if(field != null)
-                    field.format = d.format;
-            })
-            }
-
+            var result = [];
 
             // set  results of dataset
             for(var i=0;i<reducedResult.length;i++){
@@ -383,7 +315,8 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
                     // apply finalization function, was not applied since now
                     // todo verify if can be moved above
                     // note that finalization can't be applyed at init cause we don't know in advance wich partitions data can be built
-                    recline.Data.Aggregations.finalizeFunctions[aggregationFunctions[j]](currentField,  aggregatedFields, _.keys(partitionFields));
+                    recline.Data.Aggregations.finalizeFunctions[aggregationFunctions[j]](currentField,  aggregatedFields,
+                        _.keys(partitionFields[aggregationFunctions[j]]));
 
                     var tempValue;
 
@@ -449,23 +382,127 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
                 result.push(tmp);
             }
 
+            return result;
+        },
 
-            this._store = new recline.Backend.Memory.Store(result, fields);
+        buildFields: function(reducedResult, partitionFields) {
+            var self=this;
+            var dimensions = this.attributes.aggregation.dimensions;
+            var aggregationFunctions =    this.attributes.aggregation.aggregationFunctions;
 
-            this.fields.reset(fields, {renderer: recline.Data.Renderers});
-            this.query();
+            var fields = [];
+
+            var tmpField;
+            if(dimensions == null)  {
+                tmpField = reducedResult;
+            }
+            else {
+                if(reducedResult.length > 0) {
+                    tmpField = reducedResult[0].value;
+                }
+                else
+                    tmpField = {count: 0};
+            }
+
+
+            // creation of fields
+
+            fields.push( {id: "count", type: "integer"});
+
+            // defining fields based on aggreagtion functions
+            for(var j=0;j<aggregationFunctions.length;j++){
+
+                var tempValue;
+                if(typeof tmpField[aggregationFunctions[j]] == 'function')
+                    tempValue = tmpField[aggregationFunctions[j]]();
+                else
+                    tempValue = tmpField[aggregationFunctions[j]];
+
+                for (var x in tempValue) {
+                    var originalFieldAttributes = this.attributes.dataset.fields.get(x).attributes;
+                    var newType = recline.Data.Aggregations.resultingDataType[aggregationFunctions[j]](originalFieldAttributes.type);
+
+                    fields.push( {
+                        id: x + "_" + aggregationFunctions[j],
+                        type: newType,
+                        is_partitioned: false,
+                        colorSchema: originalFieldAttributes.colorSchema,
+                        originalField: x,
+                        aggregationFunction: aggregationFunctions[j]
+                    });
+                }
+
+                // add partition fields
+                _.each(partitionFields, function(aggrFunction)  {
+                    _.each(aggrFunction, function(d) {
+                    var originalFieldAttributes = self.attributes.dataset.fields.get(d.field).attributes;
+                    var newType = recline.Data.Aggregations.resultingDataType[aggregationFunctions[j]](originalFieldAttributes.type);
+
+                        var fieldId= d.id;
+                    var fieldLabel = fieldId;
+
+                    if(self.attributes.fieldLabelForPartitions) {
+                        fieldLabel = self.attributes.fieldLabelForPartitions
+                            .replace("{originalField}", d.originalField)
+                            .replace("{partitionFieldName}", d.field)
+                            .replace("{partitionFieldValue}", d.value)
+                            .replace("{aggregatedFunction}", aggregationFunctions[j]);
+                    }
+
+                    fields.push( {
+                            id: fieldId,
+                            type: newType,
+                            is_partitioned: true,
+                            partitionField: d.field,
+                            partitionValue: d.value,
+                            colorSchema: originalFieldAttributes.colorSchema,  // the schema is the one used to specify partition
+                            originalField: d.originalField,
+                            aggregationFunction: aggregationFunctions[j],
+                            label: fieldLabel
+                        }
+                    );
+                })
+                });
+
+            }
+
+            // adding all dimensions to field list
+            if(dimensions != null) {
+                fields.push( {id: "dimension"});
+                for(var i=0;i<dimensions.length;i++){
+                    var originalFieldAttributes = this.attributes.dataset.fields.get(dimensions[i]).attributes;
+                    fields.push( {
+                        id: dimensions[i],
+                        type: originalFieldAttributes.type,
+                        label: originalFieldAttributes.label,
+                        format: originalFieldAttributes.format,
+                        colorSchema: originalFieldAttributes.colorSchema
+                    });
+
+                }
+            }
 
 
 
-             /*
-                console.log("VMODEL crossfilter result")
+            // if labels are declared in dataset properties merge it;
+            if(self.attributes.fieldLabels) {
+                _.each(this.attributes.fieldLabels, function(d) {
+                    var field = _.find(fields, function(f) {return d.id === f.id });
+                    if(field != null)
+                        field.label = d.label;
+                });
+            }
 
-             console.log("VModel result");
-             console.log(result);
-             console.log("VModel fields");
-             console.log(fields);
-             */
+            // if format is declared in dataset properties merge it;
+            if(self.attributes.fieldsFormat) {
+                _.each(this.attributes.fieldsFormat, function(d) {
+                    var field = _.find(fields, function(f) {return d.id === f.id });
+                    if(field != null)
+                        field.format = d.format;
+                })
+            }
 
+            return fields;
         },
 
         query: function(queryObj) {
@@ -612,6 +649,18 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
         isFieldPartitioned: function(fieldName) {
           return  this.fields.get(fieldName).attributes.aggregationFunction
               && this.attributes.aggregation.partitions;
+        },
+
+        getPartitionedFieldsForAggregationFunction: function(aggregationFunction, aggregatedFieldName) {
+            var self=this;
+            var fields = [];
+
+            _.each(self.partitionFields[aggregationFunction], function(p) {
+                if(p.originalField == aggregatedFieldName)
+                    fields.push(self.fields.get(p.id));
+            });
+
+            return fields;
         }
 
 });

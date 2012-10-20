@@ -4892,6 +4892,7 @@ div.s-table {
 .s-table {
   width: 100%;
   margin-bottom: 20px;
+  min-height:200px;
 }
 .s-table div.s-th,
 .s-table div.s-td {
