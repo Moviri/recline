@@ -40,6 +40,7 @@ this.recline.View = this.recline.View || {};
     this.model.fields.bind('add', this.render);
 
     this.model.bind('query:done', this.redraw);
+    this.model.queryState.bind('selection:done', this.redraw);
 
 
     var stateData = _.extend({
@@ -67,6 +68,7 @@ this.recline.View = this.recline.View || {};
     var tmplData = this.model.toTemplateJSON();
     tmplData["viewId"] = this.uid;
 
+     delete this.chart;
 
 
     var htmls = Mustache.render(this.template, tmplData);
@@ -94,6 +96,9 @@ this.recline.View = this.recline.View || {};
         var seriesNVD3 = this.createSeriesNVD3();
 
         var graphType = this.state.get("graphType") ;
+
+        var viewId = this.uid;
+
         var model = this.model;
 		var state = this.state;
         var xLabel = this.state.get("xLabel");
@@ -101,18 +106,24 @@ this.recline.View = this.recline.View || {};
 
 
         nv.addGraph(function() {
-            var chart = self.getGraph[graphType](self);
+            self.chart = self.getGraph[graphType](self);
 
+            if(self.state.attributes.options)  {
+            _.each(_.keys(self.state.attributes.options), function(d) {
+                try { self.addOption[d](self.chart, self.state.attributes.options[d]); }
+                catch(err) { console.log("view.nvd3.graph.js: cannot add options " + d + " for graph type " + graphType)}
+            });
+            };
 
-  		d3.select('#nvd3chart_' + self.uid + '  svg')
+  		    d3.select('#nvd3chart_' + self.uid + '  svg')
       		    .datum(seriesNVD3)
     		    .transition()
                 .duration(500)
-      		    .call(chart);
+      		    .call(self.chart);
 
-        nv.utils.windowResize(chart.update);
+        nv.utils.windowResize(self.chart.update);
 
-        return  chart;
+        return  self.chart;
     });
   },
 
@@ -146,59 +157,179 @@ this.recline.View = this.recline.View || {};
                   .tickFormat(d3.format('s'));
 
           }
+
+            // todo merge for labels
+            /*           var yfield = self.model.fields.get(field);
+             var fieldLabel = field;
+             if (yfield.attributes.is_partitioned)
+             fieldLabel = yfield.attributes.partitionValue;
+
+             if (typeof self.state.attributes.fieldLabels != "undefined" && self.state.attributes.fieldLabels != null)
+             {
+             var fieldLabel_alternateObj = _.find(self.state.attributes.fieldLabels, function(fl) {return fl.id == fieldLabel});
+             if (typeof fieldLabel_alternateObj != "undefined" && fieldLabel_alternateObj != null)
+             fieldLabel = fieldLabel_alternateObj.label;
+             }*/
         },
 
   getFormatter: {
-    "string": d3.format(',s') ,
-    "float":  d3.format(',r') ,
-    "integer":d3.format(',r') ,
-    "date":   function(d) { return d3.time.format('%x')(new Date(d)); }
+        "string": d3.format(',s') ,
+        "float":  d3.format(',r') ,
+        "integer":d3.format(',r') ,
+        "date":   function(d) { return d3.time.format('%x')(new Date(d)); }
+
+  },
+
+  addOption: {
+     "staggerLabels":   function(chart, value) {chart.staggerLabels = value;},
+     "tooltips":        function(chart, value) {
+         chart.tooltips = value;
+     },
+     "showValues":      function(chart, value) {chart.showValues = value;},
+     "minmax":          function(){},
+     "trendlines":      function(){}
+
   },
 
 
   getGraph: {
           "multiBarChart":          function(view) {
-              var chart = nv.models.multiBarChart();
-              view.setAxis("all", chart);
-              return chart;
-          },
-          "lineChart":              function(view) {
-              var chart = nv.models.lineChart();
-              view.setAxis("all", chart);
-              return chart; },
-          "lineWithFocusChart":     function(view) {
-              var chart = nv.models.lineWithFocusChart();
+              var chart;
+              if(view.chart != null)
+                chart = view.chart;
+              else
+                chart = nv.models.multiBarChart();
 
               view.setAxis("all", chart);
               return chart;
           },
-          "indentedTree":           function(view) { return nv.models.indentedTree(); },
+          "lineChart":              function(view) {
+              var chart;
+              if(view.chart != null)
+                  chart = view.chart;
+              else
+                  chart = nv.models.lineChart();
+              view.setAxis("all", chart);
+              return chart; },
+          "lineWithFocusChart":     function(view) {
+              var chart;
+              if(view.chart != null)
+                  chart = view.chart;
+              else
+                  chart = nv.models.lineWithFocusChart();
+
+              view.setAxis("all", chart);
+              return chart;
+          },
+          "indentedTree":           function(view) {
+              var chart;
+              if(view.chart != null)
+                  chart = view.chart;
+              else
+                  chart = nv.models.indentedTree();
+          },
           "stackedAreaChart":       function(view) {
-              var chart = nv.models.stackedAreaChart();
+              var chart;
+              if(view.chart != null)
+                  chart = view.chart;
+              else
+                  chart = nv.models.stackedAreaChart();
               view.setAxis("all", chart);
               return chart;
           },
+
+          "historicalBar":       function(view) {
+            var chart;
+            if(view.chart != null)
+                chart = view.chart;
+            else
+                chart = nv.models.historicalBar();
+            return chart;
+    },
           "multiBarHorizontalChart":function(view) {
-              var chart = nv.models.multiBarHorizontalChart();
+              var chart;
+              if(view.chart != null)
+                  chart = view.chart;
+              else
+                  chart = nv.models.multiBarHorizontalChart();
               view.setAxis("all", chart);
               return chart;
           },
-          "bulletChart":            function(view) {
-              var chart = nv.models.bulletChart();
+          "legend":function(view) {
+             var chart;
+            if(view.chart != null)
+              chart = view.chart;
+          else
+              chart = nv.models.legend();
+          return chart;
+      },
+      "line":function(view) {
+          var chart;
+          if(view.chart != null)
+              chart = view.chart;
+          else
+              chart = nv.models.line();
+          return chart;
+      },
+      "sparkline":function(view) {
+          var chart;
+          if(view.chart != null)
+              chart = view.chart;
+          else
+              chart = nv.models.sparkline();
+          return chart;
+      },
+      "sparklinePlus":function(view) {
+          var chart;
+          if(view.chart != null)
+              chart = view.chart;
+          else
+              chart = nv.models.sparklinePlus();
+          return chart;
+      },
+
+      "multiChart":function(view) {
+          var chart;
+          if(view.chart != null)
+              chart = view.chart;
+          else
+              chart = nv.models.multiChart();
+          return chart;
+      },
+
+
+      "bulletChart":            function(view) {
+              var chart;
+              if(view.chart != null)
+                  chart = view.chart;
+              else
+                  chart = nv.models.bulletChart();
               return chart;
           },
           "linePlusBarChart":       function(view) {
-              var chart = nv.models.linePlusBarChart();
+              var chart;
+              if(view.chart != null)
+                  chart = view.chart;
+              else
+                  chart = nv.models.linePlusBarChart();
               view.setAxis("all", chart);
               return chart;
           },
           "cumulativeLineChart":    function(view) {
-              var chart = nv.models.cumulativeLineChart();
+              var chart;
+              if(view.chart != null)
+                  chart = view.chart;
+              else
+                  chart = nv.models.cumulativeLineChart();
               view.setAxis("all", chart);
               return chart;
           },
           "scatterChart":    function(view) {
-            var chart = nv.models.scatterChart();
+              var chart;
+              if(view.chart != null)
+                  chart = view.chart;
+              else
+                  chart = nv.models.scatterChart();
             chart.showDistX(true)
                 .showDistY(true);
             view.setAxis("all", chart);
@@ -206,7 +337,11 @@ this.recline.View = this.recline.View || {};
           },
           "discreteBarChart":       function(view) {
               var actions = view.getActionsForEvent("selection");
-              var chart = nv.models.discreteBarChart();
+              var chart;
+              if(view.chart != null)
+                  chart = view.chart;
+              else
+                  chart = nv.models.discreteBarChart();
               view.setAxis("all", chart);
 
               if(actions.length > 0)
@@ -220,8 +355,14 @@ this.recline.View = this.recline.View || {};
               var actions = view.getActionsForEvent("selection");
               var options = {};
 
-              if(view.state.attributes.options)
-                    options = view.state.attributes.options;
+              if(view.state.attributes.options) {
+                  if(view.state.attributes.options("trendlines"))
+                    options["trendlines"] = view.state.attributes.options("trendlines");
+                  if(view.state.attributes.options("minmax"))
+                      options["minmax"] = view.state.attributes.options("minmax");
+
+              }
+
 
               if(actions.length > 0) {
                   options["callback"]  = function(x) {
@@ -237,7 +378,11 @@ this.recline.View = this.recline.View || {};
               } else
                   options["callback"] = function() {};
 
-              var chart = nv.models.lineWithBrushChart(options);
+              var chart;
+              if(view.chart != null)
+                  chart = view.chart;
+              else
+                  chart = nv.models.lineWithBrushChart(options);
               view.setAxis("all", chart);
               return  chart
           },
@@ -245,8 +390,13 @@ this.recline.View = this.recline.View || {};
               var actions = view.getActionsForEvent("selection");
               var options = {};
 
-              if(view.state.attributes.options)
-                  options = view.state.attributes.options;
+              if(view.state.attributes.options) {
+                  if(view.state.attributes.options("trendlines"))
+                      options["trendlines"] = view.state.attributes.options("trendlines");
+                  if(view.state.attributes.options("minmax"))
+                      options["minmax"] = view.state.attributes.options("minmax");
+
+              }
 
               if(actions.length > 0) {
                   options["callback"]  = function(x) {
@@ -262,12 +412,21 @@ this.recline.View = this.recline.View || {};
               } else
                   options["callback"] = function() {};
 
-              var chart = nv.models.multiBarWithBrushChart(options);
+              var chart;
+              if(view.chart != null)
+                  chart = view.chart;
+              else
+                  chart = nv.models.multiBarWithBrushChart(options);
 
               return chart;
           },
 
-          "pieChart":      function() { return nv.models.pieChart(); }
+          "pieChart":      function(view) {
+              var chart;
+              if(view.chart != null)
+                  chart = view.chart;
+              else
+                  chart = nv.models.pieChart(); }
 
       },
 
@@ -279,6 +438,7 @@ this.recline.View = this.recline.View || {};
       });
 
   },
+
 
   createSeriesNVD3: function() {
 
@@ -296,7 +456,12 @@ this.recline.View = this.recline.View || {};
       //var seriesValues = this.state.get("seriesValues") ;
 
       var xAxisIsDate = false;
-
+      var unselectedColor = "#C0C0C0";
+      if(self.state.attributes.unselectedColor)
+          unselectedColor = self.state.attributes.unselectedColor;
+      var selectionActive = false;
+      if(self.model.queryState.isSelected())
+        selectionActive = true;
 
       var resultType = "filtered";
       if(self.options.useFilteredData !== null && self.options.useFilteredData === false)
@@ -332,7 +497,16 @@ this.recline.View = this.recline.View || {};
              // verify if the serie is already been initialized
              if(seriesTmp[key] != null ) { tmpS = seriesTmp[key]  }
              else {
-                 var color  = doc.getFieldColor(seriesNameField);
+
+                 var color;
+                 if(selectionActive) {
+                     if(doc.isRecordSelected())
+                         color  = doc.getFieldColor(seriesNameField);
+                     else
+                         color = unselectedColor;
+                 } else
+                     color  = doc.getFieldColor(seriesNameField);
+
                  if(color != null)
                     tmpS = {key: key, values: [], color:  color};
                  else
@@ -391,7 +565,17 @@ this.recline.View = this.recline.View || {};
 
                 var y = doc.getFieldValueUnrendered(yfield);
                   if(y != null) {
-                      var point = {x: x, y: y, record: doc, color: doc.getFieldColor(yfield)};
+
+                      if(selectionActive) {
+                          if(doc.isRecordSelected())
+                              color  = doc.getFieldColor(yfield);
+                          else
+                              color = unselectedColor;
+                      } else
+                          color  = doc.getFieldColor(yfield);
+
+
+                      var point = {x: x, y: y, record: doc, color: color};
 
                       if(sizeField)
                         point["size"] = doc.getFieldValueUnrendered(sizeField);

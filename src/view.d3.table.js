@@ -47,10 +47,15 @@ var ciccio;
 		};
 	};
 	
-	var rowOver = function(actions){
+	var rowOver = function(actions,activeRecords){
 		return function(row){
 			if(actions.length && row){
-					
+                activeRecords = [];
+                activeRecords.push(row);
+
+                actions.forEach(function(actioncontainer){
+                    actioncontainer.action.doAction(activeRecords, actioncontainer.mapping);
+                });
 			}
 		};		
 	};
@@ -210,21 +215,23 @@ var ciccio;
             {
             	options.actions.forEach(function(action){
             		action.event.forEach(function(event){
-            			if(event==='click') clickActions.push(action);
-            			else if(event==='hover')  hoverActions(action);
+            			if(event==='selection') clickActions.push(action);
+            			else if(event==='hover')  hoverActions.push(action);
             		});
             	});
             }           
             
             this.clickActions = clickActions;
             this.hoverActions = hoverActions; 
-                        
+
             this.model.bind('change', this.render);
             this.model.fields.bind('reset', this.render);
             this.model.fields.bind('add', this.render);
-            this.model.records.bind('add', this.redraw);
-            this.model.records.bind('reset', this.redraw);
-			this.model.queryState.bind('selection:done', this.redraw);
+
+            this.model.bind('query:done', this.redraw);
+            this.model.queryState.bind('selection:done', this.redraw);
+
+
 			$(window).resize(this.resize);
 
 			//create a nuew columns array with default values 
@@ -424,7 +431,9 @@ var ciccio;
             row.append("rect")
                 .attr("class", "g-background")
                 .attr("width", "100%")
-                .attr("height", rowHeight).on('click', rowClick(this.clickActions, activeRecords)).on('mouseover', rowOver(this.hoverActions, activeRecords));
+                .attr("height", rowHeight)
+                .on('click', rowClick(this.clickActions, activeRecords))
+                .on('mouseover', rowOver(this.hoverActions, activeRecords));
 
             row.each(function (record) {
 								

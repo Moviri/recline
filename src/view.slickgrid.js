@@ -253,6 +253,7 @@ my.SlickGrid = Backbone.View.extend({
         self.state.set({columnsWidth:columnsWidth});
     });
 
+      //
     this.grid.onRowHoverIn.subscribe(function(e, args){
 		console.log("HoverIn "+args.row)
 		var selectedRecords = [];
