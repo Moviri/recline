@@ -23,16 +23,8 @@ root: ../../
         <option value="indentedTree">indentedTree</option>
         <option value="bulletChart">bulletChart</option>
         <option value="lineChart">lineChart</option>
-
-
-
-
-
-
-
-
-
-
+        <option value="lineWithBrushChart">MOV-lineWithBrushChart</option>
+        <option value="multiBarWithBrushChart">MOV-multiBarWithBrushChart</option>
 
     </select>
     </div></div>
@@ -273,7 +265,7 @@ $('#graph1').append(graph1.el);
         if (elt.selectedIndex == -1)
             return null;
 
-        return elt.options[elt.selectedIndex].text;
+        return elt.options[elt.selectedIndex].value;
     }
 
 

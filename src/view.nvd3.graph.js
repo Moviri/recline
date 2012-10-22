@@ -135,7 +135,7 @@ this.recline.View = this.recline.View || {};
               var yLabel = self.state.get("yLabel");
 
               if (yLabel == null || yLabel == "" || typeof yLabel == 'undefined')
-                  yLabel = state.attributes.seriesValues.join("/");
+                  yLabel = self.state.attributes.seriesValues.join("/");
 
               // todo yaxis format must be passed as prop
               chart.yAxis
@@ -193,13 +193,13 @@ this.recline.View = this.recline.View || {};
               view.setAxis("all", chart);
               return chart;
           },
-      "scatterChart":    function(view) {
-          var chart = nv.models.scatterChart();
-          chart.showDistX(true)
-              .showDistY(true);
-          view.setAxis("all", chart);
-          return chart;
-      },
+          "scatterChart":    function(view) {
+            var chart = nv.models.scatterChart();
+            chart.showDistX(true)
+                .showDistY(true);
+            view.setAxis("all", chart);
+            return chart;
+          },
           "discreteBarChart":       function(view) {
               var actions = view.getActionsForEvent("selection");
               var chart = nv.models.discreteBarChart();
@@ -213,12 +213,12 @@ this.recline.View = this.recline.View || {};
 
           },
           "lineWithBrushChart":     function(view) {
-              var actions = self.getActionsForEvent("selection");
+              var actions = view.getActionsForEvent("selection");
               var chart;
 
               if(actions.length > 0) {
                   chart = nv.models.lineWithBrushChart(
-                      {callback: function(x) {
+                      {   callback: function(x) {
 
                           // selection is done on x axis so I need to take the record with range [min_x, max_x]
                           // is the group attribute
@@ -236,11 +236,12 @@ this.recline.View = this.recline.View || {};
               return  chart
           },
           "multiBarWithBrushChart": function(view) {
-              var chart = multiBarWithBrushChart;
-              view.setAxis("all", chart);
+              var chart = nv.models.multiBarWithBrushChart;
               return chart;
           },
+
           "pieChart":               function() { return nv.models.pieChart(); }
+
       },
 
 
