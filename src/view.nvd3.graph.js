@@ -24,13 +24,13 @@ this.recline.View = this.recline.View || {};
 
   template: '<div class="recline-graph"> \
       <div class="panel nvd3graph_{{viewId}}"style="display: block;"> \
-        <div id="nvd3chart_{{viewId}}"><svg></svg></div>\
+        <div id="nvd3chart_{{viewId}}"><svg class="bstrap"></svg></div>\
       </div> \
     </div> ',
 
   initialize: function(options) {
     var self = this;
-
+    this.uid = ""+new Date().getTime()+Math.floor(Math.random()*10000); // generating an unique id for the chart
     this.el = $(this.el);
     _.bindAll(this, 'render', 'redraw');
     this.needToRedraw = false;
@@ -64,7 +64,7 @@ this.recline.View = this.recline.View || {};
     var self = this;
 
     var tmplData = this.model.toTemplateJSON();
-    tmplData["viewId"] = this.state.get("id");
+    tmplData["viewId"] = this.uid;
 
 
 
@@ -95,6 +95,10 @@ this.recline.View = this.recline.View || {};
 
         var graphType = this.state.get("graphType") ;
         var viewId = this.state.get("id");
+        var model = this.model;
+		var state = this.state;
+        var xLabel = this.state.get("xLabel");
+        var yLabel = this.state.get("yLabel");
 
 
         nv.addGraph(function() {
@@ -337,6 +341,9 @@ this.recline.View = this.recline.View || {};
      }
       else if(seriesAttr.type == "byFieldName" || seriesAttr.type == "byPartitionedField"){
          // todo this has to be merged with above, only one branch has to be present
+         //console.log(seriesValues);
+       _.each(seriesValues, function(field) {
+           var yfield = self.model.fields.get(field);
 
          var serieNames;
          if(seriesAttr.type == "byFieldName")

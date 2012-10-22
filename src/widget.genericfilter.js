@@ -256,6 +256,21 @@ my.GenericFilter = Backbone.View.extend({
 			</table> \
 	    </fieldset> \
       </div> \
+	',
+	color_legend: ' \
+	<div class="filter-{{type}} filter"> \
+        <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}"> \
+            <legend>{{field}}</legend>  \
+				<div style="width:100%"> \
+					<svg height="50" xmlns="http://www.w3.org/2000/svg"> \
+					{{#colorValues}} \
+				    	<rect width="{{width}}" height=50 fill="{{color}}" x="{{x}}"/> \
+						<text width="{{width}}" y="30" fill="{{textColor}}" x="{{x}}">{{val}}</text> \
+					{{/colorValues}}\
+					</svg>		\
+				</div> \
+	    </fieldset> \
+	</div> \
 	'
   },
   events: {
@@ -322,7 +337,6 @@ my.GenericFilter = Backbone.View.extend({
           }
       });
 
-
       if (tmplData.filters.length > 0)
 		tmplData.filters[tmplData.filters.length -1].hrVisible = 'none'
 	
@@ -372,6 +386,7 @@ my.GenericFilter = Backbone.View.extend({
 			if (legendSelection.indexOf(v) < 0)
 				notSelected = "not-selected";
 			
+			
 // 			NEW code. Will work when facet will be returned correctly even after filtering 
 //			var color;
 //			var currTerm = _.find(this.facet.attributes.terms, function(currT) { return currT.term == v; });
@@ -386,6 +401,12 @@ my.GenericFilter = Backbone.View.extend({
 			// OLD code, somehow working but wrong
 			this.values.push({val: v, notSelected: notSelected, color: this.facet.attributes.terms[i].color, count: this.facet.attributes.terms[i].count});
 		  }		
+	  }
+	  else if (this.controlType == "color_legend")
+	  {
+		  this.colorValues = [];
+		  for (var i = 0; i < 8; i++)  
+			  this.colorValues.push({width: 30, color: "rgb(0,0,"+(2+i)*16+")", textColor:"rgb(255,255,"+(255-(2+i)*16)+")", val: i, x:30*i });
 	  }
 	  else
 	  {

@@ -101,6 +101,14 @@ this.recline.Data.ColorSchema = this.recline.Data.ColorSchema || {};
                     throw "data.colors.js: unknown or not defined properties type " + this.attributes.type;
             }
         },
+        
+        getScaleType: function() {
+        	return this.attributes.type;
+        },
+        
+        getScaleLimits: function() {
+        	return this.schema.limits;
+        },
 
         _generateVariationLimits: function(data) {
             var self=this;

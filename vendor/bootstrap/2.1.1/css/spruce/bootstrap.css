@@ -4885,6 +4885,7 @@ a.badge:hover {
 }
 div.s-table {
   max-width: 100%;
+  min-height: 200px;
   background-color: #c3c7ae;
   border-collapse: collapse;
   border-spacing: 0;
@@ -5001,14 +5002,14 @@ div.s-table {
   background-color: #c3c7ae;
 }
 .s-table-striped div.s-tbody div.s-tr div.s-td.selected {
-  background-color: #d14432;
+  background-color: #185af9;
 }
 .s-table-hover div.s-tbody div.s-tr:hover div.s-td,
 .s-table-hover div.s-tbody div.s-tr:hover div.s-th {
   background-color: #adb290;
 }
 .s-table-hover div.s-tbody div.s-tr:hover div.s-td.selected {
-  background-color: #bf3c2b;
+  background-color: #064bf1;
 }
 table [class*=span],
 .row-fluid table [class*=span] {
@@ -5159,6 +5160,44 @@ table [class*=span],
 }
 .s-table-hover div.s-tbody div.info:hover div.s-td {
   background-color: #064bf1;
+}
+div.recline-graph {
+  min-height: 250px;
+}
+svg.bstrap {
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif !important;
+  font-size: 14px;
+}
+svg.bstrap text {
+  font-weight: normal;
+  font-size: 14px;
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif !important;
+  fill: #013435;
+}
+svg.bstrap .title {
+  font-weight: normal;
+  font-size: 14px;
+  font-family: 'Josefin Slab', serif !important;
+}
+div.recline-graph div.nvtooltip {
+  background-color: #748c73;
+  border: 1px solid #90a38f;
+  font-family: Georgia, "Times New Roman", Times, serif;
+  fill: #013435;
+  stroke: #ebd90b;
+}
+div.recline-graph div.nvtooltip h3 {
+  font-size: 22px;
+}
+div.recline-graph div.nvtooltip p {
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-size: 18px;
+}
+div.recline-graph .nvd3 .nv-axis line {
+  stroke: rgba(1, 52, 53, 0.6699999999999999);
+}
+div.recline-graph .nvd3 .nv-axis path {
+  stroke: #013435;
 }
 .pull-right {
   float: right;

@@ -4885,6 +4885,7 @@ a.badge:hover {
 }
 div.s-table {
   max-width: 100%;
+  min-height: 200px;
   background-color: #3f4956;
   border-collapse: collapse;
   border-spacing: 0;
@@ -5001,14 +5002,14 @@ div.s-table {
   background-color: #3f4956;
 }
 .s-table-striped div.s-tbody div.s-tr div.s-td.selected {
-  background-color: #f2dede;
+  background-color: #d9edf7;
 }
 .s-table-hover div.s-tbody div.s-tr:hover div.s-td,
 .s-table-hover div.s-tbody div.s-tr:hover div.s-th {
   background-color: #505e6e;
 }
 .s-table-hover div.s-tbody div.s-tr:hover div.s-td.selected {
-  background-color: #ebcccc;
+  background-color: #c4e3f3;
 }
 table [class*=span],
 .row-fluid table [class*=span] {
@@ -5159,6 +5160,44 @@ table [class*=span],
 }
 .s-table-hover div.s-tbody div.info:hover div.s-td {
   background-color: #c4e3f3;
+}
+div.recline-graph {
+  min-height: 250px;
+}
+svg.bstrap {
+  font-family: Georgia, Utopia, Palatino, 'Palatino Linotype', serif !important;
+  font-size: 15px;
+}
+svg.bstrap text {
+  font-weight: normal;
+  font-size: 14px;
+  font-family: Georgia, Utopia, Palatino, 'Palatino Linotype', serif !important;
+  fill: #ece9d7;
+}
+svg.bstrap .title {
+  font-weight: normal;
+  font-size: 14px;
+  font-family: 'Oswald', sans-serif !important;
+}
+div.recline-graph div.nvtooltip {
+  background-color: #45515f;
+  border: 1px solid #2a333c;
+  font-family: Georgia, Utopia, Palatino, 'Palatino Linotype', serif;
+  fill: #ece9d7;
+  stroke: #e36b23;
+}
+div.recline-graph div.nvtooltip h3 {
+  font-size: 22px;
+}
+div.recline-graph div.nvtooltip p {
+  font-family: Georgia, Utopia, Palatino, 'Palatino Linotype', serif;
+  font-size: 18px;
+}
+div.recline-graph .nvd3 .nv-axis line {
+  stroke: rgba(236, 233, 215, 0.6699999999999999);
+}
+div.recline-graph .nvd3 .nv-axis path {
+  stroke: #ece9d7;
 }
 .pull-right {
   float: right;

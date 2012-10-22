@@ -4885,6 +4885,7 @@ a.badge:hover {
 }
 div.s-table {
   max-width: 100%;
+  min-height: 200px;
   background-color: #ffffff;
   border-collapse: collapse;
   border-spacing: 0;
@@ -5160,6 +5161,44 @@ table [class*=span],
 }
 .s-table-hover div.s-tbody div.info:hover div.s-td {
   background-color: #c4e3f3;
+}
+div.recline-graph {
+  min-height: 250px;
+}
+svg.bstrap {
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif !important;
+  font-size: 14px;
+}
+svg.bstrap text {
+  font-weight: normal;
+  font-size: 14px;
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif !important;
+  fill: #333333;
+}
+svg.bstrap .title {
+  font-weight: normal;
+  font-size: 14px;
+  font-family: inherit !important;
+}
+div.recline-graph div.nvtooltip {
+  background-color: #eeeeee;
+  border: 1px solid #ffffff;
+  font-family: Georgia, "Times New Roman", Times, serif;
+  fill: #333333;
+  stroke: #0088cc;
+}
+div.recline-graph div.nvtooltip h3 {
+  font-size: 22px;
+}
+div.recline-graph div.nvtooltip p {
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-size: 18px;
+}
+div.recline-graph .nvd3 .nv-axis line {
+  stroke: rgba(51, 51, 51, 0.6699999999999999);
+}
+div.recline-graph .nvd3 .nv-axis path {
+  stroke: #333333;
 }
 .pull-right {
   float: right;
