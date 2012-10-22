@@ -51,7 +51,7 @@ my.SlickGrid = Backbone.View.extend({
       syncColumnCellResize: true,
       forceFitColumns: this.state.get('fitColumns'),
       useInnerChart: this.state.get('useInnerChart'),
-      innerChartMax: this.state.get('innerChartMax'),
+      innerChartMax: this.state.get('innerChartMax')
 	};
 
     // We need all columns, even the hidden ones, to show on the column picker
@@ -283,9 +283,10 @@ my.SlickGrid = Backbone.View.extend({
 		selectedRecords.push(self.model.records.models[row]);
 	});
 	var actions = this.options.actions;
-	actions.forEach(function(currAction){				
-		currAction.action.doAction(selectedRecords, currAction.mapping);
-	});
+	   if(actions != null)
+        actions.forEach(function(currAction){
+		    currAction.action.doAction(selectedRecords, currAction.mapping);
+	    });
   },
   show: function() {
     // If the div is hidden, SlickGrid will calculate wrongly some

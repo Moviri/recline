@@ -33,7 +33,8 @@ this.recline.View = this.recline.View || {};
     this.uid = ""+new Date().getTime()+Math.floor(Math.random()*10000); // generating an unique id for the chart
     this.el = $(this.el);
     _.bindAll(this, 'render', 'redraw');
-    this.needToRedraw = false;
+
+
     this.model.bind('change', this.render);
     this.model.fields.bind('reset', this.render);
     this.model.fields.bind('add', this.render);
@@ -75,10 +76,9 @@ this.recline.View = this.recline.View || {};
   },
 
   getActionsForEvent: function(eventType) {
-      var self=this;
       var actions = [];
 
-      _.each(self.options.actions, function(d) {
+      _.each(this.options.actions, function(d) {
           if( _.contains(d.event, eventType))
             actions.push(d);
           });
@@ -94,7 +94,6 @@ this.recline.View = this.recline.View || {};
         var seriesNVD3 = this.createSeriesNVD3();
 
         var graphType = this.state.get("graphType") ;
-        var viewId = this.state.get("id");
         var model = this.model;
 		var state = this.state;
         var xLabel = this.state.get("xLabel");
@@ -105,7 +104,7 @@ this.recline.View = this.recline.View || {};
             var chart = self.getGraph[graphType](self);
 
 
-  		d3.select('#nvd3chart_' + viewId + '  svg')
+  		d3.select('#nvd3chart_' + self.uid + '  svg')
       		    .datum(seriesNVD3)
     		    .transition()
                 .duration(500)
@@ -169,6 +168,7 @@ this.recline.View = this.recline.View || {};
               return chart; },
           "lineWithFocusChart":     function(view) {
               var chart = nv.models.lineWithFocusChart();
+
               view.setAxis("all", chart);
               return chart;
           },
@@ -218,11 +218,13 @@ this.recline.View = this.recline.View || {};
           },
           "lineWithBrushChart":     function(view) {
               var actions = view.getActionsForEvent("selection");
-              var chart;
+              var options = {};
+
+              if(view.state.attributes.options)
+                    options = view.state.attributes.options;
 
               if(actions.length > 0) {
-                  chart = nv.models.lineWithBrushChart(
-                      {   callback: function(x) {
+                  options["callback"]  = function(x) {
 
                           // selection is done on x axis so I need to take the record with range [min_x, max_x]
                           // is the group attribute
@@ -231,20 +233,41 @@ this.recline.View = this.recline.View || {};
 
                           view.doActions(actions, [record_min.min.record, record_max.max.record]);
 
-                      }});
+                      };
+              } else
+                  options["callback"] = function() {};
 
-              } else {
-                  chart = nv.models.lineWithBrushChart();
-              }
+              var chart = nv.models.lineWithBrushChart(options);
               view.setAxis("all", chart);
               return  chart
           },
           "multiBarWithBrushChart": function(view) {
-              var chart = nv.models.multiBarWithBrushChart;
+              var actions = view.getActionsForEvent("selection");
+              var options = {};
+
+              if(view.state.attributes.options)
+                  options = view.state.attributes.options;
+
+              if(actions.length > 0) {
+                  options["callback"]  = function(x) {
+
+                      // selection is done on x axis so I need to take the record with range [min_x, max_x]
+                      // is the group attribute
+                      var record_min = _.min(x, function(d) { return d.min.x }) ;
+                      var record_max = _.max(x, function(d) { return d.max.x });
+
+                      view.doActions(actions, [record_min.min.record, record_max.max.record]);
+
+                  };
+              } else
+                  options["callback"] = function() {};
+
+              var chart = nv.models.multiBarWithBrushChart(options);
+
               return chart;
           },
 
-          "pieChart":               function() { return nv.models.pieChart(); }
+          "pieChart":      function() { return nv.models.pieChart(); }
 
       },
 
@@ -340,11 +363,6 @@ this.recline.View = this.recline.View || {};
 
      }
       else if(seriesAttr.type == "byFieldName" || seriesAttr.type == "byPartitionedField"){
-         // todo this has to be merged with above, only one branch has to be present
-         //console.log(seriesValues);
-       _.each(seriesValues, function(field) {
-           var yfield = self.model.fields.get(field);
-
          var serieNames;
          if(seriesAttr.type == "byFieldName")
             serieNames =  seriesAttr.valuesField;

@@ -130,30 +130,43 @@ root: ../../
         fieldLabelForPartitions: "{originalField}_by_{partitionFieldName}_{partitionFieldValue}_{aggregatedFunction}"
 
     });
+
+    var action1 = new recline.Action({
+        filters: {
+            filter_x: {type: "range", field: "x", fieldType: "integer"}
+        },
+        models: [
+            {model: dataset, filters:["filter_x"]}
+        ],
+        type: ["selection"]
+    });
+
     var $el = $('#grid1');
     var grid1 = new recline.View.SlickGrid({
         model: dataset,
         el: $el,
-        state: {
-            fitColumns:true }
+        state: {  fitColumns:true },
+        actions: [{action: action1, mapping: [ {srcField: "x", filter: "filter_x"}  ], event: ["selection"]  }]
     });
     grid1.visible = true;
     grid1.render();
+
     var $el = $('#grid2');
     var grid2 = new recline.View.SlickGrid({
         model: dataset,
         el: $el,
-        state: {
-            fitColumns:true }
+        state: { fitColumns:true },
+        actions: [{action: action1, mapping: [ {srcField: "x", filter: "filter_x"}  ], event: ["selection"]  }]
     });
     grid2.visible = true;
     grid2.render();
+
     var $el = $('#grid3');
     var grid3 = new recline.View.SlickGrid({
         model: dataset,
         el: $el,
-        state: {
-            fitColumns:true }
+        state: { fitColumns:true },
+        actions: [{action: action1, mapping: [ {srcField: "x", filter: "filter_x"}  ], event: ["selection"]  }]
     });
     grid3.visible = true;
     grid3.render();
@@ -162,8 +175,8 @@ root: ../../
     var grid4 = new recline.View.SlickGrid({
         model: vdatasetGender,
         el: $el,
-        state: {
-            fitColumns:true }
+        state: { fitColumns:true },
+        actions: [{action: action1, mapping: [ {srcField: "x", filter: "filter_x"}  ], event: ["selection"]  }]
     });
     grid4.visible = true;
     grid4.render();
@@ -172,6 +185,8 @@ root: ../../
     var graph2;
     var graph3;
     var graph4;
+
+
 
     drawGraph();
 
@@ -202,9 +217,16 @@ root: ../../
   state: {
       group: ["x"],
       series: {type: "byFieldName", valuesField: ["y"], sizeField: "z"},
-      graphType: type,
-      id: "1"
-  }
+      options: {trendlines:true, minmax: true},
+      graphType: type
+  },
+      actions: [{
+          action: action1,
+          mapping: [
+              {srcField: "x", filter: "filter_x"}
+          ],
+          event: ["selection"]
+      }]
 });
 $('#graph1').append(graph1.el);
 
@@ -213,13 +235,12 @@ $('#graph1').append(graph1.el);
 
   <!-- multiple series simple (without partitioning) -->
 
-    graph2 = new recline.View.NVD3Graph({
+   graph2 = new recline.View.NVD3Graph({
         model: dataset,
         state: {
             group: ["x"],
             series: {type: "byFieldName", valuesField: ["y", "z"],  sizeField: "z"},
-            graphType: type,
-            id: "2"
+            graphType: type
         }
     });
     $('#graph2').append(graph2.el);
@@ -234,8 +255,7 @@ $('#graph1').append(graph1.el);
         state: {
             group: ["x"],
             series: {type: "byFieldValue", seriesField: "gender", valuesField: "y", fillEmptyValuesWith: 0,  sizeField: "z"},
-            graphType: type,
-            id: "3"
+            graphType: type
         }
     });
     $('#graph3').append(graph3.el);
@@ -245,13 +265,12 @@ $('#graph1').append(graph1.el);
 
     <!-- multiple series based on partitioned field -->
 
-     graph4 = new recline.View.NVD3Graph({
+    graph4 = new recline.View.NVD3Graph({
         model: vdatasetGender,
         state: {
             group: ["x"],
             series: {type: "byPartitionedField", aggregatedField: "y", aggregationFunctions: ["sum"],  fillEmptyValuesWith: 0,  sizeField: "z_sum"},
-            graphType: type,
-            id: "4"
+            graphType: type
         }
     });
     $('#graph4').append(graph4.el);
