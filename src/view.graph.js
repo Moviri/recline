@@ -145,7 +145,8 @@ my.Graph = Backbone.View.extend({
       var xfield = self.model.fields.get(self.state.attributes.group);
 
       // time series
-      var isDateTime = xfield.get('type') === 'date';
+      var xtype = xfield.get('type');
+      var isDateTime = (xtype === 'date' || xtype === 'date-time' || xtype  === 'time');
 
       if (self.model.records.models[parseInt(x)]) {
         x = self.model.records.models[parseInt(x)].get(self.state.attributes.group);
@@ -221,7 +222,7 @@ my.Graph = Backbone.View.extend({
           horizontal: true,
           shadowSize: 0,
           barWidth: 0.8         
-        },
+        }
       },
       columns: {
         legend: legend,
@@ -242,9 +243,9 @@ my.Graph = Backbone.View.extend({
             horizontal: false,
             shadowSize: 0,
             barWidth: 0.8         
-        },
+        }
       },
-      grid: { hoverable: true, clickable: true },
+      grid: { hoverable: true, clickable: true }
     };
     return optionsPerGraphType[typeId];
   },
@@ -259,7 +260,8 @@ my.Graph = Backbone.View.extend({
         var x = doc.getFieldValue(xfield);
 
         // time series
-        var isDateTime = xfield.get('type') === 'date';
+        var xtype = xfield.get('type');
+        var isDateTime = (xtype === 'date' || xtype === 'date-time' || xtype  === 'time');
         
         if (isDateTime) {
           // datetime
@@ -424,7 +426,7 @@ my.GraphControls = Backbone.View.extend({
   addSeries: function (idx) {
     var data = _.extend({
       seriesIndex: idx,
-      seriesName: String.fromCharCode(idx + 64 + 1),
+      seriesName: String.fromCharCode(idx + 64 + 1)
     }, this.model.toTemplateJSON());
 
     var htmls = Mustache.render(this.templateSeriesEditor, data);

@@ -24,7 +24,7 @@ this.recline.Backend.Memory = this.recline.Backend.Memory || {};
     } else {
       if (data) {
         this.fields = _.map(data[0], function(value, key) {
-          return {id: key};
+          return {id: key, type: 'string'};
         });
       }
     }
@@ -37,7 +37,7 @@ this.recline.Backend.Memory = this.recline.Backend.Memory || {};
       });
     };
 
-    this.delete = function(doc) {
+    this.remove = function(doc) {
       var newdocs = _.reject(self.data, function(internalDoc) {
         return (doc.id === internalDoc.id);
       });
@@ -52,7 +52,7 @@ this.recline.Backend.Memory = this.recline.Backend.Memory || {};
         self.update(record);
       });
       _.each(changes.deletes, function(record) {
-        self.delete(record);
+        self.remove(record);
       });
       dfd.resolve();
       return dfd.promise();
@@ -63,8 +63,8 @@ this.recline.Backend.Memory = this.recline.Backend.Memory || {};
       var numRows = queryObj.size || this.data.length;
       var start = queryObj.from || 0;
       var results = this.data;
-      
-      results = this._applyFilters(results, queryObj);
+
+      results = recline.Data.Filters.applyFiltersOnData( queryObj.filters, results, this.fields);
       results = this._applyFreeTextQuery(results, queryObj);
 
       // TODO: this is not complete sorting!
@@ -89,54 +89,7 @@ this.recline.Backend.Memory = this.recline.Backend.Memory || {};
       return dfd.promise();
     };
 
-    // in place filtering
-    this._applyFilters = function(results, queryObj) {
-      var filters = queryObj.filters;
-      // register filters
-      var filterFunctions = {
-        term         : term,
-        range        : range,
-        geo_distance : geo_distance
-      };
-      var dataParsers = {
-        number : function (e) { return parseFloat(e, 10); },
-        string : function (e) { return e.toString() },
-        date   : function (e) { return new Date(e).valueOf() }
-      };
 
-      // filter records
-      return _.filter(results, function (record) {
-        var passes = _.map(filters, function (filter) {
-          return filterFunctions[filter.type](record, filter);
-        });
-
-        // return only these records that pass all filters
-        return _.all(passes, _.identity);
-      });
-
-      // filters definitions
-
-      function term(record, filter) {
-        var parse = dataParsers[filter.fieldType];
-        var value = parse(record[filter.field]);
-        var term  = parse(filter.term);
-
-        return (value === term);
-      }
-
-      function range(record, filter) {
-        var parse = dataParsers[filter.fieldType];
-        var value = parse(record[filter.field]);
-        var start = parse(filter.start);
-        var stop  = parse(filter.stop);
-
-        return (value >= start && value <= stop);
-      }
-
-      function geo_distance() {
-        // TODO code here
-      }
-    };
 
     // we OR across fields but AND across terms in query string
     this._applyFreeTextQuery = function(results, queryObj) {
@@ -217,6 +170,55 @@ this.recline.Backend.Memory = this.recline.Backend.Memory || {};
       });
       return this.save(toUpdate);
     };
+
+      this.getDataParser = function(filter) {
+
+          var keyedFields = {};
+          _.each(self.fields, function(field) {
+              keyedFields[field.id] = field;
+          });
+
+
+          var field = keyedFields[filter.field];
+          var fieldType = 'string';
+
+          if(field == null) {
+              console.log("Warning could not find field " + filter.field + " for dataset " );
+              console.log(self);
+          }
+          else
+              fieldType = field.type;
+          return recline.Backend.Memory.dataParsers[fieldType];
+      };
+
+      this.filterFunctions = {
+          term: function(record, filter, storeInstance) {
+
+              var parse = storeInstance.getDataParser(filter);
+              var value = parse(record[filter.field]);
+              var term  = parse(filter.term);
+
+              return (value === term);
+          },
+
+          range: function (record, filter, storeInstance) {
+
+              var parse =  storeInstance.getDataParser(filter);
+              var value = self(record[filter.field]);
+              var start = parse(filter.start);
+              var stop  = parse(filter.stop);
+
+              return (value >= start && value <= stop);
+          }
+
+      };
   };
+
+
+
+
+
+
+
 
 }(jQuery, this.recline.Backend.Memory));

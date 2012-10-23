@@ -1,0 +1,267 @@
+---
+layout: moviri
+title: Dashboard
+recline-deps: true
+root: ../../
+---
+
+<div id="loadingImage" style="display:none">
+	<div style="position:absolute;top:45%;left:45%;width:150px;height:80px;border:1px solid grey;background-color: #E0E0E0">
+		<p class="centered">
+			Loading...
+			<br>
+			<img  src="../../images/ajax-loader.gif" >
+		</p>
+	</div>
+</div>
+<div id="container" class="container-fluid">
+    <div class="row-fluid">
+        <div class="span2 ">
+            <div class="row-fluid">
+                <div id="search_container"></div>
+            </div>
+            <div class="row-fluid">
+                <div id="search_container1"></div>
+            </div>
+            <div class="row-fluid">
+                <div id="search_container2"></div>
+            </div>
+        </div>
+        <div class="span9">
+            <div class="row-fluid" style="height:10%">
+                <div class="span6">
+					<div id="indicator1"></div>
+                </div>
+                <div class="span6">
+					<div id="indicator2"></div>
+                </div>
+            </div>
+            <div class="row-fluid" style="height:30%">
+                <div class="span12" >
+                    <div id="mygrid"style="overflow:auto"></div>
+                </div>
+            </div>
+            <div class="row-fluid" style="height:30%">
+                <div class="span12"><div id="mygraph2" ></div></div>
+            </div>
+            <div class="row-fluid" style="height:30%">
+                <div class="span6" ><div id="mygraph3"></div></div>
+                <div class="span6" ><div id="mygraph4"></div></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script type="text/javascript">
+    $(document).ready(function() {
+        var url = "http://192.168.100.133:8380/cwwh-iwal-war/cw/wh/ds/AudDemoByGender";
+
+        dataset = new recline.Model.Dataset({
+            url: url,
+            backend: 'jsonp',
+            id: "AudDemoByGender",
+            fieldLabels: [{id: "age", label: "age_label"}, {id: "gender", label: "gender_label"}]
+
+        });
+
+		dataset.bind('query:done query:fail', function() { document.getElementById("loadingImage").style.display = "none";resizeAllElems(); });
+		dataset.bind('query:start', function() { document.getElementById("loadingImage").style.display = "block"; });
+
+            virtualdatasetAge = new recline.Model.VirtualDataset({
+                dataset: dataset,
+                aggregation: {
+                    dimensions: ["age"],
+                    aggregatedFields: ["totalviewed", "price_sum"],
+                    partitions: ["gender"],
+                    aggregationFunctions: ["sum", "avg"]
+                }
+            });
+
+            virtualdatasetWeekday= new recline.Model.VirtualDataset({
+                dataset: dataset,
+                aggregation: {
+                    dimensions: ["dayofweek"],
+                    aggregatedFields: ["totalviewed"],
+                    partitions: ["gender"],
+                    aggregationFunctions: ["sum", "avg"]
+                }
+            });
+            virtualdatasetHour= new recline.Model.VirtualDataset({
+                dataset: dataset,
+                aggregation: {
+                    dimensions: ["dayhour"],
+                    aggregatedFields: ["totalviewed"],
+                    partitions: ["gender"],
+                    aggregationFunctions: ["sum", "avg"]
+                }
+            });
+
+            virtualdatasetDay= new recline.Model.VirtualDataset({
+                dataset: dataset,
+                aggregation: {
+                    dimensions: ["daydate"],
+                    aggregatedFields: ["totalviewed", "price_sum"],
+                    partitions: ["gender"],
+                    aggregationFunctions: ["sum", "avg"]
+                }
+            });
+
+            virtualdatasetTotal= new recline.Model.VirtualDataset({
+                dataset: dataset,
+                aggregation: {
+                    aggregatedFields: ["totalviewed", "price_sum"],
+                    aggregationFunctions: ["sum"]
+                }
+            });
+
+
+
+        filters = [ {field: "daydate", type: "range", start:"2012-01-01 00:00:00", stop: "2012-01-30 00:00:00", fieldType: "date" }];
+        for(var i=0;i<filters.length;i++)
+            dataset.queryState.addFilter(filters[i]);
+
+        dataset.fetch(); // needed to populate filter list
+		
+           var $el = $('#mygrid');
+		   var grid = new recline.View.SlickGrid({model: virtualdatasetAge, el: $el, state: {fitColumns:true, useInnerChart:true, innerChartSerie1:'totalviewed_by_gender_Male_sum', innerChartSerie2:'totalviewed_by_gender_Female_sum', innerChartHeader:'Views by Gender'}});
+            grid.visible = true;
+            grid.render();
+
+
+
+
+            var graph2 = new recline.View.NVD3Graph({
+                model: virtualdatasetDay,
+                state: {
+                    group: "daydate",
+					yLabel: "Total Viewed",
+                    seriesValues: ["totalviewed_by_gender_Male_sum", "totalviewed_by_gender_Female_sum"],
+                    colors: ["DarkTurquoise", "DodgerBlue", "LightBlue"],
+                    graphType: "lineChart",
+                    id: "2"
+                }
+            });
+            $('#mygraph2').append(graph2.el);
+
+            var graph3 = new recline.View.NVD3Graph({
+                model: virtualdatasetWeekday,
+                state: {
+                    group: "dayofweek",
+					yLabel: "Total Viewed AVG",
+                    //seriesNameField: ["gender"],
+                    seriesValues: ["totalviewed_by_gender_Male_avg", "totalviewed_by_gender_Female_avg"],
+                    colors: ["DarkTurquoise", "DodgerBlue", "LightBlue"],
+                    graphType: "multiBarChart",
+                    id: "3"
+                }
+            });
+            $('#mygraph3').append(graph3.el);
+
+
+
+
+            var graph4 = new recline.View.NVD3Graph({
+                model: virtualdatasetHour,
+                state: {
+                    group: "dayhour",
+					yLabel: "Total Viewed AVG",
+                    //seriesNameField: ["gender"],
+                    seriesValues: ["totalviewed_by_gender_Male_avg", "totalviewed_by_gender_Female_avg"],
+                    colors: ["DarkTurquoise", "DodgerBlue", "LightBlue"],
+                    graphType: "multiBarChart",
+                    id: "4"
+                }
+            })
+            $('#mygraph4').append(graph4.el);
+
+
+            var indicator1 = new recline.View.Indicator({
+                model: virtualdatasetTotal,
+                state: {
+                    series: ["totalviewed_sum"],
+                    format: ',d',
+					label:"Views",
+                    id: "6"
+                }
+            });
+            $('#indicator1').append(indicator1.el);
+            indicator1.render();
+
+
+            var indicator2 = new recline.View.Indicator({
+                model: virtualdatasetTotal,
+                state: {
+                    series: ["price_sum_sum"],
+                    format: ',.02f',
+					label:"Revenues",
+                    id: "7"
+                }
+            });
+            $('#indicator2').append(indicator2.el);
+            indicator2.render();
+
+			var filter = new recline.View.GenericFilter({
+                sourceDataset: dataset,
+				filtersTargetDatasets: [dataset],
+                id: 'filterEditorDB',
+                label: 'DB Filters',
+				sourceFields: [{field: "daydate", controlType: 'range_calendar', type: "range", fieldType: "date" }]
+            });
+            $('#search_container').append(filter.el);
+
+            var filter1 = new recline.View.GenericFilter({
+                sourceDataset: dataset,
+				filtersTargetDatasets: [virtualdatasetDay ],
+                id: 'filterEditor1',
+                label: 'Memory Filters1',
+				sourceFields: [
+								{field: 'daydate', type: "range", controlType: 'month_calendar', fieldType: 'date'}
+							]
+            });
+            $('#search_container1').append(filter1.el);
+
+            var filter2 = new recline.View.GenericFilter({
+                sourceDataset: dataset,
+				filtersTargetDatasets: [virtualdatasetAge, virtualdatasetDay, virtualdatasetWeekday, virtualdatasetTotal, virtualdatasetHour ],
+                id: 'filterEditor2',
+                label: 'Memory Filters2',
+				sourceFields: [
+								{field: 'age', controlType: 'list', fieldType: 'number'}//,
+								//{field: 'totalviewed_sum', controlType: 'range_slider', fieldType: 'number'}
+							]
+            });
+            $('#search_container2').append(filter2.el);
+
+            // var facet = new recline.View.FacetViewer({
+				// model: virtualdatasetAge
+			// });
+            // $('#facet_container').append(facet.el);
+			
+			
+        resizeAllElems(); // force initial resize
+		
+		// then assign handler for heights of grid/charts on window resize events
+		$(window).resize(resizeAllElems);
+		
+		function resizeAllElems() {
+			_.each([{el:"mygrid", obj:grid}, {el:"mygraph2", obj:graph2}, {el:"mygraph3", obj:graph3}, {el:"mygraph4", obj:graph4}], function(eo) { 
+							resizeElem(eo.el, eo.obj)
+					});
+		}
+		
+		function resizeElem(elemName, obj)
+		{
+			var availH = window.innerHeight-5; // substract 5px for Chrome
+			var perc = document.getElementById(elemName).parentNode.parentNode.style.height.replace("%", "")/100;
+			var newH = parseInt(availH * perc);
+			$("#"+elemName).height(newH);
+			$("#"+elemName+" svg").height(newH);
+			obj.height = newH;
+			obj.update
+		}
+
+	});
+
+
+</script>

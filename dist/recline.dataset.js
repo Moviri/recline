@@ -12,7 +12,7 @@ my.Dataset = Backbone.Model.extend({
 
   // ### initialize
   initialize: function() {
-    _.bindAll(this, 'query');
+    _.bindAll(this, 'query', 'selection');
     this.backend = null;
     if (this.get('backend')) {
       this.backend = this._backendFromString(this.get('backend'));
@@ -33,6 +33,7 @@ my.Dataset = Backbone.Model.extend({
     this.queryState = new my.Query();
     this.queryState.bind('change', this.query);
     this.queryState.bind('facet:add', this.query);
+    this.queryState.bind('selection:change', this.selection);
     // store is what we query and save against
     // store will either be the backend or be a memory store if Backend fetch
     // tells us to use memory store
@@ -53,6 +54,7 @@ my.Dataset = Backbone.Model.extend({
       this.backend.fetch(this.toJSON())
         .done(handleResults)
         .fail(function(arguments) {
+          console.log("Fail in fetching data");
           dfd.reject(arguments);
         });
     } else {
@@ -67,12 +69,47 @@ my.Dataset = Backbone.Model.extend({
     function handleResults(results) {
       var out = self._normalizeRecordsAndFields(results.records, results.fields);
       if (results.useMemoryStore) {
-        self._store = new recline.Backend.Memory.Store(out.records, out.fields);
+          self._store = new recline.Backend.Memory.Store(out.records, out.fields);
       }
 
       self.set(results.metadata);
-      self.fields.reset(out.fields);
-      self.query()
+
+
+        // if labels are declared in dataset properties merge it;
+        if(self.attributes.fieldLabels) {
+            for(var i=0; i<out.fields.length; i++) {
+                var tmp  = _.find(self.attributes.fieldLabels, function(x){ return x.id==out.fields[i].id; });
+                if(tmp != null)
+                  out.fields[i].label = tmp.label;
+
+            }
+
+        }
+
+        // if format is desclared is updated
+        if(self.attributes.fieldsFormat) {
+        // if format is declared in dataset properties merge it;
+        _.each(self.attributes.fieldsFormat, function(d) {
+            var field = _.find(out.fields, function(f) {return d.id === f.id });
+            if(field != null)
+                field.format = d.format;
+        })
+        }
+
+
+
+        // assignment of color schema to fields
+        if(self.attributes.colorSchema) {
+            _.each(self.attributes.colorSchema, function(d) {
+                var field = _.find(out.fields, function(f) {return d.field === f.id });
+                if(field != null)
+                    field.colorSchema = d.schema;
+            })
+        }
+
+        self.fields.reset(out.fields, {renderer: recline.Data.Renderers});
+
+        self.query()
         .done(function() {
           dfd.resolve(self);
         })
@@ -82,6 +119,17 @@ my.Dataset = Backbone.Model.extend({
     }
 
     return dfd.promise();
+  },
+
+  setColorSchema: function() {
+      var self=this;
+      _.each(self.attributes.colorSchema, function(d) {
+          var field = _.find(self.fields.models, function(f) {
+              return d.field === f.id
+          });
+          if(field != null)
+              field.attributes.colorSchema = d.schema;
+      })
   },
 
   // ### _normalizeRecordsAndFields
@@ -165,6 +213,16 @@ my.Dataset = Backbone.Model.extend({
     });
   },
 
+    getRecords: function(type) {
+        var self=this;
+
+        if(type==='filtered'){
+            return self.records.models;
+        }else {
+            throw "Model.js: accessing to data for type " + type + " not implemented"
+        }
+    },
+
   // ### query
   //
   // AJAX method with promise API to get records from the backend.
@@ -175,6 +233,8 @@ my.Dataset = Backbone.Model.extend({
   // Resulting RecordList are used to reset this.records and are
   // also returned.
   query: function(queryObj) {
+
+
     var self = this;
     var dfd = $.Deferred();
     this.trigger('query:start');
@@ -183,6 +243,8 @@ my.Dataset = Backbone.Model.extend({
       this.queryState.set(queryObj, {silent: true});
     }
     var actualQuery = this.queryState.toJSON();
+
+    console.log("Query on model [" + self.attributes.id + "] query [" + JSON.stringify(actualQuery) + "]");
 
     this._store.query(actualQuery, this.toJSON())
       .done(function(queryResult) {
@@ -211,15 +273,61 @@ my.Dataset = Backbone.Model.extend({
       });
       return _doc;
     });
+
+    recline.Data.Filters.applySelectionsOnData(self.queryState.get('selections'), docs, self.fields);
     self.records.reset(docs);
+
     if (queryResult.facets) {
       var facets = _.map(queryResult.facets, function(facetResult, facetId) {
         facetResult.id = facetId;
-        return new my.Facet(facetResult);
+        var result =  new my.Facet(facetResult);
+        self.addColorsToTerms(facetId, result.attributes.terms);
+
+        return result;
       });
       self.facets.reset(facets);
     }
   },
+
+    addColorsToTerms: function(field, terms) {
+        var self=this;
+        _.each(terms, function(t) {
+
+            // assignment of color schema to fields
+            if(self.attributes.colorSchema) {
+                _.each(self.attributes.colorSchema, function(d) {
+                    if(d.field===field)
+                        t.color = d.schema.getColorFor(t.term);
+                })
+            }
+            });
+        },
+
+
+    selection: function(queryObj) {
+        var self = this;
+
+        this.trigger('selection:start');
+
+        if (queryObj) {
+            self.queryState.set(queryObj, {silent: true});
+        }
+        var actualQuery = self.queryState
+
+        // if memory store apply on memory
+        /*if (self.backend == recline.Backend.Memory
+            || self.backend == recline.Backend.Jsonp) {
+            self.backend.applySelections(this.queryState.get('selections'));
+        }*/
+
+        // apply on current records
+        // needed cause memory store is not mandatory
+        recline.Data.Filters.applySelectionsOnData(self.queryState.get('selections'), self.records.models, self.fields);
+
+        self.queryState.trigger('selection:done');
+
+    },
+
 
   toTemplateJSON: function() {
     var data = this.toJSON();
@@ -262,22 +370,8 @@ my.Dataset = Backbone.Model.extend({
 
   // ### _backendFromString(backendString)
   //
-  // See backend argument to initialize for details
+  // Look up a backend module from a backend string (look in recline.Backend)
   _backendFromString: function(backendString) {
-    var parts = backendString.split('.');
-    // walk through the specified path xxx.yyy.zzz to get the final object which should be backend class
-    var current = window;
-    for(ii=0;ii<parts.length;ii++) {
-      if (!current) {
-        break;
-      }
-      current = current[parts[ii]];
-    }
-    if (current) {
-      return current;
-    }
-
-    // alternatively we just had a simple string
     var backend = null;
     if (recline && recline.Backend) {
       _.each(_.keys(recline.Backend), function(name) {
@@ -287,7 +381,15 @@ my.Dataset = Backbone.Model.extend({
       });
     }
     return backend;
-  }
+  },
+
+    isFieldPartitioned: function(field) { return false }
+  },
+  getFacetByFieldId: function(fieldId) {
+  	  return _.find(this.facets.models, function(facet) {
+  		  return facet.id == fieldId;
+  	  });
+  }  
 });
 
 
@@ -309,6 +411,8 @@ my.Record = Backbone.Model.extend({
   // Certain methods require presence of a fields attribute (identical to that on Dataset)
   initialize: function() {
     _.bindAll(this, 'getFieldValue');
+
+     this["is_selected"] = false;
   },
 
   // ### getFieldValue
@@ -333,6 +437,27 @@ my.Record = Backbone.Model.extend({
       val = field.deriver(val, field, this);
     }
     return val;
+  },
+
+    getFieldColor: function(field) {
+        if(!field.attributes.colorSchema)
+            return null;
+
+        if(field.attributes.is_partitioned) {
+            return field.attributes.colorSchema.getTwoDimensionalColor(field.attributes.partitionValue, this.getFieldValueUnrendered(field) );
+        }
+        else
+            return field.attributes.colorSchema.getColorFor( this.getFieldValueUnrendered(field));
+
+    },
+
+  isRecordSelected: function() {
+    var self=this;
+      return self["is_selected"];
+  },
+  setRecordSelection: function(sel) {
+      var self=this;
+      self["is_selected"] = sel;
   },
 
   // ### summary
@@ -379,7 +504,23 @@ my.Field = Backbone.Model.extend({
     label: null,
     type: 'string',
     format: null,
-    is_derived: false
+    is_derived: false,
+    is_partitioned: false,
+    partitionValue: null,
+    partitionField: null,
+    colorSchema: null
+  },
+  virtualModelFields: {
+      label: null,
+      type: 'string',
+      format: null,
+      is_derived: false,
+      is_partitioned: false,
+      partitionValue: null,
+      partitionField: null,
+      originalField: null,
+      colorSchema: null,
+      aggregationFunction: null
   },
   // ### initialize
   //
@@ -402,6 +543,13 @@ my.Field = Backbone.Model.extend({
       this.renderer = this.defaultRenderers[this.get('type')];
     }
     this.facets = new my.FacetList();
+  },
+  getColorForPartition: function() {
+
+      if(!this.attributes.colorSchema || !this.attributes.is_partitioned)
+          return null;
+
+      return this.attributes.colorSchema.getColorFor(this.attributes.partitionValue);
   },
   defaultRenderers: {
     object: function(val, field, doc) {
@@ -437,7 +585,14 @@ my.Field = Backbone.Model.extend({
         }
         return val
       }
-    }
+    },
+	'date': function(val, field, doc) {
+		// if val contains timer value (in msecs), possibly in string format, ensure it's converted to number
+		var intVal = parseInt(val);
+		if (!isNaN(intVal) && isFinite(val))
+			return intVal;
+		else return new Date(val);
+	}
   }
 });
 
@@ -455,11 +610,12 @@ my.Query = Backbone.Model.extend({
   },
   defaults: function() {
     return {
-      size: 100,
+      //size: 100,
       from: 0,
       q: '',
       facets: {},
-      filters: []
+      filters: [],
+      selections: []
     };
   },
   _filterTemplates: {
@@ -469,8 +625,20 @@ my.Query = Backbone.Model.extend({
       field: '',
       term: ''
     },
+    termAdvanced: {
+          type: 'term',
+          operator : "eq",
+          field: '',
+          term: ''
+      },
+    list: {
+      type: 'term',
+      field: '',
+      list: []
+    },
     range: {
       type: 'range',
+      field: '',
       start: '',
       stop: ''
     },
@@ -483,17 +651,30 @@ my.Query = Backbone.Model.extend({
         lat: 0
       }
     }
-  },  
+  // ### addFilter(filter)
+  },
+      _selectionTemplates: {
+          term: {
+              type: 'term',
+              field: '',
+              term: ''
+          },
+          range: {
+              type: 'range',
+              field: '',
+              start: '',
+              stop: ''
+          }
+      },
   // ### addFilter
   //
-  // Add a new filter (appended to the list of filters)
+  // Add a new filter specified by the filter hash and append to the list of filters
   //
   // @param filter an object specifying the filter - see _filterTemplates for examples. If only type is provided will generate a filter by cloning _filterTemplates
   addFilter: function(filter) {
     // crude deep copy
     var ourfilter = JSON.parse(JSON.stringify(filter));
-    // not full specified so use template and over-write
-    // 3 as for 'type', 'field' and 'fieldType'
+    // not fully specified so use template and over-write
     if (_.keys(filter).length <= 3) {
       ourfilter = _.extend(this._filterTemplates[filter.type], ourfilter);
     }
@@ -501,6 +682,45 @@ my.Query = Backbone.Model.extend({
     filters.push(ourfilter);
     this.trigger('change:filters:new-blank');
   },
+
+    getFilters: function(){
+      return this.get('filters');
+    },
+
+    getFilterByFieldName: function(fieldName) {
+      var res = _.find(this.get('filters'), function(f) {
+          return f.field == fieldName;
+      });
+      if(res == -1)
+          return null;
+      else
+          return res;
+
+    },
+
+
+    // update or add the selected filter(s), a change event is triggered after the update
+
+  setFilter: function(filter) {
+  	  if(filter["remove"]) {
+  	  	removeFilterByField(filter.field);
+  	  }else{
+  	
+		var filters = this.get('filters');
+		var found = false;
+		for(var j=0;j<filters.length;j++) {
+			if (filters[j].field==filter.field) {
+				filters[j] = filter;
+				found = true;
+			}
+		}
+		if(!found)
+			filters.push(filter);
+		}
+  },
+
+
+
   updateFilter: function(index, value) {
   },
   // ### removeFilter
@@ -512,12 +732,99 @@ my.Query = Backbone.Model.extend({
     this.set({filters: filters});
     this.trigger('change');
   },
+  removeFilterByField: function(field) {
+    var filters = this.get('filters');
+	for (var j in filters)
+	{
+		if (filters[j].field == field)
+		{
+			removeFilter(j);
+		}
+	}
+  },
+  clearFilter: function(field) {
+    var filters = this.get('filters');
+	for (var j in filters)
+	{
+		if (filters[j].field == field)
+		{
+			filters[j].term = null;
+			filters[j].start = null;
+			filters[j].stop = null;
+			break;
+		}
+	}
+  },
+
+      // ### addSelection
+      //
+      // Add a new selection (appended to the list of selections)
+      //
+      // @param selection an object specifying the filter - see _filterTemplates for examples. If only type is provided will generate a filter by cloning _filterTemplates
+      addSelection: function(selection) {
+          // crude deep copy
+          var myselection = JSON.parse(JSON.stringify(selection));
+          // not full specified so use template and over-write
+          // 3 as for 'type', 'field' and 'fieldType'
+          if (_.keys(selection).length <= 3) {
+              myselection = _.extend(this._selectionTemplates[selection.type], myselection);
+          }
+          var selections = this.get('selections');
+          selections.push(myselection);
+          this.trigger('change:selections');
+      },
+      // ### removeSelection
+      //
+      // Remove a selection at index selectionIndex
+      removeSelection: function(selectionIndex) {
+          var selections = this.get('selections');
+          selections.splice(selectionIndex, 1);
+          this.set({selections: selections});
+          this.trigger('change:selections');
+      },
+       removeSelectionByField: function(field) {
+    var selections = this.get('selections');
+	for (var j in filters)
+	{
+		if (selections[j].field == field)
+		{
+			removeSelection(j);
+		}
+	}
+  },
+      setSelection: function(filter) {
+      	  if(filter["remove"]) {
+  	  	removeSelectionByField(filter.field);
+  	  }else{
+  	
+  	
+        var s = this.get('selections');
+        var found = false;
+        for(var j=0;j<s.length;j++) {
+            if (s[j].field==filter.field) {
+                s[j] = filter;
+                found = true;
+            }
+        }
+        if(!found)
+            s.push(filter);
+           }
+    },
+
+
+
   // ### addFacet
   //
   // Add a Facet to this query
   //
   // See <http://www.elasticsearch.org/guide/reference/api/search/facets/>
   addFacet: function(fieldId) {
+      this.addFacetNoEvent(fieldId);
+      this.trigger('facet:add', this);
+    },
+
+
+  addFacetNoEvent: function(fieldId) {
     var facets = this.get('facets');
     // Assume id and fieldId should be the same (TODO: this need not be true if we want to add two different type of facets on same field)
     if (_.contains(_.keys(facets), fieldId)) {
@@ -527,9 +834,15 @@ my.Query = Backbone.Model.extend({
       terms: { field: fieldId }
     };
     this.set({facets: facets}, {silent: true});
-    this.trigger('facet:add', this);
+
   },
-  addHistogramFacet: function(fieldId) {
+
+    addHistogramFacet: function(fieldId){
+        addHistogramFacet(fieldId);
+        this.trigger('facet:add', this);
+    },
+
+  addHistogramFacetNoEvent: function(fieldId) {
     var facets = this.get('facets');
     facets[fieldId] = {
       date_histogram: {
@@ -538,8 +851,10 @@ my.Query = Backbone.Model.extend({
       }
     };
     this.set({facets: facets}, {silent: true});
-    this.trigger('facet:add', this);
+
   }
+
+
 });
 
 
@@ -609,7 +924,7 @@ this.recline.Backend.Memory = this.recline.Backend.Memory || {};
     } else {
       if (data) {
         this.fields = _.map(data[0], function(value, key) {
-          return {id: key};
+          return {id: key, type: 'string'};
         });
       }
     }
@@ -622,7 +937,7 @@ this.recline.Backend.Memory = this.recline.Backend.Memory || {};
       });
     };
 
-    this.delete = function(doc) {
+    this.remove = function(doc) {
       var newdocs = _.reject(self.data, function(internalDoc) {
         return (doc.id === internalDoc.id);
       });
@@ -637,7 +952,7 @@ this.recline.Backend.Memory = this.recline.Backend.Memory || {};
         self.update(record);
       });
       _.each(changes.deletes, function(record) {
-        self.delete(record);
+        self.remove(record);
       });
       dfd.resolve();
       return dfd.promise();
@@ -648,8 +963,8 @@ this.recline.Backend.Memory = this.recline.Backend.Memory || {};
       var numRows = queryObj.size || this.data.length;
       var start = queryObj.from || 0;
       var results = this.data;
-      
-      results = this._applyFilters(results, queryObj);
+
+      results = recline.Data.Filters.applyFiltersOnData( queryObj.filters, results, this.fields);
       results = this._applyFreeTextQuery(results, queryObj);
 
       // TODO: this is not complete sorting!
@@ -674,54 +989,7 @@ this.recline.Backend.Memory = this.recline.Backend.Memory || {};
       return dfd.promise();
     };
 
-    // in place filtering
-    this._applyFilters = function(results, queryObj) {
-      var filters = queryObj.filters;
-      // register filters
-      var filterFunctions = {
-        term         : term,
-        range        : range,
-        geo_distance : geo_distance
-      };
-      var dataParsers = {
-        number : function (e) { return parseFloat(e, 10); },
-        string : function (e) { return e.toString() },
-        date   : function (e) { return new Date(e).valueOf() }
-      };
 
-      // filter records
-      return _.filter(results, function (record) {
-        var passes = _.map(filters, function (filter) {
-          return filterFunctions[filter.type](record, filter);
-        });
-
-        // return only these records that pass all filters
-        return _.all(passes, _.identity);
-      });
-
-      // filters definitions
-
-      function term(record, filter) {
-        var parse = dataParsers[filter.fieldType];
-        var value = parse(record[filter.field]);
-        var term  = parse(filter.term);
-
-        return (value === term);
-      }
-
-      function range(record, filter) {
-        var parse = dataParsers[filter.fieldType];
-        var value = parse(record[filter.field]);
-        var start = parse(filter.start);
-        var stop  = parse(filter.stop);
-
-        return (value >= start && value <= stop);
-      }
-
-      function geo_distance() {
-        // TODO code here
-      }
-    };
 
     // we OR across fields but AND across terms in query string
     this._applyFreeTextQuery = function(results, queryObj) {
@@ -802,6 +1070,55 @@ this.recline.Backend.Memory = this.recline.Backend.Memory || {};
       });
       return this.save(toUpdate);
     };
+
+      this.getDataParser = function(filter) {
+
+          var keyedFields = {};
+          _.each(self.fields, function(field) {
+              keyedFields[field.id] = field;
+          });
+
+
+          var field = keyedFields[filter.field];
+          var fieldType = 'string';
+
+          if(field == null) {
+              console.log("Warning could not find field " + filter.field + " for dataset " );
+              console.log(self);
+          }
+          else
+              fieldType = field.type;
+          return recline.Backend.Memory.dataParsers[fieldType];
+      };
+
+      this.filterFunctions = {
+          term: function(record, filter, storeInstance) {
+
+              var parse = storeInstance.getDataParser(filter);
+              var value = parse(record[filter.field]);
+              var term  = parse(filter.term);
+
+              return (value === term);
+          },
+
+          range: function (record, filter, storeInstance) {
+
+              var parse =  storeInstance.getDataParser(filter);
+              var value = self(record[filter.field]);
+              var start = parse(filter.start);
+              var stop  = parse(filter.stop);
+
+              return (value >= start && value <= stop);
+          }
+
+      };
   };
+
+
+
+
+
+
+
 
 }(jQuery, this.recline.Backend.Memory));

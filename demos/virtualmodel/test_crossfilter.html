@@ -1,0 +1,76 @@
+
+
+
+<script type="text/javascript" src="https://raw.github.com/square/crossfilter/master/crossfilter.min.js"></script>
+
+
+
+        <script>
+
+            var dataset = crossfilter([
+                    {age: 1, gender: 'F', views: 1000, access: 1},
+                    {age: 2, gender: 'M', views: 1000, access: 2},
+                    {age: 2, gender: 'F', views: 1000, access: 3},
+                    {age: 2, gender: 'F', views: 2000, access: 4},
+                    {age: 3, gender: 'F', views: 1000, access: 5},
+                    {age: 4, gender: 'F', views: 1000, access: 6},
+                    {age: 5, gender: 'F', views: 1000, access: 7}
+                ]);
+
+            var dimensions =  ["age", "gender"];             //series
+            var aggregatedFields = ["views", "access"];
+
+            /*
+                result
+                    var dataset = crossfilter([
+                         {group: "1", views_F: 1000, views_M_avg},
+            */
+
+                var by_dimension = dataset.dimension(function(d) {
+                var tmp = "";
+                for(i=0;i<dimensions.length;i++){
+                  tmp = tmp + d[dimensions[i]] +"#";
+                }
+                return tmp;
+            });
+
+            var group = by_dimension.group();
+
+            function sumAdd(p, v) {
+                p.count = p.count +1;
+                p.sum = p.sum + v.totalviewed;
+                return p;
+            }
+
+            function sumRemove(p, v) {
+                p.count = p.count - 1;
+                p.sum = p.sum - v.totalviewed;
+                return p;
+            }
+
+            function sumInitialize() {
+                return {count: 0, sum: 0};
+            }
+
+            var result =  group.reduce(sumAdd,sumRemove,sumInitialize);
+
+            console.log(result.all());
+
+
+            /*var group_type = payments_by_type.group();
+            var sum_by_group = group_type.reduceSum( function(d) { return d.total} );
+
+            console.log(sum_by_group.top(Infinity));
+
+            var group_typetype = payments_by_type_and_tip.group().reduce(function(p,v){console.log(p + "_" + v); p+ v.total}, function(p,v){p- v.total}, 0);
+            var sum_typetip =  payments_by_type_and_tip.group().reduceSum( function(d) { return d.total});
+            console.log(sum_typetip.all());
+            */
+            //console.log(group_typetype.top(Infinity));
+
+
+            //var sum_type = group_type.reduce(function(p,v){p+ v.total}, function(p,v){p- v.total}, 0);
+
+            //console.log(sum_type.all());
+
+        </script>

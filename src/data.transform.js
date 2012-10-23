@@ -64,4 +64,22 @@ my.Transform.mapDocs = function(docs, editFunc) {
   };
 };
 
+    my.Transform.getFieldHash = function(value) {
+        if(isNaN(value))
+            return  recline.Data.Transform.hashCode(value);
+        else
+            return Number(value);
+    };
+
+    my.Transform.hashCode = function(data){
+        var hash = 0, i, char;
+        if (data.length == 0) return hash;
+        for (i = 0; i < data.length; i++) {
+            char = data.charCodeAt(i);
+            hash = ((hash<<5)-hash)+char;
+            hash = hash & hash; // Convert to 32bit integer
+        }
+        return hash;
+    };
+
 }(this.recline.Data))

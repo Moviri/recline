@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Tutorial - Dataset Basics - Recline Data Explorer and Library</title>
+
+  <!-- Le HTML5 shim, for IE6-8 support of HTML elements -->
+  <!--[if lt IE 9]>
+    <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+
+  <link rel="stylesheet" href="../vendor/bootstrap/2.1.1/css/bootstrap.css" />
+
+  
+    <link rel="stylesheet" href="../vendor/leaflet/0.4.4/leaflet.css">
+<!--[if lte IE 8]>
+<link rel="stylesheet" href="../vendor/leaflet/0.4.4/leaflet.ie.css" />
+<![endif]-->
+<link rel="stylesheet" href="../vendor/leaflet.markercluster/MarkerCluster.css">
+<link rel="stylesheet" href="../vendor/leaflet.markercluster/MarkerCluster.Default.css">
+<!--[if lte IE 8]>
+<link rel="stylesheet" href="../vendor/leaflet.markercluster/MarkerCluster.Default.ie.css" />
+<![endif]-->
+<link rel="stylesheet" href="../vendor/slickgrid/2.0.1/slick.grid.css">
+<link rel="stylesheet" href="../vendor/timeline/20120520/css/timeline.css">
+
+
+  <!-- 3rd party JS libraries -->
+
+  <script type="text/javascript" src="../vendor/underscore/1.3.3/underscore.js"></script>
+  <script type="text/javascript" src="../vendor/backbone/0.9.2/backbone.js"></script>
+  <script type="text/javascript" src="../vendor/mustache/0.5.0-dev/mustache.js"></script>
+  <script type="text/javascript" src="../vendor/flotr2/flotr2.js"></script>
+  <script type="text/javascript" src="../vendor/leaflet/0.4.4/leaflet.js"></script>
+  <script type="text/javascript" src="../vendor/slickgrid/2.0.1/jquery-ui-1.8.16.custom.min.js"></script>
+  <script type="text/javascript" src="../vendor/slickgrid/2.0.1/jquery.event.drag-2.0.min.js"></script>
+  <script type="text/javascript" src="../vendor/slickgrid/2.0.1/slick.core.js"></script>
+  <script type="text/javascript" src="../vendor/slickgrid/2.0.1/slick.editors.js"></script>
+  <script type="text/javascript" src="../vendor/slickgrid/2.0.1/slick.formatters.js"></script>
+  <script type="text/javascript" src="../vendor/slickgrid/2.0.1/slick.grid.js"></script>
+  <script type="text/javascript" src="../vendor/moment/1.6.2/moment.js"></script>
+  <script type="text/javascript" src="../vendor/timeline/20120520/js/timeline.js"></script>
+  <script type="text/javascript" src="../vendor/crossfilter/1.1.0/crossfilter.min.js"></script>
+  <script type="text/javascript" src="../vendor/leaflet/0.4.4/leaflet.js"></script>
+  <script type="text/javascript" src="../vendor/leaflet.markercluster/leaflet.markercluster.js"></script>
+
+
+<!-- NVD3 & D3 libraries -->
+  <link rel="stylesheet" href="../vendor/nvd3/0.0.1/nv.d3.css">
+
+  <script type="text/javascript" src="../vendor/d3/v2/d3.v2.min.js"></script>
+  <script type="text/javascript" src="../vendor/nvd3/0.0.1/nv.d3.js"></script>
+  <script type="text/javascript" src="../vendor/nvd3/0.0.1/tooltip.js"></script>
+  <script type="text/javascript" src="../vendor/nvd3/0.0.1/utils.js"></script>
+  <script type="text/javascript" src="../vendor/nvd3/0.0.1/models/legend.js"></script>
+  <script type="text/javascript" src="../vendor/nvd3/0.0.1/models/axis.js"></script>
+  <script type="text/javascript" src="../vendor/nvd3/0.0.1/models/scatter.js"></script>
+  <script type="text/javascript" src="../vendor/nvd3/0.0.1/models/line.js"></script>
+  <script type="text/javascript" src="../vendor/nvd3/0.0.1/models/lineChart.js"></script>
+
+
+  <!--
+    ## Just use the all in one library version rather than individual files
+
+  <script type="text/javascript" src="../dist/recline.js"></script>
+
+  -->
+
+  <!-- model and backends -->
+  <script type="text/javascript" src="../src/model.js"></script>
+  <script type="text/javascript" src="../src/backend.memory.js"></script>
+  <script type="text/javascript" src="../src/backend.dataproxy.js"></script>
+  <script type="text/javascript" src="../src/backend.gdocs.js"></script>
+  <script type="text/javascript" src="../src/backend.elasticsearch.js"></script>
+  <script type="text/javascript" src="../src/backend.csv.js"></script>
+  <script type="text/javascript" src="../src/backend.jsonp.js"></script>
+
+  <!-- views -->
+  <script type="text/javascript" src="../src/view.grid.js"></script>
+  <script type="text/javascript" src="../src/view.slickgrid.js"></script>
+  <script type="text/javascript" src="../src/view.transform.js"></script>
+  <script type="text/javascript" src="../src/data.transform.js"></script>
+  <script type="text/javascript" src="../src/view.graph.js"></script>
+  <script type="text/javascript" src="../src/view.map.js"></script>
+  <script type="text/javascript" src="../src/view.timeline.js"></script>
+  <script type="text/javascript" src="../src/widget.pager.js"></script>
+  <script type="text/javascript" src="../src/widget.queryeditor.js"></script>
+  <script type="text/javascript" src="../src/widget.filtereditor.js"></script>
+  <script type="text/javascript" src="../src/widget.fields.js"></script>
+  <script type="text/javascript" src="../src/view.multiview.js"></script>
+  <script type="text/javascript" src="../src/view.nvd3.graph.js"></script>
+  <script type="text/javascript" src="../src/view.indicator.js"></script>
+  <script type="text/javascript" src="../src/virtualmodel.js"></script>
+  <script type="text/javascript" src="../src/widget.genericfilter.js"></script>
+
+
+
+
+
+  
+
+  <!-- link rel="stylesheet" href="vendor/bootstrap/2.0.2/css/bootstrap-responsive.css" -->
+
+  <link href="../css/site/pygments.css" rel="stylesheet" type="text/css" />
+  <link href="../css/site/site.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+<div class="navbar navbar-fixed-top">
+  <div class="navbar-inner">
+    <div class="container">
+      <a class="logo-icon pull-left" href="/">
+        <img src="http://assets.okfn.org/p/recline/img/chair.png" />
+      </a>
+      <a class="brand" href="../"><strong>Recline.js</strong> &ndash; relax with your data</a>
+      <ul class="nav">
+        <li>
+          <a href="../docs/">
+            <i class="icon-book icon-white"></i>
+            Documentation
+          </a>
+        </li>
+        <li class="divider-vertical"></li>
+        <li>
+          <a href="../docs/tutorials.html">
+            <i class="icon-road icon-white"></i>
+            Tutorials
+          </a>
+        </li>
+        <li class="divider-vertical"></li>
+        <li>
+          <a href="../demos/">
+            <i class="icon-pencil icon-white"></i>
+            Demos
+          </a>
+        </li>
+        <li class="divider-vertical"></li>
+        <li>
+          <a href="/download.html">
+            <i class="icon-download-alt icon-white"></i>
+            Download
+          </a>
+        </li>
+      </ul>
+      <ul class="nav pull-right">
+        <li>
+          <a href="http://github.com/okfn/recline/">
+            <i class="icon-download-alt icon-white"></i>
+            GitHub
+          </a>
+        </li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class='page-header'>
+  <h1>
+    Dataset Basics - Querying
+  </h1>
+</div>
+<h2 id='preparations'>Preparations</h2>
+
+<p>See <a href='..//docs/tutorial-basics.html'>first Dataset basics tutorial</a> for getting setup and initializing a Dataset.</p>
+<script type='text/javascript'>
+var data = [
+  {id: 0, date: '2011-01-01', x: 1, y: 2, z: 3, country: 'DE', geo: {lat:52.56, lon:13.40} },
+  {id: 1, date: '2011-02-02', x: 2, y: 4, z: 24, country: 'UK', geo: {lat:54.97, lon:-1.60}},
+  {id: 2, date: '2011-03-03', x: 3, y: 6, z: 9, country: 'US', geo: {lat:40.00, lon:-75.5}},
+  {id: 3, date: '2011-04-04', x: 4, y: 8, z: 6, country: 'UK', geo: {lat:57.27, lon:-6.20}},
+  {id: 4, date: '2011-05-04', x: 5, y: 10, z: 15, country: 'UK', geo: {lat:51.58, lon:0}},
+  {id: 5, date: '2011-06-02', x: 6, y: 12, z: 18, country: 'DE', geo: {lat:51.04, lon:7.9}}
+];
+
+
+var dataset = new recline.Model.Dataset({
+  records: data
+});
+</script>
+<h2 id='querying'>Querying</h2>
+
+<p>The basic thing we want to do with Datasets is query and filter them. This is very easy to do:</p>
+
+<p>This results in the following. Note how recordCount is now 3 (the total number of records matched by the query) but that records only contains 2 records as we restricted number of returned records using the size attribute.</p>
+<div class='ex-2 well'>&nbsp;</div><script type='text/javascript'> 
+$('.ex-2').html('');
+// must have a div with class="ex-1"
+var $el = $('.ex-2');
+
+// query with text 'UK' - this will attempt to match any field for UK
+// Also limit the query to return a maximum of 2 results using the size attribute 
+
+// query function has asynchronous behaviour and returns a promise object
+// (even for the case of in memory data where querying in fact happens synchronously)
+// On completion the display function will be called
+dataset.query({q: 'UK', size: 2}).done(function() {
+  $('.ex-2').append('Total found: ' + dataset.recordCount);
+  $('.ex-2').append(' Total returned: ' + dataset.records.length);
+  $('.ex-2').append(
+    $('<pre />').html(
+      JSON.stringify(dataset.records.toJSON(), null, 2)
+    )
+  );
+});
+
+
+</script>
+<h2 id='filtering'>Filtering</h2>
+
+<p>A simple unstructured query like the one provided above searches all fieldsfor the value provided.</p>
+
+<p>Often you want to &#8220;filter&#8221; results more precisely, for example by specifying a specific value in a specific field. To do this we use &#8220;filters&#8221;.</p>
+
+<h2 id='querystate'>QueryState</h2>
+
+<p>The last run query is stored as a <a href='models.html#query'>Query
+instance</a> in the <code>queryState</code> attribute of the Dataset object. Modifying <code>queryState</code> will also resulting in a query being run. This is useful when building views that want to display or manage the query state (see, for example, <a href='src/widget.queryeditor.html'>Query Editor</a> or <a href='src/widget.filtereditor.html'>Filter Editor</a> widgets).</p>
+
+<h2 id='full_details_of_the_query_language'>Full Details of the Query Language</h2>
+
+<p>Full details of the <a href='models.html#query'>query structure and its options
+can be found in the reference documentation</a>.</p>
+</div>
+
+
+
+<section class="footer">
+	<div class="container">
+    <div class="row">
+      <div class="span4">
+        <p class="getit-btn"><a href="../docs/" class="btn">Use the Library &raquo;</a></p>
+        <p>Recline.js is freely redistributable under the terms of the MIT license.</p>
+      </div>
+      <div class="span3">
+        <p><a href="http://www.shuttleworthfoundation.org/"><img src="http://farm8.staticflickr.com/7019/6467412887_18f72f5066_n.jpg" style="width: 140px;" alt="Supported by funding from the Shuttleworth Foundation" /></a></p>
+        <ul>
+          <li><a href="http://datahub.io/">The DataHub</a></li>
+          <li><a href="http://OpenSpending.org/">OpenSpending.org</a></li>
+          <li><a href="http://datacouch.com/">DataCouch.com</a></li>
+        </ul>
+      </div>
+      <div class="span3">
+        <ul>
+          <li><a href="http://okfnlabs.org/">Open Knowledge Foundation Labs</a></li>
+          <li><a href="http://opendefinition.org/">Open Definition</a></li>
+          <li><a href="http://okfn.org/">Open Knowledge Foundation</a></li>
+        </ul>
+      </div>
+      <div class="span2">
+        <h5>Contacts</h5>
+        <ul style="list-style-type: none; margin-left: 0;">
+          <li><a href="http://twitter.com/ReclineJS">@ReclineJS</a></li>
+          <li><a href="http://twitter.com/maxogden">@maxogden</a></li>
+          <li><a href="http://twitter.com/rufuspollock">@rufuspollock</a></li>
+        </ul>
+        <a class="nav-logo" href="http://okfn.org/" title="An Open Knowledge Foundation Project">
+          <img src="http://assets.okfn.org/p/okfn/img/logo_28x30.png" alt="Open Knowledge Foundation logo" />
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+</body>
+</html>

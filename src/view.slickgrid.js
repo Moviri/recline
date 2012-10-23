@@ -19,12 +19,17 @@ my.SlickGrid = Backbone.View.extend({
     this.el = $(this.el);
     this.el.addClass('recline-slickgrid');
     _.bindAll(this, 'render');
+    _.bindAll(this, 'onSelectionChanged');
+	
     this.model.records.bind('add', this.render);
     this.model.records.bind('reset', this.render);
     this.model.records.bind('remove', this.render);
 
+    this.model.queryState.bind('selection:done', this.render);
+
     var state = _.extend({
         hiddenColumns: [],
+        visibleColumns: [],
         columnsOrder: [],
         columnsSort: {},
         columnsWidth: [],
@@ -36,7 +41,6 @@ my.SlickGrid = Backbone.View.extend({
 
   events: {
   },
-
   render: function() {
     var self = this;
 
@@ -45,8 +49,10 @@ my.SlickGrid = Backbone.View.extend({
       enableColumnReorder: true,
       explicitInitialization: true,
       syncColumnCellResize: true,
-      forceFitColumns: this.state.get('fitColumns')
-    };
+      forceFitColumns: this.state.get('fitColumns'),
+      useInnerChart: this.state.get('useInnerChart'),
+      innerChartMax: this.state.get('innerChartMax')
+	};
 
     // We need all columns, even the hidden ones, to show on the column picker
     var columns = [];
@@ -78,11 +84,42 @@ my.SlickGrid = Backbone.View.extend({
 
       columns.push(column);
     });
-
-    // Restrict the visible columns
-    var visibleColumns = columns.filter(function(column) {
-      return _.indexOf(self.state.get('hiddenColumns'), column.id) == -1;
-    });
+	if (options.useInnerChart == true && self.model.records.length > 0)
+	{
+		columns.push({
+        name: self.state.get('innerChartHeader'),
+        id: 'innerChart',
+        field:'innerChart',
+        sortable: false,
+		alignLeft: true,
+        minWidth: 150,
+        formatter: Slick.Formatters.TwinBarFormatter
+      })
+	}
+	if (self.state.get('fieldLabels') && self.state.get('fieldLabels').length > 0)
+	{
+		_.each(self.state.get('fieldLabels'), function(newIdAndLabel) {
+			for (var c in columns)
+				if (columns[c].id == newIdAndLabel.id)
+					columns[c].name = newIdAndLabel.label;
+		});
+	}
+	var visibleColumns = [];
+	if (self.state.get('visibleColumns').length > 0)
+	{
+		visibleColumns = columns.filter(function(column) {
+		  return _.indexOf(self.state.get('visibleColumns'), column.id) >= 0;
+		});
+		if (self.state.get('useInnerChart') == true && self.model.records.length > 0)
+			visibleColumns.push(columns[columns.length - 1]); // innerChart field is last one added
+	}
+	else
+	{
+		// Restrict the visible columns
+		visibleColumns = columns.filter(function(column) {
+		  return _.indexOf(self.state.get('hiddenColumns'), column.id) == -1;
+		});
+	}
 
     // Order them if there is ordering info on the state
     if (this.state.get('columnsOrder')){
@@ -104,17 +141,84 @@ my.SlickGrid = Backbone.View.extend({
     }
     columns = columns.concat(tempHiddenColumns);
 
+	var max = 0;
+	var adjustMax = function(val) {
+		// adjust max in order to return the highest comfortable number
+		var valStr = ""+parseInt(val);
+		var totDigits = valStr.length;
+		if (totDigits <= 1)
+			return 10;
+		else
+		{
+			var firstChar = parseInt(valStr.charAt(0));
+			var secondChar = parseInt(valStr.charAt(1));
+			if (secondChar < 5)
+				return (firstChar+0.5)*Math.pow(10, totDigits-1)
+			else return (firstChar+1)*Math.pow(10, totDigits-1)
+		}
+	}
+	var innerChartSerie1Name = self.state.get('innerChartSerie1');
+	var innerChartSerie2Name = self.state.get('innerChartSerie2');
+	if (self.state.get('useInnerChart') == true && innerChartSerie1Name != null && innerChartSerie2Name != null && this.model.records.length > 0)
+	{
+		this.model.records.each(function(doc){
+		  var row = {};
+		  self.model.fields.each(function(field){
+			row[field.id] = doc.getFieldValue(field);
+			if (field.id == innerChartSerie1Name || field.id == innerChartSerie2Name)
+			{
+				var currVal = Math.abs(parseFloat(row[field.id]));
+				if (currVal > max)
+					max = currVal;
+			}
+		  });
+		});
+		max = adjustMax(max);
+		options.innerChartMax = max;
+	}
     var data = [];
-
+	var rowsToSelect = [];
+	var jj = 0;
     this.model.records.each(function(doc){
-      var row = {};
+      if (doc.is_selected)
+		rowsToSelect.push(jj);
+		
+	  var row = {schema_colors: []};
+
       self.model.fields.each(function(field){
-        row[field.id] = doc.getFieldValueUnrendered(field);
+        row[field.id] = doc.getFieldValue(field);
+        if (innerChartSerie1Name != null && field.id == innerChartSerie1Name)
+    		row.schema_colors[0] = doc.getFieldColor(field);
+        
+        if (innerChartSerie2Name != null && field.id == innerChartSerie2Name)
+    		row.schema_colors[1] = doc.getFieldColor(field);
       });
+	  
+	  if (self.state.get('useInnerChart') == true && innerChartSerie1Name != null && innerChartSerie2Name != null) 
+		row['innerChart'] = [ row[innerChartSerie1Name], row[innerChartSerie2Name], max ];
+		
       data.push(row);
+		jj++;
     });
 
+	if (this.options.actions != null && typeof this.options.actions != "undefined")
+	{
+		_.each(this.options.actions, function(currAction) {
+			if (_.indexOf(currAction.event, "hover") >= 0)
+				options.trackMouseHover = true;
+		});
+	}
     this.grid = new Slick.Grid(this.el, data, visibleColumns, options);
+	
+	this.grid.addClassesToGrid(["s-table", "s-table-hover", "s-table-striped", "s-table-condensed"]);
+	this.grid.removeClassesFromGrid(["ui-widget"]);
+	
+	this.grid.setSelectionModel(new Slick.RowSelectionModel());
+	this.grid.getSelectionModel().setSelectedRows(rowsToSelect);
+	
+    this.grid.onSelectedRowsChanged.subscribe(function(e, args){
+		self.onSelectionChanged(args.rows)
+	});
 
     // Column sorting
     var sortInfo = this.model.queryState.get('sort');
@@ -149,6 +253,17 @@ my.SlickGrid = Backbone.View.extend({
         self.state.set({columnsWidth:columnsWidth});
     });
 
+      //
+    this.grid.onRowHoverIn.subscribe(function(e, args){
+		console.log("HoverIn "+args.row)
+		var selectedRecords = [];
+		selectedRecords.push(self.model.records.models[args.row]);
+		var actions = self.options.actions;
+		actions.forEach(function(currAction){				
+			currAction.action.doAction(selectedRecords, currAction.mapping);
+		});
+    });
+	
     var columnpicker = new Slick.Controls.ColumnPicker(columns, this.grid,
                                                        _.extend(options,{state:this.state}));
 
@@ -162,7 +277,18 @@ my.SlickGrid = Backbone.View.extend({
 
     return this;
  },
-
+   onSelectionChanged: function(rows) {
+	var self = this;
+	var selectedRecords = [];
+	_.each(rows, function(row) {
+		selectedRecords.push(self.model.records.models[row]);
+	});
+	var actions = this.options.actions;
+	   if(actions != null)
+        actions.forEach(function(currAction){
+		    currAction.action.doAction(selectedRecords, currAction.mapping);
+	    });
+  },
   show: function() {
     // If the div is hidden, SlickGrid will calculate wrongly some
     // sizes so we must render it explicitly when the view is visible
