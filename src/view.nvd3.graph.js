@@ -127,25 +127,37 @@ this.recline.View = this.recline.View || {};
                     .call(self.chart);
 
                 nv.utils.windowResize(self.graphResize);
-
+                self.graphResize()
                 return  self.chart;
             });
         },
 
         graphResize:function () {
             var self = this;
+            var viewId = this.uid;
+
             // this only works by previously setting the body height to a numeric pixel size (percentage size don't work)
             // so we assign the window height to the body height with the command below
-            $("body").height($(window).innerHeight() - 10);
-
-            var currAncestor = self.el;
-            while (!currAncestor.hasClass('row-fluid') && !currAncestor.hasClass('row'))
-                currAncestor = currAncestor.parent();
-
-            if (typeof currAncestor != "undefined" && currAncestor != null && (currAncestor.hasClass('row-fluid') || currAncestor.hasClass('row'))) {
-                var newH = currAncestor.height();
-                $('#nvd3chart_' + viewId).height(newH);
-                $('#nvd3chart_' + viewId + '  svg').height(newH);
+            var container = self.el;
+            while (!container.hasClass('container-fluid') && !container.hasClass('container'))
+            	container = container.parent();
+            
+            if (typeof container != "undefined" && container != null 
+            		&& (container.hasClass('container') || container.hasClass('container-fluid'))
+            		&& container[0].style && container[0].style.height
+            		&& container[0].style.height.indexOf("%") > 0) 
+            {
+	            $("body").height($(window).innerHeight() - 10);
+	
+	            var currAncestor = self.el;
+	            while (!currAncestor.hasClass('row-fluid') && !currAncestor.hasClass('row'))
+	                currAncestor = currAncestor.parent();
+	
+	            if (typeof currAncestor != "undefined" && currAncestor != null && (currAncestor.hasClass('row-fluid') || currAncestor.hasClass('row'))) {
+	                var newH = currAncestor.height();
+	                $('#nvd3chart_' + viewId).height(newH);
+	                $('#nvd3chart_' + viewId + '  svg').height(newH);
+	            }
             }
             self.chart.update(); // calls original 'update' function
         },
