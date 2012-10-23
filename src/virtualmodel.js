@@ -315,9 +315,20 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
                     // apply finalization function, was not applied since now
                     // todo verify if can be moved above
                     // note that finalization can't be applyed at init cause we don't know in advance wich partitions data can be built
-                    recline.Data.Aggregations.finalizeFunctions[aggregationFunctions[j]](currentField,  aggregatedFields,
-                        _.keys(partitionFields[aggregationFunctions[j]]));
 
+                    try {
+                        var tmpPartitionFields = [];
+                        if(partitionFields[aggregationFunctions[j]] != null)
+                            tmpPartitionFields = partitionFields[aggregationFunctions[j]];
+                    recline.Data.Aggregations.finalizeFunctions[aggregationFunctions[j]](
+                        currentField,
+                        aggregatedFields,
+                        _.keys(tmpPartitionFields));
+                    }
+                    catch(err) {
+                        console.log(err);
+
+                    }
                     var tempValue;
 
 

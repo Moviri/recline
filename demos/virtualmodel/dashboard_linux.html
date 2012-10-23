@@ -120,9 +120,9 @@ root: ../../
             });
             virtualdatasetTotal= new recline.Model.VirtualDataset({
 				dataset: dataset,
-				aggregation: {
-				aggregatedFields: ["totalviewed", "price_sum"],
-				aggregationFunctions: ["sum"]
+				    aggregation: {
+				    aggregatedFields: ["totalviewed", "price_sum"],
+				    aggregationFunctions: ["sum"]
 				}
             });
 
@@ -138,7 +138,9 @@ root: ../../
             virtualdatasetDay.queryState.attributes.sort = [{field:"daydate"}];
 
             virtualdatasetDay.bind('query:done query:fail', function() { document.getElementById("loadingImage").style.display = "none"; });
-			
+
+
+
 		var action_db = new recline.Action({
             filters: {
                 filter_daydate: {type: "range", field: "daydate", fieldType: "date"}
@@ -207,11 +209,12 @@ root: ../../
 		   // var grid2 = new recline.View.SlickGrid(
 											// {model: dataset, el: $el, 
 												// state: {
-													// fitColumns:true, 
+											// fitColumns:true,
 												// }
 											// }); 
             // grid2.visible = true;
             // grid2.render();
+
 
             var graph2 = new recline.View.NVD3Graph({
                 model: virtualdatasetDay,
@@ -233,6 +236,8 @@ root: ../../
 // 				}]
             });
             $('#mygraph2').append(graph2.el);
+
+
 
             var graph3 = new recline.View.NVD3Graph({
                 model: virtualdatasetWeekday,
