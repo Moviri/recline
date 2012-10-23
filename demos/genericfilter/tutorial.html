@@ -1,0 +1,289 @@
+---
+layout: moviri
+title: Demos - NVD3 Integration
+recline-deps: true
+root: ../../
+---
+
+
+<body>
+
+<div class="container-fluid">
+
+
+
+    <div class="row-fluid"><div class="span4"></div></div>
+    <div class="row-fluid">
+        <div class="span8"><div id="grid1"></div></div>
+    </div>
+
+    <div class="row-fluid">
+        <div class="span2">
+            <table class="table">
+            <tr><td>range_calendar</td></tr>
+                <tr><td><div id="filter1"></div></td></tr>
+                <tr><td>list</td></tr>
+                <tr><td><div id="filter3"></div></td></tr>
+
+            </table>
+
+        </div>
+        <div class="span2">
+            <table class="table">
+                <tr><td>month_week_calendar</td></tr>
+                <tr><td><div id="filter2"></div></td></tr>
+                </table>
+            </div>
+        <div class="span2">
+            <table class="table">
+                <tr><td>legend</td></tr>
+                <tr><td><div id="filter4"></div></td></tr>
+                <tr><td>drop_down</td></tr>
+
+                <tr><td><div id="filter5"></div></td></tr>
+            </table>
+        </div>
+        <div class="span2">
+            <table class="table">
+                <tr><td>listbox</td></tr>
+                <tr><td><div id="filter6"></div></td></tr>
+                <tr><td>term</td></tr>
+
+                <tr><td><div id="filter7"></div></td></tr>
+            </table>
+        </div>
+        <div class="span2">
+            <table class="table">
+                <tr><td>range</td></tr>
+                <tr><td><div id="filter8"></div></td></tr>
+                <tr><td>slider</td></tr>
+
+                <tr><td><div id="filter9"></div></td></tr>
+            </table>
+        </div>
+        <div class="span2">
+            <table class="table">
+                <tr><td>range_slider</td></tr>
+                <tr><td><div id="filter10"></div></td></tr>
+                <tr><td>legend_color</td></tr>
+
+                <tr><td><div id="filter11"></div></td></tr>
+            </table>
+        </div>
+    </div>
+
+
+
+
+</div>
+
+<script>
+
+
+
+var colorSchemaDate = new recline.Data.ColorSchema({
+    type: "scaleWithDistinctData",
+    colors: ['#F7E1C5', '#6A000B']
+});
+
+var dataset = new recline.Model.Dataset({
+    records: [
+        {id: 1, gender: "F", age: 10, x: 20, y: 200, date: new Date(2012, 9, 1, 9,0,0,0)},
+        {id: 2, gender: "F", age: 10, x: 25, y: 300,  date: new Date(2012, 9, 2, 10,0,0,0)},
+        {id: 3, gender: "M", age: 15, x: 30, y: 400,  date: new Date(2012, 9, 3, 11,0,0,0)},
+        {id: 4, gender: "F", age: 15, x: 40, y: 450,   date: new Date(2012, 9, 4, 12,0,0,0)}
+    ],
+    fields: [
+        {id: 'x', type: "integer"},
+        {id: 'y', type: "integer"},
+        {id: 'age'} ,
+        {id: 'date', type: "date"}
+    ]
+});
+colorSchemaDate.setDataset(dataset, "date");
+dataset.queryState.addFacetNoEvent("date");
+
+
+var action1 = new recline.Action({
+    filters: {
+        filter_date_range: {type: "range", field: "date", fieldType: "date"},
+        filter_date_term:  {type: "term", field: "date", fieldType: "date"},
+        filter_date_list:  {type: "list", field: "date", fieldType: "date"}
+    },
+    models: [
+        {model: dataset, filters:["filter_date_term", "filter_date_list", "filter_date_range"]}
+    ],
+    type: ["selection"]
+});
+
+var $el = $('#grid1');
+var grid1 = new recline.View.SlickGrid({
+    model: dataset,
+    el: $el,
+    state: {  fitColumns:true }
+});
+grid1.visible = true;
+grid1.render();
+
+drawGraph();
+
+dataset.fetch();
+
+
+
+function drawGraph() {
+
+    var filter1 = new recline.View.GenericFilter({
+                    sourceDataset: dataset,
+ 				    sourceFields: [{field: "date", controlType: 'range_calendar', type: "range", fieldType: "date" }],
+                    actions: [{
+                            action: action1,
+                            mapping: [
+                                {srcField: "date", filter: "filter_date_range"}
+                            ],
+                            event: ["selection"]
+                    }]
+             });
+    $('#filter1').append(filter1.el);
+
+    var filter2 = new recline.View.GenericFilter({
+        sourceDataset: dataset,
+        sourceFields: [{field: "date", controlType: 'month_week_calendar', type: "range", fieldType: "date" }],
+        actions: [{
+            action: action1,
+            mapping: [
+                {srcField: "date", filter: "filter_date_range"}
+            ],
+            event: ["selection"]
+        }]
+    });
+    $('#filter2').append(filter2.el);
+
+    var filter3 = new recline.View.GenericFilter({
+        sourceDataset: dataset,
+        sourceFields: [{field: "date", controlType: 'list', type: "list", fieldType: "date" }],
+        actions: [{
+            action: action1,
+            mapping: [
+                {srcField: "date", filter: "filter_date_list"}
+            ],
+            event: ["selection"]
+        }]
+    });
+    $('#filter3').append(filter3.el);
+
+    var filter4 = new recline.View.GenericFilter({
+        sourceDataset: dataset,
+        sourceFields: [{field: "date", controlType: 'legend', type: "list", fieldType: "date" }],
+        actions: [{
+            action: action1,
+            mapping: [
+                {srcField: "date", filter: "filter_date_list"}
+            ],
+            event: ["selection"]
+        }]
+    });
+    $('#filter4').append(filter4.el);
+
+    var filter5 = new recline.View.GenericFilter({
+        sourceDataset: dataset,
+        sourceFields: [{field: "date", controlType: 'drop_down', type: "term", fieldType: "date" }],
+        actions: [{
+            action: action1,
+            mapping: [
+                {srcField: "date", filter: "filter_date_term"}
+            ],
+            event: ["selection"]
+        }]
+    });
+    $('#filter5').append(filter5.el);
+
+    var filter6 = new recline.View.GenericFilter({
+        sourceDataset: dataset,
+        sourceFields: [{field: "date", controlType: 'listbox', type: "list", fieldType: "date" }],
+        actions: [{
+            action: action1,
+            mapping: [
+                {srcField: "date", filter: "filter_date_list"}
+            ],
+            event: ["selection"]
+        }]
+    });
+    $('#filter6').append(filter6.el);
+
+    var filter7 = new recline.View.GenericFilter({
+        sourceDataset: dataset,
+        sourceFields: [{field: "date", controlType: 'term', type: "term", fieldType: "date" }],
+        actions: [{
+            action: action1,
+            mapping: [
+                {srcField: "date", filter: "filter_date_term"}
+            ],
+            event: ["selection"]
+        }]
+    });
+    $('#filter7').append(filter7.el);
+
+    var filter8 = new recline.View.GenericFilter({
+        sourceDataset: dataset,
+        sourceFields: [{field: "date", controlType: 'range', type: "range", fieldType: "date" }],
+        actions: [{
+            action: action1,
+            mapping: [
+                {srcField: "date", filter: "filter_date_range"}
+            ],
+            event: ["selection"]
+        }]
+    });
+    $('#filter8').append(filter8.el);
+
+    /*var filter9 = new recline.View.GenericFilter({
+        sourceDataset: dataset,
+        sourceFields: [{field: "date", controlType: 'slider', type: "term", fieldType: "date" }],
+        actions: [{
+            action: action1,
+            mapping: [
+                {srcField: "date", filter: "filter_date_term"}
+            ],
+            event: ["selection"]
+        }]
+    });
+    $('#filter9').append(filter9.el);
+    */
+
+    /*var filter10 = new recline.View.GenericFilter({
+        sourceDataset: dataset,
+        sourceFields: [{field: "date", controlType: 'range_slider', type: "range", fieldType: "date" }],
+        actions: [{
+            action: action1,
+            mapping: [
+                {srcField: "date", filter: "filter_date_range"}
+            ],
+            event: ["selection"]
+        }]
+    });
+    $('#filter10').append(filter10.el);
+    */
+
+    var filter11 = new recline.View.GenericFilter({
+        sourceDataset: dataset,
+        sourceFields: [{field: "date", controlType: 'color_legend', type: "list", fieldType: "date" }],
+        actions: [{
+            action: action1,
+            mapping: [
+                {srcField: "date", filter: "filter_date_list"}
+            ],
+            event: ["selection"]
+        }]
+    });
+    $('#filter11').append(filter11.el);
+
+
+
+}
+
+
+</script>
+
+</body>
+

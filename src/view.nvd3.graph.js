@@ -477,6 +477,13 @@ this.recline.View = this.recline.View || {};
                 else
                     chart = nv.models.pieChart();
 
+                chart.values(function(d) {
+                    var ret=[];
+                    _.each(d.values, function(dd) {
+                        ret.push({x: dd.x, y:dd.y});
+                    });
+                    return ret;
+                });
 
                 return chart;
             }
@@ -490,6 +497,23 @@ this.recline.View = this.recline.View || {};
                 d.action.doAction(records, d.mapping);
             });
 
+        },
+
+        getFieldLabel: function(field){
+            var self=this;
+            var fieldLabel = field.attributes.label;
+            if (field.attributes.is_partitioned)
+                fieldLabel = field.attributes.partitionValue;
+
+            if (typeof self.state.attributes.fieldLabels != "undefined" && self.state.attributes.fieldLabels != null) {
+                var fieldLabel_alternateObj = _.find(self.state.attributes.fieldLabels, function (fl) {
+                    return fl.id == fieldLabel
+                });
+                if (typeof fieldLabel_alternateObj != "undefined" && fieldLabel_alternateObj != null)
+                    fieldLabel = fieldLabel_alternateObj.label;
+            }
+
+            return fieldLabel;
         },
 
 
@@ -553,15 +577,6 @@ this.recline.View = this.recline.View || {};
                     }
                     else {
 
-                        var color;
-                        if (selectionActive) {
-                            if (doc.isRecordSelected())
-                                color = doc.getFieldColor(seriesNameField);
-                            else
-                                color = unselectedColor;
-                        } else
-                            color = doc.getFieldColor(seriesNameField);
-
                         if (color != null)
                             tmpS = {key:key, values:[], color:color};
                         else
@@ -613,17 +628,7 @@ this.recline.View = this.recline.View || {};
                     var yfield = self.model.fields.get(field);
 
                     //todo
-                    var fieldLabel = field;
-                    if (yfield.attributes.is_partitioned)
-                        fieldLabel = yfield.attributes.partitionValue;
 
-                    if (typeof self.state.attributes.fieldLabels != "undefined" && self.state.attributes.fieldLabels != null) {
-                        var fieldLabel_alternateObj = _.find(self.state.attributes.fieldLabels, function (fl) {
-                            return fl.id == fieldLabel
-                        });
-                        if (typeof fieldLabel_alternateObj != "undefined" && fieldLabel_alternateObj != null)
-                            fieldLabel = fieldLabel_alternateObj.label;
-                    }
 
 
                     var points = [];
@@ -665,7 +670,7 @@ this.recline.View = this.recline.View || {};
                     });
 
                     if (points.length > 0)
-                        series.push({values:points, key:field, label:fieldLabel, color:yfield.getColorForPartition()});
+                        series.push({values:points, key:self.getFieldLabel(yfield), color:yfield.getColorForPartition()});
                 });
 
             } else throw "views.nvd3.graph.js: unsupported or not defined type " + seriesAttr.type;
