@@ -49,7 +49,7 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
         		return self.records.models;
         	}else {
                 if(self._store.data == null) {
-                    throw "VirtualModel: unable to retrieve not filtered data, store has not been initialized";
+                    throw "VirtualModel: unable to retrieve not filtered data, store can't provide data. Use a backend that use memory store";
                 }
 
                 var docs = _.map(self._store.data, function(hit) {

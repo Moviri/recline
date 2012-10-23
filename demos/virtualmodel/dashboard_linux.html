@@ -80,6 +80,7 @@ root: ../../
             id: "AudDemoByGender",
             fieldLabels: [{id: "age", label: "Age (bin)"}, {id: "gender", label: "Gender"}],
             inMemoryQueryFields: ["age", "gender"],
+            useMemoryStore: true,
             colorSchema: [
                 {schema: colorSchema, field: "gender"}
             ]
@@ -335,21 +336,21 @@ root: ../../
             });
             $('#search_container2').append(filter2.el);
 
-//             var filter3 = new recline.View.GenericFilter({
-//                 sourceDataset: dataset,
-// 				sourceFields: [
-// 								{field: 'gender', controlType: 'legend', fieldType: 'list'}
-// 							],
-// 				useFilteredData : false,
-//                 actions: [{
-//                     action: action_db2,
-//                     mapping: [
-//                         {srcField: "gender", filter: "filter_gender"}
-//                     ],
-//                     event: ["filter"]
-//                 }]
-//             });
-//             $('#search_container3').append(filter3.el);
+             var filter3 = new recline.View.GenericFilter({
+                 sourceDataset: dataset,
+ 				sourceFields: [
+ 								{field: 'gender', controlType: 'legend', fieldType: 'list'}
+ 							],
+ 				useFilteredData : false,
+                 actions: [{
+                     action: action_db2,
+                     mapping: [
+                         {srcField: "gender", filter: "filter_gender"}
+                     ],
+                     event: ["filter"]
+                 }]
+             });
+             $('#search_container3').append(filter3.el);
 
 //             var filter4 = new recline.View.GenericFilter({
 //                 sourceDataset: virtualdatasetAge,

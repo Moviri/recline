@@ -218,13 +218,23 @@ this.recline.Model = this.recline.Model || {};
             });
         },
 
-        getRecords:function (type) {
-            var self = this;
+        getRecords: function(type) {
+            var self=this;
 
-            if (type === 'filtered') {
+            if(type==='filtered'){
                 return self.records.models;
-            } else {
-                throw "Model.js: accessing to data for type " + type + " not implemented"
+            }else {
+                if(self._store.data == null) {
+                    throw "Model: unable to retrieve not filtered data, store can't provide data. Use a backend that use memory store";
+                }
+
+                var docs = _.map(self._store.data, function(hit) {
+                    var _doc = new my.Record(hit);
+                    _doc.fields = self.fields;
+                    return _doc;
+                });
+
+                return docs;
             }
         },
 
