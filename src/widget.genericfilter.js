@@ -340,18 +340,27 @@ my.GenericFilter = Backbone.View.extend({
       if (tmplData.filters.length > 0)
 		tmplData.filters[tmplData.filters.length -1].hrVisible = 'none'
 	
+			
+	var resultType = "filtered";
+	if(self.options.useFilteredData !== null && self.options.useFilteredData === false)
+		resultType = "original";
+
     tmplData.fields = this._sourceDataset.fields.toJSON();
-	tmplData.records = _.pluck(this._sourceDataset.records.models, "attributes");
+	tmplData.records = _.pluck(this._sourceDataset.getRecords(resultType), "attributes");
 	tmplData.filterLabel = this.filterDialogLabel;
 	tmplData.dateConvert = self.dateConvert;
     tmplData.filterRender = function() {
 		
 	  this.tmpValues = [];
 	  // add value list to selected filter or templating of record values will not work
-	  if (this.controlType === 'list' || this.controlType.indexOf('slider') >= 0 || this.controlType.indexOf('legend') >= 0)
+	  if (this.controlType.indexOf('legend') >= 0)
 	  {
 	      this.facet = self._sourceDataset.getFacetByFieldId(this.field);
 		  this.tmpValues = _.pluck(this.facet.attributes.terms, "term");
+	  }
+	  else if (this.controlType === 'list' || this.controlType.indexOf('slider') >= 0)
+	  {
+		  this.tmpValues = _.pluck(tmplData.records, this.field);
 	  }
 	  this.values = new Array();
 	  if (this.start)
@@ -396,7 +405,7 @@ my.GenericFilter = Backbone.View.extend({
 //				count = currTerm.count;
 //			}
 //			
-//			this.values.push({val: v, notSelected: notSelected, color: color, count: });
+//			this.values.push({val: v, notSelected: notSelected, color: color, count: count});
 			
 			// OLD code, somehow working but wrong
 			this.values.push({val: v, notSelected: notSelected, color: this.facet.attributes.terms[i].color, count: this.facet.attributes.terms[i].count});
@@ -413,7 +422,7 @@ my.GenericFilter = Backbone.View.extend({
 		  for (var i in this.tmpValues)
 		  {
 			var v = this.tmpValues[i];
-			this.values.push({val: v, selected: (this.term == v || self._sourceDataset.records.models[i].is_selected ? self._selectedClassName : "")});
+			this.values.push({val: v, selected: (this.term == v || self._sourceDataset.getRecords(resultType)[i].is_selected ? self._selectedClassName : "")});
 			if (v > this.max)
 				this.max = v;
 				
@@ -737,7 +746,7 @@ my.GenericFilter = Backbone.View.extend({
   onRemoveFilter: function(e) {
     e.preventDefault();
     var $target = $(e.target);
-    var field = $target.parent().attr('data-filter-field');
+    var field = $target.parent().parent().attr('data-filter-field');
 	var currFilter = this.findActiveFilterByField(field);
 	//console.log(currFilter);
 	currFilter.term = "";

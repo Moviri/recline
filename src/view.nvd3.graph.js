@@ -116,12 +116,138 @@ this.recline.View = this.recline.View || {};
             };
 
   		    d3.select('#nvd3chart_' + self.uid + '  svg')
+  		    
+            var chart;
+            // todo per gli stacked e' necessario ciclare sulla serie per inserire dati null o zero dove non siano presenti
+
+            switch(graphType) {
+                case 'lineChart':
+                    chart = nv.models.lineChart().tooltips(true);
+                    break;
+                case "stackedAreaChart":
+                    chart = nv.models.stackedAreaChart()
+                        .clipEdge(true);
+                    break;
+                case "multiBarHorizontalChart":
+                    chart = nv.models.multiBarHorizontalChart()
+                    break;
+                case "bulletChart" :
+                    chart = nv.models.bulletChart();
+                     break;
+                case "cumulativeLineChart":
+                    chart = nv.models.cumulativeLineChart()
+                    break;
+                case "discreteBarChart":
+                    chart = nv.models.discreteBarChart()
+                        .staggerLabels(true)
+                        .tooltips(false)
+                        .showValues(true);
+
+                    var actions = self.getActionsForEvent("selection");
+
+                    if(actions.length > 0)
+                        chart.discretebar.dispatch.on('elementClick', function(e) {
+                            self.doActions(actions, [e.point.record]);
+                        });
+                break;
+                case "multiBarChart":
+                    chart = nv.models.multiBarChart().stacked(true);
+                    break;
+                case "lineWithBrushChart":
+                    var actions = self.getActionsForEvent("selection");
+
+                    if(actions.length > 0) {
+                        chart = nv.models.lineWithBrushChart(
+                            {callback: function(x) {
+
+                            // selection is done on x axis so I need to take the record with range [min_x, max_x]
+                            // is the group attribute
+                            var record_min = _.min(x, function(d) { return d.min.x }) ;
+                            var record_max = _.max(x, function(d) { return d.max.x });
+
+                            self.doActions(actions, [record_min.min.record, record_max.min.record]);
+
+                        }});
+
+                    } else {
+                        chart = nv.models.lineWithBrushChart();
+                    }
+
+                    break;
+                case "multiBarWithBrushChart":
+                    chart = nv.models.multiBarWithBrushChart(function(x) {
+                        //self.doActions("elementSelection", e);
+
+
+                    });
+                    break;
+                default:
+                    throw "nvd3.graph.js: unsupported graph type " +    graphType;
+            }
+
+            //chart.x(function(d)    { return d.x; })
+            //        .y(function(d) { return d.y; });
+
+			var xfield =  model.fields.get(state.attributes.group);
+			xfield.set('type', xfield.get('type').toLowerCase());
+			
+			if (xLabel == null || xLabel == "" || typeof xLabel == 'undefined')
+				xLabel = xfield.get('label')
+
+			if (yLabel == null || yLabel == "" || typeof yLabel == 'undefined')
+				yLabel = state.attributes.seriesValues.join("/");
+
+            chart.yAxis
+                .axisLabel(yLabel)
+                .tickFormat(d3.format('s'));
+
+			if (xfield.get('type') == 'date' || 
+				(xfield.get('type') == 'string' && xLabel.indexOf('date') >= 0 && model.recordCount > 0 && new Date(model.records.get(0).get(xLabel)) instanceof Date))
+			{
+				chart.xAxis
+					.axisLabel(xLabel)
+					.tickFormat(function(d) {
+             			return d3.time.format('%x')(new Date(d)) ;
+		           })   ;
+			}
+			else
+			{
+				chart.xAxis
+					.axisLabel(xLabel)
+					.tickFormat(d3.format(',r'));
+			}
+
+
+  		d3.select('#nvd3chart_' +viewId + '  svg')
       		    .datum(seriesNVD3)
     		    .transition()
                 .duration(500)
       		    .call(self.chart);
 
-        nv.utils.windowResize(self.chart.update);
+  		var chartUpdate = function()
+  		{
+  			// this function forces the height of the container row to the chart itself on every window resize
+  			
+  			// this only works by previously setting the body height to a numeric pixel size (percentage size don't work)
+  			// so we assign the window height to the body height with the command below
+  			$("body").height($(window).innerHeight()-10);
+  			
+  			var currAncestor = self.el;
+  			while (!currAncestor.hasClass('row-fluid') && !currAncestor.hasClass('row'))
+  				currAncestor = currAncestor.parent();
+  			
+  			if (typeof currAncestor != "undefined" && currAncestor != null && (currAncestor.hasClass('row-fluid') || currAncestor.hasClass('row')))
+			{
+  				var newH = currAncestor.height();
+  	  			$('#nvd3chart_' +viewId).height(newH);
+  				$('#nvd3chart_' +viewId + '  svg').height(newH);
+			}
+  			self.chart.update(); // calls original 'update' function
+  		}
+  		
+  		chartUpdate(); // force initial resize
+  		
+        nv.utils.windowResize(chartUpdate);
 
         return  self.chart;
     });
@@ -157,19 +283,6 @@ this.recline.View = this.recline.View || {};
                   .tickFormat(d3.format('s'));
 
           }
-
-            // todo merge for labels
-            /*           var yfield = self.model.fields.get(field);
-             var fieldLabel = field;
-             if (yfield.attributes.is_partitioned)
-             fieldLabel = yfield.attributes.partitionValue;
-
-             if (typeof self.state.attributes.fieldLabels != "undefined" && self.state.attributes.fieldLabels != null)
-             {
-             var fieldLabel_alternateObj = _.find(self.state.attributes.fieldLabels, function(fl) {return fl.id == fieldLabel});
-             if (typeof fieldLabel_alternateObj != "undefined" && fieldLabel_alternateObj != null)
-             fieldLabel = fieldLabel_alternateObj.label;
-             }*/
         },
 
   getFormatter: {
@@ -554,7 +667,18 @@ this.recline.View = this.recline.View || {};
 
        _.each(serieNames, function(field) {
           var yfield = self.model.fields.get(field);
+          
+          var fieldLabel = field;
+          if (yfield.attributes.is_partitioned)
+        	  fieldLabel = yfield.attributes.partitionValue;
 
+          if (typeof self.state.attributes.fieldLabels != "undefined" && self.state.attributes.fieldLabels != null)
+          {
+	          var fieldLabel_alternateObj = _.find(self.state.attributes.fieldLabels, function(fl) {return fl.id == fieldLabel});
+	          if (typeof fieldLabel_alternateObj != "undefined" && fieldLabel_alternateObj != null)
+	          fieldLabel = fieldLabel_alternateObj.label;
+          }
+          
           var points = [];
 
           _.each(records, function(doc, index) {
@@ -594,7 +718,7 @@ this.recline.View = this.recline.View || {};
           });
 
            if(points.length>0)
-            series.push({values: points, key: field, color: yfield.getColorForPartition()});
+            series.push({values: points, key: fieldLabel, color: yfield.getColorForPartition()});
        });
 
      } else throw "views.nvd3.graph.js: unsupported or not defined type " + seriesAttr.type;

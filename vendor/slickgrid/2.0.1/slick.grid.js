@@ -183,6 +183,7 @@ if (typeof Slick === "undefined") {
     // Initialization
 
     function init() {
+//      console.log('Slick.grid INIT')
       $container = $(container);
       if ($container.length < 1) {
         throw new Error("SlickGrid requires a valid container, " + container + " does not exist in the DOM.");
@@ -1631,6 +1632,8 @@ if (typeof Slick === "undefined") {
     }
 
     function getViewportHeight() {
+//    	console.log($(container))
+//    	console.log("GetViewportHeight -> Container height: "+$(container).height());
       return parseFloat($.css($container[0], "height", true)) -
           parseFloat($.css($container[0], "paddingTop", true)) -
           parseFloat($.css($container[0], "paddingBottom", true)) -
@@ -1641,10 +1644,12 @@ if (typeof Slick === "undefined") {
 
     function resizeCanvas() {
       if (!initialized) { return; }
+//      console.log("Slick.Grid.js resizeCanvas");
       if (options.autoHeight) {
         viewportH = options.rowHeight * (getDataLength() + (options.enableAddRow ? 1 : 0));
       } else {
         viewportH = getViewportHeight();
+//        console.log("viewportH:"+viewportH)
       }
 
       numVisibleRows = Math.ceil(viewportH / options.rowHeight);
@@ -1668,7 +1673,7 @@ if (typeof Slick === "undefined") {
           (options.enableAddRow ? 1 : 0) +
 		  (options.useInnerChart ? 1 : 0) +
           (options.leaveSpaceForNewRows ? numVisibleRows - 1 : 0);
-
+      
       var oldViewportHasVScroll = viewportHasVScroll;
       // with autoHeight, we do not need to accommodate the vertical scroll bar
       viewportHasVScroll = !options.autoHeight && (numberOfRows * options.rowHeight > viewportH);
@@ -1980,9 +1985,10 @@ if (typeof Slick === "undefined") {
 
     function render() {
       if (!initialized) { return; }
+//      console.log("Slick.grid.js render")
+//      console.log("viewportH:"+viewportH)
       var visible = getVisibleRange();
       var rendered = getRenderedRange();
-
       // remove rows no longer in the viewport
       cleanupRows(rendered);
 

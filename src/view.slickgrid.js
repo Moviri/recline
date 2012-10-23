@@ -43,6 +43,7 @@ my.SlickGrid = Backbone.View.extend({
   },
   render: function() {
     var self = this;
+//    console.log("View.SlickGrid RENDER");
 
     var options = {
       enableCellNavigation: true,
@@ -208,6 +209,7 @@ my.SlickGrid = Backbone.View.extend({
 				options.trackMouseHover = true;
 		});
 	}
+	
     this.grid = new Slick.Grid(this.el, data, visibleColumns, options);
 	
 	this.grid.addClassesToGrid(["s-table", "s-table-hover", "s-table-striped", "s-table-condensed"]);
@@ -275,6 +277,20 @@ my.SlickGrid = Backbone.View.extend({
       self.rendered = false;
     }
 
+    function resizeSlickGrid()
+    {
+    	if (self.model.records.length > 0)
+    	{
+//        	console.log("Resizing container height from "+self.el.height()+" to "+self.el.parent().height())
+        	// force container height to element height 
+        	self.el.height(self.el.parent().height());
+        	self.grid.invalidateAllRows();
+        	self.grid.resizeCanvas();
+    	}
+    }
+    resizeSlickGrid();
+    nv.utils.windowResize(resizeSlickGrid);
+    
     return this;
  },
    onSelectionChanged: function(rows) {

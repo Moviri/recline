@@ -14,8 +14,8 @@ root: ../../
 		</p>
 	</div>
 </div>
-<div id="container" class="container-fluid">
-    <div class="row-fluid">
+<div id="container" class="container-fluid" style="height:100%">
+    <div class="row-fluid" style="height:100%">
         <div class="span2 ">
             <div class="row-fluid">
                 <div id="search_container"></div>
@@ -33,7 +33,7 @@ root: ../../
                 <div id="search_container2"></div>
             </div>
         </div>
-        <div class="span9">
+        <div class="span9" style="height:100%">
             <div class="row-fluid" style="height:10%">
                 <div class="span6">
 					<div id="indicator1"></div>
@@ -42,9 +42,9 @@ root: ../../
 					<div id="indicator2"></div>
                 </div>
             </div>
-            <div class="row-fluid" style="height:30%">
-                <div class="span12" >
-                    <div id="mygrid"style="overflow:auto" class="dashboard-elem"></div>
+            <div class="row-fluid" style="height:30%;">
+                <div class="span12" style="height:100%">
+                    <div id="mygrid" style="overflow:auto"></div>
                 </div>
             </div>
             <!--div class="row-fluid" style="height:20%">
@@ -53,11 +53,11 @@ root: ../../
                 </div>
             </div-->
             <div class="row-fluid" style="height:30%" >
-                <div class="span12"><div id="mygraph2" class="dashboard-elem"></div></div>
+                <div class="span12"><div id="mygraph2"></div></div>
             </div>
             <div class="row-fluid" style="height:30%">
-                <div class="span6" ><div id="mygraph3" class="dashboard-elem"></div></div>
-                <div class="span6" ><div id="mygraph4" class="dashboard-elem"></div></div>
+                <div class="span6" ><div id="mygraph3"></div></div>
+                <div class="span6" ><div id="mygraph4"></div></div>
             </div>
         </div>
     </div>
@@ -70,7 +70,7 @@ root: ../../
 
         colorSchema = new recline.Data.ColorSchema({   
             type: "scaleWithDistinctData",   
-            colors:/* ["#FF0", "#F0F"]*/ ['#00CED1', '#1E90FF'], //["DarkTurquoise", "DodgerBlue"]   
+            colors: ['#00CED1', '#1E90FF'], //["DarkTurquoise", "DodgerBlue"]   
         	data:  ["Female", "Male"]
         });
         
@@ -83,11 +83,7 @@ root: ../../
             colorSchema: [
                 {schema: colorSchema, field: "gender"}
             ]
-
-            //colorSchema: colorSchema
         });
-        
-        //colorSchema.setDataset(dataset, "gender");
         
    		dataset.bind('query:start', function() { document.getElementById("loadingImage").style.display = "block"; });
 
@@ -111,8 +107,7 @@ root: ../../
                     aggregatedFields: ["totalviewed"],
                     partitions: ["gender"],
                     aggregationFunctions: ["sum", "avg"]
-                }//,
-                //colorSchema: colorSchema
+                }
             });
             virtualdatasetHour= new recline.Model.VirtualDataset({
                 dataset: dataset,
@@ -121,16 +116,14 @@ root: ../../
                     aggregatedFields: ["totalviewed"],
                     partitions: ["gender"],
                     aggregationFunctions: ["sum", "avg"]
-                }//,
-                //colorSchema: colorSchema
+                }
             });
             virtualdatasetTotal= new recline.Model.VirtualDataset({
 				dataset: dataset,
 				aggregation: {
 				aggregatedFields: ["totalviewed", "price_sum"],
 				aggregationFunctions: ["sum"]
-				}//,
-	            //colorSchema: colorSchema
+				}
             });
 
             virtualdatasetDay= new recline.Model.VirtualDataset({
@@ -140,12 +133,11 @@ root: ../../
                     aggregatedFields: ["totalviewed", "price_sum"],
                     partitions: ["gender"],
                     aggregationFunctions: ["sum", "avg"]
-                }//,
-                //colorSchema: colorSchema
+                }
             });
             virtualdatasetDay.queryState.attributes.sort = [{field:"daydate"}];
 
-            virtualdatasetDay.bind('query:done query:fail', function() { document.getElementById("loadingImage").style.display = "none";resizeAllElems(); });
+            virtualdatasetDay.bind('query:done query:fail', function() { document.getElementById("loadingImage").style.display = "none"; });
 			
 		var action_db = new recline.Action({
             filters: {
@@ -154,7 +146,7 @@ root: ../../
             models: [
                 {model: dataset, filters:["filter_daydate"]}
             ],
-            type: ["filter", "selection"]
+            type: ["filter"]
         });
 		
 		var action_db2 = new recline.Action({
@@ -172,8 +164,7 @@ root: ../../
                 filter_age:     {type: "list",  field: "age", fieldType: "number"}
             },
             models: [
-                {model: virtualdatasetAge, filters:["filter_age"]},
-				{model: dataset, filters:["filter_age"]}
+                {model: virtualdatasetAge, filters:["filter_age"]}
             ],
             type: ["selection"]
         });
@@ -206,7 +197,7 @@ root: ../../
 														srcField : "age",
 														filter : "filter_age"
 													}],
-													event : ["onSelectedRangesChanged"]
+													event : ["selection"] 
 												}]
 											}); 
             grid.visible = true;
@@ -227,16 +218,19 @@ root: ../../
                 state: {
                     group: "daydate",
 					yLabel: "Total Viewed",
-                    seriesValues: ["totalviewed_by_gender_Male_sum", "totalviewed_by_gender_Female_sum"],
+                    series: {
+                    	type: "byFieldName", 
+                    	valuesField: ["totalviewed_by_gender_Male_sum", "totalviewed_by_gender_Female_sum"]},  
+                    //series: {type: "byPartitionedField", aggregatedField: "gender", aggregationFunctions: "sum"},
                     graphType: "lineChart"
-                },
-				actions: [{
-					action: action_db,
-					mapping: [
-						{srcField: "daydate", filter: "filter_daydate"}
-					],
-					event: ["elementSelection"]
-				}]
+                }//,
+// 				actions: [{
+// 					action: action_db,
+// 					mapping: [
+// 						{srcField: "daydate", filter: "filter_daydate"}
+// 					],
+// 					event: ["selection"]
+// 				}]
             });
             $('#mygraph2').append(graph2.el);
 
@@ -246,7 +240,8 @@ root: ../../
                 state: {
                     group: "dayofweek",
 					yLabel: "Total Viewed AVG",
-                    seriesValues: ["totalviewed_by_gender_Male_avg", "totalviewed_by_gender_Female_avg"],
+                    series: {type: "byFieldName", valuesField: ["totalviewed_by_gender_Male_avg", "totalviewed_by_gender_Female_avg"]},  
+                    //series: {type: "byPartitionedField", aggregatedField: "gender", aggregationFunctions: "avg"},
                     graphType: "multiBarChart"
                 }
             });
@@ -260,7 +255,8 @@ root: ../../
                 state: {
                     group: "dayhour",
 					yLabel: "Total Viewed AVG",
-                    seriesValues: ["totalviewed_by_gender_Male_avg", "totalviewed_by_gender_Female_avg"],
+                    //series: {type: "byPartitionedField", aggregatedField: "gender", aggregationFunctions: "avg"},
+                    series: {type: "byFieldName", valuesField: ["totalviewed_by_gender_Male_avg", "totalviewed_by_gender_Female_avg"]},  
                     graphType: "multiBarChart"
                 }
             })
@@ -292,108 +288,85 @@ root: ../../
             $('#indicator2').append(indicator2.el);
             indicator2.render();
 
-			var filter = new recline.View.GenericFilter({
-                sourceDataset: dataset,
-				sourceFields: [{field: "daydate", controlType: 'range_calendar', type: "range", fieldType: "date" }],
-                actions: [{
-                    action: action_db,
-                    mapping: [
-                        {srcField: "daydate", filter: "filter_daydate"}
-                    ],
-                    event: ["onFilterValueChanged", "onListItemClicked", "onRemoveFilter"]
-                }]
-            });
-            $('#search_container').append(filter.el);
+// 			var filter = new recline.View.GenericFilter({
+//                 sourceDataset: dataset,
+// 				sourceFields: [{field: "daydate", controlType: 'range_calendar', type: "range", fieldType: "date" }],
+//                 actions: [{
+//                     action: action_db,
+//                     mapping: [
+//                         {srcField: "daydate", filter: "filter_daydate"}
+//                     ],
+//                     event: ["selection"]
+//                 }]
+//             });
+//             $('#search_container').append(filter.el);
 
-            var filter1 = new recline.View.GenericFilter({
-                sourceDataset: dataset,
-				sourceFields: [{field: 'daydate', type: "range", controlType: 'month_week_calendar', fieldType: 'date'}	],
-                actions: [{
-                    action: action_db,
-                    mapping: [
-                        {srcField: "daydate", filter: "filter_daydate"}
-                    ],
-                    event: ["onFilterValueChanged", "onListItemClicked", "onRemoveFilter"]
-                }]
-            });
-            $('#search_container1').append(filter1.el);
+//             var filter1 = new recline.View.GenericFilter({
+//                 sourceDataset: dataset,
+// 				sourceFields: [{field: 'daydate', type: "range", controlType: 'month_week_calendar', fieldType: 'date'}	],
+//                 actions: [{
+//                     action: action_db,
+//                     mapping: [
+//                         {srcField: "daydate", filter: "filter_daydate"}
+//                     ],
+//                     event: ["filter"] 
+//                 }]
+//             });
+//             $('#search_container1').append(filter1.el);
 
             var filter2 = new recline.View.GenericFilter({
                 sourceDataset: virtualdatasetAge,
 				sourceFields: [
-								{field: 'age', controlType: 'list', fieldType: 'number'}//,
-								//{field: 'age', controlType: 'range_slider', fieldType: 'number'}
+								{field: 'age', controlType: 'list', fieldType: 'number'}
 							],
+				useFilteredData : false,
                 actions: [{
                     action: action_vmodel,
                     mapping: [
                         {srcField: "age", filter: "filter_age"}
                     ],
-                    event: ["onFilterValueChanged", "onListItemClicked", "onRemoveFilter"]
+                    event: ["selection"]
                 }]
             });
             $('#search_container2').append(filter2.el);
 
-            var filter3 = new recline.View.GenericFilter({
-                sourceDataset: dataset,
-				sourceFields: [
-								{field: 'gender', controlType: 'legend', fieldType: 'list'}
-							],
-                actions: [{
-                    action: action_db2,
-                    mapping: [
-                        {srcField: "gender", filter: "filter_gender"}
-                    ],
-                    event: ["onLegendItemClicked"]
-                }]
-            });
-            $('#search_container3').append(filter3.el);
+//             var filter3 = new recline.View.GenericFilter({
+//                 sourceDataset: dataset,
+// 				sourceFields: [
+// 								{field: 'gender', controlType: 'legend', fieldType: 'list'}
+// 							],
+// 				useFilteredData : false,
+//                 actions: [{
+//                     action: action_db2,
+//                     mapping: [
+//                         {srcField: "gender", filter: "filter_gender"}
+//                     ],
+//                     event: ["filter"]
+//                 }]
+//             });
+//             $('#search_container3').append(filter3.el);
 
-            var filter4 = new recline.View.GenericFilter({
-                sourceDataset: virtualdatasetAge,
-				sourceFields: [
-								{field: 'age', controlType: 'color_legend', fieldType: 'term'}
-							],
-                actions: [{
-                    action: action_vmodel,
-                    mapping: [
-                        {srcField: "age", filter: "filter_age"}
-                    ],
-                    event: ["onFilterValueChanged", "onListItemClicked", "onRemoveFilter"]
-                }]
-            });
-            $('#search_container4').append(filter4.el);
+//             var filter4 = new recline.View.GenericFilter({
+//                 sourceDataset: virtualdatasetAge,
+// 				sourceFields: [
+// 								{field: 'age', controlType: 'color_legend', fieldType: 'term'}
+// 							],
+// 				useFilteredData : false,
+//                 actions: [{
+//                     action: action_vmodel,
+//                     mapping: [
+//                         {srcField: "age", filter: "filter_age"}
+//                     ],
+//                     event: ["selection"]
+//                 }]
+//             });
+//             $('#search_container4').append(filter4.el);
 
             // var facet = new recline.View.FacetViewer({
 				// model: virtualdatasetAge
 			// });
             // $('#facet_container').append(facet.el);
-			
-			
-        resizeAllElems(); // force initial resize
-		
-		$(window).resize(resizeAllElems);
-		
-		function resizeAllElems() {
-			//console.log("resize all elems")
-			_.each([{el:"mygrid", obj:grid}, {el:"mygraph2", obj:graph2}, {el:"mygraph3", obj:graph3}, {el:"mygraph4", obj:graph4}], function(eo) { 
-						resizeElem(eo.el, eo.obj);	
-						//$(this).trigger('element-resize');
-					});
-		}
-		
-		function resizeElem(elemName, obj)
-		{
-			var availH = window.innerHeight-5; // substract 5px for Chrome
-			var perc = document.getElementById(elemName).parentNode.parentNode.style.height.replace("%", "")/100;
-			var newH = parseInt(availH * perc);
-			$("#"+elemName).height(newH);
-			$("#"+elemName+" svg").height(newH);
-			obj.height = newH;
-			obj.update
-		}
-
-	});
+ 	});
 
 
 </script>

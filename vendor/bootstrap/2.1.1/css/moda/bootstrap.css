@@ -5520,8 +5520,37 @@ a.badge:hover {
 .g-table .g-thead .g-sortable {
   background: url("/css/images/sort.png") no-repeat scroll right center transparent;
 }
+.slick-header-column {
+  text-align: center;
+  font-weight: bold;
+}
+.slick-footer-column {
+  background-color: transparent;
+}
+.slick-header-column.ui-state-default {
+  border-bottom: 1px solid gray;
+}
+.slick-cell {
+  text-align: center;
+}
+.slick-cell-left {
+  position: absolute;
+  border: 1px solid transparent;
+  border-right: 1px dotted silver;
+  border-bottom-color: silver;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: middle;
+  z-index: 1;
+  padding: 1px 2px 2px 1px;
+  margin: 0;
+  white-space: nowrap;
+  cursor: default;
+}
 div.s-table {
   max-width: 100%;
+  min-height: 200px;
   background-color: transparent;
   border-collapse: collapse;
   border-spacing: 0;
@@ -5796,6 +5825,56 @@ table [class*=span],
 }
 .s-table-hover div.s-tbody div.info:hover div.s-td {
   background-color: #c4e3f3;
+}
+div.recline-graph {
+  min-height: 250px;
+}
+svg.bstrap {
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif !important;
+  font-size: 14px;
+}
+svg.bstrap text {
+  font-weight: normal;
+  font-size: 14px;
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif !important;
+  fill: #333333;
+}
+svg.bstrap .title {
+  font-weight: normal;
+  font-size: 14px;
+  font-family: inherit !important;
+}
+div.recline-graph div.nvtooltip {
+  background-color: #eeeeee;
+  border: 1px solid #ffffff;
+  font-family: Georgia, "Times New Roman", Times, serif;
+  fill: #333333;
+  stroke: #0088cc;
+}
+div.recline-graph div.nvtooltip h3 {
+  font-size: 22px;
+}
+div.recline-graph div.nvtooltip p {
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-size: 18px;
+}
+div.recline-graph .nvd3 .nv-axis line {
+  stroke: rgba(51, 51, 51, 0.6699999999999999);
+}
+div.recline-graph .nvd3 .nv-axis path {
+  stroke: #333333;
+}
+.table-striped tbody tr:nth-child(even) td,
+.table-striped tbody tr:nth-child(even) th {
+  background-color: transparent;
+}
+.orange {
+  color: orange;
+}
+.centered {
+  margin-left: auto;
+  margin-right: auto;
+  text-align: center;
 }
 .pull-right {
   float: right;
