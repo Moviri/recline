@@ -277,19 +277,19 @@ my.SlickGrid = Backbone.View.extend({
       self.rendered = false;
     }
 
-    function resizeSlickGrid()
-    {
-    	if (self.model.records.length > 0)
-    	{
-//        	console.log("Resizing container height from "+self.el.height()+" to "+self.el.parent().height())
-        	// force container height to element height 
-        	self.el.height(self.el.parent().height());
-        	self.grid.invalidateAllRows();
-        	self.grid.resizeCanvas();
-    	}
-    }
-    resizeSlickGrid();
-    nv.utils.windowResize(resizeSlickGrid);
+//    function resizeSlickGrid()
+//    {
+//    	if (self.model.records.length > 0)
+//    	{
+////        	console.log("Resizing container height from "+self.el.height()+" to "+self.el.parent().height())
+//        	// force container height to element height 
+//        	self.el.height(self.el.parent().height());
+//        	self.grid.invalidateAllRows();
+//        	self.grid.resizeCanvas();
+//    	}
+//    }
+//    //resizeSlickGrid();
+//    nv.utils.windowResize(resizeSlickGrid);
     
     return this;
  },
