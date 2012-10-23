@@ -236,12 +236,13 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
 
             var reducedResult = results.reducedResult;
             var partitionFields = results.partitionFields;
+            this.partitionFields = partitionFields;
 
             var fields = self.buildFields(reducedResult, partitionFields);
             var result = self.buildResult(reducedResult, partitionFields);
 
             this._store = new recline.Backend.Memory.Store(result, fields);
-            this.partitionFields = partitionFields;
+
 
             this.fields.reset(fields, {renderer: recline.Data.Renderers});
             this.query();

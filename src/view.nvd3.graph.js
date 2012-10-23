@@ -651,6 +651,8 @@ this.recline.View = this.recline.View || {};
      }
       else if(seriesAttr.type == "byFieldName" || seriesAttr.type == "byPartitionedField"){
          var serieNames;
+
+         // if partitions are active we need to retrieve the list of partitions
          if(seriesAttr.type == "byFieldName")
             serieNames =  seriesAttr.valuesField;
          else {
@@ -668,6 +670,7 @@ this.recline.View = this.recline.View || {};
        _.each(serieNames, function(field) {
           var yfield = self.model.fields.get(field);
           
+          //todo
           var fieldLabel = field;
           if (yfield.attributes.is_partitioned)
         	  fieldLabel = yfield.attributes.partitionValue;
@@ -678,6 +681,7 @@ this.recline.View = this.recline.View || {};
 	          if (typeof fieldLabel_alternateObj != "undefined" && fieldLabel_alternateObj != null)
 	          fieldLabel = fieldLabel_alternateObj.label;
           }
+
           
           var points = [];
 
@@ -718,7 +722,7 @@ this.recline.View = this.recline.View || {};
           });
 
            if(points.length>0)
-            series.push({values: points, key: fieldLabel, color: yfield.getColorForPartition()});
+            series.push({values: points, key: field, label: fieldLabel, color: yfield.getColorForPartition()});
        });
 
      } else throw "views.nvd3.graph.js: unsupported or not defined type " + seriesAttr.type;

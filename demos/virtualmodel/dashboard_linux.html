@@ -222,19 +222,9 @@ root: ../../
                 state: {
                     group: "daydate",
 					yLabel: "Total Viewed",
-                    series: {
-                    	type: "byFieldName", 
-                    	valuesField: ["totalviewed_by_gender_Male_sum", "totalviewed_by_gender_Female_sum"]},  
-                    //series: {type: "byPartitionedField", aggregatedField: "gender", aggregationFunctions: "sum"},
+                    series: {type: "byPartitionedField", aggregatedField: "totalviewed", aggregationFunctions: ["sum"]},
                     graphType: "lineChart"
-                }//,
-// 				actions: [{
-// 					action: action_db,
-// 					mapping: [
-// 						{srcField: "daydate", filter: "filter_daydate"}
-// 					],
-// 					event: ["selection"]
-// 				}]
+                }
             });
             $('#mygraph2').append(graph2.el);
 
@@ -246,8 +236,8 @@ root: ../../
                 state: {
                     group: "dayofweek",
 					yLabel: "Total Viewed AVG",
-                    series: {type: "byFieldName", valuesField: ["totalviewed_by_gender_Male_avg", "totalviewed_by_gender_Female_avg"]},  
-                    //series: {type: "byPartitionedField", aggregatedField: "gender", aggregationFunctions: "avg"},
+                    //series: {type: "byFieldName", valuesField: ["totalviewed_by_gender_Male_avg", "totalviewed_by_gender_Female_avg"]},
+                    series: {type: "byPartitionedField", aggregatedField: "totalviewed", aggregationFunctions: ["avg"]},
                     graphType: "multiBarChart"
                 }
             });
@@ -261,8 +251,8 @@ root: ../../
                 state: {
                     group: "dayhour",
 					yLabel: "Total Viewed AVG",
-                    //series: {type: "byPartitionedField", aggregatedField: "gender", aggregationFunctions: "avg"},
-                    series: {type: "byFieldName", valuesField: ["totalviewed_by_gender_Male_avg", "totalviewed_by_gender_Female_avg"]},  
+                    series: {type: "byPartitionedField", aggregatedField: "totalviewed", aggregationFunctions: ["avg"]},
+                    //series: {type: "byFieldName", valuesField: ["totalviewed_by_gender_Male_avg", "totalviewed_by_gender_Female_avg"]},
                     graphType: "multiBarChart"
                 }
             })
