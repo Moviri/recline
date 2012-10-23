@@ -5660,11 +5660,11 @@ div.s-table {
 }
 .s-table-striped div.s-tbody div.s-tr:nth-child(odd) div.s-td,
 .s-table-striped div.s-tbody div.s-tr:nth-child(odd) div.s-th {
-  background-color: #f9f9f9;
+  background-color: transparent;
 }
 .s-table-striped div.s-tbody div.s-tr:nth-child(even) div.s-td,
 .s-table-striped div.s-tbody div.s-tr:nth-child(even) div.s-th {
-  background-color: transparent;
+  background-color: #f9f9f9;
 }
 .s-table-striped div.s-tbody div.s-tr div.s-td.selected {
   background-color: #d9edf7;
@@ -5867,6 +5867,30 @@ div.recline-graph .nvd3 .nv-axis path {
 .table-striped tbody tr:nth-child(even) td,
 .table-striped tbody tr:nth-child(even) th {
   background-color: transparent;
+}
+div.filter .table tbody tr.success td {
+  background-color: #dff0d8;
+}
+div.filter .table tbody tr.error td {
+  background-color: #f2dede;
+}
+div.filter .table tbody tr.warning td {
+  background-color: #fcf8e3;
+}
+div.filter .table tbody tr.info td {
+  background-color: #d9edf7;
+}
+div.filter .table-hover tbody tr.success:hover td {
+  background-color: #d0e9c6;
+}
+div.filter .table-hover tbody tr.error:hover td {
+  background-color: #ebcccc;
+}
+div.filter .table-hover tbody tr.warning:hover td {
+  background-color: #faf2cc;
+}
+div.filter .table-hover tbody tr.info:hover td {
+  background-color: #c4e3f3;
 }
 .orange {
   color: orange;
