@@ -188,10 +188,10 @@ root: ../../
 													fitColumns:true, 
 													visibleColumns: ['totalviewed_sum', 'price_sum_sum', 'age', 'inner_chart'],
 													columnsOrder: ['age', 'totalviewed_sum', 'price_sum_sum', 'innerChart'],
-													useInnerChart:true, 
-													innerChartSerie1:'totalviewed_by_gender_Male_sum', 
-													innerChartSerie2:'totalviewed_by_gender_Female_sum', 
-													innerChartHeader:'Views by Gender',
+ 													useInnerChart:true, 
+ 													innerChartSerie1:'totalviewed_by_gender_Male_sum', 
+ 													innerChartSerie2:'totalviewed_by_gender_Female_sum', 
+ 													innerChartHeader:'Views by Gender',
 													fieldLabels: [{id: "totalviewed_sum", label: "Views"}, {id: "price_sum_sum", label: "Revenues"}]
 												},
 												actions : [{
@@ -284,31 +284,31 @@ root: ../../
             $('#indicator2').append(indicator2.el);
             indicator2.render();
 
-// 			var filter = new recline.View.GenericFilter({
-//                 sourceDataset: dataset,
-// 				sourceFields: [{field: "daydate", controlType: 'range_calendar', type: "range", fieldType: "date" }],
-//                 actions: [{
-//                     action: action_db,
-//                     mapping: [
-//                         {srcField: "daydate", filter: "filter_daydate"}
-//                     ],
-//                     event: ["selection"]
-//                 }]
-//             });
-//             $('#search_container').append(filter.el);
+			var filter = new recline.View.GenericFilter({
+                sourceDataset: dataset,
+				sourceFields: [{field: "daydate", controlType: 'range_calendar', type: "range", fieldType: "date" }],
+                actions: [{
+                    action: action_db,
+                    mapping: [
+                        {srcField: "daydate", filter: "filter_daydate"}
+                    ],
+                    event: ["selection"]
+                }]
+            });
+            $('#search_container').append(filter.el);
 
-//             var filter1 = new recline.View.GenericFilter({
-//                 sourceDataset: dataset,
-// 				sourceFields: [{field: 'daydate', type: "range", controlType: 'month_week_calendar', fieldType: 'date'}	],
-//                 actions: [{
-//                     action: action_db,
-//                     mapping: [
-//                         {srcField: "daydate", filter: "filter_daydate"}
-//                     ],
-//                     event: ["filter"] 
-//                 }]
-//             });
-//             $('#search_container1').append(filter1.el);
+            var filter1 = new recline.View.GenericFilter({
+                sourceDataset: dataset,
+				sourceFields: [{field: 'daydate', type: "range", controlType: 'month_week_calendar', fieldType: 'date'}	],
+                actions: [{
+                    action: action_db,
+                    mapping: [
+                        {srcField: "daydate", filter: "filter_daydate"}
+                    ],
+                    event: ["selection"] 
+                }]
+            });
+            $('#search_container1').append(filter1.el);
 
             var filter2 = new recline.View.GenericFilter({
                 sourceDataset: virtualdatasetAge,

@@ -55,7 +55,7 @@ my.GenericFilter = Backbone.View.extend({
 			$( "#slider{{ctrlId}}" ).slider({ \
 				min: {{min}}, \
 				max: {{max}}, \
-				value: {{min}}, \
+				value: {{term}}, \
 				slide: function( event, ui ) { \
 					$( "#amount{{ctrlId}}" ).html( "Value: "+ ui.value ); \
 				} \
@@ -65,7 +65,9 @@ my.GenericFilter = Backbone.View.extend({
 	</script> \
       <div class="filter-{{type}} filter"> \
         <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
-            <legend>{{field}}</legend>  \
+            <legend>{{field}} \
+			<a class="js-remove-filter" href="#" title="Remove this filter">&times;</a> \
+		</legend>  \
 		  <label id="amount{{ctrlId}}">Value: </label></span> \
 		  <div id="slider{{ctrlId}}" class="data-control-id" ></div> \
 		  <br> \
@@ -93,7 +95,7 @@ my.GenericFilter = Backbone.View.extend({
 				range: true, \
 				min: {{min}}, \
 				max: {{max}}, \
-				values: [ {{min}}, {{max}} ], \
+				values: [ {{from}}, {{to}} ], \
 				slide: function( event, ui ) { \
 					$( "#amount{{ctrlId}}" ).html(  "Value range: " + ui.values[ 0 ] + " - " + ui.values[ 1 ] ); \
 				} \
@@ -186,11 +188,12 @@ my.GenericFilter = Backbone.View.extend({
     drop_down: ' \
       <div class="filter-{{type}} filter"> \
         <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
-            <legend>{{field}}</legend>  \
+            <legend>{{field}} \
+    		</legend>  \
 			<select class="drop-down fields data-control-id" > \
 			<option></option> \
             {{#values}} \
-            <option value="{{val}}">{{val}}</option> \
+            <option value="{{val}}" {{selected}}>{{val}}</option> \
             {{/values}} \
           </select> \
         </fieldset> \
@@ -321,10 +324,6 @@ my.GenericFilter = Backbone.View.extend({
 		flt.hrVisible = 'block'; 
 	});
 
-	// retrieve filters already set on the model
-    //console.log("render");
-      //console.log(self._sourceDataset.queryState) ;
-
     //  map them to the correct controlType also retaining their values (start/from/term)
      _.each(self._sourceDataset.queryState.get('selections'), function(filter) {
           for (var j in tmplData.filters)
@@ -351,85 +350,31 @@ my.GenericFilter = Backbone.View.extend({
 	tmplData.dateConvert = self.dateConvert;
     tmplData.filterRender = function() {
 		
-	  this.tmpValues = [];
+  	  this.values = new Array();
+  	  
 	  // add value list to selected filter or templating of record values will not work
-	  if (this.controlType.indexOf('legend') >= 0)
+	  if (this.controlType.indexOf('calendar') >= 0)
 	  {
-	      this.facet = self._sourceDataset.getFacetByFieldId(this.field);
-		  this.tmpValues = _.pluck(this.facet.attributes.terms, "term");
-	  }
-	  else if (this.controlType === 'list' || this.controlType.indexOf('slider') >= 0)
-	  {
-		  this.tmpValues = _.pluck(tmplData.records, this.field);
-	  }
-	  this.values = new Array();
-	  if (this.start)
-		this.startDate = tmplData.dateConvert(this.start);
-		
-	  if (this.stop)
-		this.endDate = tmplData.dateConvert(this.stop);
-		
-	  if (this.tmpValues.length && typeof this.tmpValues[0] != "undefined")
-	  {
-		  this.max = this.tmpValues[0];
-		  this.min = this.tmpValues[0];
-	  }
-	  else
-	  {
-		  this.max = 100;
-		  this.min = 0;
-	  }
-	  if (this.controlType == "legend")
-	  {
-		  if (typeof this.origLegend == "undefined")
-		  {
-			  this.origLegend = this.tmpValues;
-			  this.legend = this.origLegend;
-		  }
-		  this.tmpValues = this.origLegend; 
-		  var legendSelection = this.legend;
-		  for (var i in this.tmpValues)
-		  {
-			var v = this.tmpValues[i];
-			var notSelected = "";
-			if (legendSelection.indexOf(v) < 0)
-				notSelected = "not-selected";
-			
-			
-// 			NEW code. Will work when facet will be returned correctly even after filtering 
-//			var color;
-//			var currTerm = _.find(this.facet.attributes.terms, function(currT) { return currT.term == v; });
-//			if (typeof currTerm != "undefined" && currTerm != null)
-//			{
-//				color = currTerm.color;
-//				count = currTerm.count;
-//			}
-//			
-//			this.values.push({val: v, notSelected: notSelected, color: color, count: count});
-			
-			// OLD code, somehow working but wrong
-			this.values.push({val: v, notSelected: notSelected, color: this.facet.attributes.terms[i].color, count: this.facet.attributes.terms[i].count});
-		  }		
-	  }
-	  else if (this.controlType == "color_legend")
-	  {
-		  this.colorValues = [];
-		  for (var i = 0; i < 8; i++)  
-			  this.colorValues.push({width: 30, color: "rgb(0,0,"+(2+i)*16+")", textColor:"rgb(255,255,"+(255-(2+i)*16)+")", val: i, x:30*i });
-	  }
-	  else
-	  {
-		  for (var i in this.tmpValues)
-		  {
-			var v = this.tmpValues[i];
-			this.values.push({val: v, selected: (this.term == v || self._sourceDataset.getRecords(resultType)[i].is_selected ? self._selectedClassName : "")});
-			if (v > this.max)
-				this.max = v;
+		  if (this.start)
+			this.startDate = tmplData.dateConvert(this.start);
 				
-			if (v < this.min)
-				this.min = v;
-		  }
+		  if (this.stop)
+			this.endDate = tmplData.dateConvert(this.stop);
 	  }
+	  if (this.controlType.indexOf('slider') >= 0)
+	  {
+		  if (tmplData.records.length && typeof tmplData.records[0] != "undefined")
+		  {
+			  this.max = tmplData.records[0][this.field];
+			  this.min = tmplData.records[0][this.field];
+		  }
+		  else
+		  {
+			  this.max = 100;
+			  this.min = 0;
+		  }
+	  }	  
+	  
 	  if (this.controlType == "month_week_calendar")
 	  {
 		this.weekValues = [];
@@ -488,6 +433,100 @@ my.GenericFilter = Backbone.View.extend({
 			this.yearValues.push({val: y, selected: (this.year == y ? "selected" : "")});
 			
 	  }
+	  else if (this.controlType == "legend")
+	  {
+		  // OLD code, somehow working but wrong
+	      this.facet = self._sourceDataset.getFacetByFieldId(this.field);
+		  this.tmpValues = _.pluck(this.facet.attributes.terms, "term");
+
+		  if (typeof this.origLegend == "undefined")
+		  {
+			  this.origLegend = this.tmpValues;
+			  this.legend = this.origLegend;
+		  }
+		  this.tmpValues = this.origLegend; 
+		  var legendSelection = this.legend;
+		  for (var i in this.tmpValues)
+		  {
+			var v = this.tmpValues[i];
+			var notSelected = "";
+			if (legendSelection.indexOf(v) < 0)
+				notSelected = "not-selected";
+			
+			this.values.push({val: v, notSelected: notSelected, color: this.facet.attributes.terms[i].color, count: this.facet.attributes.terms[i].count});
+		  }		
+			
+// 			NEW code. Will work when facet will be returned correctly even after filtering
+//		  this.facet = self._sourceDataset.getFacetByFieldId(this.field);
+//		  this.tmpValues = _.pluck(this.facet.attributes.terms, "term");
+//		  for (var v in this.tmpValues)
+//		  {
+//				var color;
+//				var currTerm = _.find(this.facet.attributes.terms, function(currT) { return currT.term == v; });
+//				if (typeof currTerm != "undefined" && currTerm != null)
+//				{
+//					color = currTerm.color;
+//					count = currTerm.count;
+//				}
+//				var notSelected = "";
+//				var legendSelection = this.legend;
+//				if (typeof legendSelection == "undefined" || legendSelection == null || legendSelection.indexOf(v) < 0)
+//					notSelected = "not-selected";
+//				
+//				this.values.push({val: v, notSelected: notSelected, color: color, count: count});
+//		  }		  
+	  }
+	  else if (this.controlType == "color_legend")
+	  {
+		  this.colorValues = [];
+		  for (var i = 0; i < 8; i++)  
+			  this.colorValues.push({width: 30, color: "rgb(0,0,"+(2+i)*16+")", textColor:"rgb(255,255,"+(255-(2+i)*16)+")", val: i, x:30*i });
+	  }
+	  else
+	  {
+		  for (var i in tmplData.records)
+		  {
+			  var selected = "";
+			  var v = tmplData.records[i][this.field];
+			  if (this.controlType == "list")
+			  {
+				  // scan all filtered model records and look for the same records (may not have the same index)
+				  for (var  j in self._sourceDataset.records.models)
+					  if (self._sourceDataset.records.models[j].attributes[this.field] == v)
+					  {
+						  if (self._sourceDataset.records.models[j].is_selected)
+							  selected = self._selectedClassName; 
+						  
+						  break;
+					  }
+			  }
+			  else if (this.controlType == "drop_down" && this.term == v)
+				  selected = "selected"
+			  
+			this.values.push({val: v, selected: selected });
+			if (this.controlType.indexOf('slider') >= 0)
+			{
+				if (v > this.max)
+					this.max = v;
+					
+				if (v < this.min)
+					this.min = v;
+			}
+		  }
+		  if (this.controlType.indexOf('slider') >= 0)
+		  {
+			  if (typeof this.from == "undefined")
+				  this.from = this.min; 
+	
+			  if (typeof this.to == "undefined")
+				  this.to = this.max; 
+			  
+			  if (typeof this.term == "undefined")
+				  this.term = this.min; 
+
+		  }
+	  }
+	  
 	  if (this.controlType.indexOf("slider") >= 0 || this.controlType.indexOf("calendar") >= 0)
 		self._ctrlId++;
 		
@@ -642,6 +681,7 @@ my.GenericFilter = Backbone.View.extend({
 			case "drop_down": term = termObj.val();break;
 			case "listbox": term = termObj.val();break;
 		}
+		this.findActiveFilterByField(fieldId).term = term;
         this.doAction("onFilterValueChanged", fieldId, [term], "add");
 	}
 	else if (fieldType == "range")
@@ -656,6 +696,8 @@ my.GenericFilter = Backbone.View.extend({
 			case "range_slider": from = fromObj.slider("values", 0);to = toObj.slider("values", 1);break;
 			case "range_calendar": from = new Date(fromObj.val());to = new Date(toObj.val());break;
 		}
+		this.findActiveFilterByField(fieldId).from = from;
+		this.findActiveFilterByField(fieldId).to = to;
         this.doAction("onFilterValueChanged", fieldId, [from, to], "add");
 	}
   },
@@ -749,7 +791,7 @@ my.GenericFilter = Backbone.View.extend({
     var field = $target.parent().parent().attr('data-filter-field');
 	var currFilter = this.findActiveFilterByField(field);
 	//console.log(currFilter);
-	currFilter.term = "";
+	currFilter.term = undefined;
 	currFilter.value = [];
 	
 	if (currFilter.controlType == "list" || currFilter.controlType == "month_week_calendar")
