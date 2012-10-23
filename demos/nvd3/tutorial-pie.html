@@ -14,34 +14,12 @@ root: ../../
         <li class="active">
             <a href="tutorial.html">Barchart</a>
         </li>
-        <li><a href="tutorial-pie.html">Pie</a></li>
+        <li><a href="tutorial-pie.html">Piechart</a></li>
         <li><a href="#">...</a></li>
     </ul>
 
     <div class="row-fluid"><div class="span4">    <select id="s1" onChange="reDraw();" >
-        <option value="multiBarChart">multiBarChart</option>
         <option value="pieChart">pieChart</option>
-        <option value="lineWithFocusChart">lineWithFocusChart</option>
-        <option value="cumulativeLineChart">cumulativeLineChart</option>
-        <option value="linePlusBarChart">linePlusBarChart</option>
-        <option value="multiBarHorizontalChart">multiBarHorizontalChart</option>
-        <option value="discreteBarChart">discreteBarChart (events)</option>
-        <option value="stackedAreaChart">stackedAreaChart</option>
-        <option value="scatterChart">scatterChart</option>
-        <option value="indentedTree">NOT IMPL-indentedTree</option>
-        <option value="bulletChart">bulletChart</option>
-        <option value="lineChart">lineChart</option>
-        <option value="historicalBar">historicalBar</option>
-        <option value="legend">legend</option>
-        <option value="line">line</option>
-        <option value="multiChart">multiChart</option>
-        <option value="sparkline">sparkline</option>
-        <option value="sparklinePlus">sparklinePlus</option>
-
-
-
-        <option value="lineWithBrushChart">MOV-lineWithBrushChart  (events)</option>
-        <option value="multiBarWithBrushChart">MOV-multiBarWithBrushChart (events)</option>
 
     </select>
     </div></div>
@@ -130,6 +108,7 @@ root: ../../
             {id: 4, gender: "F", age: 15, x: 40, y: 450, z: 520}
       ],
         fields: [
+            {id: 'id', type: "integer"},
             {id: 'gender'},
             {id: 'x', type: "integer"},
             {id: 'y', type: "integer"},
@@ -174,56 +153,10 @@ root: ../../
     grid1.visible = true;
     grid1.render();
 
-    /*var grid1 = new recline.View.d3.table({
-        model : dataset,
-        columns : [
-            {"name":"x","fields": [{"id":"x"}], "label": "x", "sortable": true, "width": "20%"},
-            {"name":"y","fields": [{"id":"y"}], "label": "y", "sortable": true, "width": "20%"},
 
-        ],
-        conf : {"row_height": 25, "height": 100},
-        state : {
-        },
-        actions: [{action: action1, mapping: [ {srcField: "x", filter: "filter_x_list"}  ], event: ["hover", "selection"]  }]
-    });
-    $('#grid1').append(grid1.el);
-    */
-
-
-    var $el = $('#grid2');
-    var grid2 = new recline.View.SlickGrid({
-        model: dataset,
-        el: $el,
-        state: { fitColumns:true },
-        actions: [{action: action1, mapping: [ {srcField: "x", filter: "filter_x_list"}  ], event: ["selection"]  }]
-    });
-    grid2.visible = true;
-    grid2.render();
-
-    var $el = $('#grid3');
-    var grid3 = new recline.View.SlickGrid({
-        model: dataset,
-        el: $el,
-        state: { fitColumns:true },
-        actions: [{action: action1, mapping: [ {srcField: "x", filter: "filter_x_list"}  ], event: ["selection"]  }]
-    });
-    grid3.visible = true;
-    grid3.render();
-
-    var $el = $('#grid4');
-    var grid4 = new recline.View.SlickGrid({
-        model: vdatasetGender,
-        el: $el,
-        state: { fitColumns:true },
-        actions: [{action: action1, mapping: [ {srcField: "x", filter: "filter_x_list"}  ], event: ["selection"]  }]
-    });
-    grid4.visible = true;
-    grid4.render();
 
     var graph1;
-    var graph2;
-    var graph3;
-    var graph4;
+
 
 
 
@@ -234,7 +167,7 @@ root: ../../
   <!-- one serie -->
     function reDraw() {
         var type = getSelectedText();
-        var graphs=[graph1, graph2, graph3, graph4];
+        var graphs=[graph1];
 
         _.each(graphs, function(d) {
             d.state.attributes.graphType = type;
@@ -246,7 +179,7 @@ root: ../../
     };
 
     function drawGraph() {
-        var type = "multiBarChart";
+        var type = "pieChart";
 
 
         //stackedAreaData
@@ -254,8 +187,8 @@ root: ../../
   graph1 = new recline.View.NVD3Graph({
   model: dataset,
   state: {
-      group: ["x"],
-      series: {type: "byFieldName", valuesField: ["y"], sizeField: "z"},
+      group: ["id"],
+      series: {type: "byFieldName", valuesField: ["y"]},
       options: {trendlines:true, minmax: true, tooltips: true, tooltip: "Key: {key} X: {x} Y: {y}", staggerLabels: true, showValues: true},
       graphType: type
   },
@@ -264,53 +197,8 @@ root: ../../
 $('#graph1').append(graph1.el);
 
 
+    };
 
-
-  <!-- multiple series simple (without partitioning) -->
-
-   graph2 = new recline.View.NVD3Graph({
-        model: dataset,
-        state: {
-            group: ["x"],
-            series: {type: "byFieldName", valuesField: ["y", "z"],  sizeField: "z"},
-            graphType: type
-        },
-       actions: [{  action: action1,  mapping: [ {srcField: "x", filter: "filter_x_range"} ],  event: ["selection"]  }]
-    });
-    $('#graph2').append(graph2.el);
-
-
-
-
-    <!-- multiple series based on field value (without partitioning) -->
-
-     graph3 = new recline.View.NVD3Graph({
-        model: dataset,
-        state: {
-            group: ["x"],
-            series: {type: "byFieldValue", seriesField: "gender", valuesField: "y", fillEmptyValuesWith: 0,  sizeField: "z"},
-            graphType: type
-        }
-    });
-    $('#graph3').append(graph3.el);
-
-
-
-
-    <!-- multiple series based on partitioned field -->
-
-    graph4 = new recline.View.NVD3Graph({
-        model: vdatasetGender,
-        state: {
-            group: ["x"],
-            series: {type: "byPartitionedField", aggregatedField: "y", aggregationFunctions: ["sum"],  fillEmptyValuesWith: 0,  sizeField: "z_sum"},
-            graphType: type
-        }
-    });
-    $('#graph4').append(graph4.el);
-
-
-    }
 
     function getSelectedText() {
         var elt = document.getElementById("s1");
@@ -319,11 +207,7 @@ $('#graph1').append(graph1.el);
             return null;
 
         return elt.options[elt.selectedIndex].value;
-    }
-
-
-
- //             series: {type: "byFieldValue", fieldName: "gender", fieldValue: "y"},
+    };
 
 </script>
 

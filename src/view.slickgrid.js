@@ -293,7 +293,7 @@ my.SlickGrid = Backbone.View.extend({
     
     return this;
  },
-   onSelectionChanged: function(rows) {
+  onSelectionChanged: function(rows) {
 	var self = this;
 	var selectedRecords = [];
 	_.each(rows, function(row) {

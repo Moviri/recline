@@ -194,13 +194,21 @@ this.recline.View = this.recline.View || {};
 
         addOption:{
             "staggerLabels":function (chart, value) {
-                chart.staggerLabels = value;
+                chart.staggerLabels(value);
             },
             "tooltips":function (chart, value) {
-                chart.tooltips = value;
+                chart.tooltips(value);
             },
             "showValues":function (chart, value) {
-                chart.showValues = value;
+                chart.showValues(value);
+            },
+            "tooltip": function(chart, value) {
+                var t = function(key, x, y, e, graph) {
+                    return value.replace("{x}", x)
+                        .replace("{y}", y)
+                        .replace("{key}", key);
+                };
+                chart.tooltip(t);
             },
             "minmax":function () {
             },
@@ -456,6 +464,9 @@ this.recline.View = this.recline.View || {};
                     chart = view.chart;
                 else
                     chart = nv.models.pieChart();
+
+
+                return chart;
             }
 
         },
