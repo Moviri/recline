@@ -52,7 +52,10 @@ my.SlickGrid = Backbone.View.extend({
       syncColumnCellResize: true,
       forceFitColumns: this.state.get('fitColumns'),
       useInnerChart: this.state.get('useInnerChart'),
-      innerChartMax: this.state.get('innerChartMax')
+      innerChartMax: this.state.get('innerChartMax'),
+      useStripedStyle: this.state.get('useStripedStyle'),
+      useCondensedStyle: this.state.get('useCondensedStyle'),
+      useHoverStyle: this.state.get('useHoverStyle'),
 	};
 
     // We need all columns, even the hidden ones, to show on the column picker
@@ -212,7 +215,15 @@ my.SlickGrid = Backbone.View.extend({
 	
     this.grid = new Slick.Grid(this.el, data, visibleColumns, options);
 	
-	this.grid.addClassesToGrid(["s-table", "s-table-hover", "s-table-striped", "s-table-condensed"]);
+    var classesToAdd = ["s-table"];
+    if (options.useHoverStyle)
+    	classesToAdd.push("s-table-hover")
+    if (options.useStripedStyle)
+    	classesToAdd.push("s-table-striped")
+    if (options.useCondensedStyle)
+    	classesToAdd.push("s-table-condensed")
+    	
+	this.grid.addClassesToGrid(classesToAdd);
 	this.grid.removeClassesFromGrid(["ui-widget"]);
 	
 	this.grid.setSelectionModel(new Slick.RowSelectionModel());

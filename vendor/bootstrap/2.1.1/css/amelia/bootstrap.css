@@ -5520,23 +5520,26 @@ a.badge:hover {
 .g-table .g-thead .g-sortable {
   background: url("/css/images/sort.png") no-repeat scroll right center transparent;
 }
-.slick-header-column {
+.slick-row .slick-header-column {
   text-align: center;
   font-weight: bold;
 }
-.slick-footer-column {
+.slick-row .slick-footer-column {
   background-color: transparent;
 }
-.slick-header-column.ui-state-default {
+.slick-row .slick-header-column.ui-state-default {
   border-bottom: 1px solid gray;
 }
-.slick-cell {
+.slick-row .slick-cell {
   text-align: center;
+  border: 1px solid transparent;
+  border-right: none;
+  border-bottom-color: silver;
 }
-.slick-cell-left {
+.slick-row .slick-cell-left {
   position: absolute;
   border: 1px solid transparent;
-  border-right: 1px dotted silver;
+  border-right: none;
   border-bottom-color: silver;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -5560,16 +5563,22 @@ div.s-table {
   margin-bottom: 20px;
 }
 .s-table div.s-th,
-.s-table div.s-td {
-  padding: 8px;
-  line-height: 20px;
+.s-table div.s-td,
+.s-table div.slick-footer-column {
+  padding-top: 8px;
+  padding-left: 4px;
   text-align: left;
-  vertical-align: top;
-  border-top: 1px solid #1cafbd;
+  vertical-align: middle;
+  border: 1px solid transparent;
+  border-right: none;
+  border-top-color: #1cafbd;
+  border-bottom: none;
 }
 .s-table div.s-th {
   font-weight: bold;
-  text-align: center;
+  text-align: left;
+  border-top: none;
+  border-right: 1px solid dotted #1cafbd;
 }
 .s-table div.s-thead div.s-th {
   vertical-align: bottom;

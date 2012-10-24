@@ -56,7 +56,6 @@ if (typeof Slick === "undefined") {
     // settings
     var defaults = {
       explicitInitialization: false,
-      rowHeight: 30,
       defaultColumnWidth: 80,
       enableAddRow: false,
       leaveSpaceForNewRows: false,
@@ -73,10 +72,11 @@ if (typeof Slick === "undefined") {
 	  //innerChartMax: 100,
       autoHeight: false,
       editorLock: Slick.GlobalEditorLock,
+      rowHeight: 40,
       showHeaderRow: false,
-      headerRowHeight: 25,
+      headerRowHeight: 40,
       showTopPanel: false,
-      topPanelHeight: 25,
+      topPanelHeight: 40,
       formatterFactory: null,
       editorFactory: null,
       cellFlashingCssClass: "flashing",
@@ -351,7 +351,15 @@ if (typeof Slick === "undefined") {
     }
 
 	function addClassesToGrid(classes) {
-		_.each(classes, function(currClass) { $container.addClass(currClass); });
+		_.each(classes, function(currClass) { 
+			$container.addClass(currClass);
+			if (currClass.indexOf("condensed") > 0)
+			{
+		      options.rowHeight = 30;
+		      options.headerRowHeight = 30;
+		      options.topPanelHeight = 30;
+			}
+		});
 	}
 	
 	function removeClassesFromGrid(classes) {

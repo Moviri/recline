@@ -32,7 +32,7 @@ my.GenericFilter = Backbone.View.extend({
         </fieldset> \
       </div> \
       <div class="form-stacked js-edit"> \
-	  	<div class="btn btn-info" style="display:{{titlePresent}}"> \
+	  	<div class="btn btn-info" style="display:{{titlePresent}};cursor:default"> \
 		  	<h4>{{filterDialogTitle}}</h4> \
 		  	<small>{{filterDialogDescription}}</small> \
 	  	</div> \
