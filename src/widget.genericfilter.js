@@ -43,7 +43,7 @@ my.GenericFilter = Backbone.View.extend({
     term: ' \
       <div class="filter-{{type}} filter"> \
         <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
-            <legend>{{field}}_{{ctrlId}}</legend>  \
+            <legend>{{field}}</legend>  \
           <input type="text" value="{{term}}" name="term" class="data-control-id" /> \
           <input type="button" class="btn" id="setFilterValueButton" value="Set"></input> \
         </fieldset> \
@@ -65,7 +65,7 @@ my.GenericFilter = Backbone.View.extend({
 	</script> \
       <div class="filter-{{type}} filter"> \
         <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
-            <legend>{{field}}_{{ctrlId}} \
+            <legend>{{field}} \
 			<a class="js-remove-filter" href="#" title="Remove this filter">&times;</a> \
 		</legend>  \
 		  <label id="amount{{ctrlId}}">Value: </label></span> \
@@ -78,7 +78,7 @@ my.GenericFilter = Backbone.View.extend({
     range: ' \
       <div class="filter-{{type}} filter"> \
         <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
-            <legend>{{field}}_{{ctrlId}}</legend>  \
+            <legend>{{field}}</legend>  \
           <label class="control-label" for="">From</label> \
           <input type="text" value="{{start}}" name="start"  class="data-control-id-from" style="width:auto"/> \
           <label class="control-label" for="">To</label> \
@@ -105,7 +105,7 @@ my.GenericFilter = Backbone.View.extend({
 	</script> \
       <div class="filter-{{type}} filter"> \
         <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
-            <legend>{{field}}_{{ctrlId}}</legend>  \
+            <legend>{{field}}</legend>  \
 		  <label id="amount{{ctrlId}}">Value range: </label></span> \
 		  <div id="slider-range{{ctrlId}}" class="data-control-id-from data-control-id-to" ></div> \
 		  <br> \
@@ -120,7 +120,7 @@ my.GenericFilter = Backbone.View.extend({
 	  </style> \
       <div class="filter-{{type}} filter"> \
         <fieldset> \
-            <legend>{{field}}_{{ctrlId}}  \
+            <legend>{{field}}  \
             <a class="js-remove-filter" href="#" title="Remove this filter">&times;</a> \
 			</legend> \
 			Year<br> \
@@ -174,7 +174,7 @@ my.GenericFilter = Backbone.View.extend({
 	</script> \
       <div class="filter-{{type}} filter"> \
         <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
-            <legend>{{field}}_{{ctrlId}}</legend>  \
+            <legend>{{field}}</legend>  \
 			<label for="from{{ctrlId}}">From</label> \
 			<input type="text" id="from{{ctrlId}}" name="from{{ctrlId}}" class="data-control-id-from" value="{{startDate}}" style="width:auto"/> \
 			<br> \
@@ -188,7 +188,7 @@ my.GenericFilter = Backbone.View.extend({
     drop_down: ' \
       <div class="filter-{{type}} filter"> \
         <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
-            <legend>{{field}}_{{ctrlId}} \
+            <legend>{{field}} \
     		</legend>  \
 			<select class="drop-down fields data-control-id" > \
 			<option></option> \
@@ -206,7 +206,7 @@ my.GenericFilter = Backbone.View.extend({
 	  </style> \
       <div class="filter-{{type}} filter"> \
         <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
-            <legend>{{field}}_{{ctrlId}}  \
+            <legend>{{field}}  \
             <a class="js-remove-filter" href="#" title="Remove this filter">&times;</a> \
 			</legend> \
 			<div style="max-height:500px;width:100%;border:1px solid grey;overflow:auto;"> \
@@ -224,7 +224,7 @@ my.GenericFilter = Backbone.View.extend({
     listbox: ' \
       <div class="filter-{{type}} filter"> \
         <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
-            <legend>{{field}}_{{ctrlId}}</legend>  \
+            <legend>{{field}}</legend>  \
 			<select class="fields data-control-id"  multiple SIZE=10> \
             {{#values}} \
             <option value="{{val}}" {{selected}}>{{val}}</option> \
@@ -247,7 +247,7 @@ my.GenericFilter = Backbone.View.extend({
 	  </style> \
       <div class="filter-{{type}} filter"> \
         <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
-            <legend>{{field}}_{{ctrlId}}</legend>  \
+            <legend>{{field}}</legend>  \
 			<table style="width:100%;background-color:transparent">\
 			{{#values}} \
 				<tr> \
@@ -263,7 +263,7 @@ my.GenericFilter = Backbone.View.extend({
 	color_legend: ' \
 	<div class="filter-{{type}} filter"> \
         <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}"> \
-            <legend>{{field}}_{{ctrlId}}</legend>  \
+            <legend>{{field}}</legend>  \
 				<div style="width:100%"> \
 					<svg height="50" xmlns="http://www.w3.org/2000/svg"> \
 					{{#colorValues}} \
