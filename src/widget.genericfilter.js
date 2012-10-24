@@ -478,6 +478,9 @@ my.GenericFilter = Backbone.View.extend({
 	  {
 		  // OLD code, somehow working but wrong
 	      this.facet = self._sourceDataset.getFacetByFieldId(this.field);
+          if(this.facet == null ) {
+              throw "GenericFilter: no facet present for field [" + this.field + "]. Define a facet before filter render";
+          }
 		  this.tmpValues = _.pluck(this.facet.attributes.terms, "term");
 
 		  if (typeof this.origLegend == "undefined")

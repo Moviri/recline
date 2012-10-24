@@ -14,7 +14,30 @@ root: ../../
 
     <div class="row-fluid"><div class="span4"></div></div>
     <div class="row-fluid">
-        <div class="span8"><div id="grid1"></div></div>
+        <div class="span6"><div id="grid1"></div></div>
+        <div class="span6"><div id="facet1"></div></div>
+        <div class="span6"><table class="table table-striped table-condensed table-hover">
+            <thead>
+            <tr>
+                <th>a</th>
+                <th>1</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+                <td>b</td>
+                <td>2</td>
+            </tr>
+            <tr>
+                <td>c</td>
+                <td>3</td>
+            </tr>
+
+            </tbody>
+            </table>
+        </div>
+
+
     </div>
 
     <div class="row-fluid">
@@ -89,9 +112,9 @@ var colorSchemaDate = new recline.Data.ColorSchema({
 var dataset = new recline.Model.Dataset({
     records: [
         {id: 1, gender: "F", age: 10, x: 20, y: 200, date: new Date(2012, 9, 1, 9,0,0,0)},
-        {id: 2, gender: "F", age: 10, x: 25, y: 300,  date: new Date(2012, 9, 2, 10,0,0,0)},
-        {id: 3, gender: "M", age: 15, x: 30, y: 400,  date: new Date(2012, 9, 3, 11,0,0,0)},
-        {id: 4, gender: "F", age: 15, x: 40, y: 450,   date: new Date(2012, 9, 4, 12,0,0,0)}
+        {id: 2, gender: "F", age: 10, x: 25, y: 300, date: new Date(2012, 9, 2, 10,0,0,0)},
+        {id: 3, gender: "M", age: 15, x: 30, y: 400, date: new Date(2012, 9, 3, 11,0,0,0)},
+        {id: 4, gender: "F", age: 15, x: 40, y: 450, date: new Date(2012, 9, 4, 12,0,0,0)}
     ],
     fields: [
         {id: 'x', type: "integer"},
@@ -101,20 +124,21 @@ var dataset = new recline.Model.Dataset({
     ]
 });
 colorSchemaDate.setDataset(dataset, "date");
-dataset.queryState.addFacetNoEvent("date");
+dataset.queryState.addFacetNoEvent("age", true);
+
 
 
 var action1 = new recline.Action({
     filters: {
         filter_date_range: {type: "range", field: "date", fieldType: "date"},
-        filter_date_term:  {type: "term", field: "date", fieldType: "date"},
-        filter_date_list:  {type: "list", field: "date", fieldType: "date"},
-        filter_x_range: {type: "range", field: "x", fieldType: "number"}
+        filter_date_term:  {type: "term",  field: "date", fieldType: "date"},
+        filter_date_list:  {type: "list",  field: "date", fieldType: "date"},
+        filter_age_list:   {type: "list",  field: "age",  fieldType: "integer"}
     },
     models: [
-        {model: dataset, filters:["filter_date_term", "filter_date_list", "filter_date_range", "filter_x_range"]},
+        {model: dataset, filters:["filter_date_term", "filter_date_list", "filter_date_range", "filter_age_list"]}
     ],
-    type: ["selection"]
+    type: ["filter"]
 });
 
 var $el = $('#grid1');
@@ -126,10 +150,18 @@ var grid1 = new recline.View.SlickGrid({
 grid1.visible = true;
 grid1.render();
 
+/*
+var facet = new recline.View.FacetViewer({
+    model: dataset
+});
+facet.render();
+this.el.find('#facet1').append(facet.el);
+*/
+
 drawGraph();
 
-dataset.fetch();
 
+dataset.fetch();
 
 
 function drawGraph() {
@@ -149,7 +181,7 @@ function drawGraph() {
 
     var filter2 = new recline.View.GenericFilter({
         sourceDataset: dataset,
-        sourceFields: [{field: "date", controlType: 'month_week_calendar', fieldType: "date" }],
+        sourceFields: [{field: "date", controlType: 'month_week_calendar',fieldType: "date" }],
         actions: [{
             action: action1,
             mapping: [
@@ -162,7 +194,7 @@ function drawGraph() {
 
     var filter3 = new recline.View.GenericFilter({
         sourceDataset: dataset,
-        sourceFields: [{field: "date", controlType: 'list', type: "list", fieldType: "date" }],
+        sourceFields: [{field: "date", controlType: 'list',fieldType: "date" }],
         actions: [{
             action: action1,
             mapping: [
@@ -175,11 +207,11 @@ function drawGraph() {
 
     var filter4 = new recline.View.GenericFilter({
         sourceDataset: dataset,
-        sourceFields: [{field: "date", controlType: 'legend', type: "list", fieldType: "date" }],
+        sourceFields: [{field: "age", controlType: 'legend', fieldType: "integer" }],
         actions: [{
             action: action1,
             mapping: [
-                {srcField: "date", filter: "filter_date_list"}
+                {srcField: "age", filter: "filter_age_list"}
             ],
             event: ["selection"]
         }]
@@ -188,7 +220,7 @@ function drawGraph() {
 
     var filter5 = new recline.View.GenericFilter({
         sourceDataset: dataset,
-        sourceFields: [{field: "date", controlType: 'drop_down', type: "term", fieldType: "date" }],
+        sourceFields: [{field: "date", controlType: 'drop_down', fieldType: "date" }],
         actions: [{
             action: action1,
             mapping: [
@@ -201,7 +233,7 @@ function drawGraph() {
 
     var filter6 = new recline.View.GenericFilter({
         sourceDataset: dataset,
-        sourceFields: [{field: "date", controlType: 'listbox', type: "list", fieldType: "date" }],
+        sourceFields: [{field: "date", controlType: 'listbox',fieldType: "date" }],
         actions: [{
             action: action1,
             mapping: [
@@ -214,7 +246,7 @@ function drawGraph() {
 
     var filter7 = new recline.View.GenericFilter({
         sourceDataset: dataset,
-        sourceFields: [{field: "date", controlType: 'term', type: "term", fieldType: "date" }],
+        sourceFields: [{field: "date", controlType: 'term', fieldType: "date" }],
         actions: [{
             action: action1,
             mapping: [
@@ -227,7 +259,7 @@ function drawGraph() {
 
     var filter8 = new recline.View.GenericFilter({
         sourceDataset: dataset,
-        sourceFields: [{field: "date", controlType: 'range', type: "range", fieldType: "date" }],
+        sourceFields: [{field: "date", controlType: 'range', fieldType: "date" }],
         actions: [{
             action: action1,
             mapping: [
@@ -240,7 +272,7 @@ function drawGraph() {
 
     /*var filter9 = new recline.View.GenericFilter({
         sourceDataset: dataset,
-        sourceFields: [{field: "date", controlType: 'slider', type: "term", fieldType: "date" }],
+        sourceFields: [{field: "date", controlType: 'slider',  fieldType: "date" }],
         actions: [{
             action: action1,
             mapping: [
@@ -252,23 +284,23 @@ function drawGraph() {
     $('#filter9').append(filter9.el);
     */
 
-    var filter10 = new recline.View.GenericFilter({
+    /*var filter10 = new recline.View.GenericFilter({
         sourceDataset: dataset,
-        sourceFields: [{field: "x", controlType: 'range_slider', fieldType: "number" }],
+        sourceFields: [{field: "date", controlType: 'range_slider',  fieldType: "date" }],
         actions: [{
             action: action1,
             mapping: [
-                {srcField: "x", filter: "filter_x_range"}
+                {srcField: "date", filter: "filter_date_range"}
             ],
             event: ["selection"]
         }]
     });
     $('#filter10').append(filter10.el);
-    
+    */
 
     var filter11 = new recline.View.GenericFilter({
         sourceDataset: dataset,
-        sourceFields: [{field: "date", controlType: 'color_legend', fieldType: "date" }],
+        sourceFields: [{field: "date", controlType: 'color_legend',  fieldType: "date" }],
         actions: [{
             action: action1,
             mapping: [
