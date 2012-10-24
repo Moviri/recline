@@ -264,8 +264,7 @@ root: ../../
                 state: {
                     series: ["totalviewed_sum"],
                     format: ',d',
-					label:"Views",
-                    id: "6"
+					label:"Views"
                 }
             });
             $('#indicator1').append(indicator1.el);
@@ -277,8 +276,7 @@ root: ../../
                 state: {
                     series: ["price_sum_sum"],
                     format: ',.02f',
-					label:"Revenues",
-                    id: "7"
+					label:"Revenues"
                 }
             });
             $('#indicator2').append(indicator2.el);
@@ -287,6 +285,7 @@ root: ../../
 			var filter = new recline.View.GenericFilter({
                 sourceDataset: dataset,
 				sourceFields: [{field: "daydate", controlType: 'range_calendar', type: "range", fieldType: "date" }],
+ 				state: {title:"DB date filter", description: "Use this to filter dates on the DB"},
                 actions: [{
                     action: action_db,
                     mapping: [
@@ -299,7 +298,8 @@ root: ../../
 
             var filter1 = new recline.View.GenericFilter({
                 sourceDataset: dataset,
-				sourceFields: [{field: 'daydate', type: "range", controlType: 'month_week_calendar', fieldType: 'date'}	],
+				sourceFields: [{field: 'daydate', type: "range", controlType: 'month_week_calendar', fieldType: 'date', label:'DATE'}	],
+ 				state: {title:"DB date filter 2", description: "Use this to filter months/weeks on the DB"},
                 actions: [{
                     action: action_db,
                     mapping: [
@@ -332,6 +332,7 @@ root: ../../
  								{field: 'gender', controlType: 'legend', fieldType: 'list'}
  							],
  				useFilteredData : false,
+ 				state: {title:"My gender legend", description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit"},
                  actions: [{
                      action: action_db2,
                      mapping: [
