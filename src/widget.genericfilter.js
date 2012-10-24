@@ -43,7 +43,7 @@ my.GenericFilter = Backbone.View.extend({
     term: ' \
       <div class="filter-{{type}} filter"> \
         <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
-            <legend>{{field}}</legend>  \
+            <legend>{{field}}_{{ctrlId}}</legend>  \
           <input type="text" value="{{term}}" name="term" class="data-control-id" /> \
           <input type="button" class="btn" id="setFilterValueButton" value="Set"></input> \
         </fieldset> \
@@ -65,7 +65,7 @@ my.GenericFilter = Backbone.View.extend({
 	</script> \
       <div class="filter-{{type}} filter"> \
         <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
-            <legend>{{field}} \
+            <legend>{{field}}_{{ctrlId}} \
 			<a class="js-remove-filter" href="#" title="Remove this filter">&times;</a> \
 		</legend>  \
 		  <label id="amount{{ctrlId}}">Value: </label></span> \
@@ -78,7 +78,7 @@ my.GenericFilter = Backbone.View.extend({
     range: ' \
       <div class="filter-{{type}} filter"> \
         <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
-            <legend>{{field}}</legend>  \
+            <legend>{{field}}_{{ctrlId}}</legend>  \
           <label class="control-label" for="">From</label> \
           <input type="text" value="{{start}}" name="start"  class="data-control-id-from" style="width:auto"/> \
           <label class="control-label" for="">To</label> \
@@ -105,7 +105,7 @@ my.GenericFilter = Backbone.View.extend({
 	</script> \
       <div class="filter-{{type}} filter"> \
         <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
-            <legend>{{field}}</legend>  \
+            <legend>{{field}}_{{ctrlId}}</legend>  \
 		  <label id="amount{{ctrlId}}">Value range: </label></span> \
 		  <div id="slider-range{{ctrlId}}" class="data-control-id-from data-control-id-to" ></div> \
 		  <br> \
@@ -120,7 +120,7 @@ my.GenericFilter = Backbone.View.extend({
 	  </style> \
       <div class="filter-{{type}} filter"> \
         <fieldset> \
-            <legend>{{field}}  \
+            <legend>{{field}}_{{ctrlId}}  \
             <a class="js-remove-filter" href="#" title="Remove this filter">&times;</a> \
 			</legend> \
 			Year<br> \
@@ -138,7 +138,7 @@ my.GenericFilter = Backbone.View.extend({
 			</select> \
 			<br> \
 			<div style="max-height:500px;width:100%;border:1px solid grey;overflow:auto;"> \
-				<table class="table table-striped table-hover table-condensed" style="width:100%" data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" > \
+				<table class="table table-striped table-hover table-condensed" style="width:100%" data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
 				<tbody>\
 				{{#values}} \
 				<tr class="{{selected}}"><td class="list-filter-item " myValue="{{val}}" startDate="{{startDate}}" stopDate="{{stopDate}}">{{label}}</td></tr> \
@@ -174,7 +174,7 @@ my.GenericFilter = Backbone.View.extend({
 	</script> \
       <div class="filter-{{type}} filter"> \
         <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
-            <legend>{{field}}</legend>  \
+            <legend>{{field}}_{{ctrlId}}</legend>  \
 			<label for="from{{ctrlId}}">From</label> \
 			<input type="text" id="from{{ctrlId}}" name="from{{ctrlId}}" class="data-control-id-from" value="{{startDate}}" style="width:auto"/> \
 			<br> \
@@ -188,7 +188,7 @@ my.GenericFilter = Backbone.View.extend({
     drop_down: ' \
       <div class="filter-{{type}} filter"> \
         <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
-            <legend>{{field}} \
+            <legend>{{field}}_{{ctrlId}} \
     		</legend>  \
 			<select class="drop-down fields data-control-id" > \
 			<option></option> \
@@ -205,8 +205,8 @@ my.GenericFilter = Backbone.View.extend({
 		.list-filter-item:hover { background: lightblue;cursor:pointer; } \
 	  </style> \
       <div class="filter-{{type}} filter"> \
-        <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}"> \
-            <legend>{{field}}  \
+        <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
+            <legend>{{field}}_{{ctrlId}}  \
             <a class="js-remove-filter" href="#" title="Remove this filter">&times;</a> \
 			</legend> \
 			<div style="max-height:500px;width:100%;border:1px solid grey;overflow:auto;"> \
@@ -224,10 +224,10 @@ my.GenericFilter = Backbone.View.extend({
     listbox: ' \
       <div class="filter-{{type}} filter"> \
         <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
-            <legend>{{field}}</legend>  \
+            <legend>{{field}}_{{ctrlId}}</legend>  \
 			<select class="fields data-control-id"  multiple SIZE=10> \
             {{#values}} \
-            <option value="{{val}}">{{val}}</option> \
+            <option value="{{val}}" {{selected}}>{{val}}</option> \
             {{/values}} \
           </select> \
 		  <br> \
@@ -246,12 +246,12 @@ my.GenericFilter = Backbone.View.extend({
 	 .legend-item.not-selected { background-color:transparent !important; } /* the idea is that the color "not-selected" overrides the original color (this way we may use a global style) */ \
 	  </style> \
       <div class="filter-{{type}} filter"> \
-        <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}"> \
-            <legend>{{field}}</legend>  \
+        <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
+            <legend>{{field}}_{{ctrlId}}</legend>  \
 			<table style="width:100%;background-color:transparent">\
 			{{#values}} \
 				<tr> \
-				<td style="width:25px"><div class="legend-item {{notSelected}}" myValue={{val}} style="background-color:{{color}}"></td> \
+				<td style="width:25px"><div class="legend-item {{notSelected}}" myValue="{{val}}" style="background-color:{{color}}"></td> \
 				<td style="vertical-align:middle"><label style="color:{{color}};text-shadow: black 1px 1px, black -1px -1px, black -1px 1px, black 1px -1px, black 0px 1px, black 0px -1px, black 1px 0px, black -1px 0px">{{val}}</label></td>\
 				<td><label style="text-align:right">[{{count}}]</label></td>\
 				</tr>\
@@ -263,7 +263,7 @@ my.GenericFilter = Backbone.View.extend({
 	color_legend: ' \
 	<div class="filter-{{type}} filter"> \
         <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}"> \
-            <legend>{{field}}</legend>  \
+            <legend>{{field}}_{{ctrlId}}</legend>  \
 				<div style="width:100%"> \
 					<svg height="50" xmlns="http://www.w3.org/2000/svg"> \
 					{{#colorValues}} \
@@ -287,9 +287,8 @@ my.GenericFilter = Backbone.View.extend({
 	'change .drop-down2': 'onListItemClicked',
 	'change .drop-down3': 'onPeriodChanged'
   },
-  _ctrlId : 0,
+  activeFilters : new Array(),
   _sourceDataset: null,
-  _activeFilters: [],
   _selectedClassName : "info", // use bootstrap ready-for-use classes to highlight list item selection (avail classes are success, warning, info & error)
   initialize: function(args) {
     this.el = $(this.el);
@@ -300,12 +299,13 @@ my.GenericFilter = Backbone.View.extend({
 	_.bindAll(this, 'findActiveFilterByField');
 
 	this._sourceDataset = args.sourceDataset;
+	this.uid = Math.floor(Math.random()*100000);
 
     //this._sourceDataset.fields.bind('all', this.render);
 
 	this.sourceFields = args.sourceFields;
 	this.filterDialogLabel = args.label;
-	this._activeFilters = [];
+	this.activeFilters = new Array();
 
     this._actions = args.actions;
 
@@ -316,22 +316,48 @@ my.GenericFilter = Backbone.View.extend({
     this._sourceDataset.bind('query:done', this.render);
     this._sourceDataset.queryState.bind('selection:done', this.render);
   },
-
+  areValuesEqual: function(a,b)
+  {
+	  // this also handles date equalities.
+	  // For instance comparing a Date obj with its corresponding timer value now returns true
+	  if (typeof a == "undefined" || typeof b == "undefined")
+		  return false;
+	  
+	  if (a == b)
+		  return true;
+	  if (a && a.valueOf() == b)
+		  return true;
+	  if (b && a == b.valueOf())
+		  return true;
+	  if (a && b && a.valueOf == b.valueOf())
+		  return true;
+	  
+	  return false;
+  },
   render: function() {
     var self = this;
-	var tmplData = {filters : this._activeFilters};
+	var tmplData = {filters : this.activeFilters}; 
 	_.each(tmplData.filters , function(flt) { 
 		flt.hrVisible = 'block'; 
 	});
 
-    //  map them to the correct controlType also retaining their values (start/from/term)
+    //  map them to the correct controlType and retain their values (start/from/term/...)
      _.each(self._sourceDataset.queryState.get('selections'), function(filter) {
           for (var j in tmplData.filters)
           {
               if (tmplData.filters[j].field == filter.field)
               {
-                  $.extend(tmplData.filters[j], filter);
-                  break;
+            	  if (typeof filter.list != "undefined" && filter.list != null)
+            		  tmplData.filters[j].list = filter.list
+            		  
+            	  if (typeof filter.term != "undefined" && filter.term != null)
+            		  tmplData.filters[j].term = filter.term
+            		  
+            	  if (typeof filter.start != "undefined" && filter.start != null)
+            		  tmplData.filters[j].start = filter.start
+            		  
+            	  if (typeof filter.stop != "undefined" && filter.stop != null)
+            		  tmplData.filters[j].stop = filter.stop
               }
           }
       });
@@ -450,7 +476,8 @@ my.GenericFilter = Backbone.View.extend({
 		  {
 			var v = this.tmpValues[i];
 			var notSelected = "";
-			if (legendSelection.indexOf(v) < 0)
+			if ((this.fieldType != "date" && legendSelection.indexOf(v) < 0) 
+				|| (this.fieldType == "date" && legendSelection.indexOf(v) < 0 && legendSelection.indexOf(new Date(v).valueOf()) < 0))
 				notSelected = "not-selected";
 			
 			this.values.push({val: v, notSelected: notSelected, color: this.facet.attributes.terms[i].color, count: this.facet.attributes.terms[i].count});
@@ -492,7 +519,7 @@ my.GenericFilter = Backbone.View.extend({
 			  {
 				  // scan all filtered model records and look for the same records (may not have the same index)
 				  for (var  j in self._sourceDataset.records.models)
-					  if (self._sourceDataset.records.models[j].attributes[this.field] == v)
+					  if (self.areValuesEqual(self._sourceDataset.records.models[j].attributes[this.field], v))
 					  {
 						  if (self._sourceDataset.records.models[j].is_selected)
 							  selected = self._selectedClassName; 
@@ -500,8 +527,23 @@ my.GenericFilter = Backbone.View.extend({
 						  break;
 					  }
 			  }
-			  else if (this.controlType == "drop_down" && this.term == v)
-				  selected = "selected"
+			  else if (this.controlType == "drop_down")
+			  {
+				  if (self.areValuesEqual(this.term, v) || (typeof this.list != "undefined" && this.list && this.list.length == 1 && self.areValuesEqual(this.list[0], v)))
+				  	selected = "selected"
+			  }
+			  else if (this.controlType == "listbox") 
+			  {
+				  if (self.areValuesEqual(this.term, v)) 
+					  selected = "selected"
+				  else if (typeof this.list != "undefined" && this.list != null)
+				  {
+					  for (var j in this.list)
+						  if (self.areValuesEqual(this.list[j], v))
+							  selected = "selected"
+				  }
+			  
+			  }
 			  
 			this.values.push({val: v, selected: selected });
 			if (this.controlType.indexOf('slider') >= 0)
@@ -526,11 +568,8 @@ my.GenericFilter = Backbone.View.extend({
 
 		  }
 	  }
-	  
-	  if (this.controlType.indexOf("slider") >= 0 || this.controlType.indexOf("calendar") >= 0)
-		self._ctrlId++;
-		
-	  this.ctrlId = self._ctrlId;
+	  this.ctrlId = self.uid;
+
       return Mustache.render(self.filterTemplates[this.controlType], this);
     };
 
@@ -542,19 +581,20 @@ my.GenericFilter = Backbone.View.extend({
     var $target = $(e.currentTarget);
 	var $fieldSet = $target.parent().parent().parent().parent().parent();
 	var type  = $fieldSet.attr('data-filter-type');
-	var fieldId  = $fieldSet.attr('data-filter-field');
+	var fieldId = $fieldSet.attr('data-filter-field');
+	var controlType = $fieldSet.attr('data-control-type');
 
 	$target.toggleClass("not-selected");
 	var listaValori = [];
 	$fieldSet.find('div.legend-item').each(function() { 
 		if (!$(this).hasClass("not-selected"))
-			listaValori.push($(this).attr("myValue"));
+			listaValori.push($(this).attr("myValue").valueOf()); // in case there's a date, convert it with valueOf
 	});
 		
 	// make sure at least one value is selected
 	if (listaValori.length > 0)
 	{
-		this.findActiveFilterByField(fieldId).legend = listaValori;
+		this.findActiveFilterByField(fieldId, controlType).legend = listaValori;
 		this.doAction("onLegendItemClicked", fieldId, listaValori, "add");
 	}
 	else $target.toggleClass("not-selected"); // reselect the item and exit
@@ -584,6 +624,7 @@ my.GenericFilter = Backbone.View.extend({
   },
   handleListItemClicked: function($targetTD, $table, $combo, ctrlKey) {
 	var fieldId = $table.attr('data-filter-field');
+	var controlType = $table.attr('data-control-type');
 	var type = $table.attr('data-filter-type');
 	if (type == "range" && typeof $targetTD == "undefined")
 	{
@@ -591,7 +632,7 @@ my.GenericFilter = Backbone.View.extend({
 		// user clicked on year combo
 		var year = parseInt($combo.val());
 		// update year value in filter (so that the value is retained after re-rendering)
-		this.findActiveFilterByField(fieldId).year = year;
+		this.findActiveFilterByField(fieldId, controlType).year = year;
 		this.render();
 	}
 	if (typeof $targetTD != "undefined")
@@ -619,7 +660,7 @@ my.GenericFilter = Backbone.View.extend({
 			var startDate = $targetTD.attr('startDate');
 			var endDate = $targetTD.attr('stopDate');
 
-			var currFilter = this.findActiveFilterByField(fieldId);
+			var currFilter = this.findActiveFilterByField(fieldId, controlType);
 			currFilter.term = $targetTD.attr('myValue'); // save selected item for re-rendering later
 				
 			this.doAction("onListItemClicked", fieldId, [startDate, endDate], "add");
@@ -669,7 +710,6 @@ my.GenericFilter = Backbone.View.extend({
 	var fieldType     = $target.attr('data-filter-type');
 	var controlType     = $target.attr('data-control-type');
 
-
 	if (fieldType == "term")
 	{
         var term;
@@ -681,8 +721,19 @@ my.GenericFilter = Backbone.View.extend({
 			case "drop_down": term = termObj.val();break;
 			case "listbox": term = termObj.val();break;
 		}
-		this.findActiveFilterByField(fieldId).term = term;
+		this.findActiveFilterByField(fieldId, controlType).term = term;
         this.doAction("onFilterValueChanged", fieldId, [term], "add");
+	}
+	else if (fieldType == "list")
+	{
+		var list = new Array();
+		var listObj = $target.find('.data-control-id')[0]; //return a plain HTML select obj
+		for (var i in listObj.options) 
+			if (listObj.options[i].selected) 
+				list.push(listObj.options[i].value);
+		
+		this.findActiveFilterByField(fieldId, controlType).list = list;
+        this.doAction("onFilterValueChanged", fieldId, list, "add");
 	}
 	else if (fieldType == "range")
 	{
@@ -696,8 +747,9 @@ my.GenericFilter = Backbone.View.extend({
 			case "range_slider": from = fromObj.slider("values", 0);to = toObj.slider("values", 1);break;
 			case "range_calendar": from = new Date(fromObj.val());to = new Date(toObj.val());break;
 		}
-		this.findActiveFilterByField(fieldId).from = from;
-		this.findActiveFilterByField(fieldId).to = to;
+		var activeFilter = this.findActiveFilterByField(fieldId, controlType); 
+		activeFilter.from = from;
+		activeFilter.to = to;
         this.doAction("onFilterValueChanged", fieldId, [from, to], "add");
 	}
   },
@@ -720,6 +772,7 @@ my.GenericFilter = Backbone.View.extend({
 			return "term";
 		case "range_slider" :
 		case "range_calendar" :
+		case "month_week_calendar" :
 			return "range";
 		case "list" :
 		case "listbox":
@@ -764,7 +817,7 @@ my.GenericFilter = Backbone.View.extend({
 		if (typeof newFilter.year == "undefined")
 			newFilter.year = new Date().getFullYear();
 	}
-	this._activeFilters.push(newFilter);
+	this.activeFilters.push(newFilter);
 
   },
   onPeriodChanged: function(e) {
@@ -772,16 +825,19 @@ my.GenericFilter = Backbone.View.extend({
 	var $table = $(e.target).parent().find(".table");
 	//var $yearCombo = $(e.target).parent().find(".drop-down2");
 	var fieldId = $table.attr('data-filter-field');
+	var controlType = $table.attr('data-control-type');
+
 	var type = $table.attr('data-filter-type');
-	this.findActiveFilterByField(fieldId).period = $(e.target).val();
+	var currFilter = this.findActiveFilterByField(fieldId, controlType); 
+	currFilter.period = $(e.target).val();
+	currFilter.term = null;
 	this.render();
-	//this.handleListItemClicked(undefined, $table, $yearCombo);
   },
-  findActiveFilterByField: function(fieldId) {
-	for (var j in this._activeFilters)
+  findActiveFilterByField: function(fieldId, controlType) {
+	for (var j in this.activeFilters)
 	{
-		if (this._activeFilters[j].field == fieldId)
-			return this._activeFilters[j];
+		if (this.activeFilters[j].field == fieldId && this.activeFilters[j].controlType == controlType)
+			return this.activeFilters[j];
 	}
 	return new Object(); // to avoid "undefined" errors
   },
@@ -789,7 +845,8 @@ my.GenericFilter = Backbone.View.extend({
     e.preventDefault();
     var $target = $(e.target);
     var field = $target.parent().parent().attr('data-filter-field');
-	var currFilter = this.findActiveFilterByField(field);
+    var controlType = $target.parent().parent().attr('data-control-type');
+	var currFilter = this.findActiveFilterByField(field, controlType);
 	//console.log(currFilter);
 	currFilter.term = undefined;
 	currFilter.value = [];

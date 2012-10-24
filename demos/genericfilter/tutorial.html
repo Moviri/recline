@@ -108,10 +108,11 @@ var action1 = new recline.Action({
     filters: {
         filter_date_range: {type: "range", field: "date", fieldType: "date"},
         filter_date_term:  {type: "term", field: "date", fieldType: "date"},
-        filter_date_list:  {type: "list", field: "date", fieldType: "date"}
+        filter_date_list:  {type: "list", field: "date", fieldType: "date"},
+        filter_x_range: {type: "range", field: "x", fieldType: "number"}
     },
     models: [
-        {model: dataset, filters:["filter_date_term", "filter_date_list", "filter_date_range"]}
+        {model: dataset, filters:["filter_date_term", "filter_date_list", "filter_date_range", "filter_x_range"]},
     ],
     type: ["selection"]
 });
@@ -148,7 +149,7 @@ function drawGraph() {
 
     var filter2 = new recline.View.GenericFilter({
         sourceDataset: dataset,
-        sourceFields: [{field: "date", controlType: 'month_week_calendar', type: "range", fieldType: "date" }],
+        sourceFields: [{field: "date", controlType: 'month_week_calendar', fieldType: "date" }],
         actions: [{
             action: action1,
             mapping: [
@@ -251,23 +252,23 @@ function drawGraph() {
     $('#filter9').append(filter9.el);
     */
 
-    /*var filter10 = new recline.View.GenericFilter({
+    var filter10 = new recline.View.GenericFilter({
         sourceDataset: dataset,
-        sourceFields: [{field: "date", controlType: 'range_slider', type: "range", fieldType: "date" }],
+        sourceFields: [{field: "x", controlType: 'range_slider', fieldType: "number" }],
         actions: [{
             action: action1,
             mapping: [
-                {srcField: "date", filter: "filter_date_range"}
+                {srcField: "x", filter: "filter_x_range"}
             ],
             event: ["selection"]
         }]
     });
     $('#filter10').append(filter10.el);
-    */
+    
 
     var filter11 = new recline.View.GenericFilter({
         sourceDataset: dataset,
-        sourceFields: [{field: "date", controlType: 'color_legend', type: "list", fieldType: "date" }],
+        sourceFields: [{field: "date", controlType: 'color_legend', fieldType: "date" }],
         actions: [{
             action: action1,
             mapping: [
