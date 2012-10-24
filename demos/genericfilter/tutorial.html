@@ -109,6 +109,11 @@ var colorSchemaDate = new recline.Data.ColorSchema({
     colors: ['#F7E1C5', '#6A000B']
 });
 
+var colorSchemaAge = new recline.Data.ColorSchema({
+    type: "scaleWithDistinctData",
+    colors: ['#F7E1C5', '#6A000B']
+});
+
 var dataset = new recline.Model.Dataset({
     records: [
         {id: 1, gender: "F", age: 10, x: 20, y: 200, date: new Date(2012, 9, 1, 9,0,0,0)},
@@ -119,11 +124,13 @@ var dataset = new recline.Model.Dataset({
     fields: [
         {id: 'x', type: "integer"},
         {id: 'y', type: "integer"},
-        {id: 'age'} ,
+        {id: 'age', type: "integer"} ,
         {id: 'date', type: "date"}
     ]
 });
 colorSchemaDate.setDataset(dataset, "date");
+colorSchemaAge.setDataset(dataset, "age");
+
 dataset.queryState.addFacetNoEvent("age", true);
 
 
@@ -133,12 +140,14 @@ var action1 = new recline.Action({
         filter_date_range: {type: "range", field: "date", fieldType: "date"},
         filter_date_term:  {type: "term",  field: "date", fieldType: "date"},
         filter_date_list:  {type: "list",  field: "date", fieldType: "date"},
-        filter_age_list:   {type: "list",  field: "age",  fieldType: "integer"}
+        filter_age_list:   {type: "list",  field: "age",  fieldType: "integer"},
+        filter_age_range:  {type: "range",  field: "age",  fieldType: "integer"},
+        filter_age_term:   {type: "term",  field: "age",  fieldType: "integer"}
     },
     models: [
-        {model: dataset, filters:["filter_date_term", "filter_date_list", "filter_date_range", "filter_age_list"]}
+        {model: dataset, filters:["filter_date_term", "filter_date_list", "filter_date_range", "filter_age_list", "filter_age_range", "filter_age_term"]}
     ],
-    type: ["filter"]
+    type: ["selection"]
 });
 
 var $el = $('#grid1');
@@ -270,41 +279,41 @@ function drawGraph() {
     });
     $('#filter8').append(filter8.el);
 
-    /*var filter9 = new recline.View.GenericFilter({
+    var filter9 = new recline.View.GenericFilter({
         sourceDataset: dataset,
-        sourceFields: [{field: "date", controlType: 'slider',  fieldType: "date" }],
+        sourceFields: [{field: "age", controlType: 'slider',  fieldType: "integer" }],
         actions: [{
             action: action1,
             mapping: [
-                {srcField: "date", filter: "filter_date_term"}
+                {srcField: "age", filter: "filter_age_term"}
             ],
             event: ["selection"]
         }]
     });
     $('#filter9').append(filter9.el);
-    */
 
-    /*var filter10 = new recline.View.GenericFilter({
+
+    var filter10 = new recline.View.GenericFilter({
         sourceDataset: dataset,
-        sourceFields: [{field: "date", controlType: 'range_slider',  fieldType: "date" }],
+        sourceFields: [{field: "age", controlType: 'range_slider',  fieldType: "integer" }],
         actions: [{
             action: action1,
             mapping: [
-                {srcField: "date", filter: "filter_date_range"}
+                {srcField: "age", filter: "filter_age_range"}
             ],
             event: ["selection"]
         }]
     });
     $('#filter10').append(filter10.el);
-    */
+
 
     var filter11 = new recline.View.GenericFilter({
         sourceDataset: dataset,
-        sourceFields: [{field: "date", controlType: 'color_legend',  fieldType: "date" }],
+        sourceFields: [{field: "age", controlType: 'color_legend',  fieldType: "integer" }],
         actions: [{
             action: action1,
             mapping: [
-                {srcField: "date", filter: "filter_date_list"}
+                {srcField: "age", filter: "filter_age_list"}
             ],
             event: ["selection"]
         }]
