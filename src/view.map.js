@@ -49,6 +49,8 @@ my.Map = Backbone.View.extend({
     // this will be the Leaflet L.Map object (setup below)
     this.map = null;
 
+    this.uid = "" + new Date().getTime() + Math.floor(Math.random() * 10000); // generating an unique id for the chart
+
     var stateData = _.extend({
         geomField: null,
         lonField: null,
