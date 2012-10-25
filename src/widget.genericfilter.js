@@ -8,29 +8,6 @@ my.GenericFilter = Backbone.View.extend({
   className: 'recline-filter-editor well', 
   template: ' \
     <div class="filters"> \
-      <div id="filterCreationForm" class="form-stacked js-add" style="display: none;"> \
-        <fieldset> \
-          <label>Filter type</label> \
-          <select class="filterType"> \
-            <option value="term">Term (text)</option> \
-            <option value="slider">Slider</option> \
-            <option value="range">Range</option> \
-            <option value="range_slider">Range slider</option> \
-            <option value="range_calendar">Date range</option> \
-            <option value="drop_down">Drop down</option> \
-            <option value="listbox">Listbox</option> \
-            <option value="list">Value list</option> \
-          </select> \
-          <label>Field</label> \
-          <select class="fields"> \
-            {{#fields}} \
-            <option value="{{id}}">{{label}}</option> \
-            {{/fields}} \
-          </select> \
-		  <br> \
-          <input type="button" id="addFilterButton" class="btn" value="Add"></input> \
-        </fieldset> \
-      </div> \
       <div class="form-stacked js-edit"> \
 	  	<div class="btn btn-info" style="display:{{titlePresent}};cursor:default"> \
 		  	<h4>{{filterDialogTitle}}</h4> \
@@ -43,11 +20,35 @@ my.GenericFilter = Backbone.View.extend({
       </div> \
     </div> \
   ',
+  templateHoriz: ' \
+	<style> \
+		.separated-item { padding-left:20px;padding-right:20px; } \
+	</style> \
+    <div class="filters"> \
+      <table > \
+	  	<tbody> \
+	  		<tr>\
+	  			<td class="separated-item" style="display:{{titlePresent}}">\
+				  	<div class="btn btn-info" style="cursor:default"> \
+					  	<h4>{{filterDialogTitle}}</h4> \
+					  	<small>{{filterDialogDescription}}</small> \
+				  	</div> \
+				</td>\
+			  	{{#filters}} \
+			  	<td class="separated-item">\
+          			{{{filterRender}}} \
+          		</td>\
+  				{{/filters}} \
+        	</tr>\
+  		</tbody>\
+  	   </table class="js-edit"> \
+    </div> \
+  ',
   filterTemplates: {
     term: ' \
       <div class="filter-{{type}} filter"> \
         <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
-            <legend>{{label}}</legend>  \
+            <legend style="display:{{useLegend}}">{{label}}</legend>  \
           <input type="text" value="{{term}}" name="term" class="data-control-id" /> \
           <input type="button" class="btn" id="setFilterValueButton" value="Set"></input> \
         </fieldset> \
@@ -69,7 +70,7 @@ my.GenericFilter = Backbone.View.extend({
 	</script> \
       <div class="filter-{{type}} filter"> \
         <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
-            <legend>{{label}} \
+            <legend style="display:{{useLegend}}">{{label}} \
 			<a class="js-remove-filter" href="#" title="Remove this filter">&times;</a> \
 		</legend>  \
 		  <label id="amount{{ctrlId}}">Value: </label></span> \
@@ -82,7 +83,7 @@ my.GenericFilter = Backbone.View.extend({
     range: ' \
       <div class="filter-{{type}} filter"> \
         <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
-            <legend>{{label}}</legend>  \
+            <legend style="display:{{useLegend}}">{{label}}</legend>  \
           <label class="control-label" for="">From</label> \
           <input type="text" value="{{start}}" name="start"  class="data-control-id-from" style="width:auto"/> \
           <label class="control-label" for="">To</label> \
@@ -109,7 +110,7 @@ my.GenericFilter = Backbone.View.extend({
 	</script> \
       <div class="filter-{{type}} filter"> \
         <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
-            <legend>{{label}}</legend>  \
+            <legend style="display:{{useLegend}}">{{label}}</legend>  \
 		  <label id="amount{{ctrlId}}">Value range: </label></span> \
 		  <div id="slider-range{{ctrlId}}" class="data-control-id-from data-control-id-to" ></div> \
 		  <br> \
@@ -124,7 +125,7 @@ my.GenericFilter = Backbone.View.extend({
 	  </style> \
       <div class="filter-{{type}} filter"> \
         <fieldset> \
-            <legend>{{label}}  \
+            <legend style="display:{{useLegend}}">{{label}}  \
             <a class="js-remove-filter" href="#" title="Remove this filter">&times;</a> \
 			</legend> \
 			Year<br> \
@@ -178,7 +179,7 @@ my.GenericFilter = Backbone.View.extend({
 	</script> \
       <div class="filter-{{type}} filter"> \
         <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
-            <legend>{{label}}</legend>  \
+            <legend style="display:{{useLegend}}">{{label}}</legend>  \
 			<label for="from{{ctrlId}}">From</label> \
 			<input type="text" id="from{{ctrlId}}" name="from{{ctrlId}}" class="data-control-id-from" value="{{startDate}}" style="width:auto"/> \
 			<br> \
@@ -192,7 +193,7 @@ my.GenericFilter = Backbone.View.extend({
     drop_down: ' \
       <div class="filter-{{type}} filter"> \
         <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
-            <legend>{{label}} \
+            <legend style="display:{{useLegend}}">{{label}} \
     		</legend>  \
 			<select class="drop-down fields data-control-id" > \
 			<option></option> \
@@ -210,7 +211,7 @@ my.GenericFilter = Backbone.View.extend({
 	  </style> \
       <div class="filter-{{type}} filter"> \
         <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
-            <legend>{{label}}  \
+            <legend style="display:{{useLegend}}">{{label}}  \
             <a class="js-remove-filter" href="#" title="Remove this filter">&times;</a> \
 			</legend> \
 			<div style="max-height:500px;width:100%;border:1px solid grey;overflow:auto;"> \
@@ -228,7 +229,7 @@ my.GenericFilter = Backbone.View.extend({
     listbox: ' \
       <div class="filter-{{type}} filter"> \
         <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
-            <legend>{{label}}</legend>  \
+            <legend style="display:{{useLegend}}">{{label}}</legend>  \
 			<select class="fields data-control-id"  multiple SIZE=10> \
             {{#values}} \
             <option value="{{val}}" {{selected}}>{{val}}</option> \
@@ -238,6 +239,32 @@ my.GenericFilter = Backbone.View.extend({
           <input type="button" class="btn" id="setFilterValueButton" value="Set"></input> \
         </fieldset> \
       </div> \
+    ',
+    radio_buttons : 
+    	' \
+        <div class="filter-{{type}} filter"> \
+            <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
+                <legend style="display:{{useLegend}}">{{label}}</legend>  \
+        		<div class="btn-group" > \
+    	            {{#values}} \
+    	    		<button class="btn grouped-button {{selected}}">{{val}}</button> \
+    	            {{/values}} \
+              </div> \
+            </fieldset> \
+        </div> \
+        ',
+    multibutton : 
+    	' \
+    <div class="filter-{{type}} filter"> \
+        <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
+            <legend style="display:{{useLegend}}">{{label}}</legend>  \
+    		<div class="btn-group" > \
+	            {{#values}} \
+	    		<button class="btn grouped-button {{selected}}">{{val}}</button> \
+	            {{/values}} \
+          </div> \
+        </fieldset> \
+    </div> \
     ',
 	legend: ' \
 	  <style> \
@@ -251,7 +278,7 @@ my.GenericFilter = Backbone.View.extend({
 	  </style> \
       <div class="filter-{{type}} filter"> \
         <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
-            <legend>{{label}}</legend>  \
+            <legend style="display:{{useLegend}}">{{label}}</legend>  \
 			<table style="width:100%;background-color:transparent">\
 			{{#values}} \
 				<tr> \
@@ -267,7 +294,7 @@ my.GenericFilter = Backbone.View.extend({
 	color_legend: ' \
 	<div class="filter-{{type}} filter"> \
         <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}"> \
-            <legend>{{label}}</legend>  \
+            <legend style="display:{{useLegend}}">{{label}}</legend>  \
 				<div style="width:100%"> \
 					<svg height="50" xmlns="http://www.w3.org/2000/svg"> \
 					{{#colorValues}} \
@@ -289,7 +316,8 @@ my.GenericFilter = Backbone.View.extend({
 	'click #setFilterValueButton': 'onFilterValueChanged',
 	'change .drop-down': 'onFilterValueChanged',
 	'change .drop-down2': 'onListItemClicked',
-	'change .drop-down3': 'onPeriodChanged'
+	'change .drop-down3': 'onPeriodChanged',
+	'click .grouped-button' : 'onButtonsetClicked'
   },
   activeFilters : new Array(),
   _sourceDataset: null,
@@ -312,6 +340,7 @@ my.GenericFilter = Backbone.View.extend({
 	{
 		this.filterDialogTitle = args.state.title;
 		this.filterDialogDescription = args.state.description;
+		this.useHorizontalLayout = args.state.useHorizontalLayout;
 	}
 	this.activeFilters = new Array();
 
@@ -373,7 +402,6 @@ my.GenericFilter = Backbone.View.extend({
       if (tmplData.filters.length > 0)
 		tmplData.filters[tmplData.filters.length -1].hrVisible = 'none'
 	
-			
 	var resultType = "filtered";
 	if(self.options.useFilteredData !== null && self.options.useFilteredData === false)
 		resultType = "original";
@@ -387,6 +415,10 @@ my.GenericFilter = Backbone.View.extend({
 	else tmplData.titlePresent = "none"; 
 	tmplData.dateConvert = self.dateConvert;
     tmplData.filterRender = function() {
+    	
+  	  this.useLegend = "block";
+      if (this.useFieldLabel == false)
+    	  this.useLegend = "none";
 		
   	  this.values = new Array();
 
@@ -545,6 +577,22 @@ my.GenericFilter = Backbone.View.extend({
 						  break;
 					  }
 			  }
+			  else if (this.controlType == "radio_buttons")
+			  {
+				  if (self.areValuesEqual(this.term, v) || (typeof this.list != "undefined" && this.list && this.list.length == 1 && self.areValuesEqual(this.list[0], v)))
+				  	selected = 'btn-primary'
+			  }
+			  else if (this.controlType == "multibutton")
+			  {
+				  if (self.areValuesEqual(this.term, v)) 
+					  selected = 'btn-info'
+				  else if (typeof this.list != "undefined" && this.list != null)
+				  {
+					  for (var j in this.list)
+						  if (self.areValuesEqual(this.list[j], v))
+							  selected = 'btn-info'
+				  }
+			  }
 			  else if (this.controlType == "drop_down")
 			  {
 				  if (self.areValuesEqual(this.term, v) || (typeof this.list != "undefined" && this.list && this.list.length == 1 && self.areValuesEqual(this.list[0], v)))
@@ -560,7 +608,6 @@ my.GenericFilter = Backbone.View.extend({
 						  if (self.areValuesEqual(this.list[j], v))
 							  selected = "selected"
 				  }
-			  
 			  }
 			  
 			this.values.push({val: v, selected: selected });
@@ -587,13 +634,45 @@ my.GenericFilter = Backbone.View.extend({
 		  }
 	  }
 	  this.ctrlId = self.uid;
-
-      return Mustache.render(self.filterTemplates[this.controlType], this);
+		  return Mustache.render(self.filterTemplates[this.controlType], this);
     };
+    var currTemplate = this.template;
+    if (this.useHorizontalLayout)
+    	currTemplate = this.templateHoriz
 
-    var out = Mustache.render(this.template, tmplData);
+    var out = Mustache.render(currTemplate, tmplData);
     this.el.html(out);
   },
+  onButtonsetClicked: function(e) {
+	    e.preventDefault();
+	    var $target = $(e.currentTarget);
+		var $fieldSet = $target.parent().parent();
+		var type  = $fieldSet.attr('data-filter-type');
+		var fieldId = $fieldSet.attr('data-filter-field');
+		var controlType = $fieldSet.attr('data-control-type');
+		if (controlType == "multibutton")
+		{
+			$target.toggleClass("btn-info");
+		}
+		else if (controlType == "radio_buttons")
+		{
+			// ensure one and only one selection is performed
+			$fieldSet.find('div.btn-group button.btn-info').each(function() { 
+				$(this).removeClass("btn-info"); 
+			});
+			$target.addClass("btn-info");
+		}
+		var listaValori = [];
+		$fieldSet.find('div.btn-group button.btn-info').each(function() { 
+			listaValori.push($(this).html().valueOf()); // in case there's a date, convert it with valueOf
+		});
+		if (controlType == "multibutton")
+			this.findActiveFilterByField(fieldId, controlType).list = listaValori;
+		else if (controlType == "radio_buttons")
+			this.findActiveFilterByField(fieldId, controlType).term = $target.html().valueOf();
+		
+		this.doAction("onButtonsetClicked", fieldId, listaValori, "add");
+	  },
   onLegendItemClicked: function(e) {
     e.preventDefault();
     var $target = $(e.currentTarget);
@@ -787,6 +866,7 @@ my.GenericFilter = Backbone.View.extend({
 	{
 		case "drop_down" :
 		case "slider" :
+		case "radio_buttons" :
 			return "term";
 		case "range_slider" :
 		case "range_calendar" :
@@ -795,6 +875,7 @@ my.GenericFilter = Backbone.View.extend({
 		case "list" :
 		case "listbox":
 		case "legend" :
+		case "multibutton" :
 			return "list";
 	}
 	return controlType;
