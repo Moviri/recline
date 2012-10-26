@@ -7,6 +7,7 @@
  *
  * http://docs.jquery.com/UI/Widget
  */
+(function( jQuery ) {
 (function( $, undefined ) {
 
 // jQuery 1.4+
@@ -260,3 +261,4 @@ $.Widget.prototype = {
 };
 
 })( jQuery );
+}($jq161));

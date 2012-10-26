@@ -3,7 +3,6 @@
 //     Backbone may be freely distributed under the MIT license.
 //     For all details and documentation:
 //     http://documentcloud.github.com/backbone
-
 (function(){
 
   // Initial Setup

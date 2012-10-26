@@ -12,6 +12,10 @@
  *	jquery.ui.widget.js
  *	jquery.ui.position.js
  */
+
+(function( jQuery ) {
+
+
 (function( $, undefined ) {
 
 // used to prevent race conditions with remote data sources
@@ -610,3 +614,5 @@ $.widget("ui.menu", {
 });
 
 }(jQuery));
+
+}($jq161));

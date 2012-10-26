@@ -1,0 +1,129 @@
+---
+layout: moviri
+title: Demos - NVD3 Integration
+recline-deps: true
+root: ../../
+---
+
+
+<body>
+
+<div class="container-fluid">
+
+
+    <div class="row-fluid"><div class="span4"></div></div>
+    <div class="row-fluid">
+        <div class="span2"><div id="filter1"></div></div>
+        <div class="span3"><div id="grid1" style="height: 1000px;"></div></div>
+        <div class="span6"><div id="map1"></div></div>
+    </div>
+
+
+
+
+
+
+
+</div>
+
+<script type="text/javascript" src="datasource.js"></script>
+<script>
+
+
+
+var colorSchema = new recline.Data.ColorSchema({
+    type: "scaleWithDataMinMax",
+    colors: ['#F7E1C5', '#6A000B']
+});
+
+colorSchema.setDataset(dataset, "value");
+
+
+var action1 = new recline.Action({
+    filters: {
+        filter_value_range:  {type: "range",  field: "value",  fieldType: "integer"},
+        filter_value_list:   {type: "list",  field: "value",  fieldType: "integer"},
+        filter_state_term: {type: "term", field: "state", fieldType: "string"}
+
+    },
+    models: [
+        {model: dataset, filters:["filter_value_range", "filter_value_list", "filter_state_term"]}
+    ],
+    type: ["selection"]
+});
+
+
+var $el = $('#grid1');
+var grid1 = new recline.View.SlickGrid({
+    model: dataset,
+    el: $el,
+    state: {  fitColumns:true,
+        useHoverStyle: true,
+        useStripedStyle: true,
+        useCondensedStyle: true
+    },
+    actions: [{
+        action: action1,
+        mapping: [
+            {srcField: "value", filter: "filter_value_list"}
+        ],
+        event: ["selection"]
+    }]
+
+});
+grid1.visible = true;
+grid1.render();
+
+
+drawGraph();
+
+
+dataset.fetch();
+
+
+function drawGraph() {
+
+
+
+    var filter1 = new recline.View.GenericFilter({
+        sourceDataset: dataset,
+        sourceFields: [{field: "value", controlType: 'range_slider',  fieldType: "integer" }],
+        actions: [{
+            action: action1,
+            mapping: [
+                {srcField: "value", filter: "filter_value_range"}
+            ],
+            event: ["selection"]
+        }]
+    });
+    $('#filter1').append(filter1.el);
+
+
+    var cgraph =  new recline.View.KartoGraph({
+        model: dataset,
+        state: {
+            svgURI: 'map-usa.svg',
+            layers: ['usa'],
+            mapping: [{srcShapeField: "state", srcValueField: "value", destAttribute: "name", destLayer: "usa"}],
+            type: "choropletmap",
+            unselectedColor: "#C0C0C0"
+        },
+        actions: [{
+            action: action1,
+            mapping: [
+                {srcField: "state", filter: "filter_state_term"}
+            ],
+            event: ["selection"]
+        }]
+    });
+    $('#map1').append(cgraph.el);
+
+
+
+}
+
+
+</script>
+
+</body>
+

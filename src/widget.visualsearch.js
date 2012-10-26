@@ -43,7 +43,10 @@ this.recline.View = this.recline.View || {};
         redraw:function () {
             var self = this;
 
-            this.visualSearch = VS.init({
+            console.log($().jquery);
+            console.log($.ui.version);
+
+            window.visualSearch = VS.init({
                 container  : $('#search_box_container'),
                 query      : 'country: "South Africa" account: 5-samuel "U.S. State": California',
                 showFacets : true,
@@ -196,5 +199,5 @@ this.recline.View = this.recline.View || {};
     });
 
 
-})(jQuery, recline.View);
+})($jq161, recline.View);
 
