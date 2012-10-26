@@ -346,11 +346,11 @@ my.GenericFilter = Backbone.View.extend({
 	<div class="filter-{{type}} filter"> \
         <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}"> \
             <legend style="display:{{useLegend}}">{{label}}</legend>  \
-				<div style="width:100%"> \
-					<svg height="50" xmlns="http://www.w3.org/2000/svg"> \
+				<div style="max-width:250px;height:{{totHeight}}px"> \
+					<svg height="{{totHeight}}" xmlns="http://www.w3.org/2000/svg"> \
 					{{#colorValues}} \
-				    	<rect width="{{width}}" height=50 fill="{{color}}" x="{{x}}"/> \
-						<text width="{{width}}" y="30" fill="{{textColor}}" x="{{x}}">{{val}}</text> \
+				    	<rect width="{{width}}" height=50 fill="{{color}}" x="{{x}}" y={{y}}/> \
+						<text width="{{width}}" fill="{{textColor}}" x="{{x}}" y="{{yplus30}}">{{val}}</text> \
 					{{/colorValues}}\
 					</svg>		\
 				</div> \
@@ -711,9 +711,55 @@ my.GenericFilter = Backbone.View.extend({
 	  }
 	  else if (this.controlType == "color_legend")
 	  {
+		  var ruler = document.getElementById("my_string_width_calculation_ruler");
+		  if (typeof ruler == "undefined" || ruler == null)
+		  {
+			  ruler = document.createElement("span");
+			  ruler.setAttribute('id', "my_string_width_calculation_ruler");
+			  ruler.style.visibility = "hidden";
+			  ruler.style.width = "auto";
+			  document.body.appendChild(ruler);
+		  }
+		  var maxWidth = 250;
 		  this.colorValues = [];
-		  for (var i = 0; i < 8; i++)  
-			  this.colorValues.push({width: 30, color: "rgb(0,0,"+(2+i)*16+")", textColor:"rgb(255,255,"+(255-(2+i)*16)+")", val: i, x:30*i });
+		  
+	      this.facet = self._sourceDataset.getFacetByFieldId(this.field);
+          if(typeof this.facet == "undefined" || this.facet == null ) {
+//        	  this.tmpValues = [15,20,25,30,35,40,45,50,55,60,65,70,75,80,85,90,95,100,105,110,115,120];
+              throw "GenericFilter: no facet present for field [" + this.field + "]. Define a facet before filter render";
+          }
+          else this.tmpValues = _.pluck(this.facet.attributes.terms, "term");
+          
+		  var pixelW = 0;
+		  // calculate needed pixel width for every string
+		  for (var i in this.tmpValues)
+		  {
+			  var v = this.tmpValues[i];
+			  ruler.innerHTML = v;
+			  var w = ruler.offsetWidth
+			  if (w > pixelW)
+				  pixelW = w;
+		  }
+		  pixelW += 2;
+		  
+		  var riga = 0;
+		  var colonna = 0;  
+		  
+		  for (var i in this.tmpValues)
+		  {
+			var v = this.tmpValues[i];
+			var color = /*(typeof this.facet == "undefined" ? new chroma.Color(0,0,v*2,'rgb') :*/ this.facet.attributes.terms[i].color);
+			if (pixelW*colonna > maxWidth)
+			{
+				riga++;
+				colonna = 0;
+			}
+			this.colorValues.push({width: pixelW, color: color, textColor: self.complementColor(color), 
+									val: v, x:pixelW*colonna, y:riga*50, yplus30:riga*50+30  });
+			
+			colonna++;
+	  	  }
+		  this.totHeight = (riga+1)*50;
 	  }
 	  else
 	  {
@@ -798,6 +844,19 @@ my.GenericFilter = Backbone.View.extend({
 
     var out = Mustache.render(currTemplate, tmplData);
     this.el.html(out);
+  },
+  complementColor: function(c)
+  {
+	  // calculates a readable color to use over a given color
+	  // usually returns black for light colors and white for dark colors.
+//	  var c1 = c.hsv();
+//	  if (c1[2] >= 0.5)
+//		  return chroma.hsv(c1[0],c1[1],0);
+//	  else return chroma.hsv(c1[0],c1[1],1);
+	  var c1 = c.rgb;
+	  if (c1[0]+c1[1]+c1[2] < 255*3/2)
+		  return "white";
+	  else return "black";
   },
   onButtonsetClicked: function(e) {
 	    e.preventDefault();
