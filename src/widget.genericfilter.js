@@ -204,6 +204,25 @@ my.GenericFilter = Backbone.View.extend({
         </fieldset> \
       </div> \
     ',
+    dropdown_styled: ' \
+    	<script> \
+    	$(function() { \
+    		$(".chzn-select-deselect").chosen({allow_single_deselect:true}); \
+    	}); \
+    	</script> \
+      <div class="filter-{{type}} filter"> \
+        <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
+            <legend style="display:{{useLegend}}">{{label}} \
+    		</legend>  \
+			<select class="chzn-select-deselect data-control-id" data-placeholder="Select desired {{label}}"> \
+    		<option></option> \
+            {{#values}} \
+            <option value="{{val}}" {{selected}}>{{val}}</option> \
+            {{/values}} \
+          </select> \
+        </fieldset> \
+      </div> \
+    ',
     dropdown_date_range: ' \
       <div class="filter-{{type}} filter"> \
         <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
@@ -251,6 +270,24 @@ my.GenericFilter = Backbone.View.extend({
           </select> \
 		  <br> \
           <input type="button" class="btn" id="setFilterValueButton" value="Set"></input> \
+        </fieldset> \
+      </div> \
+    ',
+    listbox_styled: ' \
+    	<script> \
+    	$(function() { \
+    		$(".chzn-select-deselect").chosen({allow_single_deselect:true}); \
+    	}); \
+    	</script> \
+      <div class="filter-{{type}} filter"> \
+        <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
+            <legend style="display:{{useLegend}}">{{label}} \
+    		</legend>  \
+			<select class="chzn-select-deselect data-control-id" multiple data-placeholder="Select desired {{label}}"> \
+            {{#values}} \
+            <option value="{{val}}" {{selected}}>{{val}}</option> \
+            {{/values}} \
+          </select> \
         </fieldset> \
       </div> \
     ',
@@ -329,6 +366,7 @@ my.GenericFilter = Backbone.View.extend({
 	'click .legend-item': 'onLegendItemClicked',
 	'click #setFilterValueButton': 'onFilterValueChanged',
 	'change .drop-down': 'onFilterValueChanged',
+	'change .chzn-select-deselect': 'onFilterValueChanged',
 	'change .drop-down2': 'onListItemClicked',
 	'change .drop-down3': 'onPeriodChanged',
 	'click .grouped-button' : 'onButtonsetClicked'
@@ -711,12 +749,12 @@ my.GenericFilter = Backbone.View.extend({
 							  selected = 'btn-info'
 				  }
 			  }
-			  else if (this.controlType == "dropdown")
+			  else if (this.controlType == "dropdown" || this.controlType == "dropdown_styled")
 			  {
 				  if (self.areValuesEqual(this.term, v) || (typeof this.list != "undefined" && this.list && this.list.length == 1 && self.areValuesEqual(this.list[0], v)))
 				  	selected = "selected"
 			  }
-			  else if (this.controlType == "listbox") 
+			  else if (this.controlType == "listbox" || this.controlType == "listbox_styled") 
 			  {
 				  if (self.areValuesEqual(this.term, v)) 
 					  selected = "selected"
@@ -933,7 +971,9 @@ my.GenericFilter = Backbone.View.extend({
 		{
 			case "term": term = termObj.val();break;
 			case "slider": term = termObj.slider("value");break;
-			case "dropdown": term = termObj.val();break;
+			case "dropdown":
+			case "dropdown_styled":
+				term = termObj.val();break;
 			case "listbox": term = termObj.val();break;
 		}
 		this.findActiveFilterByField(fieldId, controlType).term = term;
@@ -985,6 +1025,7 @@ my.GenericFilter = Backbone.View.extend({
 	switch (controlType)
 	{
 		case "dropdown" :
+		case "dropdown_styled" :
 		case "slider" :
 		case "radiobuttons" :
 			return "term";
@@ -995,6 +1036,7 @@ my.GenericFilter = Backbone.View.extend({
 			return "range";
 		case "list" :
 		case "listbox":
+		case "listbox_styled":
 		case "legend" :
 		case "multibutton" :
 			return "list";

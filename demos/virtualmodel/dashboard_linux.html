@@ -396,8 +396,9 @@ root: ../../
  				sourceFields: [
  								{field: 'age', controlType: 'multibutton', fieldType: 'number', useFieldLabel: false},
  								{field: 'age', controlType: 'radiobuttons', fieldType: 'number', useFieldLabel: false},
- 								{field: 'age', controlType: 'dropdown', fieldType: 'number', useFieldLabel: false},
- 								{field: 'age', controlType: 'range_slider', fieldType: 'number', useFieldLabel: false},
+ 								{field: 'age', controlType: 'dropdown_styled', fieldType: 'number', useFieldLabel: false},
+ 								{field: 'age', controlType: 'listbox_styled', fieldType: 'number', useFieldLabel: false},
+ 								//{field: 'age', controlType: 'range_slider', fieldType: 'number', useFieldLabel: false},
  								{field: 'daydate', controlType: 'dropdown_date_range', fieldType: 'date', useFieldLabel: false}
  							],
  				useFilteredData : false,
@@ -410,6 +411,9 @@ root: ../../
                 }]
              });
              $('#filterToolbar').append(filter5.el);
+             
+             $(".chzn-select").chosen(); 
+             $(".chzn-select-deselect").chosen({allow_single_deselect:true});
 
             // var facet = new recline.View.FacetViewer({
 				// model: virtualdatasetAge
