@@ -124,7 +124,7 @@ my.GenericFilter = Backbone.View.extend({
 		.list-filter-item:hover { background: lightblue;cursor:pointer; } \
 	  </style> \
       <div class="filter-{{type}} filter"> \
-        <fieldset> \
+        <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
             <legend style="display:{{useLegend}}">{{label}}  \
             <a class="js-remove-filter" href="#" title="Remove this filter">&times;</a> \
 			</legend> \
@@ -1116,7 +1116,7 @@ my.GenericFilter = Backbone.View.extend({
 	
 	if (currFilter.controlType == "list" || currFilter.controlType == "month_week_calendar")
 	{
-		$table = $target.parent().find(".table")
+		$table = $target.parent().parent().find(".table")
 		if (typeof $table != "undefined")
 		{
 			$table.find('tr').each(function() { 
