@@ -977,6 +977,7 @@ my.GenericFilter = Backbone.View.extend({
 			case "listbox": term = termObj.val();break;
 		}
 		this.findActiveFilterByField(fieldId, controlType).term = term;
+		this.findActiveFilterByField(fieldId, controlType).list = [term];
         this.doAction("onFilterValueChanged", fieldId, [term], "add");
 	}
 	else if (fieldType == "list")
