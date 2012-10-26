@@ -190,7 +190,7 @@ my.GenericFilter = Backbone.View.extend({
        </fieldset> \
       </div> \
 	',
-    drop_down: ' \
+    dropdown: ' \
       <div class="filter-{{type}} filter"> \
         <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
             <legend style="display:{{useLegend}}">{{label}} \
@@ -204,7 +204,21 @@ my.GenericFilter = Backbone.View.extend({
         </fieldset> \
       </div> \
     ',
-	list: ' \
+    dropdown_date_range: ' \
+      <div class="filter-{{type}} filter"> \
+        <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
+            <legend style="display:{{useLegend}}">{{label}} \
+    		</legend>  \
+			<select class="drop-down fields data-control-id" > \
+			<option></option> \
+            {{#date_values}} \
+            <option startDate="{{startDate}}" stopDate="{{stopDate}}" {{selected}}>{{val}}</option> \
+            {{/date_values}} \
+          </select> \
+        </fieldset> \
+      </div> \
+    ',
+    list: ' \
 	  <style> \
 		.list-filter-item { cursor:pointer; } \
 		.list-filter-item:hover { background: lightblue;cursor:pointer; } \
@@ -240,7 +254,7 @@ my.GenericFilter = Backbone.View.extend({
         </fieldset> \
       </div> \
     ',
-    radio_buttons : 
+    radiobuttons : 
     	' \
         <div class="filter-{{type}} filter"> \
             <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
@@ -506,6 +520,110 @@ my.GenericFilter = Backbone.View.extend({
 			this.yearValues.push({val: y, selected: (this.year == y ? "selected" : "")});
 			
 	  }
+	  else if (this.controlType == "dropdown_date_range")
+	  {
+		  var currDate = new Date();
+		  var currDate0h = new Date(currDate.getFullYear(), currDate.getMonth(), currDate.getDate(), 0, 0, 0, 0);
+		  var currDate24h = new Date(currDate.getFullYear(), currDate.getMonth(), currDate.getDate(), 23, 59, 59, 999)+1;
+		  var currYear = currDate.getFullYear();
+		  var currMonth = currDate.getMonth();
+			
+		  var weekOffset = currDate0h.getDay();
+		  var weekStartTime = currDate0h-weekOffset*86400000;
+		  var weekEndTime = weekStartTime+7*86400000;
+
+		  this.date_values = [];
+		  
+		  this.date_values.push({ val: "This week", 
+				startDate: new Date(weekStartTime),
+				stopDate: new Date(weekEndTime)
+			});
+		  
+		  var endMonth = (currMonth + 1) % 12;
+		  var endYear = currYear + (endMonth < currMonth ? 1 : 0); 
+		  this.date_values.push({ val: "This Month", 
+				startDate: new Date(currYear, currMonth, 1, 0, 0, 0, 0),
+				stopDate: new Date(endYear, endMonth, 1, 0, 0, 0, 0)
+		  });
+		  
+		  this.date_values.push({ val: "This year", 
+				startDate: new Date(currYear, 0, 1, 0, 0, 0, 0),
+				stopDate: new Date(currYear+1, 0, 1, 0, 0, 0, 0)
+			});
+		  
+		  this.date_values.push({ val: "Past week", 
+				startDate: new Date(weekStartTime-7*86400000),
+				stopDate: new Date(weekStartTime)
+			});
+		  
+		  var startMonth = currMonth - 1;
+		  if (startMonth < 0)
+			  startMonth -= 12;
+		  
+		  var startYear = currYear - (startMonth > currMonth ? 1 : 0); 
+		  this.date_values.push({ val: "Past month", 
+				startDate: new Date(startYear, startMonth, 1, 0, 0, 0, 0),
+				stopDate: new Date(currYear, currMonth, 1, 0, 0, 0, 0)
+			});
+		  
+		  startMonth = currMonth - 2;
+		  if (startMonth < 0)
+			  startMonth -= 12;
+		  
+		  startYear = currYear - (startMonth > currMonth ? 1 : 0); 
+		  this.date_values.push({ val: "Past 2 months", 
+				startDate: new Date(startYear, startMonth, 1, 0, 0, 0, 0),
+				stopDate: new Date(currYear, currMonth, 1, 0, 0, 0, 0)
+			});
+		  
+		  startMonth = currMonth - 3;
+		  if (startMonth < 0)
+			  startMonth -= 12;
+		  
+		  startYear = currYear - (startMonth > currMonth ? 1 : 0); 
+		  this.date_values.push({ val: "Past 3 month", 
+				startDate: new Date(startYear, startMonth, 1, 0, 0, 0, 0),
+				stopDate: new Date(currYear, currMonth, 1, 0, 0, 0, 0)
+			});
+		  
+		  startMonth = currMonth - 6;
+		  if (startMonth < 0)
+			  startMonth -= 12;
+		  
+		  startYear = currYear - (startMonth > currMonth ? 1 : 0); 
+		  this.date_values.push({ val: "Past 6 months", 
+				startDate: new Date(startYear, startMonth, 1, 0, 0, 0, 0),
+				stopDate: new Date(currYear, currMonth, 1, 0, 0, 0, 0)
+			});
+		  
+		  this.date_values.push({ val: "Past year", 
+				startDate: new Date(currYear-1, 0, 1, 0, 0, 0, 0),
+				stopDate: new Date(currYear, 0, 1, 0, 0, 0, 0)
+			});
+		  this.date_values.push({ val: "Last 7 days", 
+				startDate: new Date(currDate0h.getTime()-6*86400000),
+				stopDate: currDate24h
+			});
+		  this.date_values.push({ val: "Last 30 days", 
+				startDate: new Date(currDate0h.getTime()-29*86400000),
+				stopDate: currDate24h
+			});
+		  this.date_values.push({ val: "Last 90 days", 
+				startDate: new Date(currDate0h.getTime()-89*86400000),
+				stopDate: currDate24h
+			});
+		  this.date_values.push({ val: "Last 365 days", 
+				startDate: new Date(currDate0h.getTime()-364*86400000),
+				stopDate: currDate24h
+			});
+		  
+		  for (var j in this.date_values)
+			  if (this.date_values[j].val == this.term)
+			  {
+				  this.date_values[j].selected = self._selectedClassName;
+				  break;
+			  }
+	  }
 	  else if (this.controlType == "legend")
 	  {
 		  // OLD code, somehow working but wrong
@@ -577,7 +695,7 @@ my.GenericFilter = Backbone.View.extend({
 						  break;
 					  }
 			  }
-			  else if (this.controlType == "radio_buttons")
+			  else if (this.controlType == "radiobuttons")
 			  {
 				  if (self.areValuesEqual(this.term, v) || (typeof this.list != "undefined" && this.list && this.list.length == 1 && self.areValuesEqual(this.list[0], v)))
 				  	selected = 'btn-primary'
@@ -593,7 +711,7 @@ my.GenericFilter = Backbone.View.extend({
 							  selected = 'btn-info'
 				  }
 			  }
-			  else if (this.controlType == "drop_down")
+			  else if (this.controlType == "dropdown")
 			  {
 				  if (self.areValuesEqual(this.term, v) || (typeof this.list != "undefined" && this.list && this.list.length == 1 && self.areValuesEqual(this.list[0], v)))
 				  	selected = "selected"
@@ -654,7 +772,7 @@ my.GenericFilter = Backbone.View.extend({
 		{
 			$target.toggleClass("btn-info");
 		}
-		else if (controlType == "radio_buttons")
+		else if (controlType == "radiobuttons")
 		{
 			// ensure one and only one selection is performed
 			$fieldSet.find('div.btn-group button.btn-info').each(function() { 
@@ -668,7 +786,7 @@ my.GenericFilter = Backbone.View.extend({
 		});
 		if (controlType == "multibutton")
 			this.findActiveFilterByField(fieldId, controlType).list = listaValori;
-		else if (controlType == "radio_buttons")
+		else if (controlType == "radiobuttons")
 			this.findActiveFilterByField(fieldId, controlType).term = $target.html().valueOf();
 		
 		this.doAction("onButtonsetClicked", fieldId, listaValori, "add");
@@ -815,7 +933,7 @@ my.GenericFilter = Backbone.View.extend({
 		{
 			case "term": term = termObj.val();break;
 			case "slider": term = termObj.slider("value");break;
-			case "drop_down": term = termObj.val();break;
+			case "dropdown": term = termObj.val();break;
 			case "listbox": term = termObj.val();break;
 		}
 		this.findActiveFilterByField(fieldId, controlType).term = term;
@@ -838,13 +956,15 @@ my.GenericFilter = Backbone.View.extend({
         var to;
 		var fromObj = $target.find('.data-control-id-from');
 		var toObj = $target.find('.data-control-id-to');
+		var dropdownObj = $target.find('.data-control-id');
+		var activeFilter = this.findActiveFilterByField(fieldId, controlType); 
 		switch (controlType)
 		{
 			case "range": from = fromObj.val();to = toObj.val();break;
 			case "range_slider": from = fromObj.slider("values", 0);to = toObj.slider("values", 1);break;
 			case "range_calendar": from = new Date(fromObj.val());to = new Date(toObj.val());break;
+			case "dropdown_date_range": from = dropdownObj.find(":selected").attr("startDate");to = dropdownObj.find(":selected").attr("stopDate");activeFilter.term = dropdownObj.val();break;
 		}
-		var activeFilter = this.findActiveFilterByField(fieldId, controlType); 
 		activeFilter.from = from;
 		activeFilter.to = to;
         this.doAction("onFilterValueChanged", fieldId, [from, to], "add");
@@ -864,13 +984,14 @@ my.GenericFilter = Backbone.View.extend({
   getFilterTypeFromControlType: function(controlType) {
 	switch (controlType)
 	{
-		case "drop_down" :
+		case "dropdown" :
 		case "slider" :
-		case "radio_buttons" :
+		case "radiobuttons" :
 			return "term";
 		case "range_slider" :
 		case "range_calendar" :
 		case "month_week_calendar" :
+		case "dropdown_date_range" :
 			return "range";
 		case "list" :
 		case "listbox":
