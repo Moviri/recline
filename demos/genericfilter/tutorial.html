@@ -46,7 +46,7 @@ root: ../../
             <table class="table">
                 <tr><td>legend</td></tr>
                 <tr><td><div id="filter4"></div></td></tr>
-                <tr><td>drop_down</td></tr>
+                <tr><td>dropdown</td></tr>
 
                 <tr><td><div id="filter5"></div></td></tr>
             </table>
@@ -220,7 +220,7 @@ function drawGraph() {
 
     var filter5 = new recline.View.GenericFilter({
         sourceDataset: dataset,
-        sourceFields: [{field: "date", controlType: 'drop_down', fieldType: "date" }],
+        sourceFields: [{field: "date", controlType: 'dropdown', fieldType: "date" }],
         actions: [{
             action: action1,
             mapping: [

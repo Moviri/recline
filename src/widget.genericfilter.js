@@ -748,7 +748,7 @@ my.GenericFilter = Backbone.View.extend({
 		  for (var i in this.tmpValues)
 		  {
 			var v = this.tmpValues[i];
-			var color = /*(typeof this.facet == "undefined" ? new chroma.Color(0,0,v*2,'rgb') :*/ this.facet.attributes.terms[i].color);
+			var color = /*(typeof this.facet == "undefined" ? new chroma.Color(0,0,v*2,'rgb') :*/ this.facet.attributes.terms[i].color/*)*/;
 			if (pixelW*colonna > maxWidth)
 			{
 				riga++;
