@@ -26,6 +26,10 @@ root: ../../
     </div>
 
     <div class="row-fluid">
+        <div class="span9"><div id="horizontal"></div></div>
+    </div>
+
+    <div class="row-fluid">
         <div class="span2">
             <table class="table">
             <tr><td>range_calendar</td></tr>
@@ -312,6 +316,30 @@ function drawGraph() {
     $('#filter11').append(filter11.el);
 
 
+    var filterhorizontal =  new recline.View.GenericFilter({
+        sourceDataset: dataset,
+        sourceFields: [
+            {field: "age", controlType: 'color_legend',  fieldType: "integer" },
+            {field: "age", controlType: 'dropdown_styled',  fieldType: "integer" },
+            {field: "age", controlType: 'listbox_styled',  fieldType: "integer" },
+            {field: "age", controlType: 'multibutton',  fieldType: "integer" },
+            {field: "age", controlType: 'radiobuttons',  fieldType: "integer" }
+
+        ],
+        state: {
+            useHorizontalLayout: true,
+            title: "Title",
+            description: "Description"
+       },
+         actions: [{
+            action: action1,
+            mapping: [
+                {srcField: "age", filter: "filter_age_list"}
+            ],
+            event: ["selection"]
+        }]
+    });
+    $('#horizontal').append(filterhorizontal.el);
 
 }
 
