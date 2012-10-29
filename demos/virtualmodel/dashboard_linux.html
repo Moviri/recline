@@ -15,16 +15,24 @@ root: ../../
 	</div>
 </div>
 <div id="container" class="container-fluid" style="height:100%">
-    <div class="row-fluid" style="height:100%">
+    <div class="row-fluid" style="height:5%">
+		<div class="span12">
+			<div id="filterToolbar"></div>
+		</div>
+    </div>
+    <div class="row-fluid" style="height:95%">
         <div class="span2 ">
             <div class="row-fluid">
-                <div id="search_container"></div>
+                <div id="search_container4"></div>
+            </div>
+            <div class="row-fluid">
+                <div id="search_container4b"></div>
             </div>
             <div class="row-fluid">
                 <div id="search_container1"></div>
             </div>
             <div class="row-fluid">
-                <div id="search_container4"></div>
+                <div id="search_container"></div>
             </div>
             <div class="row-fluid">
                 <div id="search_container3"></div>
@@ -91,10 +99,16 @@ root: ../../
     $(document).ready(function() {
         var url = "http://192.168.100.133:8380/cwwh-iwal-war/cw/wh/ds/AudDemoByGender";
 
-        colorSchema = new recline.Data.ColorSchema({   
+        colorSchemaMF = new recline.Data.ColorSchema({   
             type: "scaleWithDistinctData",   
             colors: ['#00CED1', '#1E90FF'], //["DarkTurquoise", "DodgerBlue"]   
         	data:  ["Female", "Male"]
+        });
+        
+        colorSchemaAge = new recline.Data.ColorSchema({   
+            type: "scaleWithDataMinMax",   
+            colors: ['#000000', '0000FF'],   
+        	data:  [0, 100]
         });
         
         dataset = new recline.Model.Dataset({
@@ -104,9 +118,7 @@ root: ../../
             fieldLabels: [{id: "age", label: "Age (bin)"}, {id: "gender", label: "Gender"}],
             inMemoryQueryFields: ["age", "gender"],
             useMemoryStore: true,
-            colorSchema: [
-                {schema: colorSchema, field: "gender"}
-            ]
+            colorSchema: [ {schema: colorSchemaMF, field: "gender"} ]
         });
         
    		dataset.bind('query:start', function() { document.getElementById("loadingImage").style.display = "block"; });
@@ -119,10 +131,10 @@ root: ../../
                     partitions: ["gender"],
                     aggregationFunctions: ["sum", "avg"]
                 },
-                colorSchema: colorSchema
+                colorSchema: [ {schema: colorSchemaAge, field: "age"} ]
             });
 
-        virtualdatasetAge.queryState.addFacetNoEvent("age");
+        dataset.queryState.addFacetNoEvent("age");
 
    		virtualdatasetWeekday= new recline.Model.VirtualDataset({
                 dataset: dataset,
@@ -339,7 +351,7 @@ root: ../../
             var filter2 = new recline.View.GenericFilter({
                 sourceDataset: virtualdatasetAge,
 				sourceFields: [
-								{field: 'age', controlType: 'list', fieldType: 'number'}
+								{field: 'age', controlType: 'list', fieldType: 'number', label:"Set desired age"}
 							],
 				useFilteredData : false,
                 actions: [{
@@ -355,7 +367,7 @@ root: ../../
              var filter3 = new recline.View.GenericFilter({
                  sourceDataset: dataset,
  				sourceFields: [
- 								{field: 'gender', controlType: 'legend', fieldType: 'list'}
+ 								{field: 'gender', controlType: 'legend', fieldType: 'string'}
  							],
  				useFilteredData : false,
  				state: {title:"My gender legend", description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit"},
@@ -369,21 +381,48 @@ root: ../../
              });
              $('#search_container3').append(filter3.el);
 
-//             var filter4 = new recline.View.GenericFilter({
-//                 sourceDataset: virtualdatasetAge,
-// 				sourceFields: [
-// 								{field: 'age', controlType: 'color_legend', fieldType: 'term'}
-// 							],
-// 				useFilteredData : false,
-//                 actions: [{
-//                     action: action_vmodel,
-//                     mapping: [
-//                         {srcField: "age", filter: "filter_age"}
-//                     ],
-//                     event: ["selection"]
-//                 }]
-//             });
-//             $('#search_container4').append(filter4.el);
+            var filter4 = new recline.View.GenericFilter({
+                sourceDataset: dataset,
+				sourceFields: [
+								{field: 'gender', controlType: 'color_legend', fieldType: 'string'}
+							],
+				useFilteredData : false
+            });
+            $('#search_container4').append(filter4.el);
+
+            var filter4b = new recline.View.GenericFilter({
+                sourceDataset: dataset,
+				sourceFields: [
+								{field: 'age', controlType: 'color_legend', fieldType: 'number'}
+							],
+				useFilteredData : false
+            });
+            $('#search_container4b').append(filter4b.el);
+
+             var filter5 = new recline.View.GenericFilter({
+                 sourceDataset: virtualdatasetAge,
+                 state: {useHorizontalLayout: true, title:"Horiz toolbar", description: "Select age/gender"},
+ 				sourceFields: [
+ 								{field: 'age', controlType: 'multibutton', fieldType: 'number', useFieldLabel: false},
+ 								//{field: 'age', controlType: 'radiobuttons', fieldType: 'number', useFieldLabel: false},
+ 								{field: 'age', controlType: 'dropdown_styled', fieldType: 'number', useFieldLabel: false},
+ 								{field: 'age', controlType: 'listbox_styled', fieldType: 'number', useFieldLabel: false},
+ 								{field: 'age', controlType: 'range_slider', fieldType: 'number', useFieldLabel: false},
+ 								{field: 'daydate', controlType: 'dropdown_date_range', fieldType: 'date', useFieldLabel: false}
+ 							],
+ 				useFilteredData : false,
+                actions: [{
+                    action: action_vmodel,
+                    mapping: [
+                        {srcField: "age", filter: "filter_age"}
+                    ],
+                    event: ["selection"]
+                }]
+             });
+             $('#filterToolbar').append(filter5.el);
+             
+             $(".chzn-select").chosen(); 
+             $(".chzn-select-deselect").chosen({allow_single_deselect:true});
 
             // var facet = new recline.View.FacetViewer({
 				// model: virtualdatasetAge
