@@ -53,8 +53,7 @@ my.Filters = {};
         var fieldType = 'string';
 
         if(field == null) {
-            console.log("Warning could not find field " + filter.field + " for dataset " );
-            console.log(fields);
+            throw "data.filters.js: Warning could not find field " + filter.field + " for dataset " ;
         }
         else {
             if(field.attributes)

@@ -97,7 +97,9 @@ root: ../../
 
 <script type="text/javascript">
     $(document).ready(function() {
-        var url = "http://192.168.100.133:8380/cwwh-iwal-war/cw/wh/ds/AudDemoByGender";
+        //var url = "http://192.168.100.133:8380/cwwh-iwal-war/cw/wh/ds/AudDemoByGender";
+        var url = "http://localhost:4000/demos/virtualmodel/AudDemo.json";
+
 
         colorSchemaMF = new recline.Data.ColorSchema({   
             type: "scaleWithDistinctData",   
@@ -210,7 +212,8 @@ root: ../../
 		var dateFilter = {field: "daydate", type: "range", start:new Date(2012,0,01,00,00,00,0), stop:new Date(2012,0,30,00,00,00,0), fieldType: "date" };
         dataset.queryState.addFilter(dateFilter);
         dataset.queryState.addSelection(dateFilter);
-        
+
+        virtualdatasetAge.queryState.addFacetNoEvent("age");
     	dataset.queryState.addFacetNoEvent("gender");
 
    		dataset.fetch(); // needed to populate filter list
@@ -391,13 +394,14 @@ root: ../../
             $('#search_container4').append(filter4.el);
 
             var filter4b = new recline.View.GenericFilter({
-                sourceDataset: dataset,
+                sourceDataset: virtualdatasetAge,
 				sourceFields: [
 								{field: 'age', controlType: 'color_legend', fieldType: 'number'}
 							],
 				useFilteredData : false
             });
             $('#search_container4b').append(filter4b.el);
+
 
              var filter5 = new recline.View.GenericFilter({
                  sourceDataset: virtualdatasetAge,
@@ -407,8 +411,8 @@ root: ../../
  								//{field: 'age', controlType: 'radiobuttons', fieldType: 'number', useFieldLabel: false},
  								{field: 'age', controlType: 'dropdown_styled', fieldType: 'number', useFieldLabel: false},
  								{field: 'age', controlType: 'listbox_styled', fieldType: 'number', useFieldLabel: false},
- 								{field: 'age', controlType: 'range_slider', fieldType: 'number', useFieldLabel: false},
- 								{field: 'daydate', controlType: 'dropdown_date_range', fieldType: 'date', useFieldLabel: false}
+ 								{field: 'age', controlType: 'range_slider', fieldType: 'number', useFieldLabel: false}
+ 								//{field: 'daydate', controlType: 'dropdown_date_range', fieldType: 'date', useFieldLabel: false}
  							],
  				useFilteredData : false,
                 actions: [{

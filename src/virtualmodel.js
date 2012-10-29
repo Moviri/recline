@@ -588,8 +588,7 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
                     facetResult.id = facetId;
                     var result =  new my.Facet(facetResult);
 
-                    // todo set color to facet
-                    //self.addColorsToTerms(facetId, result.attributes.terms);
+                    self.addColorsToTerms(facetId, result.attributes.terms);
 
                     return result;
                 });
@@ -598,6 +597,21 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
 
 
         },
+
+        addColorsToTerms:function (field, terms) {
+            var self = this;
+            _.each(terms, function (t) {
+
+                // assignment of color schema to fields
+                if (self.attributes.colorSchema) {
+                    _.each(self.attributes.colorSchema, function (d) {
+                        if (d.field === field)
+                            t.color = d.schema.getColorFor(t.term);
+                    })
+                }
+            });
+        },
+
         getFacetByFieldId: function(fieldId) {
       	  return _.find(this.facets.models, function(facet) {
       		  return facet.id == fieldId;

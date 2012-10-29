@@ -412,40 +412,9 @@ this.recline.Model = this.recline.Model || {};
             return _.find(this.facets.models, function (facet) {
                 return facet.id == fieldId;
             });
-        },
-
-        getUnfilteredFacetByFieldId:function (fieldId) {
-            return _.find(this.getUnfilteredFacets(), function (facet) {
-                return facet.id == fieldId;
-            });
-        },
-
-        getUnfilteredFacets:function () {
-            var self = this;
-
-            if (self._store.data == null) {
-                throw "Model: unable to retrieve not filtered data, store can't provide data. Use a backend that use a memory store";
-            }
-
-            if (self._store.getFacetsOnUnfilteredData == null) {
-                throw "Model: backend doesn't implement getFacetsOnUnfilteredData";
-            }
-
-            var ret = self._store.getFacetsOnUnfilteredData(self.queryState);
-            var facets;
-
-            if (queryResult.facets) {
-                facets = _.map(ret, function (facetResult, facetId) {
-                    facetResult.id = facetId;
-                    var result = new my.Facet(facetResult);
-                    self.addColorsToTerms(facetId, result.attributes.terms);
-
-                    return result;
-                });
-            }
-
-            return facets;
         }
+
+
     });
 
 

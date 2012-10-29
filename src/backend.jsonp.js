@@ -133,6 +133,9 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
   };
 
     function _handleJsonResult(data) {
+        if(data.description) {
+            my.memoryFields = _handleFieldDescription(data.description);
+        }
 
       // Im fetching only record description
       if(data.data == null) {
@@ -141,11 +144,11 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
 
       var result = data;
 
+
       if(my.useMemoryStore) {
           // check if is the first time I use the memory store
           my.inMemoryStore = new recline.Backend.Memory.Store(result.data, _handleFieldDescription(result.description));
           my.data = my.inMemoryStore.data;
-
           return applyInMemoryFilters();
 
       }
@@ -172,31 +175,27 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
     };
 
     function prepareReturnedData(data) {
-        var test;
 
+        if(data.hits == null)
 
-       if(data.hits == null)
-           var fields = _handleFieldDescription(data.description);
 
             if(data.data == null) {
-                my.memoryFields = fields;
+
             return {
-                fields: fields,
+                fields: my.memoryFields,
                 useMemoryStore: false
             }
            }
         else
             {
-               var fields =my.memoryFields;
 
                 return {
                     hits: _normalizeRecords(data.data,fields ),
-                    fields:fields,
+                    fields:my.memoryFields,
                     useMemoryStore: false
                 }
             }
 
-        my.memoryFields = data.fields;
         return data;
     };
 
@@ -347,7 +346,7 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
           STRING : "string",
           DATE   : "date",
           INTEGER: "integer",
-          DOUBLE : "float"
+          DOUBLE : "number"
       };
 
 
