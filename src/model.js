@@ -211,7 +211,7 @@ this.recline.Model = this.recline.Model || {};
             if (self.attributes.fieldLabels) {
                 for (var i = 0; i < fields.length; i++) {
                     var tmp = _.find(self.attributes.fieldLabels, function (x) {
-                        return x.id == out.fields[i].id;
+                        return x.id == fields[i].id;
                     });
                     if (tmp != null)
                         fields[i].label = tmp.label;
@@ -667,7 +667,7 @@ this.recline.Model = this.recline.Model || {};
                 return null;
 
             return this.attributes.colorSchema.getColorFor(this.attributes.partitionValue);
-        },
+        }
     });
 
     my.FieldList = Backbone.Collection.extend({
