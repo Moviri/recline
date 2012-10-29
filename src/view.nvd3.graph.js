@@ -127,6 +127,7 @@ this.recline.View = this.recline.View || {};
                     .call(self.chart);
 
                 nv.utils.windowResize(self.graphResize);
+                nv.utils.windowResize(self.graphResize);
                 self.graphResize()
                 return  self.chart;
             });
