@@ -388,9 +388,6 @@ this.recline.View = this.recline.View || {};
                         view.doActions(actions, [e.point.record]);
                     });
                 return chart;
-
-            },
-            "lineWithBrushChart":function (view) {
                 var actions = view.getActionsForEvent("selection");
                 var options = {};
 
@@ -421,6 +418,9 @@ this.recline.View = this.recline.View || {};
                 } else
                     options["callback"] = function () {
                     };
+            },
+            "lineWithBrushChart":function (view) {
+
 
                 var chart;
                 if (view.chart != null)

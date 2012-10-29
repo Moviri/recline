@@ -11,7 +11,7 @@
  *  For all details and documentation:
  *  http://documentcloud.github.com/visualsearch
  */
-
+(function( jQuery ) {
 (function() {
 
   var $ = jQuery; // Handle namespaced jQuery
@@ -1889,3 +1889,4 @@ window.JST['search_box'] = _.template('<div class="VS-search">\n  <div class="VS
 window.JST['search_facet'] = _.template('<% if (model.has(\'category\')) { %>\n  <div class="category"><%= model.get(\'category\') %>:</div>\n<% } %>\n\n<div class="search_facet_input_container">\n  <input type="text" class="search_facet_input VS-interface" value="" />\n</div>\n\n<div class="search_facet_remove VS-icon VS-icon-cancel"></div>');
 window.JST['search_input'] = _.template('<input type="text" />');
 })();
+}($jq161));

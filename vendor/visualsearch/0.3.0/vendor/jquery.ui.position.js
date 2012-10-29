@@ -7,6 +7,8 @@
  *
  * http://docs.jquery.com/UI/Position
  */
+(function( jQuery ) {
+
 (function( $, undefined ) {
 
 $.ui = $.ui || {};
@@ -250,3 +252,4 @@ if ( !$.offset.setOffset ) {
 }
 
 }( jQuery ));
+}($jq161));

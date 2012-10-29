@@ -7,6 +7,7 @@
  *
  * http://docs.jquery.com/UI
  */
+(function( jQuery ) {
 (function( $, undefined ) {
 
 // prevent duplicate loading
@@ -310,3 +311,4 @@ $.extend( $.ui, {
 });
 
 })( jQuery );
+}($jq161));
