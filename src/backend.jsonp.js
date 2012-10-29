@@ -33,10 +33,10 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
         var tmpQueryStateOnBackend = new recline.Model.Query();
 
 
-        if(dataset.inMemoryQueryFields == null && !queryObj.facets) {
-            dataset.inMemoryQueryFields = [];
+        if(dataset.inMemoryQueryFields == null && !queryObj.facets && !dataset.useMemoryStore) {
+            dataset.useMemoryStore = [];
         } else
-            my.inMemoryQuery = true;
+            my.useMemoryStore = true;
 
         var filters =  queryObj.filters;
         for(var i=0;i<filters.length;i++){
@@ -141,9 +141,10 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
 
       var result = data;
 
-      if(my.inMemoryQuery) {
+      if(my.useMemoryStore) {
           // check if is the first time I use the memory store
           my.inMemoryStore = new recline.Backend.Memory.Store(result.data, _handleFieldDescription(result.description));
+          my.data = my.inMemoryStore.data;
 
           return applyInMemoryFilters();
 

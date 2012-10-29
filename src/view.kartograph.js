@@ -10,6 +10,8 @@ this.recline.View = this.recline.View || {};
 
         template:'<div id="cartograph_{{viewId}}"></div> ',
 
+        rendered: false,
+
         initialize:function (options) {
             var self = this;
 
@@ -19,20 +21,38 @@ this.recline.View = this.recline.View || {};
             this.model.bind('change', self.render);
             this.model.fields.bind('reset', self.render);
             this.model.fields.bind('add', self.render);
-            this.model.records.bind('add', self.redraw);
-            this.model.records.bind('reset', self.redraw);
+
+            this.model.bind('query:done', this.redraw);
+            this.model.queryState.bind('selection:done', this.redraw);
+
+            this.uid = "" + new Date().getTime() + Math.floor(Math.random() * 10000); // generating an unique id for the chart
+
+            this.unselectedColor = "#C0C0C0";
+            if (this.options.state.unselectedColor)
+                this.unselectedColor = this.options.state.unselectedColor;
 
         },
 
         render:function () {
             var self = this;
-            var viewId = this.options.state["id"];
-
             var tmplData = {};
-            tmplData["viewId"] = viewId;
+            tmplData["viewId"] = this.uid;
             var htmls = Mustache.render(this.template, tmplData);
             $(this.el).html(htmls);
 
+            var map_url = this.options.state["svgURI"];
+            var layers = this.options.state["layers"];
+
+            self.map = $K.map('#cartograph_' + this.uid);
+            self.map.loadMap(map_url, function (m) {
+                _.each(layers, function (d) {
+                    m.addLayer(d, self.getEventsForLayer(d));
+                });
+                self.rendered = true;
+                self.updateMap();
+
+
+            });
 
             return this;
         },
@@ -40,23 +60,17 @@ this.recline.View = this.recline.View || {};
         redraw:function () {
             var self = this;
 
-            var viewId = this.options.state["id"];
-            var map_url = this.options.state["svgURI"];
-
-            this.map = $K.map('#cartograph_' + viewId);
-            this.map.loadMap(map_url, function (map) {
-                self._onMapLoaded();
-            });
+            self.updateMap();
         },
 
-        _onMapLoaded:function (map) {
+        updateMap:function () {
             var self = this;
-            var layers = this.options.state["layers"];
-            var map = this.map;
 
-            _.each(layers, function (d) {
-                map.addLayer(d);
-            });
+            if(!self.rendered)
+                return;
+
+            var map = self.map;
+
 
             // todo verify if it is possibile to divide render and redraw
             // it seams that context is lost after initial load
@@ -87,6 +101,8 @@ this.recline.View = this.recline.View || {};
                         // check if current shape is present into results
                            if(res != null)
                                 return res.color;
+                            else
+                                return self.unselectedColor;
                     });
             });
 
@@ -106,21 +122,132 @@ this.recline.View = this.recline.View || {};
             var srcShapef = self.model.fields.get(srcShapeField);
             var srcValuef = self.model.fields.get(srcValueField);
 
+            var selectionActive = false;
+            if (self.model.queryState.isSelected())
+                selectionActive = true;
+
             var res = {};
             _.each(records, function (d) {
 
-                if(_.contains(paths, d.getFieldValueUnrendered(srcShapef)))
-                  res[d.getFieldValueUnrendered(srcShapef)] =  {record: d, field: srcValuef, color:d.getFieldColor(srcValuef), value:d.getFieldValueUnrendered(srcValuef) };
+                if(_.contains(paths, d.getFieldValueUnrendered(srcShapef))) {
+                    var color = self.unselectedColor;
+                    if(selectionActive) {
+                        if(d.isRecordSelected())
+                            color = d.getFieldColor(srcValuef);
+                    } else {
+                            color = d.getFieldColor(srcValuef);
+                    }
+
+
+                    res[d.getFieldValueUnrendered(srcShapef)] =  {record: d, field: srcValuef, color: color, value:d.getFieldValueUnrendered(srcValuef) };
+
+                }
             });
 
             return res;
         },
 
+        getEventsForLayer: function(layer) {
+            var self=this;
+            var ret = {};
 
-        doActions:function (actions, records) {
+            // fiend all fields of this layer
+            //  mapping: [{srcShapeField: "state", srcValueField: "value", destAttribute: "name", destLayer: "usa"}],
+
+            var fields = _.filter(this.options.state["mapping"], function(m) {
+                return m.destLayer == layer;
+            });
+
+            if(fields.length == 0)
+                return {};
+            if(fields.length > 1)
+                throw "view.Kartograph.js: more than one field associated with layer, impossible to link with actions"
+
+            //fields = _.map(fields, function(d) {return d.srcShapeField});
+
+            // find all actions for selection
+            var clickEvents = self.getActionsForEvent("selection");
+
+            // filter actions that doesn't contain fields
+
+            var clickActions = _.filter(clickEvents, function(d) {
+                return d.mapping.srcField == fields.srcShapeField;
+            });
+
+
+            if(clickActions.length > 0)
+            ret["click"] = function(data, path, event) {
+
+                console.log(data);
+                _.each(clickActions, function(a) {
+                    var params = [];
+                    _.each(a.mapping, function(m) {
+                       params.push({filter:m.filter,  value: [data[fields[0].destAttribute]]});
+                    });
+
+                    a.action._internalDoAction(params, "add");
+                });
+
+            };
+
+            return ret;
+        },
+
+
+        getMapping: function(srcField) {
+            var self=this;
+            var mapping = this.options.state["mapping"];
+            return _.filter(mapping, function(d) {
+                return d.srcShapeField == srcField
+            });
+
+        },
+
+        /*bindEvents: function() {
+            var self=this;
+            var actions = self.getActionsForEvent("selection");
+
+            map.addLayer('mylayer', {
+                click: function(data, path, event) {
+                    // handle mouse clicks
+                    // *data* holds the data dictionary of the clicked path
+                    // *path* is the raphael object
+                    // *event* is the original JavaScript event
+                }
+            });
+
+            if (actions.length > 0) {
+                //
+
+                options["callback"] = function (x) {
+
+                    // selection is done on x axis so I need to take the record with range [min_x, max_x]
+                    // is the group attribute
+                    var record_min = _.min(x, function (d) {
+                        return d.min.x
+                    });
+                    var record_max = _.max(x, function (d) {
+                        return d.max.x
+                    });
+
+                    view.doActions(actions, [record_min.min.record, record_max.max.record]);
+
+                };
+            } else
+                options["callback"] = function () {
+                };
+        },*/
+
+
+        doActions:function (actions, data) {
 
             _.each(actions, function (d) {
-                d.action.doAction(records, d.mapping);
+                d.action._internalDoAction([data]);
+            });
+
+            params.push({
+                filter : mapp.filter,
+                value : values
             });
 
         },

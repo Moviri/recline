@@ -5520,8 +5520,40 @@ a.badge:hover {
 .g-table .g-thead .g-sortable {
   background: url("/css/images/sort.png") no-repeat scroll right center transparent;
 }
+.slick-row .slick-header-column {
+  text-align: center;
+  font-weight: bold;
+}
+.slick-row .slick-footer-column {
+  background-color: transparent;
+}
+.slick-row .slick-header-column.ui-state-default {
+  border-bottom: 1px solid gray;
+}
+.slick-row .slick-cell {
+  text-align: center;
+  border: 1px solid transparent;
+  border-right: none;
+  border-bottom-color: silver;
+}
+.slick-row .slick-cell-left {
+  position: absolute;
+  border: 1px solid transparent;
+  border-right: none;
+  border-bottom-color: silver;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: middle;
+  z-index: 1;
+  padding: 1px 2px 2px 1px;
+  margin: 0;
+  white-space: nowrap;
+  cursor: default;
+}
 div.s-table {
   max-width: 100%;
+  min-height: 200px;
   background-color: transparent;
   border-collapse: collapse;
   border-spacing: 0;
@@ -5531,18 +5563,26 @@ div.s-table {
   margin-bottom: 20px;
 }
 .s-table div.s-th,
-.s-table div.s-td {
-  padding: 8px;
-  line-height: 20px;
+.s-table div.s-td,
+.s-table div.slick-footer-column {
+  background-image: none;
+  padding-top: 8px;
+  padding-left: 4px;
   text-align: left;
-  vertical-align: top;
-  border-top: 1px solid #dddddd;
+  vertical-align: middle;
+  border: 1px solid transparent;
+  border-right: none;
+  border-top-color: #dddddd;
+  border-bottom: none;
 }
 .s-table div.s-th {
   font-weight: bold;
-  text-align: center;
+  text-align: left;
+  border-top: none;
+  border-right: 1px solid dotted #dddddd;
 }
 .s-table div.s-thead div.s-th {
+  background-image: none;
   vertical-align: bottom;
 }
 .s-table caption + div.s-thead div.s-tr:first-child div.s-th,
@@ -5631,11 +5671,11 @@ div.s-table {
 }
 .s-table-striped div.s-tbody div.s-tr:nth-child(odd) div.s-td,
 .s-table-striped div.s-tbody div.s-tr:nth-child(odd) div.s-th {
-  background-color: #f9f9f9;
+  background-color: transparent;
 }
 .s-table-striped div.s-tbody div.s-tr:nth-child(even) div.s-td,
 .s-table-striped div.s-tbody div.s-tr:nth-child(even) div.s-th {
-  background-color: transparent;
+  background-color: #f9f9f9;
 }
 .s-table-striped div.s-tbody div.s-tr div.s-td.selected {
   background-color: #d9edf7;
@@ -5796,6 +5836,80 @@ table [class*=span],
 }
 .s-table-hover div.s-tbody div.info:hover div.s-td {
   background-color: #c4e3f3;
+}
+div.recline-graph {
+  min-height: 250px;
+}
+svg.bstrap {
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif !important;
+  font-size: 14px;
+}
+svg.bstrap text {
+  font-weight: normal;
+  font-size: 14px;
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif !important;
+  fill: #333333;
+}
+svg.bstrap .title {
+  font-weight: normal;
+  font-size: 14px;
+  font-family: inherit !important;
+}
+div.recline-graph div.nvtooltip {
+  background-color: #eeeeee;
+  border: 1px solid #ffffff;
+  font-family: Georgia, "Times New Roman", Times, serif;
+  fill: #333333;
+  stroke: #0088cc;
+}
+div.recline-graph div.nvtooltip h3 {
+  font-size: 22px;
+}
+div.recline-graph div.nvtooltip p {
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-size: 18px;
+}
+div.recline-graph .nvd3 .nv-axis line {
+  stroke: rgba(51, 51, 51, 0.6699999999999999);
+}
+div.recline-graph .nvd3 .nv-axis path {
+  stroke: #333333;
+}
+.table-striped tbody tr:nth-child(even) td,
+.table-striped tbody tr:nth-child(even) th {
+  background-color: transparent;
+}
+div.filter .table tbody tr.success td {
+  background-color: #dff0d8;
+}
+div.filter .table tbody tr.error td {
+  background-color: #f2dede;
+}
+div.filter .table tbody tr.warning td {
+  background-color: #fcf8e3;
+}
+div.filter .table tbody tr.info td {
+  background-color: #d9edf7;
+}
+div.filter .table-hover tbody tr.success:hover td {
+  background-color: #d0e9c6;
+}
+div.filter .table-hover tbody tr.error:hover td {
+  background-color: #ebcccc;
+}
+div.filter .table-hover tbody tr.warning:hover td {
+  background-color: #faf2cc;
+}
+div.filter .table-hover tbody tr.info:hover td {
+  background-color: #c4e3f3;
+}
+.orange {
+  color: orange;
+}
+.centered {
+  margin-left: auto;
+  margin-right: auto;
+  text-align: center;
 }
 .pull-right {
   float: right;

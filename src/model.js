@@ -29,6 +29,7 @@ this.recline.Model = this.recline.Model || {};
                 creates:[]
             };
             this.facets = new my.FacetList();
+
             this.recordCount = null;
             this.queryState = new my.Query();
             this.queryState.bind('change', this.query);
@@ -218,15 +219,27 @@ this.recline.Model = this.recline.Model || {};
             });
         },
 
-        getRecords:function (type) {
-            var self = this;
+        getRecords: function(type) {
+            var self=this;
 
-            if (type === 'filtered') {
+            if(type==='filtered'){
                 return self.records.models;
-            } else {
-                throw "Model.js: accessing to data for type " + type + " not implemented"
+            }else {
+                if(self._store.data == null) {
+                    throw "Model: unable to retrieve not filtered data, store can't provide data. Use a backend that use a memory store";
+                }
+
+                var docs = _.map(self._store.data, function(hit) {
+                    var _doc = new my.Record(hit);
+                    _doc.fields = self.fields;
+                    return _doc;
+                });
+
+                return docs;
             }
         },
+
+
 
         // ### query
         //
@@ -390,10 +403,46 @@ this.recline.Model = this.recline.Model || {};
         isFieldPartitioned:function (field) {
             return false
         },
+
+
+
         getFacetByFieldId:function (fieldId) {
             return _.find(this.facets.models, function (facet) {
                 return facet.id == fieldId;
             });
+        },
+
+        getUnfilteredFacetByFieldId:function (fieldId) {
+            return _.find(this.getUnfilteredFacets(), function (facet) {
+                return facet.id == fieldId;
+            });
+        },
+
+        getUnfilteredFacets: function() {
+            var self=this;
+
+            if(self._store.data == null) {
+                throw "Model: unable to retrieve not filtered data, store can't provide data. Use a backend that use a memory store";
+            }
+
+            if(self._store.getFacetsOnUnfilteredData == null) {
+                throw "Model: backend doesn't implement getFacetsOnUnfilteredData";
+            }
+
+            var ret =  self._store.getFacetsOnUnfilteredData(self.queryState);
+            var facets;
+
+            if (queryResult.facets) {
+                facets = _.map(ret, function (facetResult, facetId) {
+                    facetResult.id = facetId;
+                    var result = new my.Facet(facetResult);
+                    self.addColorsToTerms(facetId, result.attributes.terms);
+
+                    return result;
+                });
+            }
+
+            return facets;
         }
     });
 
@@ -822,20 +871,20 @@ this.recline.Model = this.recline.Model || {};
         // Add a Facet to this query
         //
         // See <http://www.elasticsearch.org/guide/reference/api/search/facets/>
-        addFacet:function (fieldId) {
+        addFacet:function (fieldId, allTerms) {
             this.addFacetNoEvent(fieldId);
             this.trigger('facet:add', this);
         },
 
 
-        addFacetNoEvent:function (fieldId) {
+        addFacetNoEvent:function (fieldId, allTerms) {
             var facets = this.get('facets');
             // Assume id and fieldId should be the same (TODO: this need not be true if we want to add two different type of facets on same field)
             if (_.contains(_.keys(facets), fieldId)) {
                 return;
             }
             facets[fieldId] = {
-                terms:{ field:fieldId }
+                terms:{ field:fieldId, all_terms: true }
             };
             this.set({facets:facets}, {silent:true});
 
@@ -873,7 +922,7 @@ this.recline.Model = this.recline.Model || {};
                 total:0,
                 other:0,
                 missing:0,
-                terms:[]
+                terms:[]       // { field: , all_terms: bool }
             };
         }
     });

@@ -10,6 +10,7 @@ root: ../../
 
 <div class="container-fluid">
 
+
     <div class="row-fluid"><div class="span4">    <select id="s1" onChange="reDraw();" >
         <option value="multiBarChart">multiBarChart</option>
         <option value="pieChart">pieChart</option>
@@ -30,8 +31,6 @@ root: ../../
         <option value="sparkline">sparkline</option>
         <option value="sparklinePlus">sparklinePlus</option>
 
-
-
         <option value="lineWithBrushChart">MOV-lineWithBrushChart  (events)</option>
         <option value="multiBarWithBrushChart">MOV-multiBarWithBrushChart (events)</option>
 
@@ -44,12 +43,16 @@ root: ../../
     <div class="span4"><div id="grid1" style="height: 200px;"></div></div>
     <div class="span5"><div id="graph1" style="height: 200px;"></div></div>
     <div class="span2"><div>
+        graph1 = new recline.View.NVD3Graph({
+        model: dataset,
         state: {
         group: ["x"],
         series: {type: "byFieldName", valuesField: ["y"], sizeField: "z"},
-        graphType: "multiBarChart",
-        id: "1"
-        }
+        options: {trendlines:true, minmax: true, tooltips: true, tooltip: "Key: {key} X: {x} Y: {y}", staggerLabels: true, showValues: true},
+        graphType: type
+        },
+        actions: [{  action: action1,  mapping: [ {srcField: "x", filter: "filter_x"} ],  event: ["selection"]  }]
+        });
     </div></div>
     </div>
 
@@ -239,12 +242,13 @@ root: ../../
 
         //stackedAreaData
 
+
   graph1 = new recline.View.NVD3Graph({
   model: dataset,
   state: {
       group: ["x"],
       series: {type: "byFieldName", valuesField: ["y"], sizeField: "z"},
-      options: {trendlines:true, minmax: true, tooltips: true, staggerLabels: true, showValues: true},
+      options: {trendlines:true, minmax: true, tooltips: true, tooltip: "Key: {key} X: {x} Y: {y}", staggerLabels: true, showValues: true},
       graphType: type
   },
       actions: [{  action: action1,  mapping: [ {srcField: "x", filter: "filter_x"} ],  event: ["selection"]  }]
@@ -263,7 +267,7 @@ $('#graph1').append(graph1.el);
             series: {type: "byFieldName", valuesField: ["y", "z"],  sizeField: "z"},
             graphType: type
         },
-       actions: [{  action: action1,  mapping: [ {srcField: "x", filter: "filter_x_range"} ],  event: ["selection"]  }]
+       actions: [{  action: action1,  mapping: [ {srcField: "x", filter: "filter_x"} ],  event: ["selection"]  }]
     });
     $('#graph2').append(graph2.el);
 

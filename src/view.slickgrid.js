@@ -43,6 +43,7 @@ my.SlickGrid = Backbone.View.extend({
   },
   render: function() {
     var self = this;
+//    console.log("View.SlickGrid RENDER");
 
     var options = {
       enableCellNavigation: true,
@@ -51,7 +52,10 @@ my.SlickGrid = Backbone.View.extend({
       syncColumnCellResize: true,
       forceFitColumns: this.state.get('fitColumns'),
       useInnerChart: this.state.get('useInnerChart'),
-      innerChartMax: this.state.get('innerChartMax')
+      innerChartMax: this.state.get('innerChartMax'),
+      useStripedStyle: this.state.get('useStripedStyle'),
+      useCondensedStyle: this.state.get('useCondensedStyle'),
+      useHoverStyle: this.state.get('useHoverStyle'),
 	};
 
     // We need all columns, even the hidden ones, to show on the column picker
@@ -208,9 +212,18 @@ my.SlickGrid = Backbone.View.extend({
 				options.trackMouseHover = true;
 		});
 	}
+	
     this.grid = new Slick.Grid(this.el, data, visibleColumns, options);
 	
-	this.grid.addClassesToGrid(["s-table", "s-table-hover", "s-table-striped", "s-table-condensed"]);
+    var classesToAdd = ["s-table"];
+    if (options.useHoverStyle)
+    	classesToAdd.push("s-table-hover")
+    if (options.useStripedStyle)
+    	classesToAdd.push("s-table-striped")
+    if (options.useCondensedStyle)
+    	classesToAdd.push("s-table-condensed")
+    	
+	this.grid.addClassesToGrid(classesToAdd);
 	this.grid.removeClassesFromGrid(["ui-widget"]);
 	
 	this.grid.setSelectionModel(new Slick.RowSelectionModel());
@@ -275,9 +288,29 @@ my.SlickGrid = Backbone.View.extend({
       self.rendered = false;
     }
 
+    function resizeSlickGrid()
+    {
+    	if (self.model.records.length > 0)
+    	{
+    		var container = self.el.parent();
+            if (typeof container != "undefined" && container != null 
+            		&& container[0].style && container[0].style.height
+            		&& container[0].style.height.indexOf("%") > 0) 
+        	{
+//        		console.log("Resizing container height from "+self.el.height()+" to "+self.el.parent().height())
+	        	// force container height to element height 
+	        	self.el.height(self.el.parent().height());
+	        	self.grid.invalidateAllRows();
+	        	self.grid.resizeCanvas();
+        	}    		
+    	}
+    }
+    //resizeSlickGrid();
+    nv.utils.windowResize(resizeSlickGrid);
+    
     return this;
  },
-   onSelectionChanged: function(rows) {
+  onSelectionChanged: function(rows) {
 	var self = this;
 	var selectedRecords = [];
 	_.each(rows, function(row) {

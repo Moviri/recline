@@ -49,7 +49,7 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
         		return self.records.models;
         	}else {
                 if(self._store.data == null) {
-                    throw "VirtualModel: unable to retrieve not filtered data, store has not been initialized";
+                    throw "VirtualModel: unable to retrieve not filtered data, store can't provide data. Use a backend that use memory store";
                 }
 
                 var docs = _.map(self._store.data, function(hit) {
@@ -236,12 +236,13 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
 
             var reducedResult = results.reducedResult;
             var partitionFields = results.partitionFields;
+            this.partitionFields = partitionFields;
 
             var fields = self.buildFields(reducedResult, partitionFields);
             var result = self.buildResult(reducedResult, partitionFields);
 
             this._store = new recline.Backend.Memory.Store(result, fields);
-            this.partitionFields = partitionFields;
+
 
             this.fields.reset(fields, {renderer: recline.Data.Renderers});
             this.query();
@@ -315,9 +316,20 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
                     // apply finalization function, was not applied since now
                     // todo verify if can be moved above
                     // note that finalization can't be applyed at init cause we don't know in advance wich partitions data can be built
-                    recline.Data.Aggregations.finalizeFunctions[aggregationFunctions[j]](currentField,  aggregatedFields,
-                        _.keys(partitionFields[aggregationFunctions[j]]));
 
+                    try {
+                        var tmpPartitionFields = [];
+                        if(partitionFields[aggregationFunctions[j]] != null)
+                            tmpPartitionFields = partitionFields[aggregationFunctions[j]];
+                    recline.Data.Aggregations.finalizeFunctions[aggregationFunctions[j]](
+                        currentField,
+                        aggregatedFields,
+                        _.keys(tmpPartitionFields));
+                    }
+                    catch(err) {
+                        console.log(err);
+
+                    }
                     var tempValue;
 
 

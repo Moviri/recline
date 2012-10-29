@@ -1,0 +1,215 @@
+---
+layout: moviri
+title: Demos - NVD3 Integration
+recline-deps: true
+root: ../../
+---
+
+
+<body>
+
+<div class="container-fluid">
+
+    <ul class="nav nav-tabs">
+        <li class="active">
+            <a href="tutorial.html">Barchart</a>
+        </li>
+        <li><a href="tutorial-pie.html">Piechart</a></li>
+        <li><a href="#">...</a></li>
+    </ul>
+
+    <div class="row-fluid"><div class="span4">    <select id="s1" onChange="reDraw();" >
+        <option value="pieChart">pieChart</option>
+
+    </select>
+    </div></div>
+
+
+    <div class="row-fluid"><div class="span4">One Series - selection on single column enabled (term)</div></div>
+    <div class="row-fluid">
+    <div class="span4"><div id="grid1" style="height: 200px;"></div></div>
+    <div class="span5"><div id="graph1" style="height: 200px;"></div></div>
+    <div class="span2"><div>
+        graph1 = new recline.View.NVD3Graph({
+        model: dataset,
+        state: {
+        group: ["x"],
+        series: {type: "byFieldName", valuesField: ["y"], sizeField: "z"},
+        options: {trendlines:true, minmax: true, tooltips: true, tooltip: "Key: {key} X: {x} Y: {y}", staggerLabels: true, showValues: true},
+        graphType: type
+        },
+        actions: [{  action: action1,  mapping: [ {srcField: "x", filter: "filter_x"} ],  event: ["selection"]  }]
+        });
+    </div></div>
+    </div>
+
+    <div class="row-fluid"><div class="span4">Multiple Series without partition, series name known before rendering, selection on data range enabled (brush graph types)</div></div>
+    <div class="row-fluid">
+        <div class="span4"><div id="grid2" style="height: 200px;"></div></div>
+        <div class="span5"><div id="graph2" style="height: 200px;"></div></div>
+        <div class="span2"><div>
+            state: {
+            group: ["x"],
+            series: {type: "byFieldName", valuesField: ["y", "z"]},
+            graphType: "multiBarChart",
+            id: "2"
+            }
+        </div></div>
+    </div>
+
+    <div class="row-fluid"><div class="span4">Multiple Series based on field value</div></div>
+    <div class="row-fluid">
+        <div class="span4"><div id="grid3" style="height: 200px;"></div></div>
+        <div class="span5"><div id="graph3" style="height: 200px;"></div></div>
+        <div class="span2"><div>state: {
+            group: ["x"],
+            series: {type: "byFieldValue", seriesField: "gender", valuesField: "y", fillEmptyValuesWith: 0},
+            graphType: "multiBarChart",
+            id: "3"
+            }</div></div>
+
+        </div>
+
+    <div class="row-fluid"><div class="span4">Multiple Series based on partition</div></div>
+    <div class="row-fluid">
+                <div class="span4"><div id="grid4" style="height: 200px;">1</div></div>
+                <div class="span5"><div id="graph4" style="height: 200px;">2</div></div>
+                <div class="span2"><div>
+                    state: {
+                    group: ["x"],
+                    series: {type: "byPartitionedField", aggregatedField: "y", aggregationFunctions: ["sum"],  fillEmptyValuesWith: 0},
+                    graphType: "multiBarChart",
+                    id: "4"
+                    }
+                </div>  </div>
+    </div>
+
+
+</div>
+
+<script>
+
+
+    var colorSchema = new recline.Data.ColorSchema({
+        type: "scaleWithDataMinMax",
+        colors: ["#0000FF", "#FFF000"]
+    });
+
+    var colorSchemaGender = new recline.Data.ColorSchema({
+        type: "scaleWithDistinctData",
+        colors: ['#F7E1C5', '#6A000B']
+    });
+
+    var dataset = new recline.Model.Dataset({
+        records: [
+            {id: 1, gender: "F", age: 10, x: 20, y: 200, z: 250},
+            {id: 2, gender: "F", age: 10, x: 25, y: 300, z: 350},
+            {id: 3, gender: "M", age: 15, x: 30, y: 400, z: 450},
+            {id: 4, gender: "F", age: 15, x: 40, y: 450, z: 520}
+      ],
+        fields: [
+            {id: 'id', type: "integer"},
+            {id: 'gender'},
+            {id: 'x', type: "integer"},
+            {id: 'y', type: "integer"},
+            {id: 'z', type: "integer"},
+            {id: 'age'}
+        ]
+    });
+    colorSchema.setDataset(dataset, "y");
+    colorSchemaGender.setDataset(dataset, "gender");
+
+    vdatasetGender = new recline.Model.VirtualDataset({
+        dataset: dataset,
+        aggregation: {
+            dimensions: ["x"],
+            aggregatedFields: ["y", "z"],
+            partitions: ["gender"],
+            aggregationFunctions: ["sum", "avg"]
+        },
+        fieldLabelForPartitions: "{originalField}_by_{partitionFieldName}_{partitionFieldValue}_{aggregatedFunction}"
+
+    });
+
+    var action1 = new recline.Action({
+        filters: {
+            filter_x_range: {type: "range", field: "x", fieldType: "integer"},
+            filter_x: {type: "term", field: "x", fieldType: "integer"},
+            filter_x_list: {type: "list", field: "x", fieldType: "integer"}
+        },
+        models: [
+            {model: dataset, filters:["filter_x", "filter_x_list", "filter_x_range"]}
+        ],
+        type: ["selection"]
+    });
+
+    var $el = $('#grid1');
+    var grid1 = new recline.View.SlickGrid({
+        model: dataset,
+        el: $el,
+        state: {  fitColumns:true },
+        actions: [{action: action1, mapping: [ {srcField: "x", filter: "filter_x_list"}  ], event: ["selection"]  }]
+    });
+    grid1.visible = true;
+    grid1.render();
+
+
+
+    var graph1;
+
+
+
+
+    drawGraph();
+
+    dataset.fetch();
+
+  <!-- one serie -->
+    function reDraw() {
+        var type = getSelectedText();
+        var graphs=[graph1];
+
+        _.each(graphs, function(d) {
+            d.state.attributes.graphType = type;
+            d.render();
+            d.redraw();
+        });
+
+
+    };
+
+    function drawGraph() {
+        var type = "pieChart";
+
+
+        //stackedAreaData
+
+  graph1 = new recline.View.NVD3Graph({
+  model: dataset,
+  state: {
+      group: ["id"],
+      series: {type: "byFieldName", valuesField: ["y"]},
+      options: {trendlines:true, minmax: true, tooltips: true, tooltip: "Key: {key} X: {x} Y: {y}", staggerLabels: true, showValues: true},
+      graphType: type
+  },
+      actions: [{  action: action1,  mapping: [ {srcField: "x", filter: "filter_x"} ],  event: ["selection"]  }]
+});
+$('#graph1').append(graph1.el);
+
+
+    };
+
+
+    function getSelectedText() {
+        var elt = document.getElementById("s1");
+
+        if (elt.selectedIndex == -1)
+            return null;
+
+        return elt.options[elt.selectedIndex].value;
+    };
+
+</script>
+
+</body>
+
