@@ -577,20 +577,26 @@ this.recline.View = this.recline.View || {};
                         tmpS = seriesTmp[key]
                     }
                     else {
+                        tmpS = {key:key, values:[]};
+
+                        var color = doc.getFieldColor(seriesNameField);
 
                         if (color != null)
-                            tmpS = {key:key, values:[], color:color};
-                        else
-                            tmpS = {key:key, values:[]};
+                            tmpS["color"] = color;
+
+
                     }
-                    ;
+                    var shape = doc.getFieldShape(seriesNameField);
 
                     var x = doc.getFieldValueUnrendered(xfield);
                     var y = doc.getFieldValueUnrendered(fieldValue);
 
+
                     var point = {x:x, y:y, record:doc};
                     if (sizeField)
                         point["size"] = doc.getFieldValueUnrendered(sizeField);
+                    if(shape != null)
+                        point["shape"] = shape;
 
                     tmpS.values.push(point);
 
@@ -628,10 +634,6 @@ this.recline.View = this.recline.View || {};
                 _.each(serieNames, function (field) {
                     var yfield = self.model.fields.get(field);
 
-                    //todo
-
-
-
                     var points = [];
 
                     _.each(records, function (doc, index) {
@@ -642,6 +644,7 @@ this.recline.View = this.recline.View || {};
 
                             var y = doc.getFieldValueUnrendered(yfield);
                             if (y != null) {
+                                var color;
 
                                 if (selectionActive) {
                                     if (doc.isRecordSelected())
@@ -651,8 +654,14 @@ this.recline.View = this.recline.View || {};
                                 } else
                                     color = doc.getFieldColor(yfield);
 
+                                var shape = doc.getFieldShape(yfield);
 
-                                var point = {x:x, y:y, record:doc, color:color};
+                                var point = {x:x, y:y, record:doc};
+
+                                if(color != null)
+                                    point["color"] = color;
+                                if(shape != null)
+                                    point["shape"] = shape;
 
                                 if (sizeField)
                                     point["size"] = doc.getFieldValueUnrendered(sizeField);

@@ -102,6 +102,17 @@ this.recline.Model = this.recline.Model || {};
             })
         },
 
+        setShapeSchema:function () {
+            var self = this;
+            _.each(self.attributes.shapeSchema, function (d) {
+                var field = _.find(self.fields.models, function (f) {
+                    return d.field === f.id
+                });
+                if (field != null)
+                    field.attributes.shapeSchema = d.schema;
+            })
+        },
+
         // ### _normalizeRecordsAndFields
         //
         // Get a proper set of fields and records from incoming set of fields and records either of which may be null or arrays or objects
@@ -241,6 +252,17 @@ this.recline.Model = this.recline.Model || {};
                     });
                     if (field != null)
                         field.colorSchema = d.schema;
+                })
+            }
+
+            // assignment of shapes schema to fields
+            if (self.attributes.shapeSchema) {
+                _.each(self.attributes.shapeSchema, function (d) {
+                    var field = _.find(fields, function (f) {
+                        return d.field === f.id
+                    });
+                    if (field != null)
+                        field.shapeSchema = d.schema;
                 })
             }
         },
@@ -476,6 +498,18 @@ this.recline.Model = this.recline.Model || {};
 
         },
 
+        getFieldShape:function (field) {
+            if (!field.attributes.shapeSchema)
+                return null;
+
+            if (field.attributes.is_partitioned) {
+                return field.attributes.shapeSchema.getShapeFor(field.attributes.partitionValue);
+            }
+            else
+                return field.attributes.shapeSchema.getShapeFor(this.getFieldValueUnrendered(field));
+
+        },
+
         isRecordSelected:function () {
             var self = this;
             return self["is_selected"];
@@ -537,7 +571,8 @@ this.recline.Model = this.recline.Model || {};
             is_partitioned:false,
             partitionValue:null,
             partitionField:null,
-            colorSchema:null
+            colorSchema:null,
+            shapeSchema:null
         },
         virtualModelFields:{
             label:null,

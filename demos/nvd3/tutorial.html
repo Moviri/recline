@@ -113,6 +113,10 @@ root: ../../
         colors: ['#F7E1C5', '#6A000B']
     });
 
+    var shapeSchemaGender = new recline.Data.ShapeSchema({
+        shapes: ['circle', 'diamond', 'square', 'triangle-down', 'triangle-up']
+    });
+
     var dataset = new recline.Model.Dataset({
         records: [
             {id: 1, gender: "F", age: 10, x: 20, y: 200, z: 250},
@@ -130,6 +134,7 @@ root: ../../
     });
     colorSchema.setDataset(dataset, "y");
     colorSchemaGender.setDataset(dataset, "gender");
+    shapeSchemaGender.setDataset(dataset, "gender");
 
     vdatasetGender = new recline.Model.VirtualDataset({
         dataset: dataset,

@@ -439,6 +439,7 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
                         type: newType,
                         is_partitioned: false,
                         colorSchema: originalFieldAttributes.colorSchema,
+                        colorSchema: originalFieldAttributes.shapeSchema,
                         originalField: x,
                         aggregationFunction: aggregationFunctions[j]
                     });
@@ -468,6 +469,7 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
                             partitionField: d.field,
                             partitionValue: d.value,
                             colorSchema: originalFieldAttributes.colorSchema,  // the schema is the one used to specify partition
+                            shapeSchema: originalFieldAttributes.shapeSchema,
                             originalField: d.originalField,
                             aggregationFunction: aggregationFunctions[j],
                             label: fieldLabel
@@ -488,7 +490,8 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
                         type: originalFieldAttributes.type,
                         label: originalFieldAttributes.label,
                         format: originalFieldAttributes.format,
-                        colorSchema: originalFieldAttributes.colorSchema
+                        colorSchema: originalFieldAttributes.colorSchema,
+                        shapeSchema: originalFieldAttributes.shapeSchema
                     });
 
                 }
