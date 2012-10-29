@@ -76,43 +76,7 @@ this.recline.Model = this.recline.Model || {};
                 self.set(results.metadata);
 
 
-                // if labels are declared in dataset properties merge it;
-                if (self.attributes.fieldLabels) {
-                    for (var i = 0; i < out.fields.length; i++) {
-                        var tmp = _.find(self.attributes.fieldLabels, function (x) {
-                            return x.id == out.fields[i].id;
-                        });
-                        if (tmp != null)
-                            out.fields[i].label = tmp.label;
-
-                    }
-
-                }
-
-                // if format is desclared is updated
-                if (self.attributes.fieldsFormat) {
-                    // if format is declared in dataset properties merge it;
-                    _.each(self.attributes.fieldsFormat, function (d) {
-                        var field = _.find(out.fields, function (f) {
-                            return d.id === f.id
-                        });
-                        if (field != null)
-                            field.format = d.format;
-                    })
-                }
-
-
-                // assignment of color schema to fields
-                if (self.attributes.colorSchema) {
-                    _.each(self.attributes.colorSchema, function (d) {
-                        var field = _.find(out.fields, function (f) {
-                            return d.field === f.id
-                        });
-                        if (field != null)
-                            field.colorSchema = d.schema;
-                    })
-                }
-
+                self.setFieldsAttributes(out.fields);
                 self.fields.reset(out.fields, {renderer:recline.Data.Renderers});
 
                 self.query()
@@ -144,92 +108,93 @@ this.recline.Model = this.recline.Model || {};
         //
         // e.g. fields = ['a', 'b', 'c'] and records = [ [1,2,3] ] =>
         // fields = [ {id: a}, {id: b}, {id: c}], records = [ {a: 1}, {b: 2}, {c: 3}]
-        _normalizeRecordsAndFields:function (records, fields) {
-            // if no fields get them from records
-            if (!fields && records && records.length > 0) {
-                // records is array then fields is first row of records ...
-                if (records[0] instanceof Array) {
-                    fields = records[0];
-                    records = records.slice(1);
-                } else {
-                    fields = _.map(_.keys(records[0]), function (key) {
-                        return {id:key};
-                    });
-                }
-            }
+  _normalizeRecordsAndFields: function(records, fields) {
+    // if no fields get them from records
+    if (!fields && records && records.length > 0) {
+      // records is array then fields is first row of records ...
+      if (records[0] instanceof Array) {
+        fields = records[0];
+        records = records.slice(1);
+      } else {
+        fields = _.map(_.keys(records[0]), function(key) {
+          return {id: key};
+        });
+      }
+    }
 
-            // fields is an array of strings (i.e. list of field headings/ids)
-            if (fields && fields.length > 0 && typeof fields[0] === 'string') {
-                // Rename duplicate fieldIds as each field name needs to be
-                // unique.
-                var seen = {};
-                fields = _.map(fields, function (field, index) {
-                    // cannot use trim as not supported by IE7
-                    var fieldId = field.replace(/^\s+|\s+$/g, '');
-                    if (fieldId === '') {
-                        fieldId = '_noname_';
-                        field = fieldId;
-                    }
-                    while (fieldId in seen) {
-                        seen[field] += 1;
-                        fieldId = field + seen[field];
-                    }
-                    if (!(field in seen)) {
-                        seen[field] = 0;
-                    }
-                    // TODO: decide whether to keep original name as label ...
-                    // return { id: fieldId, label: field || fieldId }
-                    return { id:fieldId };
-                });
-            }
-            // records is provided as arrays so need to zip together with fields
-            // NB: this requires you to have fields to match arrays
-            if (records && records.length > 0 && records[0] instanceof Array) {
-                records = _.map(records, function (doc) {
-                    var tmp = {};
-                    _.each(fields, function (field, idx) {
-                        tmp[field.id] = doc[idx];
-                    });
-                    return tmp;
-                });
-            }
-            return {
-                fields:fields,
-                records:records
-            };
-        },
+    // fields is an array of strings (i.e. list of field headings/ids)
+    if (fields && fields.length > 0 && typeof(fields[0]) != 'object') {
+      // Rename duplicate fieldIds as each field name needs to be
+      // unique.
+      var seen = {};
+      fields = _.map(fields, function(field, index) {
+        field = field.toString();
+        // cannot use trim as not supported by IE7
+        var fieldId = field.replace(/^\s+|\s+$/g, '');
+        if (fieldId === '') {
+          fieldId = '_noname_';
+          field = fieldId;
+        }
+        while (fieldId in seen) {
+          seen[field] += 1;
+          fieldId = field + seen[field];
+        }
+        if (!(field in seen)) {
+          seen[field] = 0;
+        }
+        // TODO: decide whether to keep original name as label ...
+        // return { id: fieldId, label: field || fieldId }
+        return { id: fieldId };
+      });
+    }
+    // records is provided as arrays so need to zip together with fields
+    // NB: this requires you to have fields to match arrays
+    if (records && records.length > 0 && records[0] instanceof Array) {
+      records = _.map(records, function(doc) {
+        var tmp = {};
+        _.each(fields, function(field, idx) {
+          tmp[field.id] = doc[idx];
+        });
+        return tmp;
+      });
+    }
+    return {
+      fields: fields,
+      records: records
+    };
+  },
 
-        save:function () {
+  save: function() {
+    var self = this;
+    // TODO: need to reset the changes ...
+    return this._store.save(this._changes, this.toJSON());
+  },
+
+  transform: function(editFunc) {
+    var self = this;
+    if (!this._store.transform) {
+      alert('Transform is not supported with this backend: ' + this.get('backend'));
+      return;
+    }
+    this.trigger('recline:flash', {message: "Updating all visible docs. This could take a while...", persist: true, loader: true});
+    this._store.transform(editFunc).done(function() {
+      // reload data as records have changed
+      self.query();
+      self.trigger('recline:flash', {message: "Records updated successfully"});
+    });
+  },
+
+        getRecords:function (type) {
             var self = this;
-            // TODO: need to reset the changes ...
-            return this._store.save(this._changes, this.toJSON());
-        },
 
-        transform:function (editFunc) {
-            var self = this;
-            if (!this._store.transform) {
-                alert('Transform is not supported with this backend: ' + this.get('backend'));
-                return;
-            }
-            this.trigger('recline:flash', {message:"Updating all visible docs. This could take a while...", persist:true, loader:true});
-            this._store.transform(editFunc).done(function () {
-                // reload data as records have changed
-                self.query();
-                self.trigger('recline:flash', {message:"Records updated successfully"});
-            });
-        },
-
-        getRecords: function(type) {
-            var self=this;
-
-            if(type==='filtered'){
+            if (type === 'filtered') {
                 return self.records.models;
-            }else {
-                if(self._store.data == null) {
+            } else {
+                if (self._store.data == null) {
                     throw "Model: unable to retrieve not filtered data, store can't provide data. Use a backend that use a memory store";
                 }
 
-                var docs = _.map(self._store.data, function(hit) {
+                var docs = _.map(self._store.data, function (hit) {
                     var _doc = new my.Record(hit);
                     _doc.fields = self.fields;
                     return _doc;
@@ -239,6 +204,46 @@ this.recline.Model = this.recline.Model || {};
             }
         },
 
+        setFieldsAttributes:function (fields) {
+            var self = this;
+
+            // if labels are declared in dataset properties merge it;
+            if (self.attributes.fieldLabels) {
+                for (var i = 0; i < fields.length; i++) {
+                    var tmp = _.find(self.attributes.fieldLabels, function (x) {
+                        return x.id == out.fields[i].id;
+                    });
+                    if (tmp != null)
+                        fields[i].label = tmp.label;
+
+                }
+
+            }
+
+            // if format is desclared is updated
+            if (self.attributes.fieldsFormat) {
+                // if format is declared in dataset properties merge it;
+                _.each(self.attributes.fieldsFormat, function (d) {
+                    var field = _.find(fields, function (f) {
+                        return d.id === f.id
+                    });
+                    if (field != null)
+                        field.format = d.format;
+                })
+            }
+
+
+            // assignment of color schema to fields
+            if (self.attributes.colorSchema) {
+                _.each(self.attributes.colorSchema, function (d) {
+                    var field = _.find(fields, function (f) {
+                        return d.field === f.id
+                    });
+                    if (field != null)
+                        field.colorSchema = d.schema;
+                })
+            }
+        },
 
 
         // ### query
@@ -250,12 +255,10 @@ this.recline.Model = this.recline.Model || {};
         //
         // Resulting RecordList are used to reset this.records and are
         // also returned.
-        query:function (queryObj) {
-
-
-            var self = this;
-            var dfd = $.Deferred();
-            this.trigger('query:start');
+  query: function(queryObj) {
+    var self = this;
+    var dfd = $.Deferred();
+    this.trigger('query:start');
 
             if (queryObj) {
                 this.queryState.set(queryObj, {silent:true});
@@ -405,7 +408,6 @@ this.recline.Model = this.recline.Model || {};
         },
 
 
-
         getFacetByFieldId:function (fieldId) {
             return _.find(this.facets.models, function (facet) {
                 return facet.id == fieldId;
@@ -418,18 +420,18 @@ this.recline.Model = this.recline.Model || {};
             });
         },
 
-        getUnfilteredFacets: function() {
-            var self=this;
+        getUnfilteredFacets:function () {
+            var self = this;
 
-            if(self._store.data == null) {
+            if (self._store.data == null) {
                 throw "Model: unable to retrieve not filtered data, store can't provide data. Use a backend that use a memory store";
             }
 
-            if(self._store.getFacetsOnUnfilteredData == null) {
+            if (self._store.getFacetsOnUnfilteredData == null) {
                 throw "Model: backend doesn't implement getFacetsOnUnfilteredData";
             }
 
-            var ret =  self._store.getFacetsOnUnfilteredData(self.queryState);
+            var ret = self._store.getFacetsOnUnfilteredData(self.queryState);
             var facets;
 
             if (queryResult.facets) {
@@ -585,64 +587,71 @@ this.recline.Model = this.recline.Model || {};
         // @param {Object} data: standard Backbone model attributes
         //
         // @param {Object} options: renderer and/or deriver functions.
-        initialize:function (data, options) {
-            // if a hash not passed in the first argument throw error
-            if ('0' in data) {
-                throw new Error('Looks like you did not pass a proper hash with id to Field constructor');
-            }
-            if (this.attributes.label === null) {
-                this.set({label:this.id});
-            }
-            if (options) {
-                this.renderer = options.renderer;
-                this.deriver = options.deriver;
-            }
-            if (!this.renderer) {
-                this.renderer = this.defaultRenderers[this.get('type')];
-            }
-            this.facets = new my.FacetList();
-        },
-        getColorForPartition:function () {
-
-            if (!this.attributes.colorSchema || !this.attributes.is_partitioned)
-                return null;
-
-            return this.attributes.colorSchema.getColorFor(this.attributes.partitionValue);
-        },
-        defaultRenderers:{
-            object:function (val, field, doc) {
-                return JSON.stringify(val);
-            },
-            geo_point:function (val, field, doc) {
-                return JSON.stringify(val);
-            },
-            'float':function (val, field, doc) {
-                var format = field.get('format');
-                if (format === 'percentage') {
-                    return val + '%';
-                }
-                return val;
-            },
-            'string':function (val, field, doc) {
-                var format = field.get('format');
-                if (format === 'markdown') {
-                    if (typeof Showdown !== 'undefined') {
-                        var showdown = new Showdown.converter();
-                        out = showdown.makeHtml(val);
-                        return out;
-                    } else {
-                        return val;
-                    }
-                } else if (format == 'plain') {
-                    return val;
-                } else {
-                    // as this is the default and default type is string may get things
-                    // here that are not actually strings
-                    if (val && typeof val === 'string') {
-                        val = val.replace(/(https?:\/\/[^ ]+)/g, '<a href="$1">$1</a>');
-                    }
-                    return val
-                }
+  initialize: function(data, options) {
+    // if a hash not passed in the first argument throw error
+    if ('0' in data) {
+      throw new Error('Looks like you did not pass a proper hash with id to Field constructor');
+    }
+    if (this.attributes.label === null) {
+      this.set({label: this.id});
+    }
+    if (this.attributes.type.toLowerCase() in this._typeMap) {
+      this.attributes.type = this._typeMap[this.attributes.type.toLowerCase()];
+    }
+    if (options) {
+      this.renderer = options.renderer;
+      this.deriver = options.deriver;
+    }
+    if (!this.renderer) {
+      this.renderer = this.defaultRenderers[this.get('type')];
+    }
+    this.facets = new my.FacetList();
+  },
+  _typeMap: {
+    'text': 'string',
+    'double': 'number',
+    'float': 'number',
+    'numeric': 'number',
+    'int': 'integer',
+    'datetime': 'date-time',
+    'bool': 'boolean',
+    'timestamp': 'date-time',
+    'json': 'object'
+  },
+  defaultRenderers: {
+    object: function(val, field, doc) {
+      return JSON.stringify(val);
+    },
+    geo_point: function(val, field, doc) {
+      return JSON.stringify(val);
+    },
+    'number': function(val, field, doc) {
+      var format = field.get('format');
+      if (format === 'percentage') {
+        return val + '%';
+      }
+      return val;
+    },
+    'string': function(val, field, doc) {
+      var format = field.get('format');
+      if (format === 'markdown') {
+        if (typeof Showdown !== 'undefined') {
+          var showdown = new Showdown.converter();
+          out = showdown.makeHtml(val);
+          return out;
+        } else {
+          return val;
+        }
+      } else if (format == 'plain') {
+        return val;
+      } else {
+        // as this is the default and default type is string may get things
+        // here that are not actually strings
+        if (val && typeof val === 'string') {
+          val = val.replace(/(https?:\/\/[^ ]+)/g, '<a href="$1">$1</a>');
+        }
+        return val
+      }
             },
             'date':function (val, field, doc) {
                 // if val contains timer value (in msecs), possibly in string format, ensure it's converted to number
@@ -651,7 +660,14 @@ this.recline.Model = this.recline.Model || {};
                     return intVal;
                 else return new Date(val);
             }
-        }
+        },
+        getColorForPartition:function () {
+
+            if (!this.attributes.colorSchema || !this.attributes.is_partitioned)
+                return null;
+
+            return this.attributes.colorSchema.getColorFor(this.attributes.partitionValue);
+        },
     });
 
     my.FieldList = Backbone.Collection.extend({
@@ -861,7 +877,7 @@ this.recline.Model = this.recline.Model || {};
                     s.push(filter);
             }
         },
-        isSelected: function() {
+        isSelected:function () {
             return this.get('selections').length > 0;
         },
 
@@ -884,31 +900,25 @@ this.recline.Model = this.recline.Model || {};
                 return;
             }
             facets[fieldId] = {
-                terms:{ field:fieldId, all_terms: true }
+                terms:{ field:fieldId, all_terms:true }
             };
             this.set({facets:facets}, {silent:true});
-
-        },
-
-        addHistogramFacet:function (fieldId) {
-            addHistogramFacet(fieldId);
             this.trigger('facet:add', this);
         },
+  addHistogramFacet: function(fieldId) {
+    var facets = this.get('facets');
+    facets[fieldId] = {
+      date_histogram: {
+        field: fieldId,
+        interval: 'day'
+      }
+    };
+    this.set({facets: facets}, {silent: true});
+    this.trigger('facet:add', this);
+  }
 
-        addHistogramFacetNoEvent:function (fieldId) {
-            var facets = this.get('facets');
-            facets[fieldId] = {
-                date_histogram:{
-                    field:fieldId,
-                    interval:'day'
-                }
-            };
-            this.set({facets:facets}, {silent:true});
 
-        }
-
-
-    });
+});
 
 
 // ## <a id="facet">A Facet (Result)</a>

@@ -90,7 +90,7 @@ this.recline.Data = this.recline.Data || {};
         geo_point: function(val, field, doc) {
             return JSON.stringify(val);
         },
-        'float': function(val, field, doc) {
+        number: function(val, field, doc) {
             var format = field.get('format');
             if (format === 'percentage') {
                 return val + '%';
@@ -108,7 +108,7 @@ this.recline.Data = this.recline.Data || {};
 
 
         },
-        'string': function(val, field, doc) {
+        string: function(val, field, doc) {
             var format = field.get('format');
             if (format === 'markdown') {
                 if (typeof Showdown !== 'undefined') {

@@ -2,65 +2,65 @@ this.recline = this.recline || {};
 this.recline.Backend = this.recline.Backend || {};
 this.recline.Backend.Memory = this.recline.Backend.Memory || {};
 
-(function ($, my) {
-    my.__type__ = 'memory';
+(function($, my) {
+  my.__type__ = 'memory';
 
-    // ## Data Wrapper
-    //
-    // Turn a simple array of JS objects into a mini data-store with
-    // functionality like querying, faceting, updating (by ID) and deleting (by
-    // ID).
-    //
-    // @param data list of hashes for each record/row in the data ({key:
-    // value, key: value})
-    // @param fields (optional) list of field hashes (each hash defining a field
-    // as per recline.Model.Field). If fields not specified they will be taken
-    // from the data.
-    my.Store = function (data, fields) {
-        var self = this;
-        this.data = data;
+  // ## Data Wrapper
+  //
+  // Turn a simple array of JS objects into a mini data-store with
+  // functionality like querying, faceting, updating (by ID) and deleting (by
+  // ID).
+  //
+  // @param data list of hashes for each record/row in the data ({key:
+  // value, key: value})
+  // @param fields (optional) list of field hashes (each hash defining a field
+  // as per recline.Model.Field). If fields not specified they will be taken
+  // from the data.
+  my.Store = function(data, fields) {
+    var self = this;
+    this.data = data;
         this.distinctFieldsValues = {};
 
-        if (fields) {
-            this.fields = fields;
-        } else {
-            if (data) {
-                this.fields = _.map(data[0], function (value, key) {
-                    return {id:key, type:'string'};
-                });
-            }
+    if (fields) {
+      this.fields = fields;
+    } else {
+      if (data) {
+        this.fields = _.map(data[0], function(value, key) {
+          return {id: key, type: 'string'};
+        });
+      }
+    }
+
+    this.update = function(doc) {
+      _.each(self.data, function(internalDoc, idx) {
+        if(doc.id === internalDoc.id) {
+          self.data[idx] = doc;
         }
+      });
+    };
 
-        this.update = function (doc) {
-            _.each(self.data, function (internalDoc, idx) {
-                if (doc.id === internalDoc.id) {
-                    self.data[idx] = doc;
-                }
-            });
-        };
+    this.remove = function(doc) {
+      var newdocs = _.reject(self.data, function(internalDoc) {
+        return (doc.id === internalDoc.id);
+      });
+      this.data = newdocs;
+    };
 
-        this.remove = function (doc) {
-            var newdocs = _.reject(self.data, function (internalDoc) {
-                return (doc.id === internalDoc.id);
-            });
-            this.data = newdocs;
-        };
+    this.save = function(changes, dataset) {
+      var self = this;
+      var dfd = $.Deferred();
+      // TODO _.each(changes.creates) { ... }
+      _.each(changes.updates, function(record) {
+        self.update(record);
+      });
+      _.each(changes.deletes, function(record) {
+        self.remove(record);
+      });
+      dfd.resolve();
+      return dfd.promise();
+    },
 
-        this.save = function (changes, dataset) {
-            var self = this;
-            var dfd = $.Deferred();
-            // TODO _.each(changes.creates) { ... }
-            _.each(changes.updates, function (record) {
-                self.update(record);
-            });
-            _.each(changes.deletes, function (record) {
-                self.remove(record);
-            });
-            dfd.resolve();
-            return dfd.promise();
-        },
-
-        this.query = function (queryObj) {
+    this.query = function(queryObj) {
                 var dfd = $.Deferred();
                 var numRows = queryObj.size || this.data.length;
                 var start = queryObj.from || 0;
@@ -69,27 +69,27 @@ this.recline.Backend.Memory = this.recline.Backend.Memory || {};
                 results = recline.Data.Filters.applyFiltersOnData(queryObj.filters, results, this.fields);
                 results = this._applyFreeTextQuery(results, queryObj);
 
-                // TODO: this is not complete sorting!
-                // What's wrong is we sort on the *last* entry in the sort list if there are multiple sort criteria
-                _.each(queryObj.sort, function (sortObj) {
-                    var fieldName = sortObj.field;
-                    results = _.sortBy(results, function (doc) {
-                        var _out = doc[fieldName];
-                        return _out;
-                    });
-                    if (sortObj.order == 'desc') {
-                        results.reverse();
-                    }
-                });
-                var facets = this.computeFacets(results, queryObj);
-                var out = {
-                    total:results.length,
-                    hits:results.slice(start, start + numRows),
-                    facets:facets
-                };
-                dfd.resolve(out);
-                return dfd.promise();
-            };
+      // TODO: this is not complete sorting!
+      // What's wrong is we sort on the *last* entry in the sort list if there are multiple sort criteria
+      _.each(queryObj.sort, function(sortObj) {
+        var fieldName = sortObj.field;
+        results = _.sortBy(results, function(doc) {
+          var _out = doc[fieldName];
+          return _out;
+        });
+        if (sortObj.order == 'desc') {
+          results.reverse();
+        }
+      });
+      var facets = this.computeFacets(results, queryObj);
+      var out = {
+        total: results.length,
+        hits: results.slice(start, start+numRows),
+        facets: facets
+      };
+      dfd.resolve(out);
+      return dfd.promise();
+    };
 
 
         this.getFacetsOnUnfilteredData = function (queryObj) {

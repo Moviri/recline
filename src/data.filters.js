@@ -81,6 +81,44 @@ my.Filters = {};
     	}
     },
 
+        // in place filtering
+        this._applyFilters = function(results, queryObj) {
+            var filters = queryObj.filters;
+            // register filters
+            var filterFunctions = {
+                term         : term,
+                range        : range,
+                geo_distance : geo_distance
+            };
+            var dataParsers = {
+                integer: function (e) { return parseFloat(e, 10); },
+                'float': function (e) { return parseFloat(e, 10); },
+                string : function (e) { return e.toString() },
+                date   : function (e) { return new Date(e).valueOf() },
+                datetime   : function (e) { return new Date(e).valueOf() }
+            };
+            var keyedFields = {};
+            _.each(self.fields, function(field) {
+                keyedFields[field.id] = field;
+            });
+            function getDataParser(filter) {
+                var fieldType = keyedFields[filter.field].type || 'string';
+                return dataParsers[fieldType];
+            }
+
+            // filter records
+            return _.filter(results, function (record) {
+                var passes = _.map(filters, function (filter) {
+                    return filterFunctions[filter.type](record, filter);
+                });
+
+                // return only these records that pass all filters
+                return _.all(passes, _.identity);
+            });
+
+
+        };
+
     my.Filters._filterFunctions = {
         term: function(record, filter, fields) {
 			var parse = recline.Data.Filters._getDataParser(filter, fields);
@@ -91,13 +129,20 @@ my.Filters = {};
         },
 
         range: function (record, filter, fields) {
-
-            var parse =  recline.Data.Filters._getDataParser(filter, fields);
+            var startnull = (filter.start == null || filter.start === '');
+            var stopnull = (filter.stop == null || filter.stop === '');
+            var parse = recline.Data.Filters._getDataParser(filter, fields);
             var value = parse(record[filter.field]);
             var start = parse(filter.start);
             var stop  = parse(filter.stop);
 
-            return (value >= start && value <= stop);
+            // if at least one end of range is set do not allow '' to get through
+            // note that for strings '' <= {any-character} e.g. '' <= 'a'
+            if ((!startnull || !stopnull) && value === '') {
+                return false;
+            }
+            return ((startnull || value >= start) && (stopnull || value <= stop));
+
         },
 
         list: function (record, filter, fields) {
@@ -135,9 +180,10 @@ my.Filters = {};
 
     my.Filters._dataParsers = {
             integer: function (e) { return parseFloat(e, 10); },
-            'float': function (e) { return parseFloat(e, 10); },
+            float: function (e) { return parseFloat(e, 10); },
             string : function (e) { return e.toString() },
             date   : function (e) { return new Date(e).valueOf() },
-            datetime   : function (e) { return new Date(e).valueOf() }
+            datetime   : function (e) { return new Date(e).valueOf()},
+            number: function (e) { return parseFloat(e, 10); }
         };
 }(this.recline.Data))
