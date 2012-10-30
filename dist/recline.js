@@ -3857,7 +3857,8 @@ this.recline.Model = this.recline.Model || {};
 
 }(jQuery, this.recline.Model));
 
-var ciccio;
+this.recline = this.recline || {};
+this.recline.View = this.recline.View || {};
 
 (function ($, view) {
 	
@@ -10808,5 +10809,5 @@ this.recline.View = this.recline.View || {};
     });
 
 
-})($jq161, recline.View);
+})(jQuery, recline.View);
 

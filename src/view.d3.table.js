@@ -1,4 +1,5 @@
-var ciccio;
+this.recline = this.recline || {};
+this.recline.View = this.recline.View || {};
 
 (function ($, view) {
 	
