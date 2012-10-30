@@ -892,7 +892,7 @@ this.recline.Model = this.recline.Model || {};
         //
         // See <http://www.elasticsearch.org/guide/reference/api/search/facets/>
         addFacet:function (fieldId, allTerms) {
-            this.addFacetNoEvent(fieldId);
+            this.addFacetNoEvent(fieldId, allTerms);
             this.trigger('facet:add', this);
         },
 
@@ -903,12 +903,17 @@ this.recline.Model = this.recline.Model || {};
             if (_.contains(_.keys(facets), fieldId)) {
                 return;
             }
+            var all = false;
+            if(allTerms)
+                all = true;
+
             facets[fieldId] = {
-                terms:{ field:fieldId, all_terms:true }
+                terms:{ field:fieldId, all_terms: all }
             };
             this.set({facets:facets}, {silent:true});
-            this.trigger('facet:add', this);
+
         },
+
   addHistogramFacet: function(fieldId) {
     var facets = this.get('facets');
     facets[fieldId] = {

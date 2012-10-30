@@ -190,7 +190,7 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
             {
 
                 return {
-                    hits: _normalizeRecords(data.data,fields ),
+                    hits: _normalizeRecords(data.data, my.memoryFields ),
                     fields:my.memoryFields,
                     useMemoryStore: false
                 }
