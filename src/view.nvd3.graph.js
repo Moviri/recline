@@ -32,7 +32,7 @@ this.recline.View = this.recline.View || {};
             var self = this;
             this.uid = "" + new Date().getTime() + Math.floor(Math.random() * 10000); // generating an unique id for the chart
             this.el = $(this.el);
-            _.bindAll(this, 'render', 'redraw', 'graphResize');
+            _.bindAll(this, 'render', 'redraw', 'graphResize', 'changeDimensions');
 
 
             this.model.bind('change', this.render);
@@ -41,6 +41,7 @@ this.recline.View = this.recline.View || {};
 
             this.model.bind('query:done', this.redraw);
             this.model.queryState.bind('selection:done', this.redraw);
+            this.model.bind('dimensions:change', this.changeDimensions);
 
 
             var stateData = _.extend({
@@ -60,6 +61,11 @@ this.recline.View = this.recline.View || {};
             this.state = new recline.Model.ObjectState(stateData);
 
 
+        },
+
+        changeDimensions: function() {
+            var self=this;
+            self.state.attributes.group = self.model.getDimensions();
         },
 
         render:function () {

@@ -1,4 +1,4 @@
-/*jshint multistr:true */
+ /*jshint multistr:true */
 this.recline = this.recline || {};
 this.recline.View = this.recline.View || {};
 
@@ -1191,7 +1191,21 @@ my.GenericFilter = Backbone.View.extend({
 	});*/
       this.doAction("onRemoveFilter", field, [], "remove");
 
-  }
+  },
+
+    composeStateData: function() {
+        var self=this;
+        var queryString = '?';
+        var items = [];
+        $.each(self._sourceDataset.queryState.toJSON(), function(key, value) {
+            if (typeof(value) === 'object') {
+                value = JSON.stringify(value);
+            }
+            items.push(key + '=' + encodeURIComponent(value));
+        });
+
+        return items;
+    }
 
 
 });

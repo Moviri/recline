@@ -69,6 +69,16 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
                                 crossfilter(this.attributes.dataset.records.toJSON()))));
      },
 
+        setDimensions: function(dimensions) {
+            this.attributes.aggregation.dimensions = dimensions;
+            this.trigger('dimensions:change');
+            this.initializeCrossfilter();
+        },
+
+        getDimensions: function() {
+            return this.attributes.aggregation.dimensions;
+        },
+
         createDimensions: function(crossfilterData) {
             var dimensions = this.attributes.aggregation.dimensions;
             var group;
@@ -92,7 +102,6 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
 
             return group;
         },
-
 
         reduce: function(group) {
             var aggregatedFields = this.attributes.aggregation.aggregatedFields;
@@ -248,9 +257,6 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
             this.query();
 
         },
-
-
-
 
         buildResult: function(reducedResult, partitionFields){
             var dimensions = this.attributes.aggregation.dimensions;
