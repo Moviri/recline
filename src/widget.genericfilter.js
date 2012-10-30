@@ -383,7 +383,7 @@ my.GenericFilter = Backbone.View.extend({
 	_.bindAll(this, 'findActiveFilterByField');
 
 	this._sourceDataset = args.sourceDataset;
-	this.uid = Math.floor(Math.random()*100000);
+	this.uid = args.id || Math.floor(Math.random()*100000);
 
     //this._sourceDataset.fields.bind('all', this.render);
 

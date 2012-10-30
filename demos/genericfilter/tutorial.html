@@ -6,7 +6,7 @@ root: ../../
 ---
 
 
-<body>
+<body xmlns="http://www.w3.org/1999/html">
 
 <div class="container-fluid">
 
@@ -16,7 +16,7 @@ root: ../../
     <div class="row-fluid">
         <div class="span6"><div id="grid1"></div></div>
         <div class="span6"><div id="facet1"></div></div>
-
+         <div>state: <a id="link" href="#">link</a></div>
 
 
     </div>
@@ -91,7 +91,7 @@ root: ../../
 
 <script>
 
-
+var initialState = new recline.Data.StateManagement.State({fromQueryString: true});
 
 var colorSchemaDate = new recline.Data.ColorSchema({
     type: "scaleWithDistinctData",
@@ -114,14 +114,28 @@ var dataset = new recline.Model.Dataset({
         {id: 'x', type: "integer"},
         {id: 'y', type: "integer"},
         {id: 'age', type: "integer"} ,
-        {id: 'date', type: "date"}
-    ]
+        {id: 'date', type: "date"},
+        {id: 'gender', type: "string"}
+    ],
+    initialState: initialState
 });
 colorSchemaDate.setDataset(dataset, "date");
 colorSchemaAge.setDataset(dataset, "age");
 
 dataset.queryState.addFacetNoEvent("age", true);
 
+
+dataset.queryState.bind('change',                  function() {
+
+    $("#link").attr( "href",  window.location.origin + window.location.pathname + "?" + recline.Data.StateManagement.getQueryString([dataset]));
+});
+dataset.queryState.bind('selection:change',        function() {
+
+    $("#link").attr( "href",  window.location.origin + window.location.pathname + "?" + recline.Data.StateManagement.getQueryString([dataset]));
+});
+
+//dataset.queryState.bind('change',                  function() { alert("a"); });
+//dataset.queryState.bind('selection:change',        function() { alert("a"); });
 
 
 var action1 = new recline.Action({
@@ -138,6 +152,9 @@ var action1 = new recline.Action({
     ],
     type: ["selection"]
 });
+
+
+
 
 
 var $el = $('#grid1');

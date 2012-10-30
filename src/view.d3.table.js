@@ -255,7 +255,7 @@ this.recline.View = this.recline.View || {};
             this.title = options.title;
             this.summary = options.summary;
             this.instructions = options.instructions;
-            this.graphId = options.conf.id || 'd3table_'+Math.floor(Math.random()*1000);
+            this.graphId = options.id || 'd3table_'+Math.floor(Math.random()*1000);
 
             //render header & svg container
             var out = Mustache.render(this.template, this);

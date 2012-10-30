@@ -25,6 +25,10 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
             this.recordCount = null;
             this.queryState = new my.Query();
 
+            if(this.get('initialState')) {
+                this.get('initialState').setState(this);
+            }
+
             this.attributes.dataset.bind('query:done', function() { self.initializeCrossfilter(); })
 
             //this.attributes.dataset.records.bind('add',     function() { self.initializeCrossfilter(); });
