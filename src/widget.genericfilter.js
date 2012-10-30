@@ -9,9 +9,9 @@ my.GenericFilter = Backbone.View.extend({
   template: ' \
     <div class="filters"> \
       <div class="form-stacked js-edit"> \
-	  	<div class="btn btn-info" style="display:{{titlePresent}};cursor:default"> \
+	  	<div class="label label-info" style="display:{{titlePresent}}" > \
 		  	<h4>{{filterDialogTitle}}</h4> \
-		  	<small>{{filterDialogDescription}}</small> \
+		  	{{filterDialogDescription}} \
 	  	</div> \
         {{#filters}} \
           {{{filterRender}}} \
@@ -29,9 +29,9 @@ my.GenericFilter = Backbone.View.extend({
 	  	<tbody> \
 	  		<tr>\
 	  			<td class="separated-item" style="display:{{titlePresent}}">\
-				  	<div class="btn btn-info" style="cursor:default"> \
+				  	<div class="label label-info"> \
 					  	<h4>{{filterDialogTitle}}</h4> \
-					  	<small>{{filterDialogDescription}}</small> \
+					  	{{filterDialogDescription}} \
 				  	</div> \
 				</td>\
 			  	{{#filters}} \
