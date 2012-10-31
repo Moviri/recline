@@ -195,10 +195,10 @@ my.GenericFilter = Backbone.View.extend({
         <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
             <legend style="display:{{useLegend}}">{{label}} \
     		</legend>  \
-			<select class="drop-down fields data-control-id" > \
-			<option></option> \
+			<select class="drop-down fields data-control-id" style="color:{{innerLabelColor}}"> \
+			<option class="dimmedDropDownText">{{innerLabel}}</option> \
             {{#values}} \
-            <option value="{{val}}" {{selected}}>{{val}}</option> \
+            <option class="normalDropDownText" value="{{val}}" {{selected}}>{{val}}</option> \
             {{/values}} \
           </select> \
         </fieldset> \
@@ -467,15 +467,20 @@ my.GenericFilter = Backbone.View.extend({
 	else tmplData.titlePresent = "none"; 
 	tmplData.dateConvert = self.dateConvert;
     tmplData.filterRender = function() {
-    	
-  	  this.useLegend = "block";
-      if (this.useFieldLabel == false)
-    	  this.useLegend = "none";
-		
-  	  this.values = new Array();
-
-  	  if (typeof this.label == "undefined" || this.label == null)
+    
+	  if (typeof this.label == "undefined" || this.label == null)
   		  this.label = this.field;
+     
+  	  this.useLegend = "block";
+      if (this.useFieldLabel == false || this.showLabelInsideFilter)
+    	  this.useLegend = "none";
+
+      if (this.showLabelInsideFilter)
+    	  this.innerLabel = "Select desired "+this.label;
+      
+      this.innerLabelColor = "lightgrey";
+
+  	  this.values = new Array();
   	  
 	  // add value list to selected filter or templating of record values will not work
 	  if (this.controlType.indexOf('calendar') >= 0)
@@ -798,7 +803,13 @@ my.GenericFilter = Backbone.View.extend({
 			  else if (this.controlType == "dropdown" || this.controlType == "dropdown_styled")
 			  {
 				  if (self.areValuesEqual(this.term, v) || (typeof this.list != "undefined" && this.list && this.list.length == 1 && self.areValuesEqual(this.list[0], v)))
-				  	selected = "selected"
+				  {
+					  	selected = "selected"
+					  	if (this.controlType == "dropdown")
+				  		{
+					  		this.innerLabelColor = "";
+				  		}
+				  }
 			  }
 			  else if (this.controlType == "listbox" || this.controlType == "listbox_styled") 
 			  {
