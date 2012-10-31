@@ -32,6 +32,12 @@ this.recline.Model = this.recline.Model || {};
 
             this.recordCount = null;
             this.queryState = new my.Query();
+
+            if(this.get('initialState')) {
+                this.get('initialState').setState(this);
+            }
+
+
             this.queryState.bind('change', this.query);
             this.queryState.bind('facet:add', this.query);
             this.queryState.bind('selection:change', this.selection);
@@ -777,7 +783,7 @@ this.recline.Model = this.recline.Model || {};
         },
 
 
-        // update or add the selected filter(s), a change event is triggered after the update
+        // update or add the selected filter(s), a change event is not triggered after the update
 
         setFilter:function (filter) {
             if (filter["remove"]) {
@@ -881,6 +887,7 @@ this.recline.Model = this.recline.Model || {};
                     s.push(filter);
             }
         },
+
         isSelected:function () {
             return this.get('selections').length > 0;
         },

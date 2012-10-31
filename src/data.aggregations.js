@@ -20,21 +20,24 @@ this.recline.Data = this.recline.Data || {};
             if(p==null)
                 return v;
             return Math.min(p, v);
-        }
+        },
+        ratioToReport: function (p, v) {}
     };
 
     my.Aggregations.initFunctions = {
-        sum         : function () {},
-        avg         : function () {},
-        max         : function () {},
-        min         : function () {}
+        sum           : function () {},
+        avg           : function () {},
+        max           : function () {},
+        min           : function () {},
+        ratioToReport : function () {}
     };
 
     my.Aggregations.resultingDataType = {
-        sum         : function (original) { return original },
-        avg         : function (original) { return "float"},
-        max         : function (original) { return original},
-        min         : function (original) { return original}
+        sum           : function (original) { return original },
+        avg           : function (original) { return "float"},
+        max           : function (original) { return original},
+        min           : function (original) { return original},
+        ratioToReport : function (original) { return original}
     },
 
     my.Aggregations.finalizeFunctions = {
@@ -79,7 +82,22 @@ this.recline.Data = this.recline.Data || {};
 
         },
         max         : function () {},
-        min         : function () {}
+        min         : function () {},
+        ratioToReport         : function (resultData, aggregatedFields, partitionsFields) {
+
+
+            resultData.ratioToReport = function(aggr){
+
+                return function(){
+
+                    var map = {};
+                    for(var o=0;o<aggr.length;o++){
+                        map[aggr[o]] = this.sum[aggr[o]] / this.count;
+                    }
+                    return map;
+                }
+            }(aggregatedFields);
+        }
     };
     
 	var myIsEqual = function (object, other, key) {

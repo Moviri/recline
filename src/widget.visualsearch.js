@@ -199,5 +199,5 @@ this.recline.View = this.recline.View || {};
     });
 
 
-})($jq161, recline.View);
+})(jQuery, recline.View);
 

@@ -1,32 +1,17 @@
+/*
 this.recline = this.recline || {};
+
 this.recline.Backend = this.recline.Backend || {};
 this.recline.Backend.Joined = this.recline.Backend.Joined || {};
 
 (function($, my) {
   my.__type__ = 'joined';
 
-  // ## Data Wrapper
-  //
-  // Turn a simple array of JS objects into a mini data-store with
-  // functionality like querying, faceting, updating (by ID) and deleting (by
-  // ID).
-  //
-  // @param data list of hashes for each record/row in the data ({key:
-  // value, key: value})
-  // @param fields (optional) list of field hashes (each hash defining a field
-  // as per recline.Model.Field). If fields not specified they will be taken
-  // from the data.
+
   my.Store = function(joiningmodel) {
     var self = this;
 
-    /*
-     data {primaryDataset: ds, joinedmodel: [
-      joinType: "inner", "left", "right", "union",
-      on: ds2,
-      sourceField: field1
-      destField: field2
-     ]}
-    */
+
     self.joiningmodel = joiningmodel;
 
     var startModel = {records: joiningmodel.primaryDataset.records, fields: primaryDataset.fields};
@@ -58,8 +43,6 @@ this.recline.Backend.Joined = this.recline.Backend.Joined || {};
     };
 
     my.getJoinedFields = {
-        // this is just a check that every fields are present
-        // todo check data type
         "union": function(sourceFields, destFields) {
          var fields = sourceFields;
             _.each(destFields, function(d) {
@@ -71,3 +54,5 @@ this.recline.Backend.Joined = this.recline.Backend.Joined || {};
     };
 
 }(this.recline.Backend.joined));
+
+*/

@@ -30,7 +30,8 @@ this.recline.View = this.recline.View || {};
 
         initialize:function (options) {
             var self = this;
-            this.uid = "" + new Date().getTime() + Math.floor(Math.random() * 10000); // generating an unique id for the chart
+
+            this.uid = options.id || ("" + new Date().getTime() + Math.floor(Math.random() * 10000)); // generating an unique id for the chart
             this.el = $(this.el);
             _.bindAll(this, 'render', 'redraw', 'graphResize', 'changeDimensions');
 

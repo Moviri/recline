@@ -39,23 +39,15 @@ this.recline.View = this.recline.View || {};
     this.el = $(this.el);
     _.bindAll(this, 'render');
 
-    this.model.records.bind('add',          function() {self.render();});
-    this.model.records.bind('reset',        function() {self.render();});
-    this.model.records.bind('change',       function() {self.render();});
-
-    var stateData = _.extend({
-        id: 0
-      },
-      options.state
-    );
-    this.state = new recline.Model.ObjectState(stateData);
+    this.model.bind('query:done', this.render);
+    this.uid = options.id || ("" + new Date().getTime() + Math.floor(Math.random() * 10000)); // generating an unique id for the chart
 
   },
 
     render: function() {
         var self = this;
         var tmplData = this.model.toTemplateJSON();
-        tmplData["viewId"] = this.state.attributes["id"];
+        tmplData["viewId"] = this.uid;
 		tmplData.label = this.state.attributes["label"];
 			
 		var format = this.state.attributes.format || this.defaults.format;
