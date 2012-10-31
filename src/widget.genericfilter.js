@@ -7,7 +7,7 @@ this.recline.View = this.recline.View || {};
 my.GenericFilter = Backbone.View.extend({
   className: 'recline-filter-editor well', 
   template: ' \
-    <div class="filters"> \
+    <div class="filters" style="background-color:{{backgroundColor}}"> \
       <div class="form-stacked js-edit"> \
 	  	<div class="label label-info" style="display:{{titlePresent}}" > \
 		  	<h4>{{filterDialogTitle}}</h4> \
@@ -24,7 +24,7 @@ my.GenericFilter = Backbone.View.extend({
 	<style> \
 		.separated-item { padding-left:20px;padding-right:20px; } \
 	</style> \
-    <div class="filters"> \
+    <div class="filters" style="background-color:{{backgroundColor}}"> \
       <table > \
 	  	<tbody> \
 	  		<tr>\
@@ -393,6 +393,14 @@ my.GenericFilter = Backbone.View.extend({
 		this.filterDialogTitle = args.state.title;
 		this.filterDialogDescription = args.state.description;
 		this.useHorizontalLayout = args.state.useHorizontalLayout;
+		this.showBackground = args.state.showBackground;
+		if (this.showBackground == false)
+		{
+			$(this).removeClass("well");
+			$(this.el).removeClass("well");
+		}
+		
+		this.backgroundColor = args.state.backgroundColor;
 	}
 	this.activeFilters = new Array();
 
@@ -852,6 +860,10 @@ my.GenericFilter = Backbone.View.extend({
     var currTemplate = this.template;
     if (this.useHorizontalLayout)
     	currTemplate = this.templateHoriz
+    	
+    if (self.showBackground == false)
+    	self.className = self.className.replace("well", "")
+    else tmplData.backgroundColor = self.backgroundColor;
 
     var out = Mustache.render(currTemplate, tmplData);
     this.el.html(out);
