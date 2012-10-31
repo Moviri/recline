@@ -31,8 +31,6 @@ my.SlickGrid = Backbone.View.extend({
     this.model.records.bind('reset', this.render);
     this.model.records.bind('remove', this.render);
 
-    this.model.queryState.bind('selection:done', this.render);
-
     var state = _.extend({
         hiddenColumns: [],
         visibleColumns: [],
@@ -288,6 +286,8 @@ my.SlickGrid = Backbone.View.extend({
     var columnpicker = new Slick.Controls.ColumnPicker(columns, this.grid,
                                                        _.extend(options,{state:this.state}));
 
+    this.model.queryState.bind('selection:done', self.grid.render);
+    
     if (self.visible){
       self.grid.init();
       self.rendered = true;
