@@ -204,7 +204,7 @@ this.recline.Model = this.recline.Model || {};
         getRecords:function (type) {
             var self = this;
 
-            if (type === 'filtered') {
+            if (type === 'filtered' || type == null) {
                 return self.records.models;
             } else {
                 if (self._store.data == null) {
@@ -219,6 +219,12 @@ this.recline.Model = this.recline.Model || {};
 
                 return docs;
             }
+        },
+
+        getFields:function (type) {
+            var self = this;
+            return self.fields;
+
         },
 
         setFieldsAttributes:function (fields) {

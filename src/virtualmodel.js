@@ -59,8 +59,10 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
         getRecords:function (type) {
             var self = this;
 
-            if (type === 'filtered') {
+            if (type === 'filtered' || type == null) {
                 return self.records.models;
+            } else if (type === 'totals') {
+                return self.totals.records.models;
             } else {
                 if (self._store.data == null) {
                     throw "VirtualModel: unable to retrieve not filtered data, store can't provide data. Use a backend that use memory store";
@@ -76,19 +78,32 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
             }
         },
 
+        getFields:function (type) {
+            var self = this;
+
+            if (type === 'filtered' || type == null) {
+                return self.fields;
+            } else if (type === 'totals') {
+                return self.totals.fields;
+            } else {
+                return self.fields;
+            }
+        },
+
         initializeCrossfilter:function () {
+            var aggregatedFields = this.attributes.aggregation.aggregatedFields;
+            var aggregationFunctions = this.attributes.aggregation.aggregationFunctions;
+            var originalFields = this.attributes.dataset.fields;
+            var dimensions =  this.attributes.aggregation.dimensions;
+            var partitions =this.attributes.aggregation.partitions;
+
             var crossfilterData = crossfilter(this.attributes.dataset.records.toJSON());
-            var group = this.createDimensions(crossfilterData, this.attributes.aggregation.dimensions);
-            var results = this.reduce(group,
-                this.attributes.aggregation.aggregatedFields,
-                this.attributes.aggregation.aggregationFunctions,
-                this.attributes.aggregation.partitions);
-            this.updateStore(results,
-                this.attributes.dataset.fields,
-                this.attributes.aggregation.dimensions,
-                this.attributes.aggregation.aggregationFunctions,
-                this.attributes.aggregation.aggregatedFields,
-                this.attributes.aggregation.partitions);
+            var group = this.createDimensions(crossfilterData, dimensions);
+            var results = this.reduce(group,dimensions,aggregatedFields,aggregationFunctions,partitions);
+
+
+
+            this.updateStore(results, originalFields,dimensions,aggregationFunctions,aggregatedFields,partitions);
         },
 
         setDimensions:function (dimensions) {
@@ -126,7 +141,7 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
             return group;
         },
 
-        reduce:function (group, aggregatedFields, aggregationFunctions, partitions) {
+        reduce:function (group, dimensions, aggregatedFields, aggregationFunctions, partitions) {
 
             if (aggregationFunctions == null || aggregationFunctions.length == 0)
                 throw("Error aggregationFunctions parameters is not set for virtual dataset ");
@@ -245,8 +260,6 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
 
             var tmpResult;
 
-            var dimensions = this.attributes.aggregation.dimensions;
-
             if (dimensions == null) {
                 tmpResult = [reducedGroup.value()];
             }
@@ -271,9 +284,31 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
 
             this._store = new recline.Backend.Memory.Store(result, fields);
 
-
             this.fields.reset(fields, {renderer:recline.Data.Renderers});
             this.query();
+
+        },
+
+        rebuildTotals: function(records, originalFields) {
+            /*
+                totals: {
+                    aggregationFunctions:["sum"],
+                    aggregatedFields: ["fielda"]
+                    }
+            */
+            var self=this;
+            var aggregatedFields = this.attributes.totals.aggregatedFields;
+            var aggregationFunctions =  this.attributes.totals.aggregationFunctions;
+
+            var crossfilterData = crossfilter(records.toJSON());
+            var group = this.createDimensions(crossfilterData, null);
+            var results = this.reduce(group, null,aggregatedFields, aggregationFunctions, null);
+
+            var fields = self.buildFields(results.reducedResult, originalFields, {}, null, aggregationFunctions);
+            var result = self.buildResult(results.reducedResult, originalFields, {}, null, aggregationFunctions, aggregatedFields, null);
+
+            this.totals.fields.reset(fields, {renderer:recline.Data.Renderers}) ;
+            this.totals.records.reset(result);
 
         },
 
@@ -416,8 +451,15 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
             var fields = [];
 
             var tmpField;
-            if (dimensions == null) {
-                tmpField = reducedResult;
+            if (dimensions == null ) {
+                if(reducedResult.constructor != Array)
+                    tmpField = reducedResult;
+                else
+                if (reducedResult.length > 0) {
+                    tmpField = reducedResult[0];
+                }
+                else
+                    tmpField = {count:0};
             }
             else {
                 if (reducedResult.length > 0) {
@@ -593,7 +635,15 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
                 return _doc;
             });
 
+
+
+
             self.records.reset(docs);
+
+            if(this.attributes.totals) {
+                this.rebuildTotals(self.records, self.fields);
+            }
+
 
             if (queryResult.facets) {
                 var facets = _.map(queryResult.facets, function (facetResult, facetId) {
