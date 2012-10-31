@@ -29,10 +29,6 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
                 this.get('initialState').setState(this);
             }
 
-            if (this.attributes.totals) {
-                this.totals = {records:new my.RecordList(), fields:new my.FieldList()};
-            }
-
             this.attributes.dataset.bind('query:done', function () {
                 self.initializeCrossfilter();
             })
@@ -62,7 +58,15 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
             if (type === 'filtered' || type == null) {
                 return self.records.models;
             } else if (type === 'totals') {
+                if(self.totals == null)
+                    self.rebuildTotals();
+
                 return self.totals.records.models;
+            } else if (type === 'totals_unfiltered') {
+                if(self.totals_unfiltered == null)
+                    self.rebuildUnfilteredTotals();
+
+                return self.totals_unfiltered.records.models;
             } else {
                 if (self._store.data == null) {
                     throw "VirtualModel: unable to retrieve not filtered data, store can't provide data. Use a backend that use memory store";
@@ -84,7 +88,15 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
             if (type === 'filtered' || type == null) {
                 return self.fields;
             } else if (type === 'totals') {
+                if(self.totals == null)
+                    self.rebuildTotals();
+
                 return self.totals.fields;
+            } else if (type === 'totals_unfiltered') {
+                if(self.totals == null)
+                    self.rebuildUnfilteredTotals();
+
+                return self.totals_unfiltered.fields;
             } else {
                 return self.fields;
             }
@@ -285,11 +297,28 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
             this._store = new recline.Backend.Memory.Store(result, fields);
 
             this.fields.reset(fields, {renderer:recline.Data.Renderers});
+            this.clearUnfilteredTotals();
+
             this.query();
 
         },
 
-        rebuildTotals: function(rawResult, records, originalFields) {
+        rebuildTotals: function() {
+            this._rebuildTotals(this.records, this.fields, true);
+
+        },
+        rebuildUnfilteredTotals: function() {
+            this._rebuildTotals(this._store.data, this.fields, false);
+        },
+        clearUnfilteredTotals: function() {
+            this.totals_unfiltered = null;
+           this.clearFilteredTotals();
+        },
+        clearFilteredTotals: function() {
+            this.totals = null;
+       },
+
+        _rebuildTotals: function(records, originalFields, filtered) {
             /*
                 totals: {
                     aggregationFunctions:["sum"],
@@ -300,7 +329,15 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
             var aggregatedFields = self.attributes.totals.aggregatedFields;
             var aggregationFunctions =  self.attributes.totals.aggregationFunctions;
 
-            var crossfilterData = crossfilter(rawResult);
+            var rectmp;
+
+            if(records.constructor == Array)
+                rectmp = records;
+            else
+                rectmp = _.map(records.models, function(d) { return d.attributes;}) ;
+
+            var crossfilterData =  crossfilter(rectmp);
+
             var group = this.createDimensions(crossfilterData, null);
             var results = this.reduce(group, null,aggregatedFields, aggregationFunctions, null);
 
@@ -312,15 +349,23 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
 
                 _.each(tableCalc, function(f) {
                     var p;
-                    _.each(records, function(r) {
+                    _.each(rectmp, function(r) {
                         p = recline.Data.Aggregations.tableCalculations[f](self.attributes.aggregation.aggregatedFields, p, r, result[0]);
                     });
                 });
 
+            if(filtered) {
+                if(this.totals == null) { this.totals = {records: new my.RecordList(), fields: new my.FieldList() }}
 
+                    this.totals.fields.reset(fields, {renderer:recline.Data.Renderers}) ;
+                    this.totals.records.reset(result);
+            }   else   {
+                if(this.totals_unfiltered == null) { this.totals_unfiltered = {records: new my.RecordList(), fields: new my.FieldList() }}
 
-            this.totals.fields.reset(fields, {renderer:recline.Data.Renderers}) ;
-            this.totals.records.reset(result);
+                    this.totals_unfiltered.fields.reset(fields, {renderer:recline.Data.Renderers}) ;
+                    this.totals_unfiltered.records.reset(result);
+            }
+
 
         },
 
@@ -605,6 +650,7 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
                 return;
             }
 
+            self.clearFilteredTotals();
 
             this._store.query(actualQuery, this.toJSON())
                 .done(function (queryResult) {
@@ -647,13 +693,9 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
                 return _doc;
             });
 
-            if(this.attributes.totals) {
-                this.rebuildTotals(queryResult.hits, docs, self.fields);
-            }
+            self.clearFilteredTotals();
 
              self.records.reset(docs);
-
-
 
 
             if (queryResult.facets) {

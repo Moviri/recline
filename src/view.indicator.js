@@ -24,14 +24,32 @@ this.recline.View = this.recline.View || {};
 		format: 'd'
 	  },
 
-  template: '<div class="recline-indicator"> \
+  templateBase: '<div class="recline-indicator"> \
       <div class="panel indicator_{{viewId}}"style="display: block;"> \
         <div id="indicator_{{viewId}}"> \
-			<h3 class="centered">{{label}}</h3> \
-			<h1 class="orange centered">{{value}}</h1> \
+			<table class="condensed-table border-free-table"> \
+                <tr><td style="text-align: center;">{{label}}</td></tr>    \
+                <tr><td style="text-align: center;"><small>{{description}}</small></td></tr>    \
+                <tr><td style="text-align: center;"><strong>{{value}}</strong></td></tr>  \
+             </table>  \
 		</div>\
       </div> \
     </div> ',
+  templatePercentageCompare: '<div class="recline-indicator"> \
+      <div class="panel indicator_{{viewId}}"style="display: block;"> \
+        <div id="indicator_{{viewId}}"> \
+			 <table class="condensed-table border-free-table"> \
+                <tr><td style="text-align: center;">{{label}}</td></tr>    \
+                <tr><td style="text-align: center;"><small>{{description}}</small></td></tr>    \
+                <tr><td style="text-align: center;"><strong>{{value}}</strong></td></tr>  \
+                <tr><td style="text-align: center;"><small>% of total: {{comparePercentage}} ({{compareWithValue}})</small></td></tr>  \
+             </table>  \
+		</div>\
+      </div> \
+    </div> ',
+
+
+
 
   initialize: function(options) {
     var self = this;
@@ -39,35 +57,63 @@ this.recline.View = this.recline.View || {};
     this.el = $(this.el);
     _.bindAll(this, 'render');
       this.uid = options.id || ("" + new Date().getTime() + Math.floor(Math.random() * 10000)); // generating an unique id for the chart
-    this.model.bind('query:done', this.render);
 
+      this.options.state.kpi.dataset.bind('query:done', this.render);
+      if(this.options.state.compareWith)
+          this.options.state.compareWith.dataset.bind('query:done', this.render);
 
   },
 
     render: function() {
         var self = this;
-        var tmplData = this.model.toTemplateJSON();
+        var tmplData = {};
         tmplData["viewId"] = this.uid;
 		tmplData.label = this.options.state && this.options.state["label"];
-			
-		var format = this.options["format"] || this.defaults.format;
-		var applyFormatFunction = d3.format(format)
-		
-        if (this.model.records && this.model.records.length > 0)
-			tmplData["value"] = applyFormatFunction(this.model.records.models[0].attributes[this.options.state["series"]]);
-		else tmplData["value"] = "N/A"
 
-        var htmls = Mustache.render(this.template, tmplData);
+        var kpi     = self.options.state.kpi.dataset.getRecords(self.options.state.kpi.type);
+        var field   = self.options.state.kpi.dataset.getFields(self.options.state.kpi.type).get(self.options.state.kpi.field);
+        var kpiValue;
+
+        if(kpi.length > 0) {
+            kpiValue = kpi[0].getFieldValueUnrendered(field);
+            tmplData["value"] = kpi[0].getFieldValue(field);
+        }
+        else tmplData["value"] = "N/A"
+
+        var template = this.templateBase;
+
+        if(self.options.state.compareWith) {
+            var compareWithRecord     = self.options.state.compareWith.dataset.getRecords(self.options.state.compareWith.type);
+            var compareWithField   = self.options.state.kpi.dataset.getFields(self.options.state.kpi.type).get(self.options.state.kpi.field);
+            tmplData["compareWithValue"]  = compareWithRecord[0].getFieldValue(compareWithField);
+            var compareWithValue =  compareWithRecord[0].getFieldValueUnrendered(compareWithField);
+
+            var compareValue;
+            if(self.options.state.compareWith.compareType == "percentage") {
+                var tmpField = new recline.Model.Field({type: "number", format: "percentage"});
+
+                tmplData["comparePercentage"]  =  recline.Data.Renderers(kpiValue / compareWithValue * 100, tmpField);
+                template = this.templatePercentageCompare;
+            }
+        }
+
+
+        if(this.options.state.description)
+            tmplData["description"] = this.options.state.description;
+
+        if(this.options.state.labelColor)
+            tmplData["labelColor"] = this.options.state.labelColor;
+        if(this.options.state.descriptionColor)
+            tmplData["descriptionColor"] = this.options.state.descriptionColor;
+        if(this.options.state.textColor)
+            tmplData["textColor"] = this.options.state.textColor;
+
+        var htmls = Mustache.render(template, tmplData);
          $(this.el).html(htmls);
         this.$graph = this.el.find('.panel.indicator_' + tmplData["viewId"]);
         return this;
-    },
+    }
 
-    show: function() {
-  }
-
-
-  
 
 
 });

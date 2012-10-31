@@ -94,7 +94,7 @@ this.recline.Data = this.recline.Data || {};
         number: function(val, field, doc) {
             var format = field.get('format');
             if (format === 'percentage') {
-                return val + '%';
+                return parseFloat(val.toFixed(2)) + '%';
             } else if(format === "currency_euro") {
                 return "€ " + val;
             }
