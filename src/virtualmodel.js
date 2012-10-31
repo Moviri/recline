@@ -289,7 +289,7 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
 
         },
 
-        rebuildTotals: function(records, originalFields) {
+        rebuildTotals: function(rawResult, records, originalFields) {
             /*
                 totals: {
                     aggregationFunctions:["sum"],
@@ -297,15 +297,27 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
                     }
             */
             var self=this;
-            var aggregatedFields = this.attributes.totals.aggregatedFields;
-            var aggregationFunctions =  this.attributes.totals.aggregationFunctions;
+            var aggregatedFields = self.attributes.totals.aggregatedFields;
+            var aggregationFunctions =  self.attributes.totals.aggregationFunctions;
 
-            var crossfilterData = crossfilter(records.toJSON());
+            var crossfilterData = crossfilter(rawResult);
             var group = this.createDimensions(crossfilterData, null);
             var results = this.reduce(group, null,aggregatedFields, aggregationFunctions, null);
 
             var fields = self.buildFields(results.reducedResult, originalFields, {}, null, aggregationFunctions);
             var result = self.buildResult(results.reducedResult, originalFields, {}, null, aggregationFunctions, aggregatedFields, null);
+
+            // I need to apply table calculations
+            var tableCalc = recline.Data.Aggregations.checkTableCalculation(self.attributes.aggregation.aggregationFunctions, self.attributes.totals);
+
+                _.each(tableCalc, function(f) {
+                    var p;
+                    _.each(records, function(r) {
+                        p = recline.Data.Aggregations.tableCalculations[f](self.attributes.aggregation.aggregatedFields, p, r, result[0]);
+                    });
+                });
+
+
 
             this.totals.fields.reset(fields, {renderer:recline.Data.Renderers}) ;
             this.totals.records.reset(result);
@@ -635,14 +647,13 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
                 return _doc;
             });
 
-
-
-
-            self.records.reset(docs);
-
             if(this.attributes.totals) {
-                this.rebuildTotals(self.records, self.fields);
+                this.rebuildTotals(queryResult.hits, docs, self.fields);
             }
+
+             self.records.reset(docs);
+
+
 
 
             if (queryResult.facets) {

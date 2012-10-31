@@ -21,7 +21,8 @@ this.recline.Data = this.recline.Data || {};
                 return v;
             return Math.min(p, v);
         },
-        ratioToReport: function (p, v) {}
+        ratioToReport: function (p, v) {},
+        runningTotal: function (p, v) {}
     };
 
     my.Aggregations.initFunctions = {
@@ -29,7 +30,8 @@ this.recline.Data = this.recline.Data || {};
         avg           : function () {},
         max           : function () {},
         min           : function () {},
-        ratioToReport : function () {}
+        ratioToReport : function () {},
+        runningTotal  : function () {}
     };
 
     my.Aggregations.resultingDataType = {
@@ -37,7 +39,8 @@ this.recline.Data = this.recline.Data || {};
         avg           : function (original) { return "float"},
         max           : function (original) { return original},
         min           : function (original) { return original},
-        ratioToReport : function (original) { return original}
+        ratioToReport : function (original) { return original},
+        runningTotal  : function (original) { return original}
     },
 
     my.Aggregations.finalizeFunctions = {
@@ -81,22 +84,27 @@ this.recline.Data = this.recline.Data || {};
 
 
         },
-        max         : function () {},
-        min         : function () {},
-        ratioToReport         : function (resultData, aggregatedFields, partitionsFields) {
+        max                     : function () {},
+        min                     : function () {},
+        ratioToReport           : function () {},
+        runningTotal           : function () {}
+    };
 
-
-            resultData.ratioToReport = function(aggr){
-
-                return function(){
-
-                    var map = {};
-                    for(var o=0;o<aggr.length;o++){
-                        map[aggr[o]] = this.sum[aggr[o]] / this.count;
-                    }
-                    return map;
-                }
-            }(aggregatedFields);
+    my.Aggregations.tableCalculations = {
+        ratioToReport : function (aggregatedFields, p, r, totalRecords) {
+            _.each(aggregatedFields, function(f) {
+                if(totalRecords[f + "_sum_sum"] > 0)
+                    r.attributes[f + "_ratioToReport"]  = r.attributes[f + "_sum"] / totalRecords[f + "_sum_sum"];
+            });
+        },
+        runningTotal : function (aggregatedFields, p, r, totalRecords) {
+            _.each(aggregatedFields, function(f) {
+                if(p)
+                    r.attributes[f + "_runningTotal"]  =  r.attributes[f + "_sum"] + p.attributes[f + "_runningTotal"] ;
+                else
+                    r.attributes[f + "_runningTotal"] = r.attributes[f + "_sum"];
+            });
+            return r;
         }
     };
     
@@ -137,6 +145,23 @@ this.recline.Data = this.recline.Data || {};
                 });
             });
         });
+    };
+
+    my.Aggregations.checkTableCalculation = function(aggregationFunctions, totalsConfig) {
+      var tableCalc = _.intersection(aggregationFunctions, ["runningTotal", "ratioToReport"]);
+      if(tableCalc.length > 0) {
+          _.each(tableCalc, function(d) {
+             if(!_.intersection(totalsConfig.aggregationFunctions, my.Aggregations.tableCalculationDependencies[d]))
+                 throw "Data.Aggregation: unable to calculate " + d + ", totals aggregation function ["+ my.Aggregations.tableCalculationDependencies[d] + "] must be defined";
+          });
+      }
+
+        return tableCalc;
+    };
+
+    my.Aggregations.tableCalculationDependencies =  {
+        runningTotal: [],
+        ratioToReport: ["sum"]
     };
 
 })(this.recline.Data);
