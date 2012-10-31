@@ -1640,8 +1640,6 @@ if (typeof Slick === "undefined") {
     }
 
     function getViewportHeight() {
-//    	console.log($(container))
-//    	console.log("GetViewportHeight -> Container height: "+$(container).height());
       return parseFloat($.css($container[0], "height", true)) -
           parseFloat($.css($container[0], "paddingTop", true)) -
           parseFloat($.css($container[0], "paddingBottom", true)) -
@@ -1652,7 +1650,6 @@ if (typeof Slick === "undefined") {
 
     function resizeCanvas() {
       if (!initialized) { return; }
-//      console.log("Slick.Grid.js resizeCanvas");
       if (options.autoHeight) {
         viewportH = options.rowHeight * (getDataLength() + (options.enableAddRow ? 1 : 0));
       } else {
@@ -1993,8 +1990,6 @@ if (typeof Slick === "undefined") {
 
     function render() {
       if (!initialized) { return; }
-//      console.log("Slick.grid.js render")
-//      console.log("viewportH:"+viewportH)
       var visible = getVisibleRange();
       var rendered = getRenderedRange();
       // remove rows no longer in the viewport
@@ -2392,7 +2387,7 @@ if (typeof Slick === "undefined") {
     }
 
 	function handleRowMouseEnter(e) {
-	  console.log(e.currentTarget.attributes.rowNum)
+	  //console.log(e.currentTarget.attributes.rowNum)
 	  if (options.trackMouseHover)
 		trigger(self.onRowHoverIn, {row:e.currentTarget.attributes.rowNum.value}, e);
     }

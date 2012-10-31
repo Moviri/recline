@@ -268,7 +268,7 @@ my.SlickGrid = Backbone.View.extend({
 
       //
     this.grid.onRowHoverIn.subscribe(function(e, args){
-		console.log("HoverIn "+args.row)
+		//console.log("HoverIn "+args.row)
 		var selectedRecords = [];
 		selectedRecords.push(self.model.records.models[args.row]);
 		var actions = self.options.actions;
@@ -293,19 +293,21 @@ my.SlickGrid = Backbone.View.extend({
     	if (self.model.records.length > 0)
     	{
     		var container = self.el.parent();
-            if (typeof container != "undefined" && container != null 
-            		&& container[0].style && container[0].style.height
-            		&& container[0].style.height.indexOf("%") > 0) 
+            if (typeof container != "undefined" && container != null && 
+            		((container[0].style && container[0].style.height && container[0].style.height.indexOf("%") > 0)
+            		|| container.hasClass("h100") ) )
         	{
-//        		console.log("Resizing container height from "+self.el.height()+" to "+self.el.parent().height())
-	        	// force container height to element height 
-	        	self.el.height(self.el.parent().height());
+        		//console.log("Resizing container height from "+self.el.height()+" to "+self.el.parent()[0].offsetHeight)
+	        	
+            	// force container height to element height 
+	        	self.el.height(self.el.parent()[0].offsetHeight);
 	        	self.grid.invalidateAllRows();
 	        	self.grid.resizeCanvas();
+	        	self.grid.render();
         	}    		
     	}
     }
-    //resizeSlickGrid();
+    resizeSlickGrid();
     nv.utils.windowResize(resizeSlickGrid);
     
     return this;
