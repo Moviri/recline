@@ -1,6 +1,7 @@
 var dataset = new recline.Model.Dataset({
     records: [
         {state:'Alabama', abbr: 'Ala.', postalcode: 'AL', value: 869},
+        {state:'Alabama', abbr: 'Ala.', postalcode: 'AL', value: 1056},
         {state:'Alaska', abbr: 'Alaska', postalcode: 'AK', value: 279},
         {state:'American Samoa', abbr: ' ', postalcode: 'AS', value: 284},
         {state:'Arizona', abbr: 'Ariz.', postalcode: 'AZ', value: 577},
