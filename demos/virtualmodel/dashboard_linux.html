@@ -241,7 +241,7 @@ root: ../../
 														srcField : "age",
 														filter : "filter_age"
 													}],
-													event : ["selection"] 
+													event : ["hover"] 
 												}]
 											}); 
             grid.visible = true;
@@ -407,14 +407,14 @@ root: ../../
 
              var filter5 = new recline.View.GenericFilter({
                  sourceDataset: virtualdatasetAge,
-                 state: {useHorizontalLayout: true, title:"Horiz toolbar", description: "Select age/gender"},
+                 state: {useHorizontalLayout: true, title:"Horiz toolbar", description: "Select age/gender", showBackground: true, backgroundColor: "#ddd"},
  				sourceFields: [
  								{field: 'age', controlType: 'multibutton', fieldType: 'number', useFieldLabel: false},
- 								//{field: 'age', controlType: 'radiobuttons', fieldType: 'number', useFieldLabel: false},
- 								{field: 'age', controlType: 'dropdown_styled', fieldType: 'number', useFieldLabel: false},
+ 								{field: 'age', controlType: 'radiobuttons', fieldType: 'number', useFieldLabel: false},
+ 								{field: 'age', controlType: 'dropdown_styled', fieldType: 'number', useFieldLabel: false, showLabelInsideFilter: true},
  								{field: 'age', controlType: 'listbox_styled', fieldType: 'number', useFieldLabel: false},
- 								{field: 'age', controlType: 'range_slider', fieldType: 'number', useFieldLabel: false}
- 								//{field: 'daydate', controlType: 'dropdown_date_range', fieldType: 'date', useFieldLabel: false}
+ 								//{field: 'age', controlType: 'range_slider', fieldType: 'number', useFieldLabel: false}
+ 								{field: 'daydate', controlType: 'dropdown_date_range', fieldType: 'date', useFieldLabel: false}
  							],
  				useFilteredData : false,
                 actions: [{

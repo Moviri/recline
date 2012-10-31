@@ -4879,6 +4879,22 @@ a.badge:hover {
 .affix {
   position: fixed;
 }
+.normalText {
+  background-color: #90a38f;
+  color: #013435;
+}
+.dimmedText {
+  background-color: #90a38f;
+  color: #bbbbbb;
+}
+.normalDropDownText {
+  background-color: #f5f3dc;
+  color: #013435;
+}
+.dimmedDropDownText {
+  background-color: #f5f3dc;
+  color: #bbbbbb;
+}
 .h5 {
   height: 5%;
 }
@@ -5981,6 +5997,22 @@ div.filter .table-hover tbody tr.info:hover td {
 }
 .affix {
   position: fixed;
+}
+.normalText {
+  background-color: #90a38f;
+  color: #013435;
+}
+.dimmedText {
+  background-color: #90a38f;
+  color: #bbbbbb;
+}
+.normalDropDownText {
+  background-color: #f5f3dc;
+  color: #013435;
+}
+.dimmedDropDownText {
+  background-color: #f5f3dc;
+  color: #bbbbbb;
 }
 .h5 {
   height: 5%;
