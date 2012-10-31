@@ -21,7 +21,7 @@ this.recline.View = this.recline.View || {};
 // generate the element itself (you can then append view.el to the DOM.
     my.Indicator = Backbone.View.extend({
 	  defaults: {
-		format: 'd',
+		format: 'd'
 	  },
 
   template: '<div class="recline-indicator"> \
@@ -38,9 +38,9 @@ this.recline.View = this.recline.View || {};
 
     this.el = $(this.el);
     _.bindAll(this, 'render');
-
+      this.uid = options.id || ("" + new Date().getTime() + Math.floor(Math.random() * 10000)); // generating an unique id for the chart
     this.model.bind('query:done', this.render);
-    this.uid = options.id || ("" + new Date().getTime() + Math.floor(Math.random() * 10000)); // generating an unique id for the chart
+
 
   },
 
@@ -48,13 +48,13 @@ this.recline.View = this.recline.View || {};
         var self = this;
         var tmplData = this.model.toTemplateJSON();
         tmplData["viewId"] = this.uid;
-		tmplData.label = this.state.attributes["label"];
+		tmplData.label = this.options.state && this.options.state["label"];
 			
-		var format = this.state.attributes.format || this.defaults.format;
+		var format = this.options["format"] || this.defaults.format;
 		var applyFormatFunction = d3.format(format)
 		
         if (this.model.records && this.model.records.length > 0)
-			tmplData["value"] = applyFormatFunction(this.model.records.models[0].attributes[this.state.attributes["series"]]);
+			tmplData["value"] = applyFormatFunction(this.model.records.models[0].attributes[this.options.state["series"]]);
 		else tmplData["value"] = "N/A"
 
         var htmls = Mustache.render(this.template, tmplData);

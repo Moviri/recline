@@ -20,8 +20,14 @@ my.SlickGrid = Backbone.View.extend({
     this.el.addClass('recline-slickgrid');
     _.bindAll(this, 'render');
     _.bindAll(this, 'onSelectionChanged');
-	
-    this.model.records.bind('add', this.render);
+
+      this.resultType = "filtered";
+      if(self.options.resultType !== null)
+          this.resultType = self.options.resultType;
+
+
+
+      this.model.records.bind('add', this.render);
     this.model.records.bind('reset', this.render);
     this.model.records.bind('remove', this.render);
 
@@ -64,14 +70,14 @@ my.SlickGrid = Backbone.View.extend({
     // plus this way we distinguish between rendering/formatting and computed value (so e.g. sort still works ...)
     // row = row index, cell = cell index, value = value, columnDef = column definition, dataContext = full row values
     var formatter = function(row, cell, value, columnDef, dataContext) {
-      var field = self.model.fields.get(columnDef.id);
+        var field = self.model.getFields(self.resultType).get(columnDef.id);
       if (field.renderer) {
         return field.renderer(value, field, dataContext);
       } else {
         return value;
       }
     }
-    _.each(this.model.fields.toJSON(),function(field){
+    _.each(self.model.getFields(self.resultType).toJSON(),function(field){
       var column = {
         id:field['id'],
         name:field['label'],
@@ -88,7 +94,7 @@ my.SlickGrid = Backbone.View.extend({
 
       columns.push(column);
     });
-	if (options.useInnerChart == true && self.model.records.length > 0)
+	if (options.useInnerChart == true && self.model.getRecords(self.resultType).length > 0)
 	{
 		columns.push({
         name: self.state.get('innerChartHeader'),
@@ -114,7 +120,7 @@ my.SlickGrid = Backbone.View.extend({
 		visibleColumns = columns.filter(function(column) {
 		  return _.indexOf(self.state.get('visibleColumns'), column.id) >= 0;
 		});
-		if (self.state.get('useInnerChart') == true && self.model.records.length > 0)
+		if (self.state.get('useInnerChart') == true && self.model.getRecords(self.resultType).length > 0)
 			visibleColumns.push(columns[columns.length - 1]); // innerChart field is last one added
 	}
 	else
@@ -163,11 +169,13 @@ my.SlickGrid = Backbone.View.extend({
 	}
 	var innerChartSerie1Name = self.state.get('innerChartSerie1');
 	var innerChartSerie2Name = self.state.get('innerChartSerie2');
-	if (self.state.get('useInnerChart') == true && innerChartSerie1Name != null && innerChartSerie2Name != null && this.model.records.length > 0)
+
+
+    if (self.state.get('useInnerChart') == true && innerChartSerie1Name != null && innerChartSerie2Name != null && self.model.getRecords(self.resultType).length > 0)
 	{
-		this.model.records.each(function(doc){
+        _.each(self.model.getRecords(self.resultType), function(doc){
 		  var row = {};
-		  self.model.fields.each(function(field){
+            _.each(self.model.getFields(self.resultType).models, function(field){
 			row[field.id] = doc.getFieldValue(field);
 			if (field.id == innerChartSerie1Name || field.id == innerChartSerie2Name)
 			{
@@ -183,13 +191,13 @@ my.SlickGrid = Backbone.View.extend({
     var data = [];
 	var rowsToSelect = [];
 	var jj = 0;
-    this.model.records.each(function(doc){
+      _.each(self.model.getRecords(self.resultType), function(doc){
       if (doc.is_selected)
 		rowsToSelect.push(jj);
 		
 	  var row = {schema_colors: []};
 
-      self.model.fields.each(function(field){
+        _.each(self.model.getFields(self.resultType).models, function(field){
         row[field.id] = doc.getFieldValue(field);
         if (innerChartSerie1Name != null && field.id == innerChartSerie1Name)
     		row.schema_colors[0] = doc.getFieldColor(field);
@@ -290,7 +298,7 @@ my.SlickGrid = Backbone.View.extend({
 
     function resizeSlickGrid()
     {
-    	if (self.model.records.length > 0)
+    	if (self.model.getRecords(self.resultType).length > 0)
     	{
     		var container = self.el.parent();
             if (typeof container != "undefined" && container != null && 

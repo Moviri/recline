@@ -549,8 +549,8 @@ this.recline.View = this.recline.View || {};
                 selectionActive = true;
 
             var resultType = "filtered";
-            if (self.options.useFilteredData !== null && self.options.useFilteredData === false)
-                resultType = "original";
+            if(self.options.resultType !== null)
+                resultType = self.options.resultType;
 
             var records = self.model.getRecords(resultType);  //self.model.records.models;
 

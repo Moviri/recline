@@ -314,8 +314,6 @@ root: ../../
                 }
             });
             $('#indicator1').append(indicator1.el);
-            indicator1.render();
-
 
             var indicator2 = new recline.View.Indicator({
                 model: virtualdatasetTotal,
@@ -326,7 +324,6 @@ root: ../../
                 }
             });
             $('#indicator2').append(indicator2.el);
-            indicator2.render();
 
 			var filter = new recline.View.GenericFilter({
                 sourceDataset: dataset,

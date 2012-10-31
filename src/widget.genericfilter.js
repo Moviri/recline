@@ -453,10 +453,10 @@ my.GenericFilter = Backbone.View.extend({
 
       if (tmplData.filters.length > 0)
 		tmplData.filters[tmplData.filters.length -1].hrVisible = 'none'
-	
-	var resultType = "filtered";
-	if(self.options.useFilteredData !== null && self.options.useFilteredData === false)
-		resultType = "original";
+
+      var resultType = "filtered";
+      if(self.options.resultType !== null)
+          resultType = self.options.resultType;
 
     tmplData.fields = this._sourceDataset.fields.toJSON();
 	tmplData.records = _.pluck(this._sourceDataset.getRecords(resultType), "attributes");
