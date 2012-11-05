@@ -94,15 +94,15 @@ this.recline.Data = this.recline.Data || {};
         ratioToReport : function (aggregatedFields, p, r, totalRecords) {
             _.each(aggregatedFields, function(f) {
                 if(totalRecords[f + "_sum_sum"] > 0)
-                    r.attributes[f + "_ratioToReport"]  = r.attributes[f + "_sum"] / totalRecords[f + "_sum_sum"];
+                    r[f + "_ratioToReport"]  = r[f + "_sum"] / totalRecords[f + "_sum_sum"];
             });
         },
         runningTotal : function (aggregatedFields, p, r, totalRecords) {
             _.each(aggregatedFields, function(f) {
                 if(p)
-                    r.attributes[f + "_runningTotal"]  =  r.attributes[f + "_sum"] + p.attributes[f + "_runningTotal"] ;
+                    r[f + "_runningTotal"]  =  r[f + "_sum"] + p[f + "_runningTotal"] ;
                 else
-                    r.attributes[f + "_runningTotal"] = r.attributes[f + "_sum"];
+                    r[f + "_runningTotal"] = r[f + "_sum"];
             });
             return r;
         }
