@@ -60,6 +60,7 @@ my.SlickGrid = Backbone.View.extend({
       useStripedStyle: this.state.get('useStripedStyle'),
       useCondensedStyle: this.state.get('useCondensedStyle'),
       useHoverStyle: this.state.get('useHoverStyle'),
+      showLineNumbers: this.state.get('showLineNumbers'),
 	};
 
     // We need all columns, even the hidden ones, to show on the column picker
@@ -75,6 +76,19 @@ my.SlickGrid = Backbone.View.extend({
         return value;
       }
     }
+    if (options.showLineNumbers == true && self.model.getRecords(self.resultType).length > 0)
+	{
+        var column = {
+                id:'lineNumberField',
+                name:'#',
+                field:'lineNumberField',
+                sortable: true,
+                maxWidth: 80,
+                formatter: Slick.Formatters.FixedCellFormatter
+              };
+    	columns.push(column); 
+	}
+    
     _.each(self.model.getFields(self.resultType).toJSON(),function(field){
       var column = {
         id:field['id'],
@@ -113,10 +127,11 @@ my.SlickGrid = Backbone.View.extend({
 		});
 	}
 	var visibleColumns = [];
+	
 	if (self.state.get('visibleColumns').length > 0)
 	{
 		visibleColumns = columns.filter(function(column) {
-		  return _.indexOf(self.state.get('visibleColumns'), column.id) >= 0;
+		  return (_.indexOf(self.state.get('visibleColumns'), column.id) >= 0 || (options.showLineNumbers == true && column.id == 'lineNumberField'));
 		});
 		if (self.state.get('useInnerChart') == true && self.model.getRecords(self.resultType).length > 0)
 			visibleColumns.push(columns[columns.length - 1]); // innerChart field is last one added
@@ -128,7 +143,6 @@ my.SlickGrid = Backbone.View.extend({
 		  return _.indexOf(self.state.get('hiddenColumns'), column.id) == -1;
 		});
 	}
-
     // Order them if there is ordering info on the state
     if (this.state.get('columnsOrder')){
       visibleColumns = visibleColumns.sort(function(a,b){
@@ -168,7 +182,6 @@ my.SlickGrid = Backbone.View.extend({
 	var innerChartSerie1Name = self.state.get('innerChartSerie1');
 	var innerChartSerie2Name = self.state.get('innerChartSerie2');
 
-
     if (self.state.get('useInnerChart') == true && innerChartSerie1Name != null && innerChartSerie2Name != null && self.model.getRecords(self.resultType).length > 0)
 	{
         _.each(self.model.getRecords(self.resultType), function(doc){
@@ -206,7 +219,10 @@ my.SlickGrid = Backbone.View.extend({
 	  
 	  if (self.state.get('useInnerChart') == true && innerChartSerie1Name != null && innerChartSerie2Name != null) 
 		row['innerChart'] = [ row[innerChartSerie1Name], row[innerChartSerie2Name], max ];
-		
+
+	  if (options.showLineNumbers == true)
+	    row['lineNumberField'] = jj;
+
       data.push(row);
 		jj++;
     });

@@ -123,7 +123,7 @@ classes should alter those!
   outline: 0;
 }
 
-.slick-row.ui-widget-content, .slick-row.ui-state-active {
+.slick-row.ui-widget-content, .slick-row.ui-state-active, .slick-row.widget-content {
   position: absolute;
   border: 0px;
   width: 100%;

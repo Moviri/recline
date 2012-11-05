@@ -306,8 +306,9 @@ if (typeof Slick === "undefined") {
 
         $container
             .bind("resize.slickgrid", resizeCanvas);
-        $viewport
-            .bind("scroll", handleScroll);
+        
+    	$viewport.bind("scroll", handleScroll);
+        
         $headerScroller
             .bind("contextmenu", handleHeaderContextMenu)
             .bind("click", handleHeaderClick)
@@ -613,9 +614,13 @@ if (typeof Slick === "undefined") {
 
       for (var i = 0; i < columns.length; i++) {
         var m = columns[i];
+        
+        var dimmed = '';
+        if (i == 0 && m.id == 'lineNumberField')
+        	dimmed = " dimmed"
 
         var header = $("<div class='ui-state-default slick-header-column s-th' id='" + uid + m.id + "' />")
-            .html("<span class='slick-column-name'>" + m.name + "</span>")
+            .html("<span class='slick-column-name"+dimmed+"'>" + m.name + "</span>")
             .width(m.width - headerColumnWidthDiff)
             .attr("title", m.toolTip || "")
             .data("column", m)
@@ -1473,7 +1478,7 @@ if (typeof Slick === "undefined") {
       if (metadata && metadata.cssClasses) {
         rowCss += " " + metadata.cssClasses;
       }
-      stringArray.push("<div class='"/*ui-widget-content "*/ + rowCss + "' style='top:" + (options.rowHeight * row - offset) + "px' rowNum='"+row+"'>");
+      stringArray.push("<div class='widget-content "  + rowCss + "' style='top:" + (options.rowHeight * row - offset) + "px' rowNum='"+row+"'>");
 
       var colspan, m;
       for (var i = 0, ii = columns.length; i < ii; i++) {

@@ -14,10 +14,19 @@
         "YesNo": YesNoFormatter,
         "Checkmark": CheckmarkFormatter,
         "TwinBarFormatter": TwinBarFormatter,
+        "FixedCellFormatter": FixedCellFormatter,
         "DateFormatter": DateFormatter
       }
     }
   });
+  
+  function FixedCellFormatter(row, cell, value, columnDef, dataContext) {
+	var text = value;
+    if (value == null || value === "")
+    	text = "-";
+
+    return "<span class='dimmed'>"+text+"</span>";
+  }  
 
   function PercentCompleteFormatter(row, cell, value, columnDef, dataContext) {
     if (value == null || value === "") {
