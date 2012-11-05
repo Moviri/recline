@@ -24,6 +24,10 @@ root: ../../
 
         <table>
             <tr>
+                <td>Current Filters</td>
+                <td> <div id="currentfilters"></div></td>
+            </tr>
+            <tr>
                 <td>State</td>
                 <td><a id="link" href="#">link</a></td>
             </tr>
@@ -223,9 +227,6 @@ dataset.queryState.bind('selection:change', function () {
     $("#link").attr("href", window.location.origin + window.location.pathname + "?" + recline.Data.StateManagement.getQueryString([dataset]));
 });
 
-//dataset.queryState.bind('change',                  function() { alert("a"); });
-//dataset.queryState.bind('selection:change',        function() { alert("a"); });
-
 
 var action1 = new recline.Action({
     filters:{
@@ -237,9 +238,12 @@ var action1 = new recline.Action({
         filter_age_term:{type:"term", field:"age", fieldType:"integer"}
     },
     models:[
-        {model:dataset, filters:["filter_date_term", "filter_date_list", "filter_date_range", "filter_age_list", "filter_age_range", "filter_age_term"]}
+        {
+            model:dataset,
+            filters:["filter_date_term", "filter_date_list", "filter_date_range", "filter_age_list", "filter_age_range", "filter_age_term"]
+        }
     ],
-    type:["selection"]
+    type:["filter"]
 });
 
 
@@ -247,7 +251,8 @@ var $el = $('#grid1');
 var grid1 = new recline.View.SlickGrid({
     model:dataset,
     el:$el,
-    state:{  fitColumns:true,
+    state:{
+        fitColumns:true,
         useHoverStyle:true,
         useStripedStyle:true,
         useCondensedStyle:true
@@ -264,6 +269,13 @@ grid1.render();
  facet.render();
  $el.append(facet.el);
  */
+
+var $el = $('#currentfilters');
+var currentfilters = new recline.View.CurrentFilter({
+    models:[dataset],
+    el:$el
+});
+grid1.render();
 
 var filterhorizontal;
 
