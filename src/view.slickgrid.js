@@ -244,7 +244,7 @@ my.SlickGrid = Backbone.View.extend({
     if (sortInfo){
       var column = sortInfo[0].field;
       var sortAsc = !(sortInfo[0].order == 'desc');
-      this.grid.setSortColumn(column, sortAsc);
+      this.grid.sort(column, sortAsc);
     }
 
     this.grid.onSort.subscribe(function(e, args){

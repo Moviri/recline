@@ -214,7 +214,7 @@ my.GenericFilter = Backbone.View.extend({
         <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
             <legend style="display:{{useLegend}}">{{label}} \
     		</legend>  \
-			<select class="chzn-select-deselect data-control-id" data-placeholder="Select desired {{label}}"> \
+			<select class="chzn-select-deselect data-control-id" data-placeholder="{{label}}"> \
     		<option></option> \
             {{#values}} \
             <option value="{{val}}" {{selected}}>{{val}}</option> \
@@ -283,7 +283,7 @@ my.GenericFilter = Backbone.View.extend({
         <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
             <legend style="display:{{useLegend}}">{{label}} \
     		</legend>  \
-			<select class="chzn-select-deselect data-control-id" multiple data-placeholder="Select desired {{label}}"> \
+			<select class="chzn-select-deselect data-control-id" multiple data-placeholder="{{label}}"> \
             {{#values}} \
             <option value="{{val}}" {{selected}}>{{val}}</option> \
             {{/values}} \
@@ -388,20 +388,7 @@ my.GenericFilter = Backbone.View.extend({
     //this._sourceDataset.fields.bind('all', this.render);
 
 	this.sourceFields = args.sourceFields;
-	if (args.state)
-	{
-		this.filterDialogTitle = args.state.title;
-		this.filterDialogDescription = args.state.description;
-		this.useHorizontalLayout = args.state.useHorizontalLayout;
-		this.showBackground = args.state.showBackground;
-		if (this.showBackground == false)
-		{
-			$(this).removeClass("well");
-			$(this.el).removeClass("well");
-		}
-		
-		this.backgroundColor = args.state.backgroundColor;
-	}
+
 	this.activeFilters = new Array();
 
     this._actions = args.actions;
@@ -432,6 +419,21 @@ my.GenericFilter = Backbone.View.extend({
 	  return false;
   },
   render: function() {
+      if (this.options.state)
+      {
+          this.filterDialogTitle = this.options.state.title;
+          this.filterDialogDescription = this.options.state.description;
+          this.useHorizontalLayout = this.options.state.useHorizontalLayout;
+          this.showBackground = this.options.state.showBackground;
+          if (this.showBackground == false)
+          {
+              $(this).removeClass("well");
+              $(this.el).removeClass("well");
+          }
+
+          this.backgroundColor = this.options.state.backgroundColor;
+      }
+
     var self = this;
 	var tmplData = {filters : this.activeFilters}; 
 	_.each(tmplData.filters , function(flt) { 
