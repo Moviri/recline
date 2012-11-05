@@ -227,6 +227,7 @@ root: ../../
   													useHoverStyle: true,
   													useStripedStyle: true,
   													useCondensedStyle: true,
+  													showLineNumbers: true,
 													visibleColumns: ['totalviewed_sum', 'price_sum_sum', 'age', 'inner_chart'],
 													columnsOrder: ['age', 'totalviewed_sum', 'price_sum_sum', 'innerChart'],
  													useInnerChart:true, 
@@ -241,7 +242,7 @@ root: ../../
 														srcField : "age",
 														filter : "filter_age"
 													}],
-													event : ["hover"] 
+													event : ["selection"] 
 												}]
 											}); 
             grid.visible = true;

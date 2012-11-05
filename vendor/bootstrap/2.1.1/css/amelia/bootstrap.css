@@ -4883,6 +4883,9 @@ a.badge:hover {
   background-color: #003f4d;
   color: rgba(255, 255, 255, 0.9);
 }
+.dimmed {
+  color: #aaaaaa;
+}
 .dimmedText {
   background-color: #003f4d;
   color: #aaaaaa;
@@ -6001,6 +6004,9 @@ div.filter .table-hover tbody tr.info:hover td {
 .normalText {
   background-color: #003f4d;
   color: rgba(255, 255, 255, 0.9);
+}
+.dimmed {
+  color: #aaaaaa;
 }
 .dimmedText {
   background-color: #003f4d;
