@@ -72,11 +72,18 @@ root: ../../
 
 
 var colorSchema = new recline.Data.ColorSchema({
-    type: "scaleWithDataMinMax",
-    colors: ['#F7E1C5', '#6A000B']
+    type: "fixedLimits",
+    colors: ['red', 'black'],
+    limits: [5000, 10000, 30000]
 });
 
 colorSchema.setDataset(dataset, "value");
+
+var shapeSchema = new recline.Data.ShapeSchema({
+    type: "fixedLimits",
+    shapes:['circle'],
+    limits: [5000]
+});
 
 vdataset = new recline.Model.VirtualDataset({
     dataset:dataset,
@@ -90,6 +97,8 @@ vdataset = new recline.Model.VirtualDataset({
         aggregatedFields:       ["value_sum"]
     }
 });
+
+shapeSchema.setDataset(vdataset, "value_sum_sum", "totals");
 
 var action1 = new recline.Action({
     filters: {

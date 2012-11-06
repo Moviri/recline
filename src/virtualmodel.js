@@ -296,6 +296,7 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
 
             this._store = new recline.Backend.Memory.Store(result, fields);
 
+            recline.Data.FieldsUtility.setFieldsAttributes(fields, self);
             this.fields.reset(fields, {renderer:recline.Data.Renderers});
             this.clearUnfilteredTotals();
 
@@ -353,6 +354,8 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
                         p = recline.Data.Aggregations.tableCalculations[f](self.attributes.aggregation.aggregatedFields, p, r, result[0]);
                     });
                 });
+
+            recline.Data.FieldsUtility.setFieldsAttributes(fields, self);
 
             if(filtered) {
                 if(this.totals == null) { this.totals = {records: new my.RecordList(), fields: new my.FieldList() }}
@@ -549,7 +552,7 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
                         type:newType,
                         is_partitioned:false,
                         colorSchema:originalFieldAttributes.colorSchema,
-                        colorSchema:originalFieldAttributes.shapeSchema,
+                        shapeSchema:originalFieldAttributes.shapeSchema,
                         originalField:x,
                         aggregationFunction:aggregationFunctions[j]
                     });
@@ -607,28 +610,6 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
                 }
             }
 
-
-            // if labels are declared in dataset properties merge it;
-            if (self.attributes.fieldLabels) {
-                _.each(this.attributes.fieldLabels, function (d) {
-                    var field = _.find(fields, function (f) {
-                        return d.id === f.id
-                    });
-                    if (field != null)
-                        field.label = d.label;
-                });
-            }
-
-            // if format is declared in dataset properties merge it;
-            if (self.attributes.fieldsFormat) {
-                _.each(this.attributes.fieldsFormat, function (d) {
-                    var field = _.find(fields, function (f) {
-                        return d.id === f.id
-                    });
-                    if (field != null)
-                        field.format = d.format;
-                })
-            }
 
             return fields;
         },
@@ -693,9 +674,8 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
                 return _doc;
             });
 
-            self.clearFilteredTotals();
-
-             self.records.reset(docs);
+                self.clearFilteredTotals();
+                self.records.reset(docs);
 
 
             if (queryResult.facets) {
@@ -711,6 +691,29 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
             }
 
 
+        },
+
+
+        setColorSchema:function (type) {
+            var self = this;
+            _.each(self.attributes.colorSchema, function (d) {
+                var field = _.find(self.getFields(type).models, function (f) {
+                    return d.field === f.id
+                });
+                if (field != null)
+                    field.attributes.colorSchema = d.schema;
+            })
+        },
+
+        setShapeSchema:function (type) {
+            var self = this;
+            _.each(self.attributes.shapeSchema, function (d) {
+                var field = _.find(self.getFields(type).models, function (f) {
+                    return d.field === f.id
+                });
+                if (field != null)
+                    field.attributes.shapeSchema = d.schema;
+            })
         },
 
         addColorsToTerms:function (field, terms) {
@@ -787,8 +790,8 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
 
         },
 
-        isFieldPartitioned:function (fieldName) {
-            return  this.fields.get(fieldName).attributes.aggregationFunction
+        isFieldPartitioned:function (fieldName, type) {
+            return  this.getFields(type).get(fieldName).attributes.aggregationFunction
                 && this.attributes.aggregation.partitions;
         },
 

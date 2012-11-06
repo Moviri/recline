@@ -1,4 +1,4 @@
-// must have a div with class="ex-1"
+r// must have a div with class="ex-1"
 var $el = $('.ex-2');
 
 // query with text 'UK' - this will attempt to match any field for UK

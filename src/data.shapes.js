@@ -34,15 +34,15 @@ this.recline.Data.ShapeSchema = this.recline.Data.ShapeSchema || {};
         },
 
 
-        setDataset: function(ds, field) {
+        setDataset: function(ds, field, type) {
             var self=this;
-            self.attributes.dataset = {dataset: ds, field: field};
+            self.attributes.dataset = {dataset: ds, field: field, type: type};
             if(!ds.attributes["shapeSchema"])
                 ds.attributes["shapeSchema"] = [];
 
             ds.attributes["shapeSchema"].push({schema:self, field: field});
 
-            ds.setShapeSchema();
+            ds.setShapeSchema(type);
 
             self.bindToDataset();
         },
@@ -65,22 +65,56 @@ this.recline.Data.ShapeSchema = this.recline.Data.ShapeSchema || {};
         },
 
 
-        getShapeFor: function(fieldValue) {
+        getShapeNameFor: function(fieldValue) {
             var self=this;
             if(this.schema == null)
-                throw "data.shape.js: shapechema not yet initialized, datasource not fetched?"
+                throw "data.shape.js: shape schema not yet initialized, datasource not fetched?"
 
 
-            return  this.schema[fieldValue];
+            return  self._shapeName(fieldValue);
         },
+
+
+        getShapeFor: function(fieldValue, fieldColor, isSVG, isNode) {
+            var self=this;
+            if(this.schema == null)
+                throw "data.shape.js: shape schema not yet initialized, datasource not fetched?"
+
+            var shape = recline.Template.Shapes[this._shapeName(fieldValue)];
+            if(shape == null)
+                throw "data.shape.js: shape [" +  this._shapeName(fieldValue) + "] not defined in template.shapes";
+            return  shape(fieldColor, isNode, isSVG);
+        },
+
+        _shapeName: function(fieldValue) {
+            var self=this;
+
+            // find the correct shape, limits must be ordered
+            if(self.attributes.type && this.attributes.type == "fixedLimits") {
+                var shape = self.attributes.shapes[0];
+
+
+                for(var i=1;i<this.attributes.limits.length;i++) {
+                    if(fieldValue >= this.attributes.limits[i-1]
+                        && fieldValue < this.attributes.limits[i]) {
+                        shape = self.attributes.shapes[i];
+                        break;
+                    }
+                }
+
+                return shape;
+            } else
+                return self.schema[fieldValue];
+        },
+
 
         getRecordsArray: function(dataset) {
             var self=this;
             var ret = [];
 
-            if(dataset.dataset.isFieldPartitioned(dataset.field))   {
+            if(dataset.dataset.isFieldPartitioned(dataset.field, dataset.type))   {
                 var fields = dataset.dataset.getPartitionedFields(dataset.field);
-            _.each(dataset.dataset.records.models, function(d) {
+            _.each(dataset.dataset.getRecords(dataset.type), function(d) {
                 _.each(fields, function (field) {
                     ret.push(d.attributes[field.id]);
                 });
@@ -88,7 +122,7 @@ this.recline.Data.ShapeSchema = this.recline.Data.ShapeSchema || {};
             }
             else{
                 var  fields = [dataset.field];;
-                _.each(dataset.dataset.records.models, function(d) {
+                _.each(dataset.dataset.getRecords(dataset.type), function(d) {
                     _.each(fields, function (field) {
                         ret.push(d.attributes[field]);
                     });

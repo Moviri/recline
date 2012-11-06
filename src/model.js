@@ -82,7 +82,7 @@ this.recline.Model = this.recline.Model || {};
                 self.set(results.metadata);
 
 
-                self.setFieldsAttributes(out.fields);
+                recline.Data.FieldsUtility.setFieldsAttributes(out.fields, self);
                 self.fields.reset(out.fields, {renderer:recline.Data.Renderers});
 
                 self.query()
@@ -227,57 +227,6 @@ this.recline.Model = this.recline.Model || {};
 
         },
 
-        setFieldsAttributes:function (fields) {
-            var self = this;
-
-            // if labels are declared in dataset properties merge it;
-            if (self.attributes.fieldLabels) {
-                for (var i = 0; i < fields.length; i++) {
-                    var tmp = _.find(self.attributes.fieldLabels, function (x) {
-                        return x.id == fields[i].id;
-                    });
-                    if (tmp != null)
-                        fields[i].label = tmp.label;
-
-                }
-
-            }
-
-            // if format is desclared is updated
-            if (self.attributes.fieldsFormat) {
-                // if format is declared in dataset properties merge it;
-                _.each(self.attributes.fieldsFormat, function (d) {
-                    var field = _.find(fields, function (f) {
-                        return d.id === f.id
-                    });
-                    if (field != null)
-                        field.format = d.format;
-                })
-            }
-
-
-            // assignment of color schema to fields
-            if (self.attributes.colorSchema) {
-                _.each(self.attributes.colorSchema, function (d) {
-                    var field = _.find(fields, function (f) {
-                        return d.field === f.id
-                    });
-                    if (field != null)
-                        field.colorSchema = d.schema;
-                })
-            }
-
-            // assignment of shapes schema to fields
-            if (self.attributes.shapeSchema) {
-                _.each(self.attributes.shapeSchema, function (d) {
-                    var field = _.find(fields, function (f) {
-                        return d.field === f.id
-                    });
-                    if (field != null)
-                        field.shapeSchema = d.schema;
-                })
-            }
-        },
 
 
         // ### query
@@ -510,16 +459,33 @@ this.recline.Model = this.recline.Model || {};
 
         },
 
-        getFieldShape:function (field) {
+        getFieldShapeName:function (field) {
             if (!field.attributes.shapeSchema)
                 return null;
 
             if (field.attributes.is_partitioned) {
-                return field.attributes.shapeSchema.getShapeFor(field.attributes.partitionValue);
+                return field.attributes.shapeSchema.getShapeNameFor(field.attributes.partitionValue);
             }
             else
-                return field.attributes.shapeSchema.getShapeFor(this.getFieldValueUnrendered(field));
+                return field.attributes.shapeSchema.getShapeNameFor(this.getFieldValueUnrendered(field));
 
+        },
+
+        getFieldShape:function (field, isSVG, isNode) {
+            if (!field.attributes.shapeSchema)
+                return recline.Template.Shapes["empty"](null, isNode, isSVG);
+
+            var fieldValue;
+            var fieldColor = this.getFieldColor(field);
+
+            if (field.attributes.is_partitioned) {
+                fieldValue = field.attributes.partitionValue;
+            }
+            else
+                fieldValue = this.getFieldValueUnrendered(field);
+
+
+            return field.attributes.shapeSchema.getShapeFor(fieldValue, fieldColor, isSVG, isNode);
         },
 
         isRecordSelected:function () {

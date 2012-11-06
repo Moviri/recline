@@ -25,24 +25,24 @@ this.recline.View = this.recline.View || {};
 	  },
 
   templateBase: '<div class="recline-indicator"> \
-      <div class="panel indicator_{{viewId}}"style="display: block;"> \
+      <div class="panel indicator_{{viewId}}" style="display: block;"> \
         <div id="indicator_{{viewId}}"> \
 			<table class="condensed-table border-free-table"> \
-                <tr><td style="text-align: center;">{{label}}</td></tr>    \
-                <tr><td style="text-align: center;"><small>{{description}}</small></td></tr>    \
-                <tr><td style="text-align: center;"><strong>{{value}}</strong></td></tr>  \
+                <tr><td></td><td style="text-align: center;">{{label}}</td></tr>    \
+                <tr><td></td><td style="text-align: center;"><small>{{description}}</small></td></tr>    \
+                <tr><td><div>{{& shape}}</div></td><td style="text-align: center;"><strong>{{value}}</strong></td></tr>  \
              </table>  \
 		</div>\
       </div> \
     </div> ',
   templatePercentageCompare: '<div class="recline-indicator"> \
-      <div class="panel indicator_{{viewId}}"style="display: block;"> \
+      <div class="panel indicator_{{viewId}}" style="display: block;"> \
         <div id="indicator_{{viewId}}"> \
 			 <table class="condensed-table border-free-table"> \
-                <tr><td style="text-align: center;">{{label}}</td></tr>    \
-                <tr><td style="text-align: center;"><small>{{description}}</small></td></tr>    \
-                <tr><td style="text-align: center;"><strong>{{value}}</strong></td></tr>  \
-                <tr><td style="text-align: center;"><small>% of total: {{comparePercentage}} ({{compareWithValue}})</small></td></tr>  \
+                <tr><td></td><td style="text-align: center;">{{label}}</td></tr>    \
+                <tr><td></td><td style="text-align: center;"><small>{{description}}</small></td></tr>    \
+                <tr><td><div>{{& shape}}</div></td><td style="text-align: center;"><strong>{{value}}</strong></td></tr>  \
+                <tr><td></td><td style="text-align: center;"><small>% of total: {{comparePercentage}} ({{compareWithValue}})</small></td></tr>  \
              </table>  \
 		</div>\
       </div> \
@@ -74,9 +74,13 @@ this.recline.View = this.recline.View || {};
         var field   = self.options.state.kpi.dataset.getFields(self.options.state.kpi.type).get(self.options.state.kpi.field);
         var kpiValue;
 
+
+
+
         if(kpi.length > 0) {
             kpiValue = kpi[0].getFieldValueUnrendered(field);
             tmplData["value"] = kpi[0].getFieldValue(field);
+            tmplData["shape"] = kpi[0].getFieldShape(field, true, false);
         }
         else tmplData["value"] = "N/A"
 
@@ -109,8 +113,12 @@ this.recline.View = this.recline.View || {};
             tmplData["textColor"] = this.options.state.textColor;
 
         var htmls = Mustache.render(template, tmplData);
-         $(this.el).html(htmls);
-        this.$graph = this.el.find('.panel.indicator_' + tmplData["viewId"]);
+        $(this.el).html(htmls);
+
+
+        //this.$graph = this.el.find('.panel.indicator_' + tmplData["viewId"]);
+
+
         return this;
     }
 

@@ -49,15 +49,15 @@ this.recline.Data.ColorSchema = this.recline.Data.ColorSchema || {};
             }
         },
 
-        setDataset: function(ds, field) {
+        setDataset: function(ds, field, type) {
             var self=this;
-            self.attributes.dataset = {dataset: ds, field: field};
+            self.attributes.dataset = {dataset: ds, field: field, type: type};
             if(!ds.attributes["colorSchema"])
                 ds.attributes["colorSchema"] = [];
 
             ds.attributes["colorSchema"].push({schema:self, field: field});
 
-            ds.setColorSchema();
+            ds.setColorSchema(type);
 
             self.bindToDataset();
         },
@@ -95,6 +95,12 @@ this.recline.Data.ColorSchema = this.recline.Data.ColorSchema || {};
                     self.schema =  new chroma.ColorScale({
                         colors: this.attributes.colors,
                         limits: this.limits["distinct"](data)
+                    });
+                    break;
+                case "fixedLimits":
+                    self.schema =  new chroma.ColorScale({
+                        colors: this.attributes.colors,
+                        limits: this.attributes.limits
                     });
                     break;
                 default:
@@ -154,7 +160,7 @@ this.recline.Data.ColorSchema = this.recline.Data.ColorSchema || {};
 
             if(dataset.dataset.isFieldPartitioned(dataset.field))   {
                 var fields = dataset.dataset.getPartitionedFields(dataset.field);
-            _.each(dataset.dataset.records.models, function(d) {
+            _.each(dataset.dataset.getRecords(dataset.type), function(d) {
                 _.each(fields, function (field) {
                     ret.push(d.attributes[field.id]);
                 });
@@ -162,7 +168,7 @@ this.recline.Data.ColorSchema = this.recline.Data.ColorSchema || {};
             }
             else{
                 var  fields = [dataset.field];;
-                _.each(dataset.dataset.records.models, function(d) {
+                _.each(dataset.dataset.getRecords(dataset.type), function(d) {
                     _.each(fields, function (field) {
                         ret.push(d.attributes[field]);
                     });

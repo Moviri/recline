@@ -593,7 +593,7 @@ this.recline.View = this.recline.View || {};
 
 
                     }
-                    var shape = doc.getFieldShape(seriesNameField);
+                    var shape = doc.getFieldShapeName(seriesNameField);
 
                     var x = doc.getFieldValueUnrendered(xfield);
                     var y = doc.getFieldValueUnrendered(fieldValue);
@@ -661,7 +661,7 @@ this.recline.View = this.recline.View || {};
                                 } else
                                     color = doc.getFieldColor(yfield);
 
-                                var shape = doc.getFieldShape(yfield);
+                                var shape = doc.getFieldShapeName(yfield);
 
                                 var point = {x:x, y:y, record:doc};
 
