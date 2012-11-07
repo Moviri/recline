@@ -305,23 +305,18 @@ root: ../../
             })
             $('#mygraph4').append(graph4.el);
 
-
             var indicator1 = new recline.View.Indicator({
-                model: virtualdatasetTotal,
                 state: {
-                    series: ["totalviewed_sum"],
-                    format: ',d',
+                    kpi:            {dataset: virtualdatasetTotal, type: "filtered", field: "totalviewed_sum"},
 					label:"Views"
                 }
             });
             $('#indicator1').append(indicator1.el);
 
             var indicator2 = new recline.View.Indicator({
-                model: virtualdatasetTotal,
                 state: {
-                    series: ["price_sum_sum"],
-                    format: ',.02f',
-					label:"Revenues"
+                    kpi:            {dataset: virtualdatasetTotal, type: "filtered", field: "price_sum_sum"},
+                    label:"Views"
                 }
             });
             $('#indicator2').append(indicator2.el);

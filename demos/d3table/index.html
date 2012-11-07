@@ -37,7 +37,7 @@ root: ../../
 	</div>	
 </div>
 
-<link rel="stylesheet" type="text/css" href="./css/bootstrap-responsive.css"> 
+
 <script type="text/javascript">
 	var url, dataset, virtualdatasetAge, virtualdatasetTotal;
 
@@ -126,18 +126,14 @@ root: ../../
 	
 	
 	var indicator1 = new recline.View.Indicator({
-		model: virtualdatasetTotal,
 		state: {
-			series: ["totalviewed_sum"],
-			format: ',d',
-			label:"Views",
-			id: "6"
-		}
+			kpi: {dataset: virtualdatasetTotal, type: "filtered", field: "totalviewed_sum"},
+			label:"Views"
+	}
 	});
 	$('#indicator1').append(indicator1.el);
-	
-	
-	
+
+
 
 	dataset.fetch();
  // needed to populate filter list
