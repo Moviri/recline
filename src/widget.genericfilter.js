@@ -41,14 +41,15 @@ my.GenericFilter = Backbone.View.extend({
   				{{/filters}} \
         	</tr>\
   		</tbody>\
-  	   </table class="js-edit"> \
+  	   </table> \
     </div> \
   ',
   filterTemplates: {
     term: ' \
-      <div class="filter-{{type}} filter"> \
+      <div class="filter-{{type}} filter" id="{{ctrlId}}"> \
         <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
             <legend style="display:{{useLegend}}">{{label}}</legend>  \
+    		<div style="float:left;padding-right:10px;padding-top:2px;display:{{useLeftLabel}}">{{label}}</div> \
           <input type="text" value="{{term}}" name="term" class="data-control-id" /> \
           <input type="button" class="btn" id="setFilterValueButton" value="Set"></input> \
         </fieldset> \
@@ -62,26 +63,54 @@ my.GenericFilter = Backbone.View.extend({
 				max: {{max}}, \
 				value: {{term}}, \
 				slide: function( event, ui ) { \
-					$( "#amount{{ctrlId}}" ).html( "Value: "+ ui.value ); \
+					$( "#amount{{ctrlId}}" ).html( "{{label}}: "+ ui.value ); \
 				} \
 			}); \
-			$( "#amount{{ctrlId}}" ).html( "Value: "+ $( "#slider{{ctrlId}}" ).slider( "value" ) ); \
+			$( "#amount{{ctrlId}}" ).html( "{{label}}: "+ $( "#slider{{ctrlId}}" ).slider( "value" ) ); \
 		}); \
 	</script> \
-      <div class="filter-{{type}} filter"> \
+      <div class="filter-{{type}} filter" id="{{ctrlId}}" style="min-width:100px"> \
         <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
             <legend style="display:{{useLegend}}">{{label}} \
 			<a class="js-remove-filter" href="#" title="Remove this filter">&times;</a> \
 		</legend>  \
-		  <label id="amount{{ctrlId}}">Value: </label></span> \
-		  <div id="slider{{ctrlId}}" class="data-control-id" ></div> \
+		  <label id="amount{{ctrlId}}">{{label}}: </label> \
+		  <div id="slider{{ctrlId}}" class="data-control-id"></div> \
 		  <br> \
           <input type="button" class="btn" id="setFilterValueButton" value="Set"></input> \
         </fieldset> \
       </div> \
     ',
+	slider_styled : ' \
+	<style> \
+		 .layout-slider { padding-bottom:15px;width:150px } \
+	</style> \
+	<script> \
+		$(document).ready(function(){ \
+			$( "#slider{{ctrlId}}" ).jslider({ \
+				from: {{min}}, \
+				to: {{max}}, \
+				scale: [{{min}},"|","{{step1}}","|","{{mean}}","|","{{step3}}","|",{{max}}], \
+				step: {{step}}, \
+				limits: false, \
+				skin: "plastic" \
+			}); \
+		}); \
+	</script> \
+      <div class="filter-{{type}} filter" id="{{ctrlId}}"> \
+        <fieldset> \
+            <legend style="display:{{useLegend}}">{{label}} \
+			<a class="js-remove-filter" href="#" title="Remove this filter">&times;</a> \
+		</legend>  \
+		<div style="float:left;padding-right:15px;display:{{useLeftLabel}}">{{label}}</div> \
+	    <div style="float:left" class="layout-slider" data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
+	    	<input type="slider" id="slider{{ctrlId}}" value="{{term}}" class="slider-styled data-control-id" /> \
+	    </div> \
+        </fieldset> \
+      </div> \
+    ',
     range: ' \
-      <div class="filter-{{type}} filter"> \
+      <div class="filter-{{type}} filter" id="{{ctrlId}}"> \
         <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
             <legend style="display:{{useLegend}}">{{label}}</legend>  \
           <label class="control-label" for="">From</label> \
@@ -102,19 +131,47 @@ my.GenericFilter = Backbone.View.extend({
 				max: {{max}}, \
 				values: [ {{from}}, {{to}} ], \
 				slide: function( event, ui ) { \
-					$( "#amount{{ctrlId}}" ).html(  "Value range: " + ui.values[ 0 ] + " - " + ui.values[ 1 ] ); \
+					$( "#amount{{ctrlId}}" ).html(  "{{label}}: " + ui.values[ 0 ] + " - " + ui.values[ 1 ] ); \
 				} \
 			}); \
-			$( "#amount{{ctrlId}}" ).html(  "Value range: " + $( "#slider-range{{ctrlId}}" ).slider( "values", 0 ) + " - " + $( "#slider-range{{ctrlId}}" ).slider( "values", 1 ) ); \
+			$( "#amount{{ctrlId}}" ).html(  "{{label}}: " + $( "#slider-range{{ctrlId}}" ).slider( "values", 0 ) + " - " + $( "#slider-range{{ctrlId}}" ).slider( "values", 1 ) ); \
 		}); \
 	</script> \
-      <div class="filter-{{type}} filter"> \
+      <div class="filter-{{type}} filter" id="{{ctrlId}}" style="min-width:100px"> \
         <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
             <legend style="display:{{useLegend}}">{{label}}</legend>  \
-		  <label id="amount{{ctrlId}}">Value range: </label></span> \
-		  <div id="slider-range{{ctrlId}}" class="data-control-id-from data-control-id-to" ></div> \
+		  <label id="amount{{ctrlId}}">{{label}} range: </label> \
+		  <div id="slider-range{{ctrlId}}" class="data-control-id" ></div> \
 		  <br> \
           <input type="button" class="btn" id="setFilterValueButton" value="Set"></input> \
+        </fieldset> \
+      </div> \
+    ',
+	range_slider_styled : ' \
+	<style> \
+	 .layout-slider { padding-bottom:15px;width:150px } \
+	</style> \
+	<script> \
+		$(document).ready(function(){ \
+			$( "#slider{{ctrlId}}" ).jslider({ \
+				from: {{min}}, \
+				to: {{max}}, \
+				scale: [{{min}},"|","{{step1}}","|","{{mean}}","|","{{step3}}","|",{{max}}], \
+				limits: false, \
+				step: {{step}}, \
+				skin: "round_plastic", \
+			}); \
+		}); \
+	</script> \
+      <div class="filter-{{type}} filter" id="{{ctrlId}}"> \
+        <fieldset> \
+            <legend style="display:{{useLegend}}">{{label}} \
+			<a class="js-remove-filter" href="#" title="Remove this filter">&times;</a> \
+		</legend>  \
+		<div style="float:left;padding-right:15px;display:{{useLeftLabel}}">{{label}}</div> \
+	    <div style="float:left" class="layout-slider" data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
+	    	<input type="slider" id="slider{{ctrlId}}" value="{{from}};{{to}}" class="slider-styled data-control-id" /> \
+	    </div> \
         </fieldset> \
       </div> \
     ',
@@ -123,7 +180,7 @@ my.GenericFilter = Backbone.View.extend({
 		.list-filter-item { cursor:pointer; } \
 		.list-filter-item:hover { background: lightblue;cursor:pointer; } \
 	  </style> \
-      <div class="filter-{{type}} filter"> \
+      <div class="filter-{{type}} filter" id="{{ctrlId}}"> \
         <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
             <legend style="display:{{useLegend}}">{{label}}  \
             <a class="js-remove-filter" href="#" title="Remove this filter">&times;</a> \
@@ -177,7 +234,7 @@ my.GenericFilter = Backbone.View.extend({
 		}); \
 	}); \
 	</script> \
-      <div class="filter-{{type}} filter"> \
+      <div class="filter-{{type}} filter" id="{{ctrlId}}"> \
         <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
             <legend style="display:{{useLegend}}">{{label}}</legend>  \
 			<label for="from{{ctrlId}}">From</label> \
@@ -191,11 +248,17 @@ my.GenericFilter = Backbone.View.extend({
       </div> \
 	',
     dropdown: ' \
-      <div class="filter-{{type}} filter"> \
+      <script>  \
+    	function updateColor(elem) { \
+    		if (elem.prop("selectedIndex") == 0) elem.addClass("dimmed"); else elem.removeClass("dimmed"); \
+  		} \
+      </script> \
+      <div class="filter-{{type}} filter" id="{{ctrlId}}"> \
         <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
             <legend style="display:{{useLegend}}">{{label}} \
     		</legend>  \
-			<select class="drop-down fields data-control-id" style="color:{{innerLabelColor}}"> \
+    		<div style="float:left;padding-right:10px;padding-top:2px;display:{{useLeftLabel}}">{{label}}</div> \
+    		<select class="drop-down fields data-control-id dimmed" onchange="updateColor($(this))"> \
 			<option class="dimmedDropDownText">{{innerLabel}}</option> \
             {{#values}} \
             <option class="normalDropDownText" value="{{val}}" {{selected}}>{{val}}</option> \
@@ -210,11 +273,11 @@ my.GenericFilter = Backbone.View.extend({
     		$(".chzn-select-deselect").chosen({allow_single_deselect:true}); \
     	}); \
     	</script> \
-      <div class="filter-{{type}} filter"> \
+      <div class="filter-{{type}} filter" id="{{ctrlId}}"> \
         <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
-            <legend style="display:{{useLegend}}">{{label}} \
-    		</legend>  \
-			<select class="chzn-select-deselect data-control-id" data-placeholder="{{label}}"> \
+            <legend style="display:{{useLegend}}">{{label}}</legend>  \
+			<div style="float:left;padding-right:10px;padding-top:3px;display:{{useLeftLabel}}">{{label}}</div> \
+    		<select class="chzn-select-deselect data-control-id" data-placeholder="{{innerLabel}}"> \
     		<option></option> \
             {{#values}} \
             <option value="{{val}}" {{selected}}>{{val}}</option> \
@@ -224,10 +287,11 @@ my.GenericFilter = Backbone.View.extend({
       </div> \
     ',
     dropdown_date_range: ' \
-      <div class="filter-{{type}} filter"> \
+      <div class="filter-{{type}} filter" id="{{ctrlId}}"> \
         <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
             <legend style="display:{{useLegend}}">{{label}} \
     		</legend>  \
+    		<div style="float:left;padding-right:10px;padding-top:3px;display:{{useLeftLabel}}">{{label}}</div> \
 			<select class="drop-down fields data-control-id" > \
 			<option></option> \
             {{#date_values}} \
@@ -242,11 +306,12 @@ my.GenericFilter = Backbone.View.extend({
 		.list-filter-item { cursor:pointer; } \
 		.list-filter-item:hover { background: lightblue;cursor:pointer; } \
 	  </style> \
-      <div class="filter-{{type}} filter"> \
+      <div class="filter-{{type}} filter" id="{{ctrlId}}"> \
         <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
             <legend style="display:{{useLegend}}">{{label}}  \
             <a class="js-remove-filter" href="#" title="Remove this filter">&times;</a> \
 			</legend> \
+    		<div style="float:left;padding-right:10px;display:{{useLeftLabel}}">{{label}}</div> \
 			<div style="max-height:500px;width:100%;border:1px solid grey;overflow:auto;"> \
 				<table class="table table-striped table-hover table-condensed" style="width:100%" data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" > \
 				<tbody>\
@@ -260,9 +325,10 @@ my.GenericFilter = Backbone.View.extend({
       </div> \
 	',
     listbox: ' \
-      <div class="filter-{{type}} filter"> \
+      <div class="filter-{{type}} filter" id="{{ctrlId}}"> \
         <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
             <legend style="display:{{useLegend}}">{{label}}</legend>  \
+    		<div style="float:left;padding-right:10px;display:{{useLeftLabel}}">{{label}}</div> \
 			<select class="fields data-control-id"  multiple SIZE=10> \
             {{#values}} \
             <option value="{{val}}" {{selected}}>{{val}}</option> \
@@ -279,11 +345,12 @@ my.GenericFilter = Backbone.View.extend({
     		$(".chzn-select-deselect").chosen({allow_single_deselect:true}); \
     	}); \
     	</script> \
-      <div class="filter-{{type}} filter"> \
+      <div class="filter-{{type}} filter" id="{{ctrlId}}"> \
         <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
             <legend style="display:{{useLegend}}">{{label}} \
     		</legend>  \
-			<select class="chzn-select-deselect data-control-id" multiple data-placeholder="{{label}}"> \
+    		<div style="float:left;padding-right:10px;padding-top:4px;display:{{useLeftLabel}}">{{label}}</div> \
+			<select class="chzn-select-deselect data-control-id" multiple data-placeholder="{{innerLabel}}"> \
             {{#values}} \
             <option value="{{val}}" {{selected}}>{{val}}</option> \
             {{/values}} \
@@ -293,23 +360,25 @@ my.GenericFilter = Backbone.View.extend({
     ',
     radiobuttons : 
     	' \
-        <div class="filter-{{type}} filter"> \
-            <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
+        <div class="filter-{{type}} filter" id="{{ctrlId}}"> \
+            <div data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
                 <legend style="display:{{useLegend}}">{{label}}</legend>  \
-        		<div class="btn-group" > \
+    			<div style="float:left;padding-right:10px;padding-top:4px;display:{{useLeftLabel}}">{{label}}</div> \
+    			<div class="btn-group data-control-id" > \
     	            {{#values}} \
     	    		<button class="btn grouped-button {{selected}}">{{val}}</button> \
     	            {{/values}} \
-              </div> \
-            </fieldset> \
+              	</div> \
+            </div> \
         </div> \
         ',
     multibutton : 
     	' \
-    <div class="filter-{{type}} filter"> \
+    <div class="filter-{{type}} filter" id="{{ctrlId}}"> \
         <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
             <legend style="display:{{useLegend}}">{{label}}</legend>  \
-    		<div class="btn-group" > \
+    		<div style="float:left;padding-right:10px;padding-top:4px;display:{{useLeftLabel}}">{{label}}</div> \
+    		<div class="btn-group data-control-id" > \
 	            {{#values}} \
 	    		<button class="btn grouped-button {{selected}}">{{val}}</button> \
 	            {{/values}} \
@@ -327,9 +396,10 @@ my.GenericFilter = Backbone.View.extend({
 					}  \
 	 .legend-item.not-selected { background-color:transparent !important; } /* the idea is that the color "not-selected" overrides the original color (this way we may use a global style) */ \
 	  </style> \
-      <div class="filter-{{type}} filter"> \
+      <div class="filter-{{type}} filter" id="{{ctrlId}}"> \
         <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
             <legend style="display:{{useLegend}}">{{label}}</legend>  \
+			<div style="float:left;padding-right:10px;display:{{useLeftLabel}}">{{label}}</div> \
 			<table style="width:100%;background-color:transparent">\
 			{{#values}} \
 				<tr> \
@@ -343,13 +413,16 @@ my.GenericFilter = Backbone.View.extend({
       </div> \
 	',
 	color_legend: ' \
-	<div class="filter-{{type}} filter"> \
+	<div class="filter-{{type}} filter" > \
         <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}"> \
             <legend style="display:{{useLegend}}">{{label}}</legend>  \
-				<div style="max-width:250px;height:{{totHeight}}px"> \
+				<div style="float:left;padding-right:10px;height:{{lineHeight}}px;display:{{useLeftLabel}}"> \
+					<label style="line-height:{{lineHeight}}px">{{label}}</label> \
+				</div> \
+				<div style="max-width:250px;height:{{totHeight}}px;display:inline"> \
 					<svg height="{{totHeight}}" xmlns="http://www.w3.org/2000/svg"> \
 					{{#colorValues}} \
-				    	<rect width="{{width}}" height=50 fill="{{color}}" x="{{x}}" y={{y}}/> \
+				    	<rect width="{{width}}" height={{lineHeight}} fill="{{color}}" x="{{x}}" y={{y}}/> \
 						<text width="{{width}}" fill="{{textColor}}" x="{{x}}" y="{{yplus30}}">{{val}}</text> \
 					{{/colorValues}}\
 					</svg>		\
@@ -369,7 +442,8 @@ my.GenericFilter = Backbone.View.extend({
 	'change .chzn-select-deselect': 'onFilterValueChanged',
 	'change .drop-down2': 'onListItemClicked',
 	'change .drop-down3': 'onPeriodChanged',
-	'click .grouped-button' : 'onButtonsetClicked'
+	'click .grouped-button' : 'onButtonsetClicked',
+	'change .slider-styled' : 'onStyledSliderValueChanged'
   },
   activeFilters : new Array(),
   _sourceDataset: null,
@@ -377,18 +451,48 @@ my.GenericFilter = Backbone.View.extend({
   initialize: function(args) {
     this.el = $(this.el);
     _.bindAll(this, 'render');
+    _.bindAll(this, 'update');
 	_.bindAll(this, 'getFieldType');
 	_.bindAll(this, 'onRemoveFilter');
 	_.bindAll(this, 'onPeriodChanged');
 	_.bindAll(this, 'findActiveFilterByField');
+	
+	_.bindAll(this, 'updateDropdown');
+	_.bindAll(this, 'updateDropdownStyled');
+	_.bindAll(this, 'updateSlider');
+	_.bindAll(this, 'updateSliderStyled');
+	_.bindAll(this, 'updateRadiobuttons');
+	_.bindAll(this, 'updateRangeSlider');
+	_.bindAll(this, 'updateRangeSliderStyled');
+	_.bindAll(this, 'updateRangeCalendar');
+	_.bindAll(this, 'updateMonthWeekCalendar');
+	_.bindAll(this, 'updateDropdownDateRange');
+	_.bindAll(this, 'updateList');
+	_.bindAll(this, 'updateListbox');
+	_.bindAll(this, 'updateListboxStyled');
+	_.bindAll(this, 'updateLegend');
+	_.bindAll(this, 'updateMultibutton');
+	_.bindAll(this, 'redrawGenericControl');
 
 	this._sourceDataset = args.sourceDataset;
-	this.uid = args.id || Math.floor(Math.random()*100000);
-
-    //this._sourceDataset.fields.bind('all', this.render);
+	this.uid = args.id || Math.floor(Math.random()*100000); // unique id of the view containing all filters
+	this.numId = 0; // auto-increasing id used for a single filter 
 
 	this.sourceFields = args.sourceFields;
-
+	if (args.state)
+	{
+		this.filterDialogTitle = args.state.title;
+		this.filterDialogDescription = args.state.description;
+		this.useHorizontalLayout = args.state.useHorizontalLayout;
+		this.showBackground = args.state.showBackground;
+		if (this.showBackground == false)
+		{
+			$(this).removeClass("well");
+			$(this.el).removeClass("well");
+		}
+		
+		this.backgroundColor = args.state.backgroundColor;
+	}
 	this.activeFilters = new Array();
 
     this._actions = args.actions;
@@ -398,7 +502,7 @@ my.GenericFilter = Backbone.View.extend({
 			this.addNewFilterControl(this.sourceFields[k]);
 
     this._sourceDataset.bind('query:done', this.render);
-    this._sourceDataset.queryState.bind('selection:done', this.render);
+    this._sourceDataset.queryState.bind('selection:done', this.update);
   },
   areValuesEqual: function(a,b)
   {
@@ -418,108 +522,248 @@ my.GenericFilter = Backbone.View.extend({
 	  
 	  return false;
   },
-  render: function() {
-      if (this.options.state)
-      {
-          this.filterDialogTitle = this.options.state.title;
-          this.filterDialogDescription = this.options.state.description;
-          this.useHorizontalLayout = this.options.state.useHorizontalLayout;
-          this.showBackground = this.options.state.showBackground;
-          if (this.showBackground == false)
-          {
-              $(this).removeClass("well");
-              $(this.el).removeClass("well");
-          }
-
-          this.backgroundColor = this.options.state.backgroundColor;
-      }
-
-    var self = this;
-	var tmplData = {filters : this.activeFilters}; 
-	_.each(tmplData.filters , function(flt) { 
-		flt.hrVisible = 'block'; 
+  update: function() {
+	//console.log("genericfilter update "+this.uid)
+	var self = this;
+    // retrieve filter values (start/from/term/...)
+    _.each(this._sourceDataset.queryState.get('selections'), function(filter) {
+         for (var j in self.activeFilters)
+         {
+             if (self.activeFilters[j].field == filter.field)
+             {
+           	  //if (typeof filter.list != "undefined" && filter.list != null)
+           		  self.activeFilters[j].list = filter.list
+           		  
+           	  //if (typeof filter.term != "undefined" && filter.term != null)
+           		  self.activeFilters[j].term = filter.term
+           		  
+           	  //if (typeof filter.start != "undefined" && filter.start != null)
+           		  self.activeFilters[j].start = filter.start
+           		  
+           	  //if (typeof filter.stop != "undefined" && filter.stop != null)
+           		  self.activeFilters[j].stop = filter.stop
+             }
+         }
+     });
+	
+	var currFilters = this.el.find("div.filter");
+	_.each(currFilters , function(flt) {
+		//console.log("Updating filter frame with id "+flt.id);
+		//console.log(flt);
+		var currFilterCtrl = $(flt).find(".data-control-id");
+		if (typeof currFilterCtrl != "undefined" && currFilterCtrl != null)
+		{
+			//console.log("Main control is:");
+			//console.log($(currFilterCtrl));
+		}
+		else
+		{
+			var currFilterCtrlFrom = $(flt).find(".data-control-id-from");
+			//console.log("From control is:");
+			//console.log($(currFilterCtrlFrom));
+			var currFilterCtrlTo = $(flt).find(".data-control-id-to");
+			//console.log("To control is:");
+			//console.log($(currFilterCtrlTo));
+		}
+		var currActiveFilter = null;
+		for (var j in self.activeFilters)
+		{
+			if (self.activeFilters[j].ctrlId == flt.id)
+			{
+				//console.log("Associated activeFilter is:")
+				currActiveFilter = self.activeFilters[j] 
+				//console.log(currActiveFilter)
+				break;
+			}
+		}
+		if (currActiveFilter != null)
+		{
+			if (currActiveFilter.userChanged)
+			{
+				// skip the filter that triggered the change
+				//console.log("Skipping filter update:")
+				//console.log(currActiveFilter)
+				currActiveFilter.userChanged = undefined;
+				return;
+			}
+			switch(currActiveFilter.controlType)
+			{
+				// term
+			case "dropdown" : return self.updateDropdown($(flt), currActiveFilter, $(currFilterCtrl));
+			case "dropdown_styled" : return self.updateDropdownStyled($(flt), currActiveFilter, $(currFilterCtrl));
+			case "slider" : return self.updateSlider($(flt), currActiveFilter, $(currFilterCtrl));
+			case "slider_styled" : return self.updateSliderStyled($(flt), currActiveFilter, $(currFilterCtrl));
+			case "radiobuttons" : return self.updateRadiobuttons($(flt), currActiveFilter, $(currFilterCtrl));
+				// range
+			case "range_slider" : return self.updateRangeSlider($(flt), currActiveFilter, $(currFilterCtrl));
+			case "range_slider_styled" : return self.updateRangeSliderStyled($(flt), currActiveFilter, $(currFilterCtrl));
+			case "range_calendar" : return self.updateRangeCalendar($(flt), currActiveFilter, $(currFilterCtrlFrom), $(currFilterCtrlTo));
+			case "month_week_calendar" : return self.updateMonthWeekCalendar($(flt), currActiveFilter, $(currFilterCtrl));
+			case "dropdown_date_range" : return self.updateDropdownDateRange($(flt), currActiveFilter, $(currFilterCtrl));
+				// list
+			case "list" : return self.updateList($(flt), currActiveFilter, $(currFilterCtrl));
+			case "listbox": return self.updateListbox($(flt), currActiveFilter, $(currFilterCtrl));
+			case "listbox_styled": return self.updateListboxStyled($(flt), currActiveFilter, $(currFilterCtrl));
+			case "legend" : return self.updateLegend($(flt), currActiveFilter, $(currFilterCtrl));
+			case "multibutton" : return self.updateMultibutton($(flt), currActiveFilter, $(currFilterCtrl));
+			}
+		}
 	});
+  },
+  computeUserChoices: function(currActiveFilter) {
+	  var valueList = currActiveFilter.list;
+	  if ((typeof valueList == "undefined" || valueList == null) && currActiveFilter.term)
+		  valueList = [currActiveFilter.term];
+	  
+	  return valueList;
+  },
+  redrawGenericControl: function(filterContainer, currActiveFilter) {
+	  var out = this.createSingleFilter(currActiveFilter);
+	  filterContainer.parent().html(out);
+  },
+  updateDropdown: function(filterContainer, currActiveFilter, filterCtrl) { 
+	  var valueList = this.computeUserChoices(currActiveFilter);
 
-    //  map them to the correct controlType and retain their values (start/from/term/...)
-     _.each(self._sourceDataset.queryState.get('selections'), function(filter) {
-          for (var j in tmplData.filters)
-          {
-              if (tmplData.filters[j].field == filter.field)
-              {
-            	  if (typeof filter.list != "undefined" && filter.list != null)
-            		  tmplData.filters[j].list = filter.list
-            		  
-            	  if (typeof filter.term != "undefined" && filter.term != null)
-            		  tmplData.filters[j].term = filter.term
-            		  
-            	  if (typeof filter.start != "undefined" && filter.start != null)
-            		  tmplData.filters[j].start = filter.start
-            		  
-            	  if (typeof filter.stop != "undefined" && filter.stop != null)
-            		  tmplData.filters[j].stop = filter.stop
-              }
-          }
-      });
+	  if (valueList != null && valueList.length == 1)
+	  {
+		  filterCtrl[0].style.color = "";
+		  filterCtrl.val(currActiveFilter.list[0]);
+	  }
+	  else
+		  filterCtrl.find("option:first").prop("selected", "selected");
 
-      if (tmplData.filters.length > 0)
-		tmplData.filters[tmplData.filters.length -1].hrVisible = 'none'
-
-      var resultType = "filtered";
-      if(self.options.resultType !== null)
-          resultType = self.options.resultType;
-
-    tmplData.fields = this._sourceDataset.fields.toJSON();
-	tmplData.records = _.pluck(this._sourceDataset.getRecords(resultType), "attributes");
-	tmplData.filterDialogTitle = this.filterDialogTitle;
-	tmplData.filterDialogDescription = this.filterDialogDescription;
-	if (this.filterDialogTitle || this.filterDialogDescription)
-		tmplData.titlePresent = "block";
-	else tmplData.titlePresent = "none"; 
-	tmplData.dateConvert = self.dateConvert;
-    tmplData.filterRender = function() {
-    
-	  if (typeof this.label == "undefined" || this.label == null)
-  		  this.label = this.field;
+	  if (filterCtrl.prop("selectedIndex") == 0)
+		  filterCtrl.addClass("dimmed");
+	  else filterCtrl.removeClass("dimmed");
+  },
+  updateDropdownStyled: function(filterContainer, currActiveFilter, filterCtrl) { this.redrawGenericControl(filterContainer, currActiveFilter); },
+  updateSlider: function(filterContainer, currActiveFilter, filterCtrl) {
+	  var valueList = this.computeUserChoices(currActiveFilter);
+	  if (valueList != null && valueList.length == 1)
+	  {
+		  filterCtrl.slider("value", valueList[0]);
+		  $( "#amount"+currActiveFilter.ctrlId).html(currActiveFilter.label+": "+valueList[0]); // sistema di riserva
+		  filterCtrl.trigger("slide", filterCtrl); // non pare funzionare 
+	  }
+  },
+  updateSliderStyled: function(filterContainer, currActiveFilter, filterCtrl) {
+	  var valueList = this.computeUserChoices(currActiveFilter);
+	  if (valueList != null && valueList.length == 1)
+		  filterCtrl.jslider("value", valueList[0]);
+  },
+  updateRadiobuttons: function(filterContainer, currActiveFilter, filterCtrl) {
+	  var valueList = this.computeUserChoices(currActiveFilter);
+	  
+	  var buttons = filterCtrl.find("button.grouped-button");
+	  if (valueList != null && valueList.length == 1)
+	  {
+		  // do not use each or other jquery/underscore methods since they don't work well here
+		  for (var i = 0; i < buttons.length; i++)
+		  {
+			  var btn = $(buttons[i]);
+			  for (var j = 0; j < valueList.length; j++) 
+			  {
+				  var v = valueList[j];
+				  if (this.areValuesEqual(v, btn.html()))
+					  btn.addClass("btn-primary");
+				  else btn.removeClass("btn-primary");
+			  }
+		  }
+	  }
+	  else _.each(buttons, function(btn) { $(btn).removeClass("btn-primary")});
+  },
+  updateRangeSlider: function(filterContainer, currActiveFilter, filterCtrl) {
+	  var valueList = this.computeUserChoices(currActiveFilter);
+	  if (valueList != null && valueList.length == 2)
+	  {
+		  filterCtrl.slider("values", 0, valueList[0]);
+		  filterCtrl.slider("values", 1, valueList[1]);
+		  $( "#amount"+currActiveFilter.ctrlId).html(currActiveFilter.label+": "+valueList[0]+ " - " + valueList[1]); // sistema di riserva
+		  filterCtrl.trigger("slide", filterCtrl); // non pare funzionare 
+	  }
+  },
+  updateRangeSliderStyled: function(filterContainer, currActiveFilter, filterCtrl) {
+	  var valueList = this.computeUserChoices(currActiveFilter);
+	  if (valueList != null && valueList.length == 2)
+		  filterCtrl.jslider("value", valueList[0], valueList[1]);
+  },
+  updateRangeCalendar: function(filterContainer, currActiveFilter, filterCtrlFrom, filterCtrlTo) {this.redrawGenericControl(filterContainer, currActiveFilter);},
+  updateMonthWeekCalendar: function(filterContainer, currActiveFilter, filterCtrl) {this.redrawGenericControl(filterContainer, currActiveFilter);},
+  updateDropdownDateRange: function(filterContainer, currActiveFilter, filterCtrl) {this.redrawGenericControl(filterContainer, currActiveFilter);},
+  updateList: function(filterContainer, currActiveFilter, filterCtrl) {this.redrawGenericControl(filterContainer, currActiveFilter);},
+  updateListbox: function(filterContainer, currActiveFilter, filterCtrl) {this.redrawGenericControl(filterContainer, currActiveFilter);},
+  updateListboxStyled: function(filterContainer, currActiveFilter, filterCtrl) {this.redrawGenericControl(filterContainer, currActiveFilter);},
+  updateLegend: function(filterContainer, currActiveFilter, filterCtrl) {this.redrawGenericControl(filterContainer, currActiveFilter);},
+  updateMultibutton: function(filterContainer, currActiveFilter, filterCtrl) {
+	  var valueList = this.computeUserChoices(currActiveFilter);
+	  
+	  var buttons = filterCtrl.find("button.grouped-button");
+	  _.each(buttons, function(btn) { $(btn).removeClass("btn-info")});
+	  
+	  // from now on, do not use each or other jquery/underscore methods since they don't work well here
+	  if (valueList != null)
+		  for (var i = 0; i < buttons.length; i++)
+	  {
+		  var btn = $(buttons[i]);
+		  for (var j = 0; j < valueList.length; j++) 
+		  {
+			  var v = valueList[j];
+			  if (this.areValuesEqual(v, btn.html()))
+				  btn.addClass("btn-info");
+		  }
+	  }
+  },
+  filterRender: function() {
+	  return this.self.createSingleFilter(this); // make sure you pass the current active filter
+  },
+  createSingleFilter: function(currActiveFilter) {
+	  var self = currActiveFilter.self;
+	  if (typeof currActiveFilter.label == "undefined" || currActiveFilter.label == null)
+  		  currActiveFilter.label = currActiveFilter.field;
      
-  	  this.useLegend = "block";
-      if (this.useFieldLabel == false || this.showLabelInsideFilter)
-    	  this.useLegend = "none";
-
-      if (this.showLabelInsideFilter)
-    	  this.innerLabel = "Select desired "+this.label;
+  	  currActiveFilter.useLegend = "block";
+      if (currActiveFilter.labelPosition != 'top')
+    	  currActiveFilter.useLegend = "none";
       
-      this.innerLabelColor = "lightgrey";
+  	  currActiveFilter.useLeftLabel = "none";
+      if (currActiveFilter.labelPosition == 'left')
+    	  currActiveFilter.useLeftLabel = "block";
 
-  	  this.values = new Array();
+      if (currActiveFilter.labelPosition == 'inside')
+    	  currActiveFilter.innerLabel = currActiveFilter.label;
+      
+      //currActiveFilter.innerLabelColor = "lightgrey";
+
+  	  currActiveFilter.values = new Array();
   	  
 	  // add value list to selected filter or templating of record values will not work
-	  if (this.controlType.indexOf('calendar') >= 0)
+	  if (currActiveFilter.controlType.indexOf('calendar') >= 0)
 	  {
-		  if (this.start)
-			this.startDate = tmplData.dateConvert(this.start);
+		  if (currActiveFilter.start)
+			currActiveFilter.startDate = self.dateConvert(currActiveFilter.start);
 				
-		  if (this.stop)
-			this.endDate = tmplData.dateConvert(this.stop);
+		  if (currActiveFilter.stop)
+			currActiveFilter.endDate = self.dateConvert(currActiveFilter.stop);
 	  }
-	  if (this.controlType.indexOf('slider') >= 0)
+	  if (currActiveFilter.controlType.indexOf('slider') >= 0)
 	  {
-		  if (tmplData.records.length && typeof tmplData.records[0] != "undefined")
+		  if (self.templateRecords.length && typeof self.templateRecords[0] != "undefined")
 		  {
-			  this.max = tmplData.records[0][this.field];
-			  this.min = tmplData.records[0][this.field];
+			  currActiveFilter.max = self.templateRecords[0][currActiveFilter.field];
+			  currActiveFilter.min = self.templateRecords[0][currActiveFilter.field];
 		  }
 		  else
 		  {
-			  this.max = 100;
-			  this.min = 0;
+			  currActiveFilter.max = 100;
+			  currActiveFilter.min = 0;
 		  }
 	  }	  
 	  
-	  if (this.controlType == "month_week_calendar")
+	  if (currActiveFilter.controlType == "month_week_calendar")
 	  {
-		this.weekValues = [];
-		this.periodValues = [ {val: "Months", selected: (this.period == "Months" ? "selected" : "")}, {val:"Weeks", selected: (this.period == "Weeks" ? "selected" : "")} ]
-		var currYear = this.year;
+		currActiveFilter.weekValues = [];
+		currActiveFilter.periodValues = [ {val: "Months", selected: (currActiveFilter.period == "Months" ? "selected" : "")}, {val:"Weeks", selected: (currActiveFilter.period == "Weeks" ? "selected" : "")} ]
+		var currYear = currActiveFilter.year;
 		var januaryFirst = new Date(currYear,0,1);
 		var januaryFirst_time = januaryFirst.getTime();
 		var weekOffset = januaryFirst.getDay();
@@ -536,15 +780,15 @@ my.GenericFilter = Backbone.View.extend({
 				weekEndTime = new Date(currYear+1,0,1).getTime();
 				finished = true;
 			}
-			this.weekValues.push({val: w+1,
+			currActiveFilter.weekValues.push({val: w+1,
 									label: ""+(w+1)+ " ["+d3.time.format("%x")(new Date(weekStartTime))+" -> "+d3.time.format("%x")(new Date(weekEndTime-1000))+"]",
 									startDate: new Date(weekStartTime), 
 									stopDate: new Date(weekEndTime),
-									selected: (this.term == w+1 ? self._selectedClassName : "")
+									selected: (currActiveFilter.term == w+1 ? self._selectedClassName : "")
 								});
 		}
 		
-		this.monthValues = [];
+		currActiveFilter.monthValues = [];
 		for (m = 1; m <= 12; m++)
 		{
 			var endYear = currYear;
@@ -554,26 +798,26 @@ my.GenericFilter = Backbone.View.extend({
 				endYear = currYear+1;
 				endMonth = 0;
 			}
-			this.monthValues.push({ val: d3.format("02d")(m), 
+			currActiveFilter.monthValues.push({ val: d3.format("02d")(m), 
 									label: d3.time.format("%B")(new Date(m+"/01/2012"))+" "+currYear,
 									startDate: new Date(currYear, m-1, 1, 0, 0, 0, 0),
 									stopDate: new Date(endYear, endMonth, 1, 0, 0, 0, 0),
-									selected: (this.term == m ? self._selectedClassName : "")
+									selected: (currActiveFilter.term == m ? self._selectedClassName : "")
 								});
 		}
-		if (this.period == "Months")
-			this.values = this.monthValues;
-		else if (this.period == "Weeks")
-			this.values = this.weekValues;
+		if (currActiveFilter.period == "Months")
+			currActiveFilter.values = currActiveFilter.monthValues;
+		else if (currActiveFilter.period == "Weeks")
+			currActiveFilter.values = currActiveFilter.weekValues;
 
-		this.yearValues = [];
+		currActiveFilter.yearValues = [];
 		var startYear = 2010;
 		var endYear = parseInt(d3.time.format("%Y")(new Date()))
 		for (var y = startYear; y <= endYear; y++)
-			this.yearValues.push({val: y, selected: (this.year == y ? "selected" : "")});
+			currActiveFilter.yearValues.push({val: y, selected: (currActiveFilter.year == y ? "selected" : "")});
 			
 	  }
-	  else if (this.controlType == "dropdown_date_range")
+	  else if (currActiveFilter.controlType == "dropdown_date_range")
 	  {
 		  var currDate = new Date();
 		  var currDate0h = new Date(currDate.getFullYear(), currDate.getMonth(), currDate.getDate(), 0, 0, 0, 0);
@@ -585,26 +829,26 @@ my.GenericFilter = Backbone.View.extend({
 		  var weekStartTime = currDate0h-weekOffset*86400000;
 		  var weekEndTime = weekStartTime+7*86400000;
 
-		  this.date_values = [];
+		  currActiveFilter.date_values = [];
 		  
-		  this.date_values.push({ val: "This week", 
+		  currActiveFilter.date_values.push({ val: "This week", 
 				startDate: new Date(weekStartTime),
 				stopDate: new Date(weekEndTime)
 			});
 		  
 		  var endMonth = (currMonth + 1) % 12;
 		  var endYear = currYear + (endMonth < currMonth ? 1 : 0); 
-		  this.date_values.push({ val: "This Month", 
+		  currActiveFilter.date_values.push({ val: "This Month", 
 				startDate: new Date(currYear, currMonth, 1, 0, 0, 0, 0),
 				stopDate: new Date(endYear, endMonth, 1, 0, 0, 0, 0)
 		  });
 		  
-		  this.date_values.push({ val: "This year", 
+		  currActiveFilter.date_values.push({ val: "This year", 
 				startDate: new Date(currYear, 0, 1, 0, 0, 0, 0),
 				stopDate: new Date(currYear+1, 0, 1, 0, 0, 0, 0)
 			});
 		  
-		  this.date_values.push({ val: "Past week", 
+		  currActiveFilter.date_values.push({ val: "Past week", 
 				startDate: new Date(weekStartTime-7*86400000),
 				stopDate: new Date(weekStartTime)
 			});
@@ -614,7 +858,7 @@ my.GenericFilter = Backbone.View.extend({
 			  startMonth -= 12;
 		  
 		  var startYear = currYear - (startMonth > currMonth ? 1 : 0); 
-		  this.date_values.push({ val: "Past month", 
+		  currActiveFilter.date_values.push({ val: "Past month", 
 				startDate: new Date(startYear, startMonth, 1, 0, 0, 0, 0),
 				stopDate: new Date(currYear, currMonth, 1, 0, 0, 0, 0)
 			});
@@ -624,7 +868,7 @@ my.GenericFilter = Backbone.View.extend({
 			  startMonth -= 12;
 		  
 		  startYear = currYear - (startMonth > currMonth ? 1 : 0); 
-		  this.date_values.push({ val: "Past 2 months", 
+		  currActiveFilter.date_values.push({ val: "Past 2 months", 
 				startDate: new Date(startYear, startMonth, 1, 0, 0, 0, 0),
 				stopDate: new Date(currYear, currMonth, 1, 0, 0, 0, 0)
 			});
@@ -634,7 +878,7 @@ my.GenericFilter = Backbone.View.extend({
 			  startMonth -= 12;
 		  
 		  startYear = currYear - (startMonth > currMonth ? 1 : 0); 
-		  this.date_values.push({ val: "Past 3 month", 
+		  currActiveFilter.date_values.push({ val: "Past 3 month", 
 				startDate: new Date(startYear, startMonth, 1, 0, 0, 0, 0),
 				stopDate: new Date(currYear, currMonth, 1, 0, 0, 0, 0)
 			});
@@ -644,87 +888,87 @@ my.GenericFilter = Backbone.View.extend({
 			  startMonth -= 12;
 		  
 		  startYear = currYear - (startMonth > currMonth ? 1 : 0); 
-		  this.date_values.push({ val: "Past 6 months", 
+		  currActiveFilter.date_values.push({ val: "Past 6 months", 
 				startDate: new Date(startYear, startMonth, 1, 0, 0, 0, 0),
 				stopDate: new Date(currYear, currMonth, 1, 0, 0, 0, 0)
 			});
 		  
-		  this.date_values.push({ val: "Past year", 
+		  currActiveFilter.date_values.push({ val: "Past year", 
 				startDate: new Date(currYear-1, 0, 1, 0, 0, 0, 0),
 				stopDate: new Date(currYear, 0, 1, 0, 0, 0, 0)
 			});
-		  this.date_values.push({ val: "Last 7 days", 
+		  currActiveFilter.date_values.push({ val: "Last 7 days", 
 				startDate: new Date(currDate0h.getTime()-6*86400000),
 				stopDate: currDate24h
 			});
-		  this.date_values.push({ val: "Last 30 days", 
+		  currActiveFilter.date_values.push({ val: "Last 30 days", 
 				startDate: new Date(currDate0h.getTime()-29*86400000),
 				stopDate: currDate24h
 			});
-		  this.date_values.push({ val: "Last 90 days", 
+		  currActiveFilter.date_values.push({ val: "Last 90 days", 
 				startDate: new Date(currDate0h.getTime()-89*86400000),
 				stopDate: currDate24h
 			});
-		  this.date_values.push({ val: "Last 365 days", 
+		  currActiveFilter.date_values.push({ val: "Last 365 days", 
 				startDate: new Date(currDate0h.getTime()-364*86400000),
 				stopDate: currDate24h
 			});
 		  
-		  for (var j in this.date_values)
-			  if (this.date_values[j].val == this.term)
+		  for (var j in currActiveFilter.date_values)
+			  if (currActiveFilter.date_values[j].val == currActiveFilter.term)
 			  {
-				  this.date_values[j].selected = self._selectedClassName;
+				  currActiveFilter.date_values[j].selected = self._selectedClassName;
 				  break;
 			  }
 	  }
-	  else if (this.controlType == "legend")
+	  else if (currActiveFilter.controlType == "legend")
 	  {
 		  // OLD code, somehow working but wrong
-	      this.facet = self._sourceDataset.getFacetByFieldId(this.field);
-          if(this.facet == null ) {
-              throw "GenericFilter: no facet present for field [" + this.field + "]. Define a facet before filter render";
+	      currActiveFilter.facet = self._sourceDataset.getFacetByFieldId(currActiveFilter.field);
+          if(currActiveFilter.facet == null ) {
+              throw "GenericFilter: no facet present for field [" + currActiveFilter.field + "]. Define a facet before filter render";
           }
-		  this.tmpValues = _.pluck(this.facet.attributes.terms, "term");
+		  currActiveFilter.tmpValues = _.pluck(currActiveFilter.facet.attributes.terms, "term");
 
-		  if (typeof this.origLegend == "undefined")
+		  if (typeof currActiveFilter.origLegend == "undefined")
 		  {
-			  this.origLegend = this.tmpValues;
-			  this.legend = this.origLegend;
+			  currActiveFilter.origLegend = currActiveFilter.tmpValues;
+			  currActiveFilter.legend = currActiveFilter.origLegend;
 		  }
-		  this.tmpValues = this.origLegend; 
-		  var legendSelection = this.legend;
-		  for (var i in this.tmpValues)
+		  currActiveFilter.tmpValues = currActiveFilter.origLegend; 
+		  var legendSelection = currActiveFilter.legend;
+		  for (var i in currActiveFilter.tmpValues)
 		  {
-			var v = this.tmpValues[i];
+			var v = currActiveFilter.tmpValues[i];
 			var notSelected = "";
-			if ((this.fieldType != "date" && legendSelection.indexOf(v) < 0) 
-				|| (this.fieldType == "date" && legendSelection.indexOf(v) < 0 && legendSelection.indexOf(new Date(v).valueOf()) < 0))
+			if ((currActiveFilter.fieldType != "date" && legendSelection.indexOf(v) < 0) 
+				|| (currActiveFilter.fieldType == "date" && legendSelection.indexOf(v) < 0 && legendSelection.indexOf(new Date(v).valueOf()) < 0))
 				notSelected = "not-selected";
 			
-			this.values.push({val: v, notSelected: notSelected, color: this.facet.attributes.terms[i].color, count: this.facet.attributes.terms[i].count});
+			currActiveFilter.values.push({val: v, notSelected: notSelected, color: currActiveFilter.facet.attributes.terms[i].color, count: currActiveFilter.facet.attributes.terms[i].count});
 		  }		
 			
 // 			NEW code. Will work when facet will be returned correctly even after filtering
-//		  this.facet = self._sourceDataset.getFacetByFieldId(this.field);
-//		  this.tmpValues = _.pluck(this.facet.attributes.terms, "term");
-//		  for (var v in this.tmpValues)
+//		  currActiveFilter.facet = self._sourceDataset.getFacetByFieldId(currActiveFilter.field);
+//		  currActiveFilter.tmpValues = _.pluck(currActiveFilter.facet.attributes.terms, "term");
+//		  for (var v in currActiveFilter.tmpValues)
 //		  {
 //				var color;
-//				var currTerm = _.find(this.facet.attributes.terms, function(currT) { return currT.term == v; });
+//				var currTerm = _.find(currActiveFilter.facet.attributes.terms, function(currT) { return currT.term == v; });
 //				if (typeof currTerm != "undefined" && currTerm != null)
 //				{
 //					color = currTerm.color;
 //					count = currTerm.count;
 //				}
 //				var notSelected = "";
-//				var legendSelection = this.legend;
+//				var legendSelection = currActiveFilter.legend;
 //				if (typeof legendSelection == "undefined" || legendSelection == null || legendSelection.indexOf(v) < 0)
 //					notSelected = "not-selected";
 //				
-//				this.values.push({val: v, notSelected: notSelected, color: color, count: count});
+//				currActiveFilter.values.push({val: v, notSelected: notSelected, color: color, count: count});
 //		  }		  
 	  }
-	  else if (this.controlType == "color_legend")
+	  else if (currActiveFilter.controlType == "color_legend")
 	  {
 		  var ruler = document.getElementById("my_string_width_calculation_ruler");
 		  if (typeof ruler == "undefined" || ruler == null)
@@ -736,20 +980,19 @@ my.GenericFilter = Backbone.View.extend({
 			  document.body.appendChild(ruler);
 		  }
 		  var maxWidth = 250;
-		  this.colorValues = [];
+		  currActiveFilter.colorValues = [];
 		  
-	      this.facet = self._sourceDataset.getFacetByFieldId(this.field);
-          if(typeof this.facet == "undefined" || this.facet == null ) {
-//        	  this.tmpValues = [15,20,25,30,35,40,45,50,55,60,65,70,75,80,85,90,95,100,105,110,115,120];
-              throw "GenericFilter: no facet present for field [" + this.field + "]. Define a facet before filter render";
+	      currActiveFilter.facet = self._sourceDataset.getFacetByFieldId(currActiveFilter.field);
+          if(typeof currActiveFilter.facet == "undefined" || currActiveFilter.facet == null ) {
+              throw "GenericFilter: no facet present for field [" + currActiveFilter.field + "]. Define a facet before filter render";
           }
-          else this.tmpValues = _.pluck(this.facet.attributes.terms, "term");
+          else currActiveFilter.tmpValues = _.pluck(currActiveFilter.facet.attributes.terms, "term");
           
 		  var pixelW = 0;
 		  // calculate needed pixel width for every string
-		  for (var i in this.tmpValues)
+		  for (var i in currActiveFilter.tmpValues)
 		  {
-			  var v = this.tmpValues[i];
+			  var v = currActiveFilter.tmpValues[i];
 			  ruler.innerHTML = v;
 			  var w = ruler.offsetWidth
 			  if (w > pixelW)
@@ -758,35 +1001,38 @@ my.GenericFilter = Backbone.View.extend({
 		  pixelW += 2;
 		  
 		  var riga = 0;
-		  var colonna = 0;  
+		  var colonna = 0;
+		  currActiveFilter.lineHeight = 40;
 		  
-		  for (var i in this.tmpValues)
+		  for (var i in currActiveFilter.tmpValues)
 		  {
-			var v = this.tmpValues[i];
-			var color = /*(typeof this.facet == "undefined" ? new chroma.Color(0,0,v*2,'rgb') :*/ this.facet.attributes.terms[i].color/*)*/;
+			var v = currActiveFilter.tmpValues[i];
+			var color = currActiveFilter.facet.attributes.terms[i].color;
 			if (pixelW*colonna > maxWidth)
 			{
 				riga++;
 				colonna = 0;
 			}
-			this.colorValues.push({width: pixelW, color: color, textColor: self.complementColor(color), 
-									val: v, x:pixelW*colonna, y:riga*50, yplus30:riga*50+30  });
+			currActiveFilter.colorValues.push({width: pixelW, color: color, textColor: self.complementColor(color), 
+									val: v, x:pixelW*colonna, y:riga*currActiveFilter.lineHeight, yplus30:riga*currActiveFilter.lineHeight+25 });
 			
 			colonna++;
 	  	  }
-		  this.totHeight = (riga+1)*50;
+		  currActiveFilter.totHeight = (riga+1)*currActiveFilter.lineHeight;
 	  }
 	  else
 	  {
-		  for (var i in tmplData.records)
+		  var lastV = null;
+		  currActiveFilter.step = null;
+		  for (var i in self.templateRecords)
 		  {
 			  var selected = "";
-			  var v = tmplData.records[i][this.field];
-			  if (this.controlType == "list")
+			  var v = self.templateRecords[i][currActiveFilter.field];
+			  if (currActiveFilter.controlType == "list")
 			  {
 				  // scan all filtered model records and look for the same records (may not have the same index)
 				  for (var  j in self._sourceDataset.records.models)
-					  if (self.areValuesEqual(self._sourceDataset.records.models[j].attributes[this.field], v))
+					  if (self.areValuesEqual(self._sourceDataset.records.models[j].attributes[currActiveFilter.field], v))
 					  {
 						  if (self._sourceDataset.records.models[j].is_selected)
 							  selected = self._selectedClassName; 
@@ -794,71 +1040,149 @@ my.GenericFilter = Backbone.View.extend({
 						  break;
 					  }
 			  }
-			  else if (this.controlType == "radiobuttons")
+			  else if (currActiveFilter.controlType == "radiobuttons")
 			  {
-				  if (self.areValuesEqual(this.term, v) || (typeof this.list != "undefined" && this.list && this.list.length == 1 && self.areValuesEqual(this.list[0], v)))
+				  if (self.areValuesEqual(currActiveFilter.term, v) || (typeof currActiveFilter.list != "undefined" && currActiveFilter.list && currActiveFilter.list.length == 1 && self.areValuesEqual(currActiveFilter.list[0], v)))
 				  	selected = 'btn-primary'
 			  }
-			  else if (this.controlType == "multibutton")
+			  else if (currActiveFilter.controlType == "multibutton")
 			  {
-				  if (self.areValuesEqual(this.term, v)) 
+				  if (self.areValuesEqual(currActiveFilter.term, v)) 
 					  selected = 'btn-info'
-				  else if (typeof this.list != "undefined" && this.list != null)
+				  else if (typeof currActiveFilter.list != "undefined" && currActiveFilter.list != null)
 				  {
-					  for (var j in this.list)
-						  if (self.areValuesEqual(this.list[j], v))
+					  for (var j in currActiveFilter.list)
+						  if (self.areValuesEqual(currActiveFilter.list[j], v))
 							  selected = 'btn-info'
 				  }
 			  }
-			  else if (this.controlType == "dropdown" || this.controlType == "dropdown_styled")
+			  else if (currActiveFilter.controlType == "dropdown" || currActiveFilter.controlType == "dropdown_styled")
 			  {
-				  if (self.areValuesEqual(this.term, v) || (typeof this.list != "undefined" && this.list && this.list.length == 1 && self.areValuesEqual(this.list[0], v)))
+				  if (self.areValuesEqual(currActiveFilter.term, v) || (typeof currActiveFilter.list != "undefined" && currActiveFilter.list && currActiveFilter.list.length == 1 && self.areValuesEqual(currActiveFilter.list[0], v)))
 				  {
 					  	selected = "selected"
-					  	if (this.controlType == "dropdown")
-				  		{
-					  		this.innerLabelColor = "";
-				  		}
+//					  	if (currActiveFilter.controlType == "dropdown")
+//				  		{
+//					  		currActiveFilter.innerLabelColor = "";
+//				  		}
 				  }
 			  }
-			  else if (this.controlType == "listbox" || this.controlType == "listbox_styled") 
+			  else if (currActiveFilter.controlType == "listbox" || currActiveFilter.controlType == "listbox_styled") 
 			  {
-				  if (self.areValuesEqual(this.term, v)) 
+				  if (self.areValuesEqual(currActiveFilter.term, v)) 
 					  selected = "selected"
-				  else if (typeof this.list != "undefined" && this.list != null)
+				  else if (typeof currActiveFilter.list != "undefined" && currActiveFilter.list != null)
 				  {
-					  for (var j in this.list)
-						  if (self.areValuesEqual(this.list[j], v))
+					  for (var j in currActiveFilter.list)
+						  if (self.areValuesEqual(currActiveFilter.list[j], v))
 							  selected = "selected"
 				  }
 			  }
 			  
-			this.values.push({val: v, selected: selected });
-			if (this.controlType.indexOf('slider') >= 0)
+			currActiveFilter.values.push({val: v, selected: selected });
+			if (currActiveFilter.controlType.indexOf('slider') >= 0)
 			{
-				if (v > this.max)
-					this.max = v;
+				if (v > currActiveFilter.max)
+					currActiveFilter.max = v;
 					
-				if (v < this.min)
-					this.min = v;
+				if (v < currActiveFilter.min)
+					currActiveFilter.min = v;
+				
+				if (currActiveFilter.controlType.indexOf('styled') > 0 && lastV != null)
+				{
+					if (currActiveFilter.step == null)
+						currActiveFilter.step = v - lastV;
+					else if (v - lastV != currActiveFilter.step)
+						currActiveFilter.step = 1;
+				}
 			}
+			lastV = v;
 		  }
-		  if (this.controlType.indexOf('slider') >= 0)
+		  if (currActiveFilter.controlType.indexOf('slider') >= 0)
 		  {
-			  if (typeof this.from == "undefined")
-				  this.from = this.min; 
+			  if (typeof currActiveFilter.from == "undefined")
+				  currActiveFilter.from = currActiveFilter.min; 
 	
-			  if (typeof this.to == "undefined")
-				  this.to = this.max; 
+			  if (typeof currActiveFilter.to == "undefined")
+				  currActiveFilter.to = currActiveFilter.max; 
 			  
-			  if (typeof this.term == "undefined")
-				  this.term = this.min; 
-
+			  if (typeof currActiveFilter.term == "undefined")
+				  currActiveFilter.term = currActiveFilter.min; 
+			  
+			  if (currActiveFilter.controlType.indexOf('styled') > 0)
+			  {
+				  if (currActiveFilter.min % 2 == 0 && currActiveFilter.max % 2 == 0)
+				  {
+					  currActiveFilter.step1 = (currActiveFilter.max - currActiveFilter.min)/4 + currActiveFilter.min
+					  currActiveFilter.mean = (currActiveFilter.max - currActiveFilter.min)/2 
+					  currActiveFilter.step2 = (currActiveFilter.max - currActiveFilter.min)*3/4 + currActiveFilter.min
+					  if (currActiveFilter.step1 != Math.floor(currActiveFilter.step1) || currActiveFilter.step2 != Math.floor(currActiveFilter.step2))
+					  {
+						  currActiveFilter.step1 = "|"
+						  currActiveFilter.step2 = "|"
+					  }
+				  }
+				  else
+				  {
+					  currActiveFilter.step1 = "|"
+					  currActiveFilter.mean = "|"
+					  currActiveFilter.step2 = "|"
+				  }
+			  }
 		  }
 	  }
-	  this.ctrlId = self.uid;
-		  return Mustache.render(self.filterTemplates[this.controlType], this);
-    };
+	  currActiveFilter.ctrlId = self.uid+"_"+self.numId;
+	  self.numId++;
+		  
+	  return Mustache.render(self.filterTemplates[currActiveFilter.controlType], currActiveFilter);
+  },
+  render: function() {
+    var self = this;
+    //console.log("genericfilter render "+this.uid)
+	var tmplData = {filters : this.activeFilters}; 
+	_.each(tmplData.filters , function(flt) { 
+		flt.hrVisible = 'block';
+		flt.self = self; // pass self to filters!
+	});
+
+    //  map them to the correct controlType and retain their values (start/from/term/...)
+     _.each(self._sourceDataset.queryState.get('selections'), function(filter) {
+          for (var j in tmplData.filters)
+          {
+              if (tmplData.filters[j].field == filter.field)
+              {
+            	  //if (typeof filter.list != "undefined" && filter.list != null)
+            		  tmplData.filters[j].list = filter.list
+            		  
+            	  //if (typeof filter.term != "undefined" && filter.term != null)
+            		  tmplData.filters[j].term = filter.term
+            		  
+            	  //if (typeof filter.start != "undefined" && filter.start != null)
+            		  tmplData.filters[j].start = filter.start
+            		  
+            	  //if (typeof filter.stop != "undefined" && filter.stop != null)
+            		  tmplData.filters[j].stop = filter.stop
+              }
+          }
+      });
+
+      if (tmplData.filters.length > 0)
+		tmplData.filters[tmplData.filters.length -1].hrVisible = 'none'
+
+      var resultType = "filtered";
+      if(self.options.resultType !== null)
+          resultType = self.options.resultType;
+
+    tmplData.fields = this._sourceDataset.fields.toJSON();
+    this.templateRecords = _.pluck(this._sourceDataset.getRecords(resultType), "attributes"); 
+	tmplData.records = this.templateRecords;
+	tmplData.filterDialogTitle = this.filterDialogTitle;
+	tmplData.filterDialogDescription = this.filterDialogDescription;
+	if (this.filterDialogTitle || this.filterDialogDescription)
+		tmplData.titlePresent = "block";
+	else tmplData.titlePresent = "none"; 
+	tmplData.dateConvert = self.dateConvert;
+    tmplData.filterRender = self.filterRender;
     var currTemplate = this.template;
     if (this.useHorizontalLayout)
     	currTemplate = this.templateHoriz
@@ -890,26 +1214,31 @@ my.GenericFilter = Backbone.View.extend({
 		var type  = $fieldSet.attr('data-filter-type');
 		var fieldId = $fieldSet.attr('data-filter-field');
 		var controlType = $fieldSet.attr('data-control-type');
+		var classToUse = "btn-info"
 		if (controlType == "multibutton")
 		{
-			$target.toggleClass("btn-info");
+			$target.toggleClass(classToUse);
 		}
 		else if (controlType == "radiobuttons")
 		{
 			// ensure one and only one selection is performed
-			$fieldSet.find('div.btn-group button.btn-info').each(function() { 
-				$(this).removeClass("btn-info"); 
+			classToUse = "btn-primary"
+			$fieldSet.find('div.btn-group button.'+classToUse).each(function() { 
+				$(this).removeClass(classToUse); 
 			});
-			$target.addClass("btn-info");
+			$target.addClass(classToUse);
 		}
 		var listaValori = [];
-		$fieldSet.find('div.btn-group button.btn-info').each(function() { 
+		$fieldSet.find('div.btn-group button.'+classToUse).each(function() { 
 			listaValori.push($(this).html().valueOf()); // in case there's a date, convert it with valueOf
 		});
+		var currActiveFilter = this.findActiveFilterByField(fieldId, controlType);
+		currActiveFilter.userChanged = true;
 		if (controlType == "multibutton")
-			this.findActiveFilterByField(fieldId, controlType).list = listaValori;
+			currActiveFilter.list = listaValori;
 		else if (controlType == "radiobuttons")
-			this.findActiveFilterByField(fieldId, controlType).term = $target.html().valueOf();
+			currActiveFilter.term = $target.html().valueOf();
+		
 		
 		this.doAction("onButtonsetClicked", fieldId, listaValori, "add");
 	  },
@@ -931,7 +1260,10 @@ my.GenericFilter = Backbone.View.extend({
 	// make sure at least one value is selected
 	if (listaValori.length > 0)
 	{
-		this.findActiveFilterByField(fieldId, controlType).legend = listaValori;
+		var currActiveFilter = this.findActiveFilterByField(fieldId, controlType)
+		currActiveFilter.userChanged = true;
+		currActiveFilter.legend = listaValori;
+
 		this.doAction("onLegendItemClicked", fieldId, listaValori, "add");
 	}
 	else $target.toggleClass("not-selected"); // reselect the item and exit
@@ -990,6 +1322,9 @@ my.GenericFilter = Backbone.View.extend({
 			});
 		}
 
+		var currFilter = this.findActiveFilterByField(fieldId, controlType);
+		currFilter.userChanged = true;
+		
 		if (type == "range")
 		{
 			// case month_week_calendar 
@@ -997,9 +1332,8 @@ my.GenericFilter = Backbone.View.extend({
 			var startDate = $targetTD.attr('startDate');
 			var endDate = $targetTD.attr('stopDate');
 
-			var currFilter = this.findActiveFilterByField(fieldId, controlType);
 			currFilter.term = $targetTD.attr('myValue'); // save selected item for re-rendering later
-				
+			
 			this.doAction("onListItemClicked", fieldId, [startDate, endDate], "add");
 		}
 		else if (type == "list")
@@ -1039,7 +1373,35 @@ my.GenericFilter = Backbone.View.extend({
 			return d;
 		}
 	},
-
+    onStyledSliderValueChanged: function(e, value) {
+        e.preventDefault();
+        var $target = $(e.target).parent();
+    	var fieldId     = $target.attr('data-filter-field');
+    	var fieldType     = $target.attr('data-filter-type');
+    	var controlType     = $target.attr('data-control-type');
+    	if (fieldType == "term")
+		{
+    		//var termObj = $target.find('.data-control-id');
+			var term = value; //termObj.attr("value");
+			var activeFilter= this.findActiveFilterByField(fieldId, controlType); 
+			activeFilter.userChanged = true;
+			activeFilter.term = term;
+			activeFilter.list = [term];
+	        this.doAction("onStyledSliderValueChanged", fieldId, [term], "add");
+		}
+    	else if (fieldType == "range")
+    	{
+    		//var fromToObj = $target.find('.data-control-id');
+    		var activeFilter = this.findActiveFilterByField(fieldId, controlType); 
+			activeFilter.userChanged = true;
+    		var fromTo = value.split(";"); //fromToObj.attr("value").split(";");
+    		var from = fromTo[0];
+    		var to=fromTo[1];
+    		activeFilter.from = from;
+    		activeFilter.to = to;
+            this.doAction("onStyledSliderValueChanged", fieldId, [from, to], "add");
+    	}
+    },
     onFilterValueChanged: function(e) {
     e.preventDefault();
     var $target = $(e.target).parent();
@@ -1047,6 +1409,8 @@ my.GenericFilter = Backbone.View.extend({
 	var fieldType     = $target.attr('data-filter-type');
 	var controlType     = $target.attr('data-control-type');
 
+	var activeFilter = this.findActiveFilterByField(fieldId, controlType); 
+	activeFilter.userChanged = true;
 	if (fieldType == "term")
 	{
         var term;
@@ -1054,14 +1418,17 @@ my.GenericFilter = Backbone.View.extend({
 		switch (controlType)
 		{
 			case "term": term = termObj.val();break;
-			case "slider": term = termObj.slider("value");break;
+			case "slider":
+				term = termObj.slider("value");break;
+			case "slider_styled":
+				term = termObj.attr("value");break;
 			case "dropdown":
 			case "dropdown_styled":
 				term = termObj.val();break;
 			case "listbox": term = termObj.val();break;
 		}
-		this.findActiveFilterByField(fieldId, controlType).term = term;
-		this.findActiveFilterByField(fieldId, controlType).list = [term];
+		activeFilter.term = term;
+		activeFilter.list = [term];
         this.doAction("onFilterValueChanged", fieldId, [term], "add");
 	}
 	else if (fieldType == "list")
@@ -1072,23 +1439,24 @@ my.GenericFilter = Backbone.View.extend({
 			if (listObj.options[i].selected) 
 				list.push(listObj.options[i].value);
 		
-		this.findActiveFilterByField(fieldId, controlType).list = list;
+		activeFilter.list = list;
         this.doAction("onFilterValueChanged", fieldId, list, "add");
 	}
 	else if (fieldType == "range")
 	{
         var from;
         var to;
+        var fromTo;
 		var fromObj = $target.find('.data-control-id-from');
 		var toObj = $target.find('.data-control-id-to');
-		var dropdownObj = $target.find('.data-control-id');
-		var activeFilter = this.findActiveFilterByField(fieldId, controlType); 
+		var fromToObj = $target.find('.data-control-id');
 		switch (controlType)
 		{
 			case "range": from = fromObj.val();to = toObj.val();break;
-			case "range_slider": from = fromObj.slider("values", 0);to = toObj.slider("values", 1);break;
+			case "range_slider": from = fromToObj.slider("values", 0);to = fromToObj.slider("values", 1);break;
+			case "range_slider_styled": fromTo = fromToObj.attr("value").split(";");from = fromTo[0];to=fromTo[1];break;
 			case "range_calendar": from = new Date(fromObj.val());to = new Date(toObj.val());break;
-			case "dropdown_date_range": from = dropdownObj.find(":selected").attr("startDate");to = dropdownObj.find(":selected").attr("stopDate");activeFilter.term = dropdownObj.val();break;
+			case "dropdown_date_range": from = fromToObj.find(":selected").attr("startDate");to = fromToObj.find(":selected").attr("stopDate");activeFilter.term = fromToObj.val();break;
 		}
 		activeFilter.from = from;
 		activeFilter.to = to;
@@ -1112,9 +1480,11 @@ my.GenericFilter = Backbone.View.extend({
 		case "dropdown" :
 		case "dropdown_styled" :
 		case "slider" :
+		case "slider_styled" :
 		case "radiobuttons" :
 			return "term";
 		case "range_slider" :
+		case "range_slider_styled" :
 		case "range_calendar" :
 		case "month_week_calendar" :
 		case "dropdown_date_range" :
@@ -1197,6 +1567,7 @@ my.GenericFilter = Backbone.View.extend({
 	//console.log(currFilter);
 	currFilter.term = undefined;
 	currFilter.value = [];
+	currFilter.userChanged = undefined;
 	
 	if (currFilter.controlType == "list" || currFilter.controlType == "month_week_calendar")
 	{

@@ -175,6 +175,14 @@ root: ../../
                         <div id="filter11"></div>
                     </td>
                 </tr>
+                <tr>
+                    <td>
+	        <div>
+				<input id="SliderSingle" type="slider" value="20" />
+		    </div>
+                    </td>
+                </tr>
+                
             </table>
         </div>
     </div>
@@ -183,6 +191,14 @@ root: ../../
 </div>
 
 <script>
+
+$(document).ready(function(){
+	console.log("aaaaa")
+	$("#SliderSingle").jslider(
+			{ from: 5, 
+				to: 50, step: 2.5, round: 1, format: { format: '##.0', locale: 'de' }, dimension: '&nbsp;&eur;', skin: "round" });
+	console.log("bbbbb")
+});
 
 var initialState = new recline.Data.StateManagement.State({fromQueryString:true});
 
