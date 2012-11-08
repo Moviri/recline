@@ -189,7 +189,6 @@ this.recline.Backend.Memory = this.recline.Backend.Memory || {};
                     // want descending order
                     return -item.count;
                 });
-                tmp.terms = tmp.terms.slice(0, 10);
             });
 
 
