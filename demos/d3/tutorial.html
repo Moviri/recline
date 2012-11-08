@@ -24,7 +24,7 @@ root: ../../
 
     .bs::after
     {
-    content: "Indicators";
+    content: "D3";
     position: absolute;
     top: -1px;
     left: -1px;
@@ -45,17 +45,19 @@ root: ../../
 </style>
 
     <div class="row-fluid">
-        <div class="span2"><div id="filter1"></div></div>
+
+
+        <div class="span2">    <div id="filter1"></div></div>
         <div class="span5"><div id="grid2"  style="height: 30px;"></div><div id="grid1" style="height: 800px;"></div></div>
         <div class="span3">
+            <select id="s1" onChange="reDraw();">
+                <option value="sparkline">Select Viz</option>
+                <option value="sparkline">sparkline</option>
+                <option value="treemap">treemap</option>
+            </select>
             <div class="bs">
-                  <table class="table">
-                      <tr><td><div id="indicator"></div></td><td><div id="indicator2"></div></td></tr>
-                      <tr><td><div id="sparkline"></div> </td><td></td></tr>
-                   </table>
+                  <div id="d3_graph"></div>
             </div>
-
-
             </div>
     </div>
 
@@ -86,29 +88,15 @@ var shapeSchema = new recline.Data.ShapeSchema({
     limits: [5000]
 });
 
-vdataset = new recline.Model.VirtualDataset({
-    dataset:dataset,
-    aggregation:{
-        dimensions:["state"],
-        aggregatedFields:["value"],
-        aggregationFunctions:["sum", "ratioToReport", "runningTotal"]
-    },
-    totals: {
-        aggregationFunctions:   ["sum"],
-        aggregatedFields:       ["value_sum"]
-    }
-});
-
-shapeSchema.setDataset(vdataset, "value_sum_sum", "totals");
 
 var action1 = new recline.Action({
     filters: {
         filter_state_term: {type: "term", field: "state", fieldType: "string"},
-        filter_value_range: {type: "range", field: "value_sum", fieldType: "integer"}
+        filter_value_range: {type: "range", field: "value", fieldType: "integer"}
 
     },
     models: [
-        {model: vdataset, filters:["filter_state_term", "filter_value_range"]}
+        {model: dataset, filters:["filter_state_term", "filter_value_range"]}
     ],
     type: ["filter"]
 });
@@ -128,7 +116,7 @@ $('#filter1').append(filter1.el);
 
 var $el = $('#grid1');
 var grid1 = new recline.View.SlickGrid({
-    model: vdataset,
+    model: dataset,
     el: $el,
     state: {  fitColumns:true,
         useHoverStyle: true,
@@ -148,47 +136,60 @@ grid1.visible = true;
 grid1.render();
 
 
-var $el = $('#grid2');
-var grid2 = new recline.View.SlickGrid({
-    model: vdataset,
-    resultType: "totals",
-    el: $el,
-    state: {  fitColumns:true,
-        useHoverStyle: true,
-        useStripedStyle: true,
-        useCondensedStyle: true
-    }
-
-});
-grid2.visible = true;
-grid2.render();
-
-var indicator1 = new recline.View.Indicator({
-    state: {
-        label:"Values 1",
-        labelColor: "red",
-        description: "show total views",
-        descriptionColor: "red",
-        textColor: "red",
-        kpi:            {dataset: vdataset, type: "totals", field: "value_sum_sum"},
-        compareWith:    {dataset: vdataset, type: "totals_unfiltered", field: "values_sum_sum", compareType: "percentage"}
-    }
-});
-$('#indicator').append(indicator1.el);
-
-var indicator2 = new recline.View.Indicator({
-    state: {
-        label:          "Values 2",
-        kpi:            {dataset: vdataset, type: "totals", field: "value_sum_sum"}
-    }
-});
-$('#indicator2').append(indicator2.el);
-
-
 
 dataset.fetch();
 
+function reDraw() {
+    var type = getSelectedText("s1");
+    var d;
+    if(type == "sparkline") {
 
+        d = new recline.View.d3.Sparkline({
+            model: dataset,
+            resultType: "unfiltered",
+            field: "value",
+            height: 80,
+            width: 300,
+            color: "red",
+            duration: 10000,
+            delay: 200
+        });
+
+
+    } else if(type == "treemap") {
+        d = new recline.View.d3.Treemap({
+            model: dataset,
+            resultType: "unfiltered",
+            fieldValue: "value",
+            fieldName: "state",
+            height: 800,
+            width: 600,
+            duration: 10000,
+            delay: 200
+        });
+    }
+
+
+    if(d) {
+
+
+
+        $('#d3_graph').empty();
+        $('#d3_graph').append(d.el);
+        d.render();
+        d.redraw();
+    }
+};
+
+
+function getSelectedText(element) {
+    var elt = document.getElementById(element);
+
+    if (elt.selectedIndex == -1)
+        return null;
+
+    return elt.options[elt.selectedIndex].value;
+}
 
 </script>
 

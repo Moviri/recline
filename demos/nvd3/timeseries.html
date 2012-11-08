@@ -1,0 +1,56 @@
+---
+layout: moviri
+title: Demos - NVD3 Integration
+recline-deps: true
+root: ../../
+---
+<script type="text/javascript" src="series.data.js"></script>
+
+
+<div class="container-fluid">
+ <div class="row-fluid"><div class="span9"><div id="graph1" style="height: 150px;"></div></div></div>
+ </div>
+<div class="container-fluid">
+    <div class="row-fluid"><div class="span9"><div id="graph2" style="height: 150px;"></div></div></div>
+</div>
+<div class="container-fluid">
+    <div class="row-fluid"><div class="span9"><div id="graph3" style="height: 150px;"></div></div></div>
+</div>
+<div class="container-fluid">
+    <div class="row-fluid"><div class="span9"><div id="graph4" style="height: 150px;"></div></div></div>
+</div>
+
+
+<script>
+    var conf = [
+        ["#graph1", "multiBarChart"],
+        ["#graph2", "lineChart"],
+        ["#graph3", "discreteBarChart"]
+
+
+
+    ];
+
+    _.each(conf, function(d) {
+        var graph = new recline.View.NVD3Graph({
+            model:dataset,
+            state:{
+                group:["x"],
+                series      : {type:"byFieldName", valuesField:["y"]},
+                options     : {tooltips:true, staggerLabels:false, showValues:false, showControls:false, showLegend:false, reduceXTicks:true},
+                graphType   : d[1]
+            }
+        });
+
+        $(d[0]).append(graph.el);
+        graph.render();
+        graph.redraw();
+
+    });
+
+
+
+
+
+
+</script>
