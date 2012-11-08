@@ -739,7 +739,6 @@ function (e) {
 		{
 			this.inputNode.attr("value", e);
 			this.onstatechange.call(this, e);
-			console.log(e)
 			this.inputNode.trigger("change", e);
 		}
     }, r.prototype.getValue = function () {

@@ -523,7 +523,6 @@ my.GenericFilter = Backbone.View.extend({
 	  return false;
   },
   update: function() {
-	//console.log("genericfilter update "+this.uid)
 	var self = this;
     // retrieve filter values (start/from/term/...)
     _.each(this._sourceDataset.queryState.get('selections'), function(filter) {
@@ -531,48 +530,32 @@ my.GenericFilter = Backbone.View.extend({
          {
              if (self.activeFilters[j].field == filter.field)
              {
-           	  //if (typeof filter.list != "undefined" && filter.list != null)
-           		  self.activeFilters[j].list = filter.list
-           		  
-           	  //if (typeof filter.term != "undefined" && filter.term != null)
-           		  self.activeFilters[j].term = filter.term
-           		  
-           	  //if (typeof filter.start != "undefined" && filter.start != null)
-           		  self.activeFilters[j].start = filter.start
-           		  
-           	  //if (typeof filter.stop != "undefined" && filter.stop != null)
-           		  self.activeFilters[j].stop = filter.stop
+       		  self.activeFilters[j].list = filter.list
+       		  self.activeFilters[j].term = filter.term
+       		  self.activeFilters[j].start = filter.start
+       		  self.activeFilters[j].stop = filter.stop
              }
          }
      });
 	
 	var currFilters = this.el.find("div.filter");
 	_.each(currFilters , function(flt) {
-		//console.log("Updating filter frame with id "+flt.id);
-		//console.log(flt);
 		var currFilterCtrl = $(flt).find(".data-control-id");
 		if (typeof currFilterCtrl != "undefined" && currFilterCtrl != null)
 		{
-			//console.log("Main control is:");
 			//console.log($(currFilterCtrl));
 		}
 		else
 		{
 			var currFilterCtrlFrom = $(flt).find(".data-control-id-from");
-			//console.log("From control is:");
-			//console.log($(currFilterCtrlFrom));
 			var currFilterCtrlTo = $(flt).find(".data-control-id-to");
-			//console.log("To control is:");
-			//console.log($(currFilterCtrlTo));
 		}
 		var currActiveFilter = null;
 		for (var j in self.activeFilters)
 		{
 			if (self.activeFilters[j].ctrlId == flt.id)
 			{
-				//console.log("Associated activeFilter is:")
 				currActiveFilter = self.activeFilters[j] 
-				//console.log(currActiveFilter)
 				break;
 			}
 		}
@@ -581,8 +564,6 @@ my.GenericFilter = Backbone.View.extend({
 			if (currActiveFilter.userChanged)
 			{
 				// skip the filter that triggered the change
-				//console.log("Skipping filter update:")
-				//console.log(currActiveFilter)
 				currActiveFilter.userChanged = undefined;
 				return;
 			}
@@ -1138,7 +1119,6 @@ my.GenericFilter = Backbone.View.extend({
   },
   render: function() {
     var self = this;
-    //console.log("genericfilter render "+this.uid)
 	var tmplData = {filters : this.activeFilters}; 
 	_.each(tmplData.filters , function(flt) { 
 		flt.hrVisible = 'block';
@@ -1564,7 +1544,6 @@ my.GenericFilter = Backbone.View.extend({
     var field = $target.parent().parent().attr('data-filter-field');
     var controlType = $target.parent().parent().attr('data-control-type');
 	var currFilter = this.findActiveFilterByField(field, controlType);
-	//console.log(currFilter);
 	currFilter.term = undefined;
 	currFilter.value = [];
 	currFilter.userChanged = undefined;
