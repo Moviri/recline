@@ -249,6 +249,7 @@ colorSchemaDate.setDataset(dataset, "date");
 colorSchemaAge.setDataset(dataset, "age");
 
 dataset.queryState.addFacetNoEvent("age", true);
+dataset.queryState.addFacetNoEvent("date", true);
 
 
 dataset.queryState.bind('change', function () {

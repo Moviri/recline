@@ -699,6 +699,13 @@ my.GenericFilter = Backbone.View.extend({
   },
   createSingleFilter: function(currActiveFilter) {
 	  var self = currActiveFilter.self;
+	  
+      currActiveFilter.facet = self._sourceDataset.getFacetByFieldId(currActiveFilter.field);
+	  var facetTerms = currActiveFilter.facet.attributes.terms;
+
+      if(currActiveFilter.facet == null ) {
+          throw "GenericFilter: no facet present for field [" + currActiveFilter.field + "]. Define a facet before filter render";
+      }
 	  if (typeof currActiveFilter.label == "undefined" || currActiveFilter.label == null)
   		  currActiveFilter.label = currActiveFilter.field;
      
@@ -713,8 +720,6 @@ my.GenericFilter = Backbone.View.extend({
       if (currActiveFilter.labelPosition == 'inside')
     	  currActiveFilter.innerLabel = currActiveFilter.label;
       
-      //currActiveFilter.innerLabelColor = "lightgrey";
-
   	  currActiveFilter.values = new Array();
   	  
 	  // add value list to selected filter or templating of record values will not work
@@ -728,10 +733,10 @@ my.GenericFilter = Backbone.View.extend({
 	  }
 	  if (currActiveFilter.controlType.indexOf('slider') >= 0)
 	  {
-		  if (self.templateRecords.length && typeof self.templateRecords[0] != "undefined")
+		  if (facetTerms.length > 0 && typeof facetTerms[0].term != "undefined")
 		  {
-			  currActiveFilter.max = self.templateRecords[0][currActiveFilter.field];
-			  currActiveFilter.min = self.templateRecords[0][currActiveFilter.field];
+			  currActiveFilter.max = facetTerms[0].term;
+			  currActiveFilter.min = facetTerms[0].term;
 		  }
 		  else
 		  {
@@ -905,10 +910,6 @@ my.GenericFilter = Backbone.View.extend({
 	  else if (currActiveFilter.controlType == "legend")
 	  {
 		  // OLD code, somehow working but wrong
-	      currActiveFilter.facet = self._sourceDataset.getFacetByFieldId(currActiveFilter.field);
-          if(currActiveFilter.facet == null ) {
-              throw "GenericFilter: no facet present for field [" + currActiveFilter.field + "]. Define a facet before filter render";
-          }
 		  currActiveFilter.tmpValues = _.pluck(currActiveFilter.facet.attributes.terms, "term");
 
 		  if (typeof currActiveFilter.origLegend == "undefined")
@@ -930,7 +931,6 @@ my.GenericFilter = Backbone.View.extend({
 		  }		
 			
 // 			NEW code. Will work when facet will be returned correctly even after filtering
-//		  currActiveFilter.facet = self._sourceDataset.getFacetByFieldId(currActiveFilter.field);
 //		  currActiveFilter.tmpValues = _.pluck(currActiveFilter.facet.attributes.terms, "term");
 //		  for (var v in currActiveFilter.tmpValues)
 //		  {
@@ -963,11 +963,7 @@ my.GenericFilter = Backbone.View.extend({
 		  var maxWidth = 250;
 		  currActiveFilter.colorValues = [];
 		  
-	      currActiveFilter.facet = self._sourceDataset.getFacetByFieldId(currActiveFilter.field);
-          if(typeof currActiveFilter.facet == "undefined" || currActiveFilter.facet == null ) {
-              throw "GenericFilter: no facet present for field [" + currActiveFilter.field + "]. Define a facet before filter render";
-          }
-          else currActiveFilter.tmpValues = _.pluck(currActiveFilter.facet.attributes.terms, "term");
+  		currActiveFilter.tmpValues = _.pluck(currActiveFilter.facet.attributes.terms, "term");
           
 		  var pixelW = 0;
 		  // calculate needed pixel width for every string
@@ -1005,21 +1001,14 @@ my.GenericFilter = Backbone.View.extend({
 	  {
 		  var lastV = null;
 		  currActiveFilter.step = null;
-		  for (var i in self.templateRecords)
+		  for (var i in facetTerms)
 		  {
 			  var selected = "";
-			  var v = self.templateRecords[i][currActiveFilter.field];
+			  var v = facetTerms[i].term;
 			  if (currActiveFilter.controlType == "list")
 			  {
-				  // scan all filtered model records and look for the same records (may not have the same index)
-				  for (var  j in self._sourceDataset.records.models)
-					  if (self.areValuesEqual(self._sourceDataset.records.models[j].attributes[currActiveFilter.field], v))
-					  {
-						  if (self._sourceDataset.records.models[j].is_selected)
-							  selected = self._selectedClassName; 
-						  
-						  break;
-					  }
+				  if (facetTerms[i].count > 0)
+					  selected = self._selectedClassName;
 			  }
 			  else if (currActiveFilter.controlType == "radiobuttons")
 			  {
@@ -1040,13 +1029,7 @@ my.GenericFilter = Backbone.View.extend({
 			  else if (currActiveFilter.controlType == "dropdown" || currActiveFilter.controlType == "dropdown_styled")
 			  {
 				  if (self.areValuesEqual(currActiveFilter.term, v) || (typeof currActiveFilter.list != "undefined" && currActiveFilter.list && currActiveFilter.list.length == 1 && self.areValuesEqual(currActiveFilter.list[0], v)))
-				  {
 					  	selected = "selected"
-//					  	if (currActiveFilter.controlType == "dropdown")
-//				  		{
-//					  		currActiveFilter.innerLabelColor = "";
-//				  		}
-				  }
 			  }
 			  else if (currActiveFilter.controlType == "listbox" || currActiveFilter.controlType == "listbox_styled") 
 			  {
@@ -1131,17 +1114,10 @@ my.GenericFilter = Backbone.View.extend({
           {
               if (tmplData.filters[j].field == filter.field)
               {
-            	  //if (typeof filter.list != "undefined" && filter.list != null)
-            		  tmplData.filters[j].list = filter.list
-            		  
-            	  //if (typeof filter.term != "undefined" && filter.term != null)
-            		  tmplData.filters[j].term = filter.term
-            		  
-            	  //if (typeof filter.start != "undefined" && filter.start != null)
-            		  tmplData.filters[j].start = filter.start
-            		  
-            	  //if (typeof filter.stop != "undefined" && filter.stop != null)
-            		  tmplData.filters[j].stop = filter.stop
+        		  tmplData.filters[j].list = filter.list
+        		  tmplData.filters[j].term = filter.term
+        		  tmplData.filters[j].start = filter.start
+        		  tmplData.filters[j].stop = filter.stop
               }
           }
       });
@@ -1154,8 +1130,6 @@ my.GenericFilter = Backbone.View.extend({
           resultType = self.options.resultType;
 
     tmplData.fields = this._sourceDataset.fields.toJSON();
-    this.templateRecords = _.pluck(this._sourceDataset.getRecords(resultType), "attributes"); 
-	tmplData.records = this.templateRecords;
 	tmplData.filterDialogTitle = this.filterDialogTitle;
 	tmplData.filterDialogDescription = this.filterDialogDescription;
 	if (this.filterDialogTitle || this.filterDialogDescription)
@@ -1361,8 +1335,7 @@ my.GenericFilter = Backbone.View.extend({
     	var controlType     = $target.attr('data-control-type');
     	if (fieldType == "term")
 		{
-    		//var termObj = $target.find('.data-control-id');
-			var term = value; //termObj.attr("value");
+			var term = value;
 			var activeFilter= this.findActiveFilterByField(fieldId, controlType); 
 			activeFilter.userChanged = true;
 			activeFilter.term = term;
@@ -1371,10 +1344,9 @@ my.GenericFilter = Backbone.View.extend({
 		}
     	else if (fieldType == "range")
     	{
-    		//var fromToObj = $target.find('.data-control-id');
     		var activeFilter = this.findActiveFilterByField(fieldId, controlType); 
 			activeFilter.userChanged = true;
-    		var fromTo = value.split(";"); //fromToObj.attr("value").split(";");
+    		var fromTo = value.split(";");
     		var from = fromTo[0];
     		var to=fromTo[1];
     		activeFilter.from = from;
@@ -1558,12 +1530,6 @@ my.GenericFilter = Backbone.View.extend({
 						});
 		}		
 	}
-	
-
-
-  	/*_.each(this._targetDatasets, function(ds) {
-		ds.queryState.removeFilterByField(field);
-	});*/
       this.doAction("onRemoveFilter", field, [], "remove");
 
   },
