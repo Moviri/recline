@@ -8,9 +8,9 @@ this.recline.Data = this.recline.Data || {};
     // formatters define how data is rapresented in internal dataset
     my.FormattersMODA = {
         integer : function (e) { return parseInt(e); },
-        string : function (e) { return e.toString() },
-        date   : function (e) { return new Date(parseInt(e)).valueOf() },
-        float  : function (e) { return parseFloat(e, 10); },
+        string  : function (e) { return e.toString() },
+        date    : function (e) { return new Date(parseInt(e)).valueOf() },
+        float   : function (e) { return parseFloat(e, 10); },
         number  : function (e) { return parseFloat(e, 10); }
     };
 
@@ -86,7 +86,7 @@ this.recline.Data = this.recline.Data || {};
             if(format == null || format == "date")
                 return val;
 
-            return val.toLocaleDateString();
+            return new Date(val).toLocaleString();
         },
         geo_point: function(val, field, doc) {
             return JSON.stringify(val);
