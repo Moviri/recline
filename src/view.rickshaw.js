@@ -104,10 +104,10 @@ this.recline.View = this.recline.View || {};
 
             }
 
-            if (self.options.state.legend) {
+            if (self.options.legend) {
                 var legend = new Rickshaw.Graph.Legend({
                     graph:self.graph,
-                    element:document.querySelector('#' + self.options.state.legend)
+                    element:document.querySelector('#' + self.options.legend)
                 });
 
                 var shelving = new Rickshaw.Graph.Behavior.Series.Toggle({
