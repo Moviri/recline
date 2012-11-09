@@ -98,12 +98,14 @@ my.GenericFilter = Backbone.View.extend({
 		}); \
 	</script> \
       <div class="filter-{{type}} filter" id="{{ctrlId}}"> \
-        <fieldset> \
+        <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
             <legend style="display:{{useLegend}}">{{label}} \
 			<a class="js-remove-filter" href="#" title="Remove this filter">&times;</a> \
 		</legend>  \
-		<div style="float:left;padding-right:15px;display:{{useLeftLabel}}">{{label}}</div> \
-	    <div style="float:left" class="layout-slider" data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
+		<div style="float:left;padding-right:15px;display:{{useLeftLabel}}">{{label}} \
+			<a class="js-remove-filter" href="#" title="Remove this filter">&times;</a> \
+		</div> \
+	    <div style="float:left" class="layout-slider" > \
 	    	<input type="slider" id="slider{{ctrlId}}" value="{{term}}" class="slider-styled data-control-id" /> \
 	    </div> \
         </fieldset> \
@@ -164,12 +166,11 @@ my.GenericFilter = Backbone.View.extend({
 		}); \
 	</script> \
       <div class="filter-{{type}} filter" id="{{ctrlId}}"> \
-        <fieldset> \
+        <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
             <legend style="display:{{useLegend}}">{{label}} \
-			<a class="js-remove-filter" href="#" title="Remove this filter">&times;</a> \
 		</legend>  \
 		<div style="float:left;padding-right:15px;display:{{useLeftLabel}}">{{label}}</div> \
-	    <div style="float:left" class="layout-slider" data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
+	    <div style="float:left" class="layout-slider" > \
 	    	<input type="slider" id="slider{{ctrlId}}" value="{{from}};{{to}}" class="slider-styled data-control-id" /> \
 	    </div> \
         </fieldset> \
@@ -311,7 +312,9 @@ my.GenericFilter = Backbone.View.extend({
             <legend style="display:{{useLegend}}">{{label}}  \
             <a class="js-remove-filter" href="#" title="Remove this filter">&times;</a> \
 			</legend> \
-    		<div style="float:left;padding-right:10px;display:{{useLeftLabel}}">{{label}}</div> \
+    		<div style="float:left;padding-right:10px;display:{{useLeftLabel}}">{{label}} \
+    			<a class="js-remove-filter" href="#" title="Remove this filter">&times;</a> \
+    		</div> \
 			<div style="max-height:500px;width:100%;border:1px solid grey;overflow:auto;"> \
 				<table class="table table-striped table-hover table-condensed" style="width:100%" data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" > \
 				<tbody>\
@@ -358,13 +361,13 @@ my.GenericFilter = Backbone.View.extend({
         </fieldset> \
       </div> \
     ',
-    radiobuttons : 
-    	' \
+    radiobuttons : ' \
         <div class="filter-{{type}} filter" id="{{ctrlId}}"> \
             <div data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
                 <legend style="display:{{useLegend}}">{{label}}</legend>  \
     			<div style="float:left;padding-right:10px;padding-top:4px;display:{{useLeftLabel}}">{{label}}</div> \
     			<div class="btn-group data-control-id" > \
+    				<button class="btn grouped-button btn-primary">All</button> \
     	            {{#values}} \
     	    		<button class="btn grouped-button {{selected}}">{{val}}</button> \
     	            {{/values}} \
@@ -372,11 +375,11 @@ my.GenericFilter = Backbone.View.extend({
             </div> \
         </div> \
         ',
-    multibutton : 
-    	' \
+    multibutton : ' \
     <div class="filter-{{type}} filter" id="{{ctrlId}}"> \
         <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
-            <legend style="display:{{useLegend}}">{{label}}</legend>  \
+    		<legend style="display:{{useLegend}}">{{label}} \
+    		</legend>  \
     		<div style="float:left;padding-right:10px;padding-top:4px;display:{{useLeftLabel}}">{{label}}</div> \
     		<div class="btn-group data-control-id" > \
 	            {{#values}} \
@@ -636,22 +639,30 @@ my.GenericFilter = Backbone.View.extend({
 	  var valueList = this.computeUserChoices(currActiveFilter);
 	  
 	  var buttons = filterCtrl.find("button.grouped-button");
-	  if (valueList != null && valueList.length == 1)
+	  _.each(buttons, function(btn) { $(btn).removeClass("btn-primary")});
+	  if (valueList != null) 
 	  {
-		  // do not use each or other jquery/underscore methods since they don't work well here
-		  for (var i = 0; i < buttons.length; i++)
+		  if (valueList.length == 1)
 		  {
-			  var btn = $(buttons[i]);
-			  for (var j = 0; j < valueList.length; j++) 
+			  // do not use each or other jquery/underscore methods since they don't work well here
+			  for (var i = 0; i < buttons.length; i++)
 			  {
-				  var v = valueList[j];
-				  if (this.areValuesEqual(v, btn.html()))
-					  btn.addClass("btn-primary");
-				  else btn.removeClass("btn-primary");
+				  var btn = $(buttons[i]);
+				  for (var j = 0; j < valueList.length; j++) 
+				  {
+					  var v = valueList[j];
+					  if (this.areValuesEqual(v, btn.html()))
+					  {
+						  btn.addClass("btn-primary");
+						  break;
+					  }
+				  }
 			  }
 		  }
+		  else if (valueList.length == 0)
+			  $(buttons[0]).addClass("btn-primary"); // select button "All"
 	  }
-	  else _.each(buttons, function(btn) { $(btn).removeClass("btn-primary")});
+	  else $(buttons[0]).addClass("btn-primary"); // select button "All"
   },
   updateRangeSlider: function(filterContainer, currActiveFilter, filterCtrl) {
 	  var valueList = this.computeUserChoices(currActiveFilter);
@@ -1191,9 +1202,14 @@ my.GenericFilter = Backbone.View.extend({
 		if (controlType == "multibutton")
 			currActiveFilter.list = listaValori;
 		else if (controlType == "radiobuttons")
-			currActiveFilter.term = $target.html().valueOf();
-		
-		
+		{
+			if (listaValori.length == 1 && listaValori[0] == "All")
+			{
+				listaValori = [];
+				currActiveFilter.term = "";
+			}
+			else currActiveFilter.term = $target.html().valueOf();
+		}
 		this.doAction("onButtonsetClicked", fieldId, listaValori, "add");
 	  },
   onLegendItemClicked: function(e) {
@@ -1329,7 +1345,7 @@ my.GenericFilter = Backbone.View.extend({
 	},
     onStyledSliderValueChanged: function(e, value) {
         e.preventDefault();
-        var $target = $(e.target).parent();
+        var $target = $(e.target).parent().parent();
     	var fieldId     = $target.attr('data-filter-field');
     	var fieldType     = $target.attr('data-filter-type');
     	var controlType     = $target.attr('data-control-type');
@@ -1530,7 +1546,13 @@ my.GenericFilter = Backbone.View.extend({
 						});
 		}		
 	}
-      this.doAction("onRemoveFilter", field, [], "remove");
+	else if (currFilter.controlType == "slider_styled")
+	{
+		var filterCtrl = $target.parent().parent().find(".slider-styled")
+		filterCtrl.jslider("value", filterCtrl.jslider().settings.from);
+	}
+      
+	this.doAction("onRemoveFilter", field, [], "remove");
 
   },
 
