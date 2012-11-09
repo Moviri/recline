@@ -49,6 +49,7 @@ root: ../../
     <div class="row-fluid">
         <div class="span9">
             <div id="grid1" ></div>
+            <div id="legenddiv"></div>
         </div>
 
     </div>
@@ -130,12 +131,12 @@ grid1.render();
         model:dataset,
         state:{
             group:["x"],
-            series:{type:"byFieldName", valuesField:["y"]},
+            series:{type:"byFieldName", valuesField:["y", "z"]},
             events:{dataset: datasetevents, resultType: "unfiltered", timeField: "When", valueField: "What", endField:"end"}
         },
         width: 1024,
-        height: 150
-        //legend: "legenddiv"
+        height: 150,
+        legend: "legenddiv"
     });
 
 

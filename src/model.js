@@ -645,10 +645,13 @@ this.recline.Model = this.recline.Model || {};
         },
         getColorForPartition:function () {
 
-            if (!this.attributes.colorSchema || !this.attributes.is_partitioned)
+            if (!this.attributes.colorSchema)
                 return null;
 
-            return this.attributes.colorSchema.getColorFor(this.attributes.partitionValue);
+            if(this.attributes.is_partitioned)
+                return this.attributes.colorSchema.getColorFor(this.attributes.partitionValue);
+
+            return this.attributes.colorSchema.getColorFor(this.attributes.id);
         }
     });
 

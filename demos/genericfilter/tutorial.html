@@ -57,6 +57,12 @@ root: ../../
             <div id="horizontal"></div>
         </div>
     </div>
+    <div class="row-fluid">
+        <div class="span9">
+            <div id="horizontal2"></div>
+        </div>
+    </div>
+
 
     <div class="row-fluid">
         <div class="span2">
@@ -175,13 +181,7 @@ root: ../../
                         <div id="filter11"></div>
                     </td>
                 </tr>
-                <tr>
-                    <td>
-	        <div>
-				<input id="SliderSingle" type="slider" value="20" />
-		    </div>
-                    </td>
-                </tr>
+
                 
             </table>
         </div>
@@ -192,13 +192,6 @@ root: ../../
 
 <script>
 
-$(document).ready(function(){
-	console.log("aaaaa")
-	$("#SliderSingle").jslider(
-			{ from: 5, 
-				to: 50, step: 2.5, round: 1, format: { format: '##.0', locale: 'de' }, dimension: '&nbsp;&eur;', skin: "round" });
-	console.log("bbbbb")
-});
 
 var initialState = new recline.Data.StateManagement.State({fromQueryString:true});
 
@@ -218,21 +211,21 @@ var dataset = new recline.Model.Dataset({
         {id:2, gender:"F", age:10, x:25, y:300, date:new Date(2012, 9, 2, 10, 0, 0, 0)},
         {id:3, gender:"M", age:15, x:30, y:400, date:new Date(2012, 9, 3, 11, 0, 0, 0)},
         {id:4, gender:"F", age:20, x:40, y:450, date:new Date(2012, 9, 4, 12, 0, 0, 0)},
-        {id:4, gender:"F", age:25, x:40, y:450, date:new Date(2012, 9, 4, 12, 0, 0, 0)},
-        {id:4, gender:"F", age:30, x:40, y:450, date:new Date(2012, 9, 4, 12, 0, 0, 0)},
-        {id:4, gender:"F", age:35, x:40, y:450, date:new Date(2012, 9, 4, 12, 0, 0, 0)},
-        {id:4, gender:"F", age:40, x:40, y:450, date:new Date(2012, 9, 4, 12, 0, 0, 0)},
-        {id:4, gender:"F", age:45, x:40, y:450, date:new Date(2012, 9, 4, 12, 0, 0, 0)},
-        {id:4, gender:"F", age:50, x:40, y:450, date:new Date(2012, 9, 4, 12, 0, 0, 0)},
-        {id:4, gender:"F", age:55, x:40, y:450, date:new Date(2012, 9, 4, 12, 0, 0, 0)},
-        {id:4, gender:"F", age:60, x:40, y:450, date:new Date(2012, 9, 4, 12, 0, 0, 0)},
-        {id:4, gender:"F", age:65, x:40, y:450, date:new Date(2012, 9, 4, 12, 0, 0, 0)},
-        {id:4, gender:"F", age:70, x:40, y:450, date:new Date(2012, 9, 4, 12, 0, 0, 0)},
-        {id:4, gender:"F", age:75, x:40, y:450, date:new Date(2012, 9, 4, 12, 0, 0, 0)},
-        {id:4, gender:"F", age:80, x:40, y:450, date:new Date(2012, 9, 4, 12, 0, 0, 0)},
-        {id:4, gender:"F", age:85, x:40, y:450, date:new Date(2012, 9, 4, 12, 0, 0, 0)},
-        {id:4, gender:"F", age:90, x:40, y:450, date:new Date(2012, 9, 4, 12, 0, 0, 0)},
-        {id:4, gender:"F", age:95, x:40, y:450, date:new Date(2012, 9, 4, 12, 0, 0, 0)}
+        {id:5, gender:"F", age:25, x:40, y:450, date:new Date(2012, 9, 4, 12, 0, 0, 0)},
+        {id:6, gender:"F", age:30, x:40, y:450, date:new Date(2012, 9, 4, 12, 0, 0, 0)},
+        {id:7, gender:"F", age:35, x:40, y:450, date:new Date(2012, 9, 4, 12, 0, 0, 0)},
+        {id:8, gender:"F", age:40, x:40, y:450, date:new Date(2012, 9, 4, 12, 0, 0, 0)},
+        {id:9, gender:"F", age:45, x:40, y:450, date:new Date(2012, 9, 4, 12, 0, 0, 0)},
+        {id:10, gender:"F", age:50, x:40, y:450, date:new Date(2012, 9, 4, 12, 0, 0, 0)},
+        {id:11, gender:"F", age:55, x:40, y:450, date:new Date(2012, 9, 4, 12, 0, 0, 0)},
+        {id:12, gender:"F", age:60, x:40, y:450, date:new Date(2012, 9, 4, 12, 0, 0, 0)},
+        {id:13, gender:"F", age:65, x:40, y:450, date:new Date(2012, 9, 4, 12, 0, 0, 0)},
+        {id:14, gender:"F", age:70, x:40, y:450, date:new Date(2012, 9, 4, 12, 0, 0, 0)},
+        {id:15, gender:"F", age:75, x:40, y:450, date:new Date(2012, 9, 4, 12, 0, 0, 0)},
+        {id:16, gender:"F", age:80, x:40, y:450, date:new Date(2012, 9, 4, 12, 0, 0, 0)},
+        {id:17, gender:"F", age:85, x:40, y:450, date:new Date(2012, 9, 4, 12, 0, 0, 0)},
+        {id:18, gender:"F", age:90, x:40, y:450, date:new Date(2012, 9, 4, 12, 0, 0, 0)},
+        {id:19, gender:"F", age:95, x:40, y:450, date:new Date(2012, 9, 4, 12, 0, 0, 0)}
 
 
     ],
@@ -514,11 +507,11 @@ function drawGraph() {
     filterhorizontal = new recline.View.GenericFilter({
         sourceDataset:dataset,
         sourceFields:[
-            {field:"age", controlType:'color_legend', fieldType:"integer", label: "Select age" },
-            {field:"age", controlType:'dropdown', fieldType:"integer" , label: "Select age", showLabelInsideFilter: true },
-            {field:"age", controlType:'listbox_styled', fieldType:"integer", label: "Select age", showLabelInsideFilter: true },
-            {field:"age", controlType:'multibutton', fieldType:"integer", label: "Select age"},
-            {field:"age", controlType:'radiobuttons', fieldType:"integer",  useFieldLabel:true  }
+            {field:"age", controlType:'color_legend', fieldType:"integer", label: "Select age", labelPosition: "left"  },
+            {field:"age", controlType:'dropdown', fieldType:"integer" , label: "Select age", labelPosition: "left"  },
+            {field:"age", controlType:'listbox_styled', fieldType:"integer", label: "Select age", labelPosition: "inside"  },
+            {field:"age", controlType:'multibutton', fieldType:"integer", label: "Select age", labelPosition: "none" },
+
 
         ],
         state:{
@@ -537,6 +530,29 @@ function drawGraph() {
         ]
     });
     $('#horizontal').append(filterhorizontal.el);
+
+    filterhorizontal2 = new recline.View.GenericFilter({
+        sourceDataset:dataset,
+        sourceFields:[
+            {field:"age", controlType:'range_slider_styled', fieldType:"integer", label: "Select age", labelPosition: "left" },
+            {field:"age", controlType:'radiobuttons', fieldType:"integer",  label: "Select age", labelPosition: "yop"   }
+     ],
+        state:{
+            useHorizontalLayout:true,
+            title:"Title2",
+            description:"Description2"
+        },
+        actions:[
+            {
+                action:action1,
+                mapping:[
+                    {srcField:"age", filter:"filter_age_list"}
+                ],
+                event:["selection"]
+            }
+        ]
+    });
+    $('#horizontal2').append(filterhorizontal2.el);
 
 }
 
