@@ -49,19 +49,22 @@ classes should alter those!
   font-style: italic;
 }
 
+.slick-subheader.ui-state-default, .slick-subheaderrow.ui-state-default,
 .slick-footer.ui-state-default, .slick-footerrow.ui-state-default {
   width: 100%;
   overflow: hidden;
   border-left: 0px;
 }
 
-.slick-footer-columns, .slick-footerrow-columns {
+.slick-subheader-columns, .slick-subheaderrow-columns,
+.slick-footer-columns, .slick-footerrow-columns, {
   position: relative;
   white-space: nowrap;
   cursor: default;
   overflow: hidden;
 }
 
+.slick-subheader-column.ui-state-default,
 .slick-footer-column.ui-state-default {
   position: relative;
   display: inline-block;
@@ -78,11 +81,11 @@ classes should alter those!
   float: left;
 }
 
-.slick-footerrow-column.ui-state-default {
+.slick-subheaderrow-column.ui-state-default , .slick-footerrow-column.ui-state-default {
   padding: 4px;
 }
 
-.slick-footer-column-sorted {
+.slick-subheader-column-sorted, .slick-footer-column-sorted {
   font-style: italic;
 }
 
@@ -129,7 +132,7 @@ classes should alter those!
   width: 100%;
 }
 
-.slick-cell, .slick-headerrow-column, .slick-footerrow-column {
+.slick-cell, .slick-headerrow-column, .slick-subheaderrow-column {
   position: absolute;
 
   border: 1px solid transparent;

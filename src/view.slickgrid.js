@@ -61,6 +61,7 @@ my.SlickGrid = Backbone.View.extend({
       useCondensedStyle: this.state.get('useCondensedStyle'),
       useHoverStyle: this.state.get('useHoverStyle'),
       showLineNumbers: this.state.get('showLineNumbers'),
+      showTotals: this.state.get('showTotals'),
 	};
 
     // We need all columns, even the hidden ones, to show on the column picker

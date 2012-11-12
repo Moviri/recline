@@ -5596,8 +5596,12 @@ body {
   text-align: center;
   font-weight: bold;
 }
-.slick-row .slick-footer-column {
+.slick-row .slick-subheader-column {
   background-color: transparent;
+}
+.slick-footer-column {
+  background-color: #3a4450;
+  font-weight: bold;
 }
 .slick-row .slick-header-column.ui-state-default {
   border-bottom: 1px solid gray;
@@ -5636,6 +5640,7 @@ div.s-table {
 }
 .s-table div.s-th,
 .s-table div.s-td,
+.s-table div.slick-subheader-column,
 .s-table div.slick-footer-column {
   background-image: none;
   padding-top: 8px;
