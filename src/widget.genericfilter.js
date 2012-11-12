@@ -710,6 +710,8 @@ my.GenericFilter = Backbone.View.extend({
   },
   createSingleFilter: function(currActiveFilter) {
 	  var self = currActiveFilter.self;
+//	  console.log("create single filter "+currActiveFilter.ctrlId);
+//	  console.log(currActiveFilter)
 	  
       currActiveFilter.facet = self._sourceDataset.getFacetByFieldId(currActiveFilter.field);
 	  var facetTerms = currActiveFilter.facet.attributes.terms;
@@ -816,101 +818,64 @@ my.GenericFilter = Backbone.View.extend({
 	  }
 	  else if (currActiveFilter.controlType == "dropdown_date_range")
 	  {
-		  var currDate = new Date();
-		  var currDate0h = new Date(currDate.getFullYear(), currDate.getMonth(), currDate.getDate(), 0, 0, 0, 0);
-		  var currDate24h = new Date(currDate.getFullYear(), currDate.getMonth(), currDate.getDate(), 23, 59, 59, 999)+1;
-		  var currYear = currDate.getFullYear();
-		  var currMonth = currDate.getMonth();
-			
-		  var weekOffset = currDate0h.getDay();
-		  var weekStartTime = currDate0h-weekOffset*86400000;
-		  var weekEndTime = weekStartTime+7*86400000;
-
 		  currActiveFilter.date_values = [];
 		  
-		  currActiveFilter.date_values.push({ val: "This week", 
-				startDate: new Date(weekStartTime),
-				stopDate: new Date(weekEndTime)
-			});
-		  
-		  var endMonth = (currMonth + 1) % 12;
-		  var endYear = currYear + (endMonth < currMonth ? 1 : 0); 
-		  currActiveFilter.date_values.push({ val: "This Month", 
-				startDate: new Date(currYear, currMonth, 1, 0, 0, 0, 0),
-				stopDate: new Date(endYear, endMonth, 1, 0, 0, 0, 0)
-		  });
-		  
-		  currActiveFilter.date_values.push({ val: "This year", 
-				startDate: new Date(currYear, 0, 1, 0, 0, 0, 0),
-				stopDate: new Date(currYear+1, 0, 1, 0, 0, 0, 0)
-			});
-		  
-		  currActiveFilter.date_values.push({ val: "Past week", 
-				startDate: new Date(weekStartTime-7*86400000),
-				stopDate: new Date(weekStartTime)
-			});
-		  
-		  var startMonth = currMonth - 1;
-		  if (startMonth < 0)
-			  startMonth -= 12;
-		  
-		  var startYear = currYear - (startMonth > currMonth ? 1 : 0); 
-		  currActiveFilter.date_values.push({ val: "Past month", 
-				startDate: new Date(startYear, startMonth, 1, 0, 0, 0, 0),
-				stopDate: new Date(currYear, currMonth, 1, 0, 0, 0, 0)
-			});
-		  
-		  startMonth = currMonth - 2;
-		  if (startMonth < 0)
-			  startMonth -= 12;
-		  
-		  startYear = currYear - (startMonth > currMonth ? 1 : 0); 
-		  currActiveFilter.date_values.push({ val: "Past 2 months", 
-				startDate: new Date(startYear, startMonth, 1, 0, 0, 0, 0),
-				stopDate: new Date(currYear, currMonth, 1, 0, 0, 0, 0)
-			});
-		  
-		  startMonth = currMonth - 3;
-		  if (startMonth < 0)
-			  startMonth -= 12;
-		  
-		  startYear = currYear - (startMonth > currMonth ? 1 : 0); 
-		  currActiveFilter.date_values.push({ val: "Past 3 month", 
-				startDate: new Date(startYear, startMonth, 1, 0, 0, 0, 0),
-				stopDate: new Date(currYear, currMonth, 1, 0, 0, 0, 0)
-			});
-		  
-		  startMonth = currMonth - 6;
-		  if (startMonth < 0)
-			  startMonth -= 12;
-		  
-		  startYear = currYear - (startMonth > currMonth ? 1 : 0); 
-		  currActiveFilter.date_values.push({ val: "Past 6 months", 
-				startDate: new Date(startYear, startMonth, 1, 0, 0, 0, 0),
-				stopDate: new Date(currYear, currMonth, 1, 0, 0, 0, 0)
-			});
-		  
-		  currActiveFilter.date_values.push({ val: "Past year", 
-				startDate: new Date(currYear-1, 0, 1, 0, 0, 0, 0),
-				stopDate: new Date(currYear, 0, 1, 0, 0, 0, 0)
-			});
-		  currActiveFilter.date_values.push({ val: "Last 7 days", 
-				startDate: new Date(currDate0h.getTime()-6*86400000),
-				stopDate: currDate24h
-			});
-		  currActiveFilter.date_values.push({ val: "Last 30 days", 
-				startDate: new Date(currDate0h.getTime()-29*86400000),
-				stopDate: currDate24h
-			});
-		  currActiveFilter.date_values.push({ val: "Last 90 days", 
-				startDate: new Date(currDate0h.getTime()-89*86400000),
-				stopDate: currDate24h
-			});
-		  currActiveFilter.date_values.push({ val: "Last 365 days", 
-				startDate: new Date(currDate0h.getTime()-364*86400000),
-				stopDate: currDate24h
-			});
-		  
+		var defaultDateFilters = [
+   			{ label: 'This week', start: "sunday", stop:"next sunday"},
+   			{ label: 'This month', start: "1", delta:{months:1}},
+   			{ label: 'This year', start: "january 1", delta:{years:1}},
+   			{ label: 'Past week', stop: "sunday", delta:{days:-7}},
+   			{ label: 'Past month', stop: "1", delta:{months:-1}},
+   			{ label: 'Past 2 months', stop: "1", delta:{months:-2}},
+   			{ label: 'Past 3 months', stop: "1", delta:{months:-3}},
+   			{ label: 'Past 6 months', stop: "1", delta:{months:-6}},
+   			{ label: 'Past year', stop: "january 1", delta:{years:-1}},
+   			{ label: 'Last 7 days', start: "-6", stop:"t +1 d"},
+   			{ label: 'Last 30 days', start: "-29", stop:"t +1 d"},
+   			{ label: 'Last 90 days', start: "-89", stop:"t +1 d"},
+   			{ label: 'Last 365 days', start: "-1 y", stop:"t +1 d"},
+   		]
+		var fullDateFilters = defaultDateFilters;
+		if (currActiveFilter.skipDefaultFilters)
+			fullDateFilters = [];			
+		
+		if (currActiveFilter.userFilters)
+			fullDateFilters = fullDateFilters.concat(currActiveFilter.userFilters);
+		
+   		for (var i in fullDateFilters)
+   		{
+   			var flt = fullDateFilters[i];
+   			var startDate = null;
+   			var stopDate = null;
+   			if (flt.start && flt.stop)
+   			{
+   				startDate = Date.parse(flt.start);
+   				stopDate = Date.parse(flt.stop);
+   			}
+   			else if (flt.start && flt.delta)
+   			{
+   				startDate = Date.parse(flt.start);
+   				if (startDate)
+				{
+   					stopDate = new Date(startDate);
+   					stopDate.add(flt.delta);
+				}
+   			}
+   			else if (flt.stop && flt.delta)
+   			{
+   				stopDate = Date.parse(flt.stop);
+   				if (stopDate)
+				{
+   					startDate = new Date(stopDate);
+   					startDate.add(flt.delta);
+				}
+   			}
+   			if (startDate && stopDate && flt.label)
+	   			  currActiveFilter.date_values.push({ val: flt.label, 
+					startDate: startDate,
+					stopDate: stopDate
+				});
+   		}
 		  for (var j in currActiveFilter.date_values)
 			  if (currActiveFilter.date_values[j].val == currActiveFilter.term)
 			  {

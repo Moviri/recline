@@ -138,6 +138,7 @@ root: ../../
 
         dataset.queryState.addFacetNoEvent("age");
         dataset.queryState.addFacetNoEvent("daydate");
+        virtualdatasetAge.queryState.addFacetNoEvent("daydate");
 
    		virtualdatasetWeekday= new recline.Model.VirtualDataset({
                 dataset: dataset,
@@ -338,7 +339,16 @@ root: ../../
 
             var filter1 = new recline.View.GenericFilter({
                 sourceDataset: dataset,
-				sourceFields: [{field: 'daydate', type: "range", controlType: 'month_week_calendar', fieldType: 'date', label:'DATE'}	],
+				sourceFields: [
+				               {field: 'daydate', type: "range", controlType: 'month_week_calendar', fieldType: 'date', label:'DATE'},
+								{field: 'daydate', controlType: 'dropdown_date_range', fieldType: 'date', label: "Default date ranges"},
+								{field: 'daydate', controlType: 'dropdown_date_range', fieldType: 'date', label: "Custom date ranges",
+				            	   skipDefaultFilters: true, userFilters: [
+				            	                                  			{ label: 'First 15 days of month', start: "1", delta:{days:15}},
+				            	                                   			{ label: 'Final 15 days of month', start: "15", delta:{days:15}},
+				            	                                           ]   
+								},
+				               ],
  				state: {title:"DB date filter 2", description: "Use this to filter months/weeks on the DB"},
                 actions: [{
                     action: action_db,
@@ -406,13 +416,12 @@ root: ../../
                  sourceDataset: virtualdatasetAge,
                  state: {useHorizontalLayout: true, title:"Horiz toolbar", description: "Select age/gender"},
  				sourceFields: [
- 								{field: 'age', controlType: 'multibutton', fieldType: 'number', labelPosition: "left"},
- 								//{field: 'age', controlType: 'dropdown_styled', fieldType: 'number', labelPosition: "inside", label: "Select age"},
- 								//{field: 'age', controlType: 'listbox_styled', fieldType: 'number', labelPosition: "left"},
- 								//{field: 'daydate', controlType: 'dropdown_date_range', fieldType: 'date', labelPosition: "left"},
- 								//{field: 'age', controlType: 'range_slider', fieldType: 'number', labelPosition: "left"},
- 								{field: 'age', controlType: 'slider_styled', fieldType: 'number', labelPosition: "left"},
+ 								//{field: 'age', controlType: 'multibutton', fieldType: 'number', labelPosition: "left"},
  								{field: 'age', controlType: 'radiobuttons', fieldType: 'number', labelPosition: "left"},
+ 								{field: 'age', controlType: 'dropdown_styled', fieldType: 'number', labelPosition: "inside", label: "Select age"},
+ 								{field: 'age', controlType: 'listbox_styled', fieldType: 'number', labelPosition: "left"},
+ 								//{field: 'age', controlType: 'range_slider', fieldType: 'number', labelPosition: "left"},
+ 								{field: 'age', controlType: 'range_slider_styled', fieldType: 'number', labelPosition: "left"},
  							],
  				useFilteredData : false,
                 actions: [{
