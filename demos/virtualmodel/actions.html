@@ -1,0 +1,92 @@
+---
+layout: moviri
+title: Demos - NVD3 Integration
+recline-deps: true
+root: ../../
+---
+
+
+<body>
+
+<div class="container-fluid">
+<div class="row-fluid">
+    <div class="span9"><div id="grouped_grid"></div></div>
+</div>
+<div class="row-fluid">
+    <div class="span9"><div id="mygraph"></div></div>
+</div>
+
+
+<script>
+
+    var dataset =   new recline.Model.Dataset({
+        records: [
+            {id:0, date: '2011-01-01', gender: "M", y: 1, z: 3, country: 'DE', title: 'first', lat:52.56, lon:13.40},
+            {id:1, date: '2011-01-01', gender: "F", y: 1, z: 24, country: 'DE', title: 'second', lat:54.97, lon:-1.60},
+            {id:2, date: '2011-01-01', gender: "M", y: 1, z: 3, country: 'UK', title: 'first', lat:52.56, lon:13.40},
+            {id:3, date: '2011-01-01', gender: "M", y: 2, z: 5, country: 'UK', title: 'first', lat:52.56, lon:13.40},
+            {id:4, date: '2011-01-01', gender: "M", y: 3, z: 3, country: 'DE', title: 'first', lat:52.56, lon:13.40},
+            {id:5, date: '2011-01-01', gender: "M", y: 4, z: 3, country: 'IT', title: 'first', lat:52.56, lon:13.40},
+            {id:6, date: '2011-01-01', gender: "M", y: 5, z: 3, country: 'IT', title: 'first', lat:52.56, lon:13.40}
+
+        ],
+        // let's be really explicit about fields
+        // Plus take opportunity to set date to be a date field and set some labels
+        fields: [
+            {id: 'id'},
+            {id: 'date', type: 'date'},
+            {id: 'gender'},
+            {id: 'y'},
+            {id: 'z'},
+            {id: 'country', 'label': 'Country'},
+            {id: 'title', 'label': 'Title'},
+            {id: 'lat'},
+            {id: 'lon'}
+        ]});
+
+    var action1 = new recline.Action({
+        filters: {
+            filter1: {type: "term", field: "gender", fieldType: "string"},
+            filter2: {type: "term", field: "z", fieldType: "string"}
+
+        },
+        models: [{model: dataset, filters:["filter1", "filter2"]}],
+        type: ["filter"]
+    });
+
+    var grid=  new recline.View.Grid({
+        id: 'grid',
+        label: 'Grid',
+        model: dataset
+    });
+    $('#grouped_grid').append(grid.el);
+    grid.render();
+
+var graph = new recline.View.NVD3Graph({
+  model: dataset,
+  state: {
+      group: ["y"],
+      seriesValues: ["z"],
+      seriesNameField: ["gender"],
+      colors: ["#cb4b4b", "#4da74d", "#9440ed"],
+      graphType: "discreteBarChart",
+      id: "22"
+  },
+  actions: [{
+          action: action1,
+          mapping: [
+              {srcField: "gender", filter: "filter1"}
+          ],
+          event: ["click"]
+      }]
+});
+$('#mygraph').append(graph.el);
+graph.redraw();
+graph.render();
+
+
+
+</script>
+
+</body>
+
