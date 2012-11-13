@@ -227,6 +227,18 @@ my.SlickGrid = Backbone.View.extend({
       data.push(row);
 		jj++;
     });
+      if (options.showTotals && self.model.records.length > 0)
+	  {
+    	  options.totals = {};
+    	  var totalsRecord = self.model.getRecords("totals");
+    	  for (var f in options.showTotals)
+		  {
+    		  var currTotal = options.showTotals[f];
+    		  var fieldObj = self.model.getField_byAggregationFunction("totals"+(currTotal.filtered ? "_filtered" : ""), currTotal.field, currTotal.aggregation);
+    		  if (typeof fieldObj != "undefined")
+    			  options.totals[currTotal.field] = totalsRecord[0].getFieldValue(fieldObj);
+		  }
+	  }
 
 	if (this.options.actions != null && typeof this.options.actions != "undefined")
 	{

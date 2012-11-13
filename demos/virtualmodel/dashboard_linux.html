@@ -133,6 +133,10 @@ root: ../../
                     partitions: ["gender"],
                     aggregationFunctions: ["sum", "avg"]
                 },
+			    totals: {
+			        aggregationFunctions:   ["sum"],
+			        aggregatedFields:       ["totalviewed_sum", "price_sum_sum"]
+			    },
                 colorSchema: [ {schema: colorSchemaAge, field: "age"} ]
             });
 
@@ -237,7 +241,7 @@ root: ../../
  													innerChartSerie2:'totalviewed_by_gender_Female_sum', 
  													innerChartHeader:'Views by Gender',
 													fieldLabels: [{id: "totalviewed_sum", label: "Views"}, {id: "price_sum_sum", label: "Revenues"}],
-													showTotals: true
+													showTotals: [{field: 'totalviewed_sum', aggregation: 'sum', filtered: false}, {field:'price_sum_sum', aggregation: 'sum', filtered: false}]
 												},
 												actions : [{
 													action : action_vmodel,

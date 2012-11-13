@@ -680,8 +680,8 @@ if (typeof Slick === "undefined") {
 			var lastBottomColumnHtml = "";
 			if (i == 0 && options.showLineNumbers)
 				lastBottomColumnHtml = getDataLength();
-			else if (i < columns.length-(options.useInnerChart ? 1 : 0))
-				lastBottomColumnHtml = "TOTAL"+i;
+			else if (i < columns.length-(options.useInnerChart ? 1 : 0) && options.totals[m.id])
+				lastBottomColumnHtml = options.totals[m.id];
 			
 			headerBottom = $("<div class='ui-state-default slick-footer-column' id='" + uid + m.id + "' />")
 				.html("<span class='slick-column-name"+dimmed+"'>" + lastBottomColumnHtml + "</span>")
