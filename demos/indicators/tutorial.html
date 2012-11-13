@@ -113,9 +113,11 @@ var action1 = new recline.Action({
     type: ["filter"]
 });
 
+dataset.queryState.addFacetNoEvent("value");
+
 var filter1 = new recline.View.GenericFilter({
     sourceDataset: dataset,
-    sourceFields: [{field: "value", controlType: 'range_slider',  fieldType: "integer" }],
+    sourceFields: [{field: "value", controlType: 'range_slider_styled',  fieldType: "integer" }],
     actions: [{
         action: action1,
         mapping: [
@@ -133,7 +135,8 @@ var grid1 = new recline.View.SlickGrid({
     state: {  fitColumns:true,
         useHoverStyle: true,
         useStripedStyle: true,
-        useCondensedStyle: true
+        useCondensedStyle: true,
+        showTotals: [ {field: "value_sum", aggregation: "sum" } ]
     },
     actions: [{
         action: action1,
@@ -147,21 +150,6 @@ var grid1 = new recline.View.SlickGrid({
 grid1.visible = true;
 grid1.render();
 
-
-var $el = $('#grid2');
-var grid2 = new recline.View.SlickGrid({
-    model: vdataset,
-    resultType: "totals",
-    el: $el,
-    state: {  fitColumns:true,
-        useHoverStyle: true,
-        useStripedStyle: true,
-        useCondensedStyle: true
-    }
-
-});
-grid2.visible = true;
-grid2.render();
 
 var indicator1 = new recline.View.Indicator({
     state: {
