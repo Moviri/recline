@@ -72,7 +72,11 @@ this.recline.View = this.recline.View || {};
 
         var kpi     = self.options.state.kpi.dataset.getRecords(self.options.state.kpi.type);
         //var field   = self.options.state.kpi.dataset.getFields(self.options.state.kpi.type).get(self.options.state.kpi.field);
-        var field = self.options.state.kpi.dataset.getField_byAggregationFunction(self.options.state.kpi.type, self.options.state.kpi.field, self.options.state.kpi.aggr);
+        var field;
+        if(self.options.state.kpi.aggr)
+            field = self.options.state.kpi.dataset.getField_byAggregationFunction(self.options.state.kpi.type, self.options.state.kpi.field, self.options.state.kpi.aggr);
+        else
+            field = self.options.state.kpi.dataset.getFields(self.options.state.kpi.type).get(self.options.state.kpi.field);
 
         var kpiValue;
 
@@ -90,7 +94,12 @@ this.recline.View = this.recline.View || {};
 
         if(self.options.state.compareWith) {
             var compareWithRecord  = self.options.state.compareWith.dataset.getRecords(self.options.state.compareWith.type);
-            var compareWithField = self.options.state.compareWith.dataset.getField_byAggregationFunction(self.options.state.compareWith.type, self.options.state.compareWith.field, self.options.state.compareWith.aggr);
+            var compareWithField;
+
+            if(self.options.state.kpi.aggr)
+                compareWithField= self.options.state.compareWith.dataset.getField_byAggregationFunction(self.options.state.compareWith.type, self.options.state.compareWith.field, self.options.state.compareWith.aggr);
+            else
+                compareWithField= self.options.state.compareWith.dataset.getFields(self.options.state.compareWith.type).get(self.options.state.compareWith.field);
 
             tmplData["compareWithValue"]  = compareWithRecord[0].getFieldValue(compareWithField);
             var compareWithValue =  compareWithRecord[0].getFieldValueUnrendered(compareWithField);
