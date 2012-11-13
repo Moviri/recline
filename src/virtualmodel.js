@@ -82,6 +82,12 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
             }
         },
 
+        getField_byAggregationFunction: function(resultType, fieldName, aggr) {
+            var fields = this.getFields(resultType);
+            return fields.get(fieldName + "_" + aggr);
+        },
+
+
         getFields:function (type) {
             var self = this;
 

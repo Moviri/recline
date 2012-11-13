@@ -71,7 +71,9 @@ this.recline.View = this.recline.View || {};
 		tmplData.label = this.options.state && this.options.state["label"];
 
         var kpi     = self.options.state.kpi.dataset.getRecords(self.options.state.kpi.type);
-        var field   = self.options.state.kpi.dataset.getFields(self.options.state.kpi.type).get(self.options.state.kpi.field);
+        //var field   = self.options.state.kpi.dataset.getFields(self.options.state.kpi.type).get(self.options.state.kpi.field);
+        var field = self.options.state.kpi.dataset.getField_byAggregationFunction(self.options.state.kpi.type, self.options.state.kpi.field, self.options.state.kpi.aggr);
+
         var kpiValue;
 
 
@@ -87,8 +89,9 @@ this.recline.View = this.recline.View || {};
         var template = this.templateBase;
 
         if(self.options.state.compareWith) {
-            var compareWithRecord     = self.options.state.compareWith.dataset.getRecords(self.options.state.compareWith.type);
-            var compareWithField   = self.options.state.kpi.dataset.getFields(self.options.state.kpi.type).get(self.options.state.kpi.field);
+            var compareWithRecord  = self.options.state.compareWith.dataset.getRecords(self.options.state.compareWith.type);
+            var compareWithField = self.options.state.compareWith.dataset.getField_byAggregationFunction(self.options.state.compareWith.type, self.options.state.compareWith.field, self.options.state.compareWith.aggr);
+
             tmplData["compareWithValue"]  = compareWithRecord[0].getFieldValue(compareWithField);
             var compareWithValue =  compareWithRecord[0].getFieldValueUnrendered(compareWithField);
 

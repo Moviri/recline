@@ -170,8 +170,8 @@ var indicator1 = new recline.View.Indicator({
         description: "show total views",
         descriptionColor: "red",
         textColor: "red",
-        kpi:            {dataset: vdataset, type: "totals", field: "value_sum_sum"},
-        compareWith:    {dataset: vdataset, type: "totals_unfiltered", field: "values_sum_sum", compareType: "percentage"}
+        kpi:            {dataset: vdataset, type: "totals", field: "value_sum", aggr: "sum"},
+        compareWith:    {dataset: vdataset, type: "totals_unfiltered", field: "value_sum", aggr: "sum", compareType: "percentage"}
     }
 });
 $('#indicator').append(indicator1.el);
@@ -179,7 +179,7 @@ $('#indicator').append(indicator1.el);
 var indicator2 = new recline.View.Indicator({
     state: {
         label:          "Values 2",
-        kpi:            {dataset: vdataset, type: "totals", field: "value_sum_sum"}
+        kpi:            {dataset: vdataset, type: "totals", field: "value_sum", aggr: "sum"}
     }
 });
 $('#indicator2').append(indicator2.el);

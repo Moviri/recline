@@ -451,8 +451,8 @@ this.recline.Model = this.recline.Model || {};
         //
         // For the provided Field get the corresponding rendered computed data value
         // for this record.
-        getFieldValue_byAggregationFunction:function (field, aggr) {
-            field += "_" + aggr;
+        getFieldValue_byAggregationFunction:function (fieldName, aggr) {
+            var field = this.fields.get(fieldName + "_" + aggr);
             val = this.getFieldValueUnrendered(field);
             if (field.renderer) {
                 val = field.renderer(val, field, this.toJSON());
