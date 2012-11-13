@@ -81,6 +81,7 @@ var colorSchema = new recline.Data.ColorSchema({
 });
 
 colorSchema.setDataset(dataset, "value");
+dataset.queryState.addFacetNoEvent("value");
 
 var shapeSchema = new recline.Data.ShapeSchema({
     type: "fixedLimits",
@@ -103,7 +104,7 @@ var action1 = new recline.Action({
 
 var filter1 = new recline.View.GenericFilter({
     sourceDataset: dataset,
-    sourceFields: [{field: "value", controlType: 'range_slider',  fieldType: "integer" }],
+    sourceFields: [{field: "value", controlType: 'range_slider_styled',  fieldType: "integer" }],
     actions: [{
         action: action1,
         mapping: [
