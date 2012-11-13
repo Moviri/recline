@@ -416,13 +416,13 @@ my.GenericFilter = Backbone.View.extend({
       </div> \
 	',
 	color_legend: ' \
-	<div class="filter-{{type}} filter" > \
+	<div class="filter-{{type}} filter" style="width:{{totWidth2}}px"> \
         <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}"> \
             <legend style="display:{{useLegend}}">{{label}}</legend>  \
 				<div style="float:left;padding-right:10px;height:{{lineHeight}}px;display:{{useLeftLabel}}"> \
 					<label style="line-height:{{lineHeight}}px">{{label}}</label> \
 				</div> \
-				<div style="max-width:250px;height:{{totHeight}}px;display:inline"> \
+				<div style="width:{{totWidth}}px;height:{{totHeight}}px;display:inline"> \
 					<svg height="{{totHeight}}" xmlns="http://www.w3.org/2000/svg"> \
 					{{#colorValues}} \
 				    	<rect width="{{width}}" height={{lineHeight}} fill="{{color}}" x="{{x}}" y={{y}}/> \
@@ -963,6 +963,9 @@ my.GenericFilter = Backbone.View.extend({
 			var color = currActiveFilter.facet.attributes.terms[i].color;
 			if (pixelW*colonna > maxWidth)
 			{
+				currActiveFilter.totWidth = (colonna-1)*pixelW;
+				currActiveFilter.totWidth2 = currActiveFilter.totWidth + (currActiveFilter.labelPosition == 'left' ? currActiveFilter.label.length * 10 : 10)
+
 				riga++;
 				colonna = 0;
 			}
