@@ -952,20 +952,25 @@ my.GenericFilter = Backbone.View.extend({
 				  pixelW = w;
 		  }
 		  pixelW += 2;
+		  currActiveFilter.lineHeight = 40;
+
+		  // calculate needed row number and columns per row
+		  var maxColsPerRow = Math.floor(maxWidth / pixelW);
+		  var totRighe = Math.ceil(currActiveFilter.tmpValues.length / maxColsPerRow);
+		  var colsPerRow = Math.ceil(currActiveFilter.tmpValues.length/totRighe);
+		  currActiveFilter.totWidth = colsPerRow*pixelW;
+		  currActiveFilter.totWidth2 = currActiveFilter.totWidth + (currActiveFilter.labelPosition == 'left' ? currActiveFilter.label.length * 10 : 10)
+		  currActiveFilter.totHeight = totRighe*currActiveFilter.lineHeight;
 		  
 		  var riga = 0;
 		  var colonna = 0;
-		  currActiveFilter.lineHeight = 40;
 		  
 		  for (var i in currActiveFilter.tmpValues)
 		  {
 			var v = currActiveFilter.tmpValues[i];
 			var color = currActiveFilter.facet.attributes.terms[i].color;
-			if (pixelW*colonna > maxWidth)
+			if (colonna == colsPerRow)
 			{
-				currActiveFilter.totWidth = (colonna-1)*pixelW;
-				currActiveFilter.totWidth2 = currActiveFilter.totWidth + (currActiveFilter.labelPosition == 'left' ? currActiveFilter.label.length * 10 : 10)
-
 				riga++;
 				colonna = 0;
 			}
@@ -974,7 +979,6 @@ my.GenericFilter = Backbone.View.extend({
 			
 			colonna++;
 	  	  }
-		  currActiveFilter.totHeight = (riga+1)*currActiveFilter.lineHeight;
 	  }
 	  else
 	  {
