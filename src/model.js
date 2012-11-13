@@ -447,6 +447,19 @@ this.recline.Model = this.recline.Model || {};
             return val;
         },
 
+        // ### getFieldValue
+        //
+        // For the provided Field get the corresponding rendered computed data value
+        // for this record.
+        getFieldValue_byAggregationFunction:function (field, aggr) {
+            field += "_" + aggr;
+            val = this.getFieldValueUnrendered(field);
+            if (field.renderer) {
+                val = field.renderer(val, field, this.toJSON());
+            }
+            return val;
+        },
+
         getFieldColor:function (field) {
             if (!field.attributes.colorSchema)
                 return null;
