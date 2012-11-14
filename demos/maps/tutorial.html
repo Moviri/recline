@@ -20,10 +20,6 @@ root: ../../
 
 
 
-
-
-
-
 </div>
 
 <script type="text/javascript" src="datasource.js"></script>
@@ -37,7 +33,7 @@ var colorSchema = new recline.Data.ColorSchema({
 });
 
 colorSchema.setDataset(dataset, "value");
-
+dataset.queryState.addFacetNoEvent("value");
 
 var action1 = new recline.Action({
     filters: {
@@ -87,7 +83,7 @@ function drawGraph() {
 
     var filter1 = new recline.View.GenericFilter({
         sourceDataset: dataset,
-        sourceFields: [{field: "value", controlType: 'range_slider',  fieldType: "integer" }],
+        sourceFields: [{field: "value", controlType: 'range_slider_styled',  fieldType: "integer" }],
         actions: [{
             action: action1,
             mapping: [
