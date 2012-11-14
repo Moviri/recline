@@ -1,6 +1,6 @@
 ---
 layout: moviri
-title: Demos - NVD3 Integration
+title: Demos - D3 Integration
 recline-deps: true
 root: ../../
 ---
@@ -81,7 +81,7 @@ var colorSchema = new recline.Data.ColorSchema({
 });
 
 colorSchema.setDataset(dataset, "value");
-dataset.queryState.addFacetNoEvent("value");
+dataset.queryState.addFacetNoEvent("value", true);
 
 var shapeSchema = new recline.Data.ShapeSchema({
     type: "fixedLimits",

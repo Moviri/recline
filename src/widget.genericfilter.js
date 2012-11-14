@@ -1086,7 +1086,7 @@ my.GenericFilter = Backbone.View.extend({
   render: function() {
     var self = this;
 	var tmplData = {filters : this.activeFilters}; 
-	_.each(tmplData.filters , function(flt) { 
+	_.each(tmplData.filters , function(flt) {
 		flt.hrVisible = 'block';
 		flt.self = self; // pass self to filters!
 	});
