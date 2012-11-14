@@ -109,13 +109,13 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
         },
 
         initializeCrossfilter:function () {
-            var aggregatedFields = this.attributes.aggregation.aggregatedFields;
+            var aggregatedFields = this.attributes.aggregation.measures;
             var aggregationFunctions = this.attributes.aggregation.aggregationFunctions;
             var originalFields = this.attributes.dataset.fields;
             var dimensions =  this.attributes.aggregation.dimensions;
             var partitions =this.attributes.aggregation.partitions;
 
-            var crossfilterData = crossfilter(this.attributes.dataset.records.toJSON());
+            var crossfilterData = crossfilter(this.attributes.dataset.toFullJSON());
             var group = this.createDimensions(crossfilterData, dimensions);
             var results = this.reduce(group,dimensions,aggregatedFields,aggregationFunctions,partitions);
 
@@ -333,7 +333,7 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
                     }
             */
             var self=this;
-            var aggregatedFields = self.attributes.totals.aggregatedFields;
+            var aggregatedFields = self.attributes.totals.measures;
             var aggregationFunctions =  self.attributes.totals.aggregationFunctions;
 
             var rectmp;
@@ -357,7 +357,7 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
                 _.each(tableCalc, function(f) {
                     var p;
                     _.each(rectmp, function(r) {
-                        p = recline.Data.Aggregations.tableCalculations[f](self.attributes.aggregation.aggregatedFields, p, r, result[0]);
+                        p = recline.Data.Aggregations.tableCalculations[f](self.attributes.aggregation.measures, p, r, result[0]);
                     });
                 });
 
