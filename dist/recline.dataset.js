@@ -1125,8 +1125,9 @@ this.recline.Backend.Memory = this.recline.Backend.Memory || {};
 
                 var termsWithZeroCount =
                     _.difference(
-                        _.map(tmp.termsall, function(d) { return d.value}),
-                        self.distinctFieldsValues[facetId]);
+                        self.distinctFieldsValues[facetId],
+                        _.map(tmp.termsall, function(d) { return d.value})
+                        );
 
                 _.each(termsWithZeroCount, function (d) {
                     tmp.termsall[d] = {count: 0, value: d};

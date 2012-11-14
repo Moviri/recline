@@ -1728,8 +1728,9 @@ this.recline.Backend.Memory = this.recline.Backend.Memory || {};
 
                 var termsWithZeroCount =
                     _.difference(
-                        _.map(tmp.termsall, function(d) { return d.value}),
-                        self.distinctFieldsValues[facetId]);
+                        self.distinctFieldsValues[facetId],
+                        _.map(tmp.termsall, function(d) { return d.value})
+                        );
 
                 _.each(termsWithZeroCount, function (d) {
                     tmp.termsall[d] = {count: 0, value: d};
@@ -11529,7 +11530,7 @@ my.GenericFilter = Backbone.View.extend({
   render: function() {
     var self = this;
 	var tmplData = {filters : this.activeFilters}; 
-	_.each(tmplData.filters , function(flt) { 
+	_.each(tmplData.filters , function(flt) {
 		flt.hrVisible = 'block';
 		flt.self = self; // pass self to filters!
 	});
