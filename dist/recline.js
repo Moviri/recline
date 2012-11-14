@@ -3997,7 +3997,7 @@ this.recline.Model = this.recline.Model || {};
             this.recordCount = null;
             this.queryState = new my.Query();
 
-            if(this.get('initialState')) {
+            if (this.get('initialState')) {
                 this.get('initialState').setState(this);
             }
 
@@ -4047,7 +4047,9 @@ this.recline.Model = this.recline.Model || {};
 
 
                 recline.Data.FieldsUtility.setFieldsAttributes(out.fields, self);
-                self.fields.reset(out.fields, {renderer:recline.Data.Renderers});
+                var options = {renderer:recline.Data.Renderers};
+
+                self.fields.reset(out.fields, options);
 
                 self.query()
                     .done(function () {
@@ -4089,81 +4091,81 @@ this.recline.Model = this.recline.Model || {};
         //
         // e.g. fields = ['a', 'b', 'c'] and records = [ [1,2,3] ] =>
         // fields = [ {id: a}, {id: b}, {id: c}], records = [ {a: 1}, {b: 2}, {c: 3}]
-  _normalizeRecordsAndFields: function(records, fields) {
-    // if no fields get them from records
-    if (!fields && records && records.length > 0) {
-      // records is array then fields is first row of records ...
-      if (records[0] instanceof Array) {
-        fields = records[0];
-        records = records.slice(1);
-      } else {
-        fields = _.map(_.keys(records[0]), function(key) {
-          return {id: key};
-        });
-      }
-    }
+        _normalizeRecordsAndFields:function (records, fields) {
+            // if no fields get them from records
+            if (!fields && records && records.length > 0) {
+                // records is array then fields is first row of records ...
+                if (records[0] instanceof Array) {
+                    fields = records[0];
+                    records = records.slice(1);
+                } else {
+                    fields = _.map(_.keys(records[0]), function (key) {
+                        return {id:key};
+                    });
+                }
+            }
 
-    // fields is an array of strings (i.e. list of field headings/ids)
-    if (fields && fields.length > 0 && typeof(fields[0]) != 'object') {
-      // Rename duplicate fieldIds as each field name needs to be
-      // unique.
-      var seen = {};
-      fields = _.map(fields, function(field, index) {
-        field = field.toString();
-        // cannot use trim as not supported by IE7
-        var fieldId = field.replace(/^\s+|\s+$/g, '');
-        if (fieldId === '') {
-          fieldId = '_noname_';
-          field = fieldId;
-        }
-        while (fieldId in seen) {
-          seen[field] += 1;
-          fieldId = field + seen[field];
-        }
-        if (!(field in seen)) {
-          seen[field] = 0;
-        }
-        // TODO: decide whether to keep original name as label ...
-        // return { id: fieldId, label: field || fieldId }
-        return { id: fieldId };
-      });
-    }
-    // records is provided as arrays so need to zip together with fields
-    // NB: this requires you to have fields to match arrays
-    if (records && records.length > 0 && records[0] instanceof Array) {
-      records = _.map(records, function(doc) {
-        var tmp = {};
-        _.each(fields, function(field, idx) {
-          tmp[field.id] = doc[idx];
-        });
-        return tmp;
-      });
-    }
-    return {
-      fields: fields,
-      records: records
-    };
-  },
+            // fields is an array of strings (i.e. list of field headings/ids)
+            if (fields && fields.length > 0 && typeof(fields[0]) != 'object') {
+                // Rename duplicate fieldIds as each field name needs to be
+                // unique.
+                var seen = {};
+                fields = _.map(fields, function (field, index) {
+                    field = field.toString();
+                    // cannot use trim as not supported by IE7
+                    var fieldId = field.replace(/^\s+|\s+$/g, '');
+                    if (fieldId === '') {
+                        fieldId = '_noname_';
+                        field = fieldId;
+                    }
+                    while (fieldId in seen) {
+                        seen[field] += 1;
+                        fieldId = field + seen[field];
+                    }
+                    if (!(field in seen)) {
+                        seen[field] = 0;
+                    }
+                    // TODO: decide whether to keep original name as label ...
+                    // return { id: fieldId, label: field || fieldId }
+                    return { id:fieldId };
+                });
+            }
+            // records is provided as arrays so need to zip together with fields
+            // NB: this requires you to have fields to match arrays
+            if (records && records.length > 0 && records[0] instanceof Array) {
+                records = _.map(records, function (doc) {
+                    var tmp = {};
+                    _.each(fields, function (field, idx) {
+                        tmp[field.id] = doc[idx];
+                    });
+                    return tmp;
+                });
+            }
+            return {
+                fields:fields,
+                records:records
+            };
+        },
 
-  save: function() {
-    var self = this;
-    // TODO: need to reset the changes ...
-    return this._store.save(this._changes, this.toJSON());
-  },
+        save:function () {
+            var self = this;
+            // TODO: need to reset the changes ...
+            return this._store.save(this._changes, this.toJSON());
+        },
 
-  transform: function(editFunc) {
-    var self = this;
-    if (!this._store.transform) {
-      alert('Transform is not supported with this backend: ' + this.get('backend'));
-      return;
-    }
-    this.trigger('recline:flash', {message: "Updating all visible docs. This could take a while...", persist: true, loader: true});
-    this._store.transform(editFunc).done(function() {
-      // reload data as records have changed
-      self.query();
-      self.trigger('recline:flash', {message: "Records updated successfully"});
-    });
-  },
+        transform:function (editFunc) {
+            var self = this;
+            if (!this._store.transform) {
+                alert('Transform is not supported with this backend: ' + this.get('backend'));
+                return;
+            }
+            this.trigger('recline:flash', {message:"Updating all visible docs. This could take a while...", persist:true, loader:true});
+            this._store.transform(editFunc).done(function () {
+                // reload data as records have changed
+                self.query();
+                self.trigger('recline:flash', {message:"Records updated successfully"});
+            });
+        },
 
         getRecords:function (type) {
             var self = this;
@@ -4192,7 +4194,6 @@ this.recline.Model = this.recline.Model || {};
         },
 
 
-
         // ### query
         //
         // AJAX method with promise API to get records from the backend.
@@ -4202,10 +4203,10 @@ this.recline.Model = this.recline.Model || {};
         //
         // Resulting RecordList are used to reset this.records and are
         // also returned.
-  query: function(queryObj) {
-    var self = this;
-    var dfd = $.Deferred();
-    this.trigger('query:start');
+        query:function (queryObj) {
+            var self = this;
+            var dfd = $.Deferred();
+            this.trigger('query:start');
 
             if (queryObj) {
                 this.queryState.set(queryObj, {silent:true});
@@ -4359,6 +4360,22 @@ this.recline.Model = this.recline.Model || {};
             return _.find(this.facets.models, function (facet) {
                 return facet.id == fieldId;
             });
+        },
+
+        toFullJSON: function(resultType) {
+            var self=this;
+            return _.map(self.getRecords(resultType), function(r) {
+                var res={};
+
+                _.each(self.getFields(resultType).models, function(f) {
+                    res[f.id] = r.getFieldValueUnrendered(f);
+                });
+
+                return res;
+
+            });
+
+
         }
 
 
@@ -4392,7 +4409,7 @@ this.recline.Model = this.recline.Model || {};
         // For the provided Field get the corresponding rendered computed data value
         // for this record.
         getFieldValue:function (field) {
-            val = this.getFieldValueUnrendered(field);
+            var val = this.getFieldValueUnrendered(field);
             if (field.renderer) {
                 val = field.renderer(val, field, this.toJSON());
             }
@@ -4534,71 +4551,74 @@ this.recline.Model = this.recline.Model || {};
         // @param {Object} data: standard Backbone model attributes
         //
         // @param {Object} options: renderer and/or deriver functions.
-  initialize: function(data, options) {
-    // if a hash not passed in the first argument throw error
-    if ('0' in data) {
-      throw new Error('Looks like you did not pass a proper hash with id to Field constructor');
-    }
-    if (this.attributes.label === null) {
-      this.set({label: this.id});
-    }
-    if (this.attributes.type.toLowerCase() in this._typeMap) {
-      this.attributes.type = this._typeMap[this.attributes.type.toLowerCase()];
-    }
-    if (options) {
-      this.renderer = options.renderer;
-      this.deriver = options.deriver;
-    }
-    if (!this.renderer) {
-      this.renderer = this.defaultRenderers[this.get('type')];
-    }
-    this.facets = new my.FacetList();
-  },
-  _typeMap: {
-    'text': 'string',
-    'double': 'number',
-    'float': 'number',
-    'numeric': 'number',
-    'int': 'integer',
-    'datetime': 'date-time',
-    'bool': 'boolean',
-    'timestamp': 'date-time',
-    'json': 'object'
-  },
-  defaultRenderers: {
-    object: function(val, field, doc) {
-      return JSON.stringify(val);
-    },
-    geo_point: function(val, field, doc) {
-      return JSON.stringify(val);
-    },
-    'number': function(val, field, doc) {
-      var format = field.get('format');
-      if (format === 'percentage') {
-        return val + '%';
-      }
-      return val;
-    },
-    'string': function(val, field, doc) {
-      var format = field.get('format');
-      if (format === 'markdown') {
-        if (typeof Showdown !== 'undefined') {
-          var showdown = new Showdown.converter();
-          out = showdown.makeHtml(val);
-          return out;
-        } else {
-          return val;
-        }
-      } else if (format == 'plain') {
-        return val;
-      } else {
-        // as this is the default and default type is string may get things
-        // here that are not actually strings
-        if (val && typeof val === 'string') {
-          val = val.replace(/(https?:\/\/[^ ]+)/g, '<a href="$1">$1</a>');
-        }
-        return val
-      }
+        initialize:function (data, options) {
+            // if a hash not passed in the first argument throw error
+            if ('0' in data) {
+                throw new Error('Looks like you did not pass a proper hash with id to Field constructor');
+            }
+            if (this.attributes.label === null) {
+                this.set({label:this.id});
+            }
+            if (this.attributes.type.toLowerCase() in this._typeMap) {
+                this.attributes.type = this._typeMap[this.attributes.type.toLowerCase()];
+            }
+            if (options) {
+                this.renderer = options.renderer;
+                this.deriver = options.deriver;
+            }
+            if (!this.deriver && data.deriver)
+                this.deriver = data.deriver;
+
+            if (!this.renderer) {
+                this.renderer = this.defaultRenderers[this.get('type')];
+            }
+            this.facets = new my.FacetList();
+        },
+        _typeMap:{
+            'text':'string',
+            'double':'number',
+            'float':'number',
+            'numeric':'number',
+            'int':'integer',
+            'datetime':'date-time',
+            'bool':'boolean',
+            'timestamp':'date-time',
+            'json':'object'
+        },
+        defaultRenderers:{
+            object:function (val, field, doc) {
+                return JSON.stringify(val);
+            },
+            geo_point:function (val, field, doc) {
+                return JSON.stringify(val);
+            },
+            'number':function (val, field, doc) {
+                var format = field.get('format');
+                if (format === 'percentage') {
+                    return val + '%';
+                }
+                return val;
+            },
+            'string':function (val, field, doc) {
+                var format = field.get('format');
+                if (format === 'markdown') {
+                    if (typeof Showdown !== 'undefined') {
+                        var showdown = new Showdown.converter();
+                        out = showdown.makeHtml(val);
+                        return out;
+                    } else {
+                        return val;
+                    }
+                } else if (format == 'plain') {
+                    return val;
+                } else {
+                    // as this is the default and default type is string may get things
+                    // here that are not actually strings
+                    if (val && typeof val === 'string') {
+                        val = val.replace(/(https?:\/\/[^ ]+)/g, '<a href="$1">$1</a>');
+                    }
+                    return val
+                }
             },
             'date':function (val, field, doc) {
                 // if val contains timer value (in msecs), possibly in string format, ensure it's converted to number
@@ -4613,7 +4633,7 @@ this.recline.Model = this.recline.Model || {};
             if (!this.attributes.colorSchema)
                 return null;
 
-            if(this.attributes.is_partitioned)
+            if (this.attributes.is_partitioned)
                 return this.attributes.colorSchema.getColorFor(this.attributes.partitionValue);
 
             return this.attributes.colorSchema.getColorFor(this.attributes.id);
@@ -4851,30 +4871,30 @@ this.recline.Model = this.recline.Model || {};
                 return;
             }
             var all = false;
-            if(allTerms)
+            if (allTerms)
                 all = true;
 
             facets[fieldId] = {
-                terms:{ field:fieldId, all_terms: all }
+                terms:{ field:fieldId, all_terms:all }
             };
             this.set({facets:facets}, {silent:true});
 
         },
 
-  addHistogramFacet: function(fieldId) {
-    var facets = this.get('facets');
-    facets[fieldId] = {
-      date_histogram: {
-        field: fieldId,
-        interval: 'day'
-      }
-    };
-    this.set({facets: facets}, {silent: true});
-    this.trigger('facet:add', this);
-  }
+        addHistogramFacet:function (fieldId) {
+            var facets = this.get('facets');
+            facets[fieldId] = {
+                date_histogram:{
+                    field:fieldId,
+                    interval:'day'
+                }
+            };
+            this.set({facets:facets}, {silent:true});
+            this.trigger('facet:add', this);
+        }
 
 
-});
+    });
 
 
 // ## <a id="facet">A Facet (Result)</a>
@@ -9248,13 +9268,13 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
         },
 
         initializeCrossfilter:function () {
-            var aggregatedFields = this.attributes.aggregation.aggregatedFields;
+            var aggregatedFields = this.attributes.aggregation.measures;
             var aggregationFunctions = this.attributes.aggregation.aggregationFunctions;
             var originalFields = this.attributes.dataset.fields;
             var dimensions =  this.attributes.aggregation.dimensions;
             var partitions =this.attributes.aggregation.partitions;
 
-            var crossfilterData = crossfilter(this.attributes.dataset.records.toJSON());
+            var crossfilterData = crossfilter(this.attributes.dataset.toFullJSON());
             var group = this.createDimensions(crossfilterData, dimensions);
             var results = this.reduce(group,dimensions,aggregatedFields,aggregationFunctions,partitions);
 
@@ -9472,7 +9492,7 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
                     }
             */
             var self=this;
-            var aggregatedFields = self.attributes.totals.aggregatedFields;
+            var aggregatedFields = self.attributes.totals.measures;
             var aggregationFunctions =  self.attributes.totals.aggregationFunctions;
 
             var rectmp;
@@ -9496,7 +9516,7 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
                 _.each(tableCalc, function(f) {
                     var p;
                     _.each(rectmp, function(r) {
-                        p = recline.Data.Aggregations.tableCalculations[f](self.attributes.aggregation.aggregatedFields, p, r, result[0]);
+                        p = recline.Data.Aggregations.tableCalculations[f](self.attributes.aggregation.measures, p, r, result[0]);
                     });
                 });
 
