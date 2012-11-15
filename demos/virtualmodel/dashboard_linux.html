@@ -328,13 +328,13 @@
                 dataset: dataset,
                 aggregation: {
                     dimensions: ["age"],
-                    aggregatedFields: ["totalviewed", "price_sum"],
+                    measures: ["totalviewed", "price_sum"],
                     partitions: ["gender"],
                     aggregationFunctions: ["sum", "avg"]
                 },
 			    totals: {
 			        aggregationFunctions:   ["sum"],
-			        aggregatedFields:       ["totalviewed_sum", "price_sum_sum"]
+			        measures:       ["totalviewed_sum", "price_sum_sum"]
 			    },
                 colorSchema: [ {schema: colorSchemaAge, field: "age"} ]
             });
@@ -347,7 +347,7 @@
                 dataset: dataset,
                 aggregation: {
                     dimensions: ["dayofweek"],
-                    aggregatedFields: ["totalviewed"],
+                    measures: ["totalviewed"],
                     partitions: ["gender"],
                     aggregationFunctions: ["sum", "avg"]
                 }
@@ -356,7 +356,7 @@
                 dataset: dataset,
                 aggregation: {
                     dimensions: ["dayhour"],
-                    aggregatedFields: ["totalviewed"],
+                    measures: ["totalviewed"],
                     partitions: ["gender"],
                     aggregationFunctions: ["sum", "avg"]
                 }
@@ -364,7 +364,7 @@
             virtualdatasetTotal= new recline.Model.VirtualDataset({
 				dataset: dataset,
 				    aggregation: {
-				    aggregatedFields: ["totalviewed", "price_sum"],
+                        measures: ["totalviewed", "price_sum"],
 				    aggregationFunctions: ["sum"]
 				}
             });
@@ -373,7 +373,7 @@
                 dataset: dataset,
                 aggregation: {
                     dimensions: ["daydate"],
-                    aggregatedFields: ["totalviewed", "price_sum"],
+                    measures: ["totalviewed", "price_sum"],
                     partitions: ["gender"],
                     aggregationFunctions: ["sum", "avg"]
                 }

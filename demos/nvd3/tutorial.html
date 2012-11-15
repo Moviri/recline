@@ -339,7 +339,7 @@ vdatasetGender = new recline.Model.VirtualDataset({
     dataset:dataset,
     aggregation:{
         dimensions:["x"],
-        aggregatedFields:["y", "z"],
+        measures:["y", "z"],
         partitions:["gender"],
         aggregationFunctions:["sum", "avg"]
     },
