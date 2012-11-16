@@ -47,7 +47,6 @@ my.SlickGrid = Backbone.View.extend({
   },
   render: function() {
     var self = this;
-//    console.log("View.SlickGrid RENDER");
 
     var options = {
       enableCellNavigation: true,
@@ -85,7 +84,7 @@ my.SlickGrid = Backbone.View.extend({
                 id:'lineNumberField',
                 name:'#',
                 field:'lineNumberField',
-                sortable: true,
+                sortable: (options.showPartitionedData ? false : true),
                 maxWidth: 80,
                 formatter: Slick.Formatters.FixedCellFormatter
               };
@@ -133,7 +132,7 @@ my.SlickGrid = Backbone.View.extend({
   	          id: fakePartitionFieldname,
   	          name:options.showPartitionedData.partition,
   	          field: options.showPartitionedData.partition,
-  	          sortable: true,
+  	          sortable: false,
   	          minWidth: 80,
   	          formatter: formatter,
   	        };
@@ -149,7 +148,7 @@ my.SlickGrid = Backbone.View.extend({
           id:field['id'],
           name:field['label'],
           field:field['id'],
-          sortable: true,
+          sortable: (options.showPartitionedData ? false : true),
           minWidth: 80,
           formatter: formatter,
         };
@@ -258,9 +257,9 @@ my.SlickGrid = Backbone.View.extend({
 		max = adjustMax(max);
 		options.innerChartMax = max;
 	}
-    
     var data = [];
 	var rowsToSelect = [];
+	var unselectableRowIds = [];
 	var jj = 0;
 	
     if (options.showPartitionedData)
@@ -327,6 +326,7 @@ my.SlickGrid = Backbone.View.extend({
     	    				row[measureFieldName] = "<b>"+rec.getFieldValue(modelField)+"</b>";
     	    			else row[measureFieldName] = "<b>"+0+"</b>";
         			}
+    	    		unselectableRowIds.push(data.length)
 		    		data.push(row);
 	    		}
 			}
@@ -352,7 +352,7 @@ my.SlickGrid = Backbone.View.extend({
 		  if (self.state.get('useInnerChart') == true && innerChartSerie1Name != null && innerChartSerie2Name != null) 
 			row['innerChart'] = [ row[innerChartSerie1Name], row[innerChartSerie2Name], max ];
 	
-	      data.push(row);
+		  data.push(row);
 			
 	      jj++;
 	      
@@ -381,6 +381,12 @@ my.SlickGrid = Backbone.View.extend({
 				options.trackMouseHover = true;
 		});
 	}
+    data.getItemMetadata = function (row) 
+	{
+        if (_.contains(unselectableRowIds, row))
+          return { "selectable": false }
+	}
+	
     this.grid = new Slick.Grid(this.el, data, visibleColumns, options);
 	
     var classesToAdd = ["s-table"];
