@@ -777,20 +777,20 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
         },
 
         // Retrieve the list of partitioned field for the specified aggregated field
-        getPartitionedFields:function (fieldName) {
-            var field = this.fields.get(fieldName);
+        getPartitionedFields:function (partitionedField, measureField) {
+            //var field = this.fields.get(fieldName);
 
             var fields = _.filter(this.fields.models, function (d) {
                 return (
-                    d.attributes.aggregationFunction == field.attributes.aggregationFunction
-                        && d.attributes.originalField == field.attributes.originalField
+                    d.attributes.partitionField == partitionedField
+                        && d.attributes.originalField == measureField
                     );
             });
 
             if (fields == null)
                 field = [];
 
-            fields.push(field);
+            //fields.push(field);
 
             return fields;
 
