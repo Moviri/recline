@@ -109,13 +109,39 @@ my.SlickGrid = Backbone.View.extend({
     	}
     	if (getObjectClass(self.model) != "VirtualDataset")
     		throw "Slickgrid exception: showPartitionedData option can only be used on a partitioned virtualmodel! Exiting";
-    	
+
+        // obtain a fake partition field since the virtualmodel is missing it.
+        // take the first partitioned field available so that the formatter may work
+    	var firstMeasureFieldname = options.showPartitionedData.measures[0].field;
+    	var partitionFieldname = options.showPartitionedData.partition;
+    	var modelAggregatFields = self.model.getPartitionedFields(partitionFieldname, firstMeasureFieldname);
+    	var fakePartitionFieldname = modelAggregatFields[0].id; 
+
     	validFields = self.model.attributes.aggregation.dimensions.concat([options.showPartitionedData.partition]).concat(
     			_.map(options.showPartitionedData.measures, function(m) { return m.field+"_"+m.aggregation})
     			);
+    	// slightly different version of list above. Using fake name instead of real name of column 
+    	var validFieldsForOrdering = self.model.attributes.aggregation.dimensions.concat([fakePartitionFieldname]).concat(
+    			_.map(options.showPartitionedData.measures, function(m) { return m.field+"_"+m.aggregation})
+		);
     	var columnsOrder = this.state.get('columnsOrder'); 
         if (typeof columnsOrder == "undefined" || columnsOrder == null || columnsOrder.length == 0)
-        	columnsOrderToUse = validFields;
+        	columnsOrderToUse = validFieldsForOrdering;
+        
+        
+    	var columnPart = {
+  	          id: fakePartitionFieldname,
+  	          name:options.showPartitionedData.partition,
+  	          field: options.showPartitionedData.partition,
+  	          sortable: true,
+  	          minWidth: 80,
+  	          formatter: formatter,
+  	        };
+        var widthInfo = _.find(self.state.get('columnsWidth'),function(c){return c.column == field.id});
+        if (widthInfo){
+          column['width'] = widthInfo.width;
+        }
+    	columns.push(columnPart);
 	}
     
     _.each(self.model.getFields(self.resultType).toJSON(),function(field){
@@ -133,7 +159,7 @@ my.SlickGrid = Backbone.View.extend({
         }
         if (options.showPartitionedData)
     	{
-        	if (_.contains(validFields, field['id']))
+        	if (_.contains(validFields, field['id']) || (field['id'] == fakePartitionFieldname && field['field'] == options.showPartitionedData.partition))
         		columns.push(column);
     	}
         else columns.push(column);
@@ -305,19 +331,6 @@ my.SlickGrid = Backbone.View.extend({
 	    		}
 			}
 		}
-    	
-    	
-//        foreach dimension d in dimensions {
-//        	partitions = virtualmodel.getPartitionFields("agebin", "visits") (partition field, measure field)
-//        	foreach partition f in partitions
-//        	{
-//        		d.getFieldValue(f)
-//        		d.isRecordSelected()
-//        	}
-//        	if sub totals print d.getFieldValue("visits")
-//        }
-//        
-//        gran totals
 	}
     else
 	{
@@ -348,8 +361,6 @@ my.SlickGrid = Backbone.View.extend({
 	    });
 	}
       
-
-      
       if (options.showTotals && self.model.records.length > 0)
 	  {
     	  options.totals = {};
@@ -377,6 +388,8 @@ my.SlickGrid = Backbone.View.extend({
     	classesToAdd.push("s-table-hover")
     if (options.useCondensedStyle)
     	classesToAdd.push("s-table-condensed")
+    if (options.useStripedStyle)
+    	classesToAdd.push("s-table-striped")
     	
 	this.grid.addClassesToGrid(classesToAdd);
 	this.grid.removeClassesFromGrid(["ui-widget"]);
