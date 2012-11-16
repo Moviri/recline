@@ -680,6 +680,8 @@ if (typeof Slick === "undefined") {
 			var lastBottomColumnHtml = "";
 			if (i == 0 && options.showLineNumbers)
 				lastBottomColumnHtml = getDataLength();
+			else if (options.showTotals && i == (options.showLineNumbers?1:0))
+				lastBottomColumnHtml = "<b>Grand total(s)</b>";
 			else if (i < columns.length-(options.useInnerChart ? 1 : 0) && options.totals[m.id])
 				lastBottomColumnHtml = options.totals[m.id];
 			
@@ -1616,6 +1618,8 @@ if (typeof Slick === "undefined") {
       // if there is a corresponding row (if not, this is the Add New row or this data hasn't been loaded yet)
       if (d) {
         var value = getDataItemValueForColumn(d, m);
+        //if (cell == 1)
+        	//value = "<b>"+value+"</b>"
         stringArray.push(getFormatter(row, m)(row, cell, value, m, d));
       }
 

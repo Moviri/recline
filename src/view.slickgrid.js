@@ -52,6 +52,7 @@ my.SlickGrid = Backbone.View.extend({
     var options = {
       enableCellNavigation: true,
       enableColumnReorder: true,
+      enableExpandCollapse: true,
       explicitInitialization: true,
       syncColumnCellResize: true,
       forceFitColumns: this.state.get('fitColumns'),
@@ -62,6 +63,7 @@ my.SlickGrid = Backbone.View.extend({
       useHoverStyle: this.state.get('useHoverStyle'),
       showLineNumbers: this.state.get('showLineNumbers'),
       showTotals: this.state.get('showTotals'),
+      showPartitionedData: this.state.get('showPartitionedData'),
 	};
 
     // We need all columns, even the hidden ones, to show on the column picker
@@ -89,24 +91,42 @@ my.SlickGrid = Backbone.View.extend({
               };
     	columns.push(column); 
 	}
+    var validFields = [];
+    var columnsOrderToUse = this.state.get('columnsOrder');
+    if (options.showPartitionedData)
+	{
+    	if (self.model.class.name != "VirtualDataset")
+    		throw "Slickgrid exception: showPartitionedData option can only be used on a partitioned virtualmodel! Exiting";
+    	
+    	validFields = options.showPartitionedData.partition.concat(
+    			_.map(options.showPartitionedData.measures, function(m) { return m.field+"_"+m.aggregation})
+    			);
+    	var columnsOrder = this.state.get('columnsOrder'); 
+        if (typeof columnsOrder == "undefined" || columnsOrder == null || columnsOrder.length == 0)
+        	columnsOrderToUse = validFields;
+	}
     
     _.each(self.model.getFields(self.resultType).toJSON(),function(field){
-      var column = {
-        id:field['id'],
-        name:field['label'],
-        field:field['id'],
-        sortable: true,
-        minWidth: 80,
-        formatter: formatter
-      };
-
-      var widthInfo = _.find(self.state.get('columnsWidth'),function(c){return c.column == field.id});
-      if (widthInfo){
-        column['width'] = widthInfo.width;
-      }
-
-      columns.push(column);
+        var column = {
+          id:field['id'],
+          name:field['label'],
+          field:field['id'],
+          sortable: true,
+          minWidth: 80,
+          formatter: formatter,
+        };
+        var widthInfo = _.find(self.state.get('columnsWidth'),function(c){return c.column == field.id});
+        if (widthInfo){
+          column['width'] = widthInfo.width;
+        }
+        if (options.showPartitionedData)
+    	{
+        	if (_.contains(validFields, field['id']))
+        		columns.push(column);
+    	}
+        else columns.push(column);
     });
+    
 	if (options.useInnerChart == true && self.model.getRecords(self.resultType).length > 0)
 	{
 		columns.push({
@@ -145,12 +165,12 @@ my.SlickGrid = Backbone.View.extend({
 		});
 	}
     // Order them if there is ordering info on the state
-    if (this.state.get('columnsOrder')){
+    if (columnsOrderToUse) {
       visibleColumns = visibleColumns.sort(function(a,b){
-        return _.indexOf(self.state.get('columnsOrder'),a.id) > _.indexOf(self.state.get('columnsOrder'),b.id) ? 1 : -1;
+        return _.indexOf(columnsOrderToUse,a.id) > _.indexOf(columnsOrderToUse,b.id) ? 1 : -1;
       });
       columns = columns.sort(function(a,b){
-        return _.indexOf(self.state.get('columnsOrder'),a.id) > _.indexOf(self.state.get('columnsOrder'),b.id) ? 1 : -1;
+        return _.indexOf(columnsOrderToUse,a.id) > _.indexOf(columnsOrderToUse,b.id) ? 1 : -1;
       });
     }
 
@@ -200,33 +220,116 @@ my.SlickGrid = Backbone.View.extend({
 		max = adjustMax(max);
 		options.innerChartMax = max;
 	}
+    
     var data = [];
 	var rowsToSelect = [];
 	var jj = 0;
+	
+    if (options.showPartitionedData)
+	{
+    	var partitionFieldname = options.showPartitionedData.partition;
+    	var dimensionFieldnames = self.model.options.aggregation.dimensions;
+    	var records = self.model.getRecords(self.resultType);
+    	var dimensionValues = []
+    	for (var d in dimensionFieldnames)
+		{
+    		var dimensionFieldname = dimensionFieldnames[d];
+    		var currDimensionValues = _.map(records, function(record){ return record.attributes[dimensionFieldname]; });
+    		dimensionValues[d] = _.uniq(currDimensionValues); // should be already sorted
+		}
+    	
+		var allPartitionValues = _.map(records, function(record){ return record.attributes[partitionFieldname]; });
+		var partitionValues = _.uniq(allPartitionValues); // should be already sorted
+    		
+    	var row = [];
+    	for (var d in dimensionValues)
+		{
+    		var dimensionFieldname = dimensionFieldnames[d];
+	    	for (var i0 in dimensionValues[d])
+			{
+		    	for (var i1 in partitionValues)
+		    	{
+		    		var row = {schema_colors: []};
+		    		if (i1 == 0)
+		    			row[dimensionFieldname] = dimensionValues[d][i0];
+		    		
+		    		row[partitionFieldname] = partitionValues[i1];
+		    		
+	    			var rec = _.find(records, function(r) { return r.attributes[dimensionFieldname] ==dimensionValues[d][i0] && r.attributes[partitionFieldname] == partitionValues[i1]; });
+	    			if (rec)
+					{
+	    	    		for (var m in options.showPartitionedData.measures)
+	        			{
+	    	    			var measureField = options.showPartitionedData.measures[m];
+	    	    			var modelAggregationFields = self.model.getPartitionedFields(partitionFieldname, measureField);
+	    	    			var modelField = _.find(modelAggregationFields, function(f) { return f.originalField == measureFieldName});
+	    	    			
+	    	    			//var modelField = _.find(self.model.getFields(self.resultType).models, function(f) { return f.id == measureFieldName});
+	    	    			if (modelField)
+	    	    				row[measureFieldName] = rec.getFieldValue(modelField);
+	    	    			else row[measureFieldName] = 0;
+	        			}
+					}
+	
+		    		if (options.showLineNumbers == true)
+					    row['lineNumberField'] = jj;
+		    		
+		    		data.push(row);
+		    	}
+		    	if (options.showPartitionedData.showSubTotals)
+	    		{
+		    		var row = [];
+		    		row[partitionFieldname] = "<b>Total(s)</b>";
+		    		
+		    		data.push(row);
+	    		}
+			}
+		}
+    	
+    	
+//        foreach dimension d in dimensions {
+//        	partitions = virtualmodel.getPartitionFields("agebin", "visits") (partition field, measure field)
+//        	foreach partition f in partitions
+//        	{
+//        		d.getFieldValue(f)
+//        		d.isRecordSelected()
+//        	}
+//        	if sub totals print d.getFieldValue("visits")
+//        }
+//        
+//        gran totals
+	}
+    else
+	{
       _.each(self.model.getRecords(self.resultType), function(doc){
-      if (doc.is_selected)
-		rowsToSelect.push(jj);
-		
-	  var row = {schema_colors: []};
+	      if (doc.is_selected)
+			rowsToSelect.push(jj);
+			
+		  var row = {schema_colors: []};
+	
+	        _.each(self.model.getFields(self.resultType).models, function(field){
+	        row[field.id] = doc.getFieldValue(field);
+	        if (innerChartSerie1Name != null && field.id == innerChartSerie1Name)
+	    		row.schema_colors[0] = doc.getFieldColor(field);
+	        
+	        if (innerChartSerie2Name != null && field.id == innerChartSerie2Name)
+	    		row.schema_colors[1] = doc.getFieldColor(field);
+	      });
+		  
+		  if (self.state.get('useInnerChart') == true && innerChartSerie1Name != null && innerChartSerie2Name != null) 
+			row['innerChart'] = [ row[innerChartSerie1Name], row[innerChartSerie2Name], max ];
+	
+	      data.push(row);
+			
+	      jj++;
+	      
+		  if (options.showLineNumbers == true)
+			    row['lineNumberField'] = jj;
+	    });
+	}
+      
 
-        _.each(self.model.getFields(self.resultType).models, function(field){
-        row[field.id] = doc.getFieldValue(field);
-        if (innerChartSerie1Name != null && field.id == innerChartSerie1Name)
-    		row.schema_colors[0] = doc.getFieldColor(field);
-        
-        if (innerChartSerie2Name != null && field.id == innerChartSerie2Name)
-    		row.schema_colors[1] = doc.getFieldColor(field);
-      });
-	  
-	  if (self.state.get('useInnerChart') == true && innerChartSerie1Name != null && innerChartSerie2Name != null) 
-		row['innerChart'] = [ row[innerChartSerie1Name], row[innerChartSerie2Name], max ];
-
-	  if (options.showLineNumbers == true)
-	    row['lineNumberField'] = jj;
-
-      data.push(row);
-		jj++;
-    });
+      
       if (options.showTotals && self.model.records.length > 0)
 	  {
     	  options.totals = {};
@@ -247,14 +350,11 @@ my.SlickGrid = Backbone.View.extend({
 				options.trackMouseHover = true;
 		});
 	}
-	
     this.grid = new Slick.Grid(this.el, data, visibleColumns, options);
 	
     var classesToAdd = ["s-table"];
     if (options.useHoverStyle)
     	classesToAdd.push("s-table-hover")
-    if (options.useStripedStyle)
-    	classesToAdd.push("s-table-striped")
     if (options.useCondensedStyle)
     	classesToAdd.push("s-table-condensed")
     	

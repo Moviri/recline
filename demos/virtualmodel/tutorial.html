@@ -205,6 +205,11 @@ var grid2 = new recline.View.SlickGrid({
         useHoverStyle:true,
         useStripedStyle:true,
         useCondensedStyle:true,
+   		showPartitionedData: {
+           	measures:               [{field: "visits", aggregation: "sum" }, {field: "revenues", aggregation: "sum" }],
+           	partition:             ["agebin"],
+           	showSubTotals: true
+           },
         showTotals: [ {field: "visits_sum", aggregation: "sum" } ]
     }
 });
@@ -287,6 +292,11 @@ var grid2 = new recline.View.SlickGrid({
             useHoverStyle:true,
             useStripedStyle:true,
             useCondensedStyle:true,
+    		showPartitionedData: {
+            	measures:               [{field: "visits", aggregation: "sum" }, {field: "revenues", aggregation: "sum" }],
+            	partition:             ["agebin"],
+            	showSubTotals: true
+            },
             showTotals: [ {field: "visits_sum", aggregation: "sum" } ]
         }
 
@@ -297,7 +307,7 @@ var grid2 = new recline.View.SlickGrid({
 
     //dataset.fetch();
     //dataset.fields.get("agebin").deriver = agebin;
-
+    
 </script>
 
 </body>

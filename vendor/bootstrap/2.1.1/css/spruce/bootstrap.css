@@ -5673,6 +5673,9 @@ div.s-table {
 .s-table div.s-tbody + div.s-tbody {
   border-top: 2px solid #f5f3dc;
 }
+.s-table div.s-tbody div.s-tr div.s-td.selected {
+  background-color: #185af9;
+}
 .s-table-condensed div.s-th,
 .s-table-condensed div.s-td {
   padding: 4px;
@@ -5913,6 +5916,27 @@ table [class*=span],
 }
 .s-table-hover div.s-tbody div.info:hover div.s-td {
   background-color: #064bf1;
+}
+.slick-group {
+  background-color: #b8bd9f;
+}
+.slick-group-toggle {
+  width: 9px;
+  height: 9px;
+  margin-right: 5px;
+}
+.slick-group-toggle.expanded {
+  background: url(../../img/collapse.gif) no-repeat center center;
+}
+.slick-group-toggle.collapsed {
+  background: url(../../img/expand.gif) no-repeat center center;
+}
+.slick-group-totals {
+  color: silver;
+  background-color: #ee7026;
+}
+.slick-group-totals div.s-td:empty {
+  background-color: #c3c7ae;
 }
 div.recline-graph {
   min-height: 250px;

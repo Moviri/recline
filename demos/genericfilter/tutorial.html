@@ -1,5 +1,5 @@
 ---
-layout: moviri-release
+layout: moviri
 title: Demos - NVD3 Integration
 recline-deps: true
 root: ../../
@@ -282,7 +282,8 @@ var grid1 = new recline.View.SlickGrid({
         fitColumns:true,
         useHoverStyle:true,
         useStripedStyle:true,
-        useCondensedStyle:true
+        useCondensedStyle:true,
+        //groupBy: "age"
     }
 });
 grid1.visible = true;
