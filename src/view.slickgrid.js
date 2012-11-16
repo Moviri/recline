@@ -95,10 +95,22 @@ my.SlickGrid = Backbone.View.extend({
     var columnsOrderToUse = this.state.get('columnsOrder');
     if (options.showPartitionedData)
 	{
-    	if (self.model.class.name != "VirtualDataset")
+    	var getObjectClass = function (obj) {
+    	    if (obj && obj.constructor && obj.constructor.toString) {
+    	        var arr = obj.constructor.toString().match(
+    	            /function\s*(\w+)/);
+
+    	        if (arr && arr.length == 2) {
+    	            return arr[1];
+    	        }
+    	    }
+
+    	    return undefined;
+    	}
+    	if (getObjectClass(self.model) != "VirtualDataset")
     		throw "Slickgrid exception: showPartitionedData option can only be used on a partitioned virtualmodel! Exiting";
     	
-    	validFields = options.showPartitionedData.partition.concat(
+    	validFields = self.model.attributes.aggregation.dimensions.concat([options.showPartitionedData.partition]).concat(
     			_.map(options.showPartitionedData.measures, function(m) { return m.field+"_"+m.aggregation})
     			);
     	var columnsOrder = this.state.get('columnsOrder'); 
@@ -228,7 +240,7 @@ my.SlickGrid = Backbone.View.extend({
     if (options.showPartitionedData)
 	{
     	var partitionFieldname = options.showPartitionedData.partition;
-    	var dimensionFieldnames = self.model.options.aggregation.dimensions;
+    	var dimensionFieldnames = self.model.attributes.aggregation.dimensions;
     	var records = self.model.getRecords(self.resultType);
     	var dimensionValues = []
     	for (var d in dimensionFieldnames)
@@ -237,8 +249,9 @@ my.SlickGrid = Backbone.View.extend({
     		var currDimensionValues = _.map(records, function(record){ return record.attributes[dimensionFieldname]; });
     		dimensionValues[d] = _.uniq(currDimensionValues); // should be already sorted
 		}
-    	
-		var allPartitionValues = _.map(records, function(record){ return record.attributes[partitionFieldname]; });
+    	var firstMeasureFieldname = options.showPartitionedData.measures[0].field;
+    	var modelAggregatFields = self.model.getPartitionedFields(partitionFieldname, firstMeasureFieldname);
+		var allPartitionValues = _.map(modelAggregatFields, function(f){ return f.attributes.partitionValue; });
 		var partitionValues = _.uniq(allPartitionValues); // should be already sorted
     		
     	var row = [];
@@ -255,19 +268,18 @@ my.SlickGrid = Backbone.View.extend({
 		    		
 		    		row[partitionFieldname] = partitionValues[i1];
 		    		
-	    			var rec = _.find(records, function(r) { return r.attributes[dimensionFieldname] ==dimensionValues[d][i0] && r.attributes[partitionFieldname] == partitionValues[i1]; });
+	    			var rec = _.find(records, function(r) { return r.attributes[dimensionFieldname] ==dimensionValues[d][i0]; });
 	    			if (rec)
 					{
 	    	    		for (var m in options.showPartitionedData.measures)
 	        			{
 	    	    			var measureField = options.showPartitionedData.measures[m];
-	    	    			var modelAggregationFields = self.model.getPartitionedFields(partitionFieldname, measureField);
-	    	    			var modelField = _.find(modelAggregationFields, function(f) { return f.originalField == measureFieldName});
-	    	    			
-	    	    			//var modelField = _.find(self.model.getFields(self.resultType).models, function(f) { return f.id == measureFieldName});
+	    	    			var measureFieldName = measureField.field
+	    	    			var modelAggregationFields = self.model.getPartitionedFields(partitionFieldname, measureFieldName);
+	    	    			var modelField = _.find(modelAggregationFields, function(f) { return f.attributes.partitionValue == partitionValues[i1]});
 	    	    			if (modelField)
-	    	    				row[measureFieldName] = rec.getFieldValue(modelField);
-	    	    			else row[measureFieldName] = 0;
+	    	    				row[measureFieldName+"_"+measureField.aggregation] = rec.getFieldValue(modelField);
+	    	    			else row[measureFieldName+"_"+measureField.aggregation] = 0;
 	        			}
 					}
 	
@@ -279,8 +291,16 @@ my.SlickGrid = Backbone.View.extend({
 		    	if (options.showPartitionedData.showSubTotals)
 	    		{
 		    		var row = [];
-		    		row[partitionFieldname] = "<b>Total(s)</b>";
-		    		
+		    		row[dimensionFieldname] = "<b>Total(s)</b>";
+    	    		for (var m in options.showPartitionedData.measures)
+        			{
+    	    			var measureField = options.showPartitionedData.measures[m];
+    	    			var measureFieldName = measureField.field+"_"+measureField.aggregation
+    	    			var modelField = _.find(self.model.getFields(self.resultType).models, function(f) { return f.attributes.id == measureFieldName});
+    	    			if (modelField)
+    	    				row[measureFieldName] = "<b>"+rec.getFieldValue(modelField)+"</b>";
+    	    			else row[measureFieldName] = "<b>"+0+"</b>";
+        			}
 		    		data.push(row);
 	    		}
 			}
