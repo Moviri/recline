@@ -140,9 +140,9 @@ root: ../../
                 colorSchema: [ {schema: colorSchemaAge, field: "age"} ]
             });
 
-        dataset.queryState.addFacetNoEvent("age");
-        dataset.queryState.addFacetNoEvent("daydate");
-        virtualdatasetAge.queryState.addFacetNoEvent("daydate");
+        dataset.queryState.addFacetNoEvent("age", true);
+        dataset.queryState.addFacetNoEvent("daydate", true);
+        virtualdatasetAge.queryState.addFacetNoEvent("daydate", true);
 
    		virtualdatasetWeekday= new recline.Model.VirtualDataset({
                 dataset: dataset,
@@ -219,8 +219,8 @@ root: ../../
         dataset.queryState.addFilter(dateFilter);
         dataset.queryState.addSelection(dateFilter);
 
-        virtualdatasetAge.queryState.addFacetNoEvent("age");
-    	dataset.queryState.addFacetNoEvent("gender");
+        virtualdatasetAge.queryState.addFacetNoEvent("age", true);
+    	dataset.queryState.addFacetNoEvent("gender", true);
 
    		dataset.fetch(); // needed to populate filter list
 		
