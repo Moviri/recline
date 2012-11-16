@@ -2,8 +2,8 @@
 <span class="k">this</span><span class="p">.</span><span class="nx">recline</span><span class="p">.</span><span class="nx">Backend</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">recline</span><span class="p">.</span><span class="nx">Backend</span> <span class="o">||</span> <span class="p">{};</span>
 <span class="k">this</span><span class="p">.</span><span class="nx">recline</span><span class="p">.</span><span class="nx">Backend</span><span class="p">.</span><span class="nx">Memory</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">recline</span><span class="p">.</span><span class="nx">Backend</span><span class="p">.</span><span class="nx">Memory</span> <span class="o">||</span> <span class="p">{};</span>
 
-<span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">$</span><span class="p">,</span> <span class="nx">my</span><span class="p">)</span> <span class="p">{</span>
-  <span class="nx">my</span><span class="p">.</span><span class="nx">__type__</span> <span class="o">=</span> <span class="s1">&#39;memory&#39;</span><span class="p">;</span></pre></div>             </td>           </tr>                               <tr id="section-2">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-2">&#182;</a>               </div>               <h2>Data Wrapper</h2>
+<span class="p">(</span><span class="kd">function</span> <span class="p">(</span><span class="nx">$</span><span class="p">,</span> <span class="nx">my</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nx">my</span><span class="p">.</span><span class="nx">__type__</span> <span class="o">=</span> <span class="s1">&#39;memory&#39;</span><span class="p">;</span></pre></div>             </td>           </tr>                               <tr id="section-2">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-2">&#182;</a>               </div>               <h2>Data Wrapper</h2>
 
 <p>Turn a simple array of JS objects into a mini data-store with
 functionality like querying, faceting, updating (by ID) and deleting (by
@@ -13,49 +13,49 @@ ID).</p>
 value, key: value})
 @param fields (optional) list of field hashes (each hash defining a field
 as per recline.Model.Field). If fields not specified they will be taken
-from the data.</p>             </td>             <td class="code">               <div class="highlight"><pre>  <span class="nx">my</span><span class="p">.</span><span class="nx">Store</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">data</span><span class="p">,</span> <span class="nx">fields</span><span class="p">)</span> <span class="p">{</span>
-    <span class="kd">var</span> <span class="nx">self</span> <span class="o">=</span> <span class="k">this</span><span class="p">;</span>
-    <span class="k">this</span><span class="p">.</span><span class="nx">data</span> <span class="o">=</span> <span class="nx">data</span><span class="p">;</span>
+from the data.</p>             </td>             <td class="code">               <div class="highlight"><pre>    <span class="nx">my</span><span class="p">.</span><span class="nx">Store</span> <span class="o">=</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">data</span><span class="p">,</span> <span class="nx">fields</span><span class="p">)</span> <span class="p">{</span>
+        <span class="kd">var</span> <span class="nx">self</span> <span class="o">=</span> <span class="k">this</span><span class="p">;</span>
+        <span class="k">this</span><span class="p">.</span><span class="nx">data</span> <span class="o">=</span> <span class="nx">data</span><span class="p">;</span>
         <span class="k">this</span><span class="p">.</span><span class="nx">distinctFieldsValues</span> <span class="o">=</span> <span class="p">{};</span>
 
-    <span class="k">if</span> <span class="p">(</span><span class="nx">fields</span><span class="p">)</span> <span class="p">{</span>
-      <span class="k">this</span><span class="p">.</span><span class="nx">fields</span> <span class="o">=</span> <span class="nx">fields</span><span class="p">;</span>
-    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
-      <span class="k">if</span> <span class="p">(</span><span class="nx">data</span><span class="p">)</span> <span class="p">{</span>
-        <span class="k">this</span><span class="p">.</span><span class="nx">fields</span> <span class="o">=</span> <span class="nx">_</span><span class="p">.</span><span class="nx">map</span><span class="p">(</span><span class="nx">data</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="kd">function</span><span class="p">(</span><span class="nx">value</span><span class="p">,</span> <span class="nx">key</span><span class="p">)</span> <span class="p">{</span>
-          <span class="k">return</span> <span class="p">{</span><span class="nx">id</span><span class="o">:</span> <span class="nx">key</span><span class="p">,</span> <span class="nx">type</span><span class="o">:</span> <span class="s1">&#39;string&#39;</span><span class="p">};</span>
-        <span class="p">});</span>
-      <span class="p">}</span>
-    <span class="p">}</span>
-
-    <span class="k">this</span><span class="p">.</span><span class="nx">update</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">doc</span><span class="p">)</span> <span class="p">{</span>
-      <span class="nx">_</span><span class="p">.</span><span class="nx">each</span><span class="p">(</span><span class="nx">self</span><span class="p">.</span><span class="nx">data</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">internalDoc</span><span class="p">,</span> <span class="nx">idx</span><span class="p">)</span> <span class="p">{</span>
-        <span class="k">if</span><span class="p">(</span><span class="nx">doc</span><span class="p">.</span><span class="nx">id</span> <span class="o">===</span> <span class="nx">internalDoc</span><span class="p">.</span><span class="nx">id</span><span class="p">)</span> <span class="p">{</span>
-          <span class="nx">self</span><span class="p">.</span><span class="nx">data</span><span class="p">[</span><span class="nx">idx</span><span class="p">]</span> <span class="o">=</span> <span class="nx">doc</span><span class="p">;</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nx">fields</span><span class="p">)</span> <span class="p">{</span>
+            <span class="k">this</span><span class="p">.</span><span class="nx">fields</span> <span class="o">=</span> <span class="nx">fields</span><span class="p">;</span>
+        <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+            <span class="k">if</span> <span class="p">(</span><span class="nx">data</span><span class="p">)</span> <span class="p">{</span>
+                <span class="k">this</span><span class="p">.</span><span class="nx">fields</span> <span class="o">=</span> <span class="nx">_</span><span class="p">.</span><span class="nx">map</span><span class="p">(</span><span class="nx">data</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">value</span><span class="p">,</span> <span class="nx">key</span><span class="p">)</span> <span class="p">{</span>
+                    <span class="k">return</span> <span class="p">{</span><span class="nx">id</span><span class="o">:</span><span class="nx">key</span><span class="p">,</span> <span class="nx">type</span><span class="o">:</span><span class="s1">&#39;string&#39;</span><span class="p">};</span>
+                <span class="p">});</span>
+            <span class="p">}</span>
         <span class="p">}</span>
-      <span class="p">});</span>
-    <span class="p">};</span>
 
-    <span class="k">this</span><span class="p">.</span><span class="nx">remove</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">doc</span><span class="p">)</span> <span class="p">{</span>
-      <span class="kd">var</span> <span class="nx">newdocs</span> <span class="o">=</span> <span class="nx">_</span><span class="p">.</span><span class="nx">reject</span><span class="p">(</span><span class="nx">self</span><span class="p">.</span><span class="nx">data</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">internalDoc</span><span class="p">)</span> <span class="p">{</span>
-        <span class="k">return</span> <span class="p">(</span><span class="nx">doc</span><span class="p">.</span><span class="nx">id</span> <span class="o">===</span> <span class="nx">internalDoc</span><span class="p">.</span><span class="nx">id</span><span class="p">);</span>
-      <span class="p">});</span>
-      <span class="k">this</span><span class="p">.</span><span class="nx">data</span> <span class="o">=</span> <span class="nx">newdocs</span><span class="p">;</span>
-    <span class="p">};</span>
+        <span class="k">this</span><span class="p">.</span><span class="nx">update</span> <span class="o">=</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">doc</span><span class="p">)</span> <span class="p">{</span>
+            <span class="nx">_</span><span class="p">.</span><span class="nx">each</span><span class="p">(</span><span class="nx">self</span><span class="p">.</span><span class="nx">data</span><span class="p">,</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">internalDoc</span><span class="p">,</span> <span class="nx">idx</span><span class="p">)</span> <span class="p">{</span>
+                <span class="k">if</span> <span class="p">(</span><span class="nx">doc</span><span class="p">.</span><span class="nx">id</span> <span class="o">===</span> <span class="nx">internalDoc</span><span class="p">.</span><span class="nx">id</span><span class="p">)</span> <span class="p">{</span>
+                    <span class="nx">self</span><span class="p">.</span><span class="nx">data</span><span class="p">[</span><span class="nx">idx</span><span class="p">]</span> <span class="o">=</span> <span class="nx">doc</span><span class="p">;</span>
+                <span class="p">}</span>
+            <span class="p">});</span>
+        <span class="p">};</span>
 
-    <span class="k">this</span><span class="p">.</span><span class="nx">save</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">changes</span><span class="p">,</span> <span class="nx">dataset</span><span class="p">)</span> <span class="p">{</span>
-      <span class="kd">var</span> <span class="nx">self</span> <span class="o">=</span> <span class="k">this</span><span class="p">;</span>
-      <span class="kd">var</span> <span class="nx">dfd</span> <span class="o">=</span> <span class="nx">$</span><span class="p">.</span><span class="nx">Deferred</span><span class="p">();</span></pre></div>             </td>           </tr>                               <tr id="section-3">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-3">&#182;</a>               </div>               <p>TODO _.each(changes.creates) { ... }</p>             </td>             <td class="code">               <div class="highlight"><pre>      <span class="nx">_</span><span class="p">.</span><span class="nx">each</span><span class="p">(</span><span class="nx">changes</span><span class="p">.</span><span class="nx">updates</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">record</span><span class="p">)</span> <span class="p">{</span>
-        <span class="nx">self</span><span class="p">.</span><span class="nx">update</span><span class="p">(</span><span class="nx">record</span><span class="p">);</span>
-      <span class="p">});</span>
-      <span class="nx">_</span><span class="p">.</span><span class="nx">each</span><span class="p">(</span><span class="nx">changes</span><span class="p">.</span><span class="nx">deletes</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">record</span><span class="p">)</span> <span class="p">{</span>
-        <span class="nx">self</span><span class="p">.</span><span class="nx">remove</span><span class="p">(</span><span class="nx">record</span><span class="p">);</span>
-      <span class="p">});</span>
-      <span class="nx">dfd</span><span class="p">.</span><span class="nx">resolve</span><span class="p">();</span>
-      <span class="k">return</span> <span class="nx">dfd</span><span class="p">.</span><span class="nx">promise</span><span class="p">();</span>
-    <span class="p">},</span>
+        <span class="k">this</span><span class="p">.</span><span class="nx">remove</span> <span class="o">=</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">doc</span><span class="p">)</span> <span class="p">{</span>
+            <span class="kd">var</span> <span class="nx">newdocs</span> <span class="o">=</span> <span class="nx">_</span><span class="p">.</span><span class="nx">reject</span><span class="p">(</span><span class="nx">self</span><span class="p">.</span><span class="nx">data</span><span class="p">,</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">internalDoc</span><span class="p">)</span> <span class="p">{</span>
+                <span class="k">return</span> <span class="p">(</span><span class="nx">doc</span><span class="p">.</span><span class="nx">id</span> <span class="o">===</span> <span class="nx">internalDoc</span><span class="p">.</span><span class="nx">id</span><span class="p">);</span>
+            <span class="p">});</span>
+            <span class="k">this</span><span class="p">.</span><span class="nx">data</span> <span class="o">=</span> <span class="nx">newdocs</span><span class="p">;</span>
+        <span class="p">};</span>
 
-    <span class="k">this</span><span class="p">.</span><span class="nx">query</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">queryObj</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">this</span><span class="p">.</span><span class="nx">save</span> <span class="o">=</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">changes</span><span class="p">,</span> <span class="nx">dataset</span><span class="p">)</span> <span class="p">{</span>
+            <span class="kd">var</span> <span class="nx">self</span> <span class="o">=</span> <span class="k">this</span><span class="p">;</span>
+            <span class="kd">var</span> <span class="nx">dfd</span> <span class="o">=</span> <span class="nx">$</span><span class="p">.</span><span class="nx">Deferred</span><span class="p">();</span></pre></div>             </td>           </tr>                               <tr id="section-3">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-3">&#182;</a>               </div>               <p>TODO _.each(changes.creates) { ... }</p>             </td>             <td class="code">               <div class="highlight"><pre>            <span class="nx">_</span><span class="p">.</span><span class="nx">each</span><span class="p">(</span><span class="nx">changes</span><span class="p">.</span><span class="nx">updates</span><span class="p">,</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">record</span><span class="p">)</span> <span class="p">{</span>
+                <span class="nx">self</span><span class="p">.</span><span class="nx">update</span><span class="p">(</span><span class="nx">record</span><span class="p">);</span>
+            <span class="p">});</span>
+            <span class="nx">_</span><span class="p">.</span><span class="nx">each</span><span class="p">(</span><span class="nx">changes</span><span class="p">.</span><span class="nx">deletes</span><span class="p">,</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">record</span><span class="p">)</span> <span class="p">{</span>
+                <span class="nx">self</span><span class="p">.</span><span class="nx">remove</span><span class="p">(</span><span class="nx">record</span><span class="p">);</span>
+            <span class="p">});</span>
+            <span class="nx">dfd</span><span class="p">.</span><span class="nx">resolve</span><span class="p">();</span>
+            <span class="k">return</span> <span class="nx">dfd</span><span class="p">.</span><span class="nx">promise</span><span class="p">();</span>
+        <span class="p">},</span>
+
+            <span class="k">this</span><span class="p">.</span><span class="nx">query</span> <span class="o">=</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">queryObj</span><span class="p">)</span> <span class="p">{</span>
                 <span class="kd">var</span> <span class="nx">dfd</span> <span class="o">=</span> <span class="nx">$</span><span class="p">.</span><span class="nx">Deferred</span><span class="p">();</span>
                 <span class="kd">var</span> <span class="nx">numRows</span> <span class="o">=</span> <span class="nx">queryObj</span><span class="p">.</span><span class="nx">size</span> <span class="o">||</span> <span class="k">this</span><span class="p">.</span><span class="nx">data</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span>
                 <span class="kd">var</span> <span class="nx">start</span> <span class="o">=</span> <span class="nx">queryObj</span><span class="p">.</span><span class="nx">from</span> <span class="o">||</span> <span class="mi">0</span><span class="p">;</span>
@@ -63,25 +63,25 @@ from the data.</p>             </td>             <td class="code">              
 
                 <span class="nx">results</span> <span class="o">=</span> <span class="nx">recline</span><span class="p">.</span><span class="nx">Data</span><span class="p">.</span><span class="nx">Filters</span><span class="p">.</span><span class="nx">applyFiltersOnData</span><span class="p">(</span><span class="nx">queryObj</span><span class="p">.</span><span class="nx">filters</span><span class="p">,</span> <span class="nx">results</span><span class="p">,</span> <span class="k">this</span><span class="p">.</span><span class="nx">fields</span><span class="p">);</span>
                 <span class="nx">results</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">_applyFreeTextQuery</span><span class="p">(</span><span class="nx">results</span><span class="p">,</span> <span class="nx">queryObj</span><span class="p">);</span></pre></div>             </td>           </tr>                               <tr id="section-4">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-4">&#182;</a>               </div>               <p>TODO: this is not complete sorting!
-What's wrong is we sort on the <em>last</em> entry in the sort list if there are multiple sort criteria</p>             </td>             <td class="code">               <div class="highlight"><pre>      <span class="nx">_</span><span class="p">.</span><span class="nx">each</span><span class="p">(</span><span class="nx">queryObj</span><span class="p">.</span><span class="nx">sort</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">sortObj</span><span class="p">)</span> <span class="p">{</span>
-        <span class="kd">var</span> <span class="nx">fieldName</span> <span class="o">=</span> <span class="nx">sortObj</span><span class="p">.</span><span class="nx">field</span><span class="p">;</span>
-        <span class="nx">results</span> <span class="o">=</span> <span class="nx">_</span><span class="p">.</span><span class="nx">sortBy</span><span class="p">(</span><span class="nx">results</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">doc</span><span class="p">)</span> <span class="p">{</span>
-          <span class="kd">var</span> <span class="nx">_out</span> <span class="o">=</span> <span class="nx">doc</span><span class="p">[</span><span class="nx">fieldName</span><span class="p">];</span>
-          <span class="k">return</span> <span class="nx">_out</span><span class="p">;</span>
-        <span class="p">});</span>
-        <span class="k">if</span> <span class="p">(</span><span class="nx">sortObj</span><span class="p">.</span><span class="nx">order</span> <span class="o">==</span> <span class="s1">&#39;desc&#39;</span><span class="p">)</span> <span class="p">{</span>
-          <span class="nx">results</span><span class="p">.</span><span class="nx">reverse</span><span class="p">();</span>
-        <span class="p">}</span>
-      <span class="p">});</span>
-      <span class="kd">var</span> <span class="nx">facets</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">computeFacets</span><span class="p">(</span><span class="nx">results</span><span class="p">,</span> <span class="nx">queryObj</span><span class="p">);</span>
-      <span class="kd">var</span> <span class="nx">out</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="nx">total</span><span class="o">:</span> <span class="nx">results</span><span class="p">.</span><span class="nx">length</span><span class="p">,</span>
-        <span class="nx">hits</span><span class="o">:</span> <span class="nx">results</span><span class="p">.</span><span class="nx">slice</span><span class="p">(</span><span class="nx">start</span><span class="p">,</span> <span class="nx">start</span><span class="o">+</span><span class="nx">numRows</span><span class="p">),</span>
-        <span class="nx">facets</span><span class="o">:</span> <span class="nx">facets</span>
-      <span class="p">};</span>
-      <span class="nx">dfd</span><span class="p">.</span><span class="nx">resolve</span><span class="p">(</span><span class="nx">out</span><span class="p">);</span>
-      <span class="k">return</span> <span class="nx">dfd</span><span class="p">.</span><span class="nx">promise</span><span class="p">();</span>
-    <span class="p">};</span>
+What's wrong is we sort on the <em>last</em> entry in the sort list if there are multiple sort criteria</p>             </td>             <td class="code">               <div class="highlight"><pre>                <span class="nx">_</span><span class="p">.</span><span class="nx">each</span><span class="p">(</span><span class="nx">queryObj</span><span class="p">.</span><span class="nx">sort</span><span class="p">,</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">sortObj</span><span class="p">)</span> <span class="p">{</span>
+                    <span class="kd">var</span> <span class="nx">fieldName</span> <span class="o">=</span> <span class="nx">sortObj</span><span class="p">.</span><span class="nx">field</span><span class="p">;</span>
+                    <span class="nx">results</span> <span class="o">=</span> <span class="nx">_</span><span class="p">.</span><span class="nx">sortBy</span><span class="p">(</span><span class="nx">results</span><span class="p">,</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">doc</span><span class="p">)</span> <span class="p">{</span>
+                        <span class="kd">var</span> <span class="nx">_out</span> <span class="o">=</span> <span class="nx">doc</span><span class="p">[</span><span class="nx">fieldName</span><span class="p">];</span>
+                        <span class="k">return</span> <span class="nx">_out</span><span class="p">;</span>
+                    <span class="p">});</span>
+                    <span class="k">if</span> <span class="p">(</span><span class="nx">sortObj</span><span class="p">.</span><span class="nx">order</span> <span class="o">==</span> <span class="s1">&#39;desc&#39;</span><span class="p">)</span> <span class="p">{</span>
+                        <span class="nx">results</span><span class="p">.</span><span class="nx">reverse</span><span class="p">();</span>
+                    <span class="p">}</span>
+                <span class="p">});</span>
+                <span class="kd">var</span> <span class="nx">facets</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">computeFacets</span><span class="p">(</span><span class="nx">results</span><span class="p">,</span> <span class="nx">queryObj</span><span class="p">);</span>
+                <span class="kd">var</span> <span class="nx">out</span> <span class="o">=</span> <span class="p">{</span>
+                    <span class="nx">total</span><span class="o">:</span><span class="nx">results</span><span class="p">.</span><span class="nx">length</span><span class="p">,</span>
+                    <span class="nx">hits</span><span class="o">:</span><span class="nx">results</span><span class="p">.</span><span class="nx">slice</span><span class="p">(</span><span class="nx">start</span><span class="p">,</span> <span class="nx">start</span> <span class="o">+</span> <span class="nx">numRows</span><span class="p">),</span>
+                    <span class="nx">facets</span><span class="o">:</span><span class="nx">facets</span>
+                <span class="p">};</span>
+                <span class="nx">dfd</span><span class="p">.</span><span class="nx">resolve</span><span class="p">(</span><span class="nx">out</span><span class="p">);</span>
+                <span class="k">return</span> <span class="nx">dfd</span><span class="p">.</span><span class="nx">promise</span><span class="p">();</span>
+            <span class="p">};</span>
 
 
         <span class="k">this</span><span class="p">.</span><span class="nx">getFacetsOnUnfilteredData</span> <span class="o">=</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">queryObj</span><span class="p">)</span> <span class="p">{</span>
@@ -119,7 +119,7 @@ if (!matches) return false;</p>             </td>             <td class="code"> 
         <span class="p">};</span>
 
         <span class="k">this</span><span class="p">.</span><span class="nx">computeFacets</span> <span class="o">=</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">records</span><span class="p">,</span> <span class="nx">queryObj</span><span class="p">)</span> <span class="p">{</span>
-            <span class="kd">var</span> <span class="nx">self</span><span class="o">=</span><span class="k">this</span><span class="p">;</span>
+            <span class="kd">var</span> <span class="nx">self</span> <span class="o">=</span> <span class="k">this</span><span class="p">;</span>
             <span class="kd">var</span> <span class="nx">facetResults</span> <span class="o">=</span> <span class="p">{};</span>
             <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nx">queryObj</span><span class="p">.</span><span class="nx">facets</span><span class="p">)</span> <span class="p">{</span>
                 <span class="k">return</span> <span class="nx">facetResults</span><span class="p">;</span>
@@ -132,7 +132,7 @@ if (!matches) return false;</p>             </td>             <td class="code"> 
                     <span class="kd">var</span> <span class="nx">val</span> <span class="o">=</span> <span class="nx">doc</span><span class="p">[</span><span class="nx">fieldId</span><span class="p">];</span>
                     <span class="kd">var</span> <span class="nx">tmp</span> <span class="o">=</span> <span class="nx">facetResults</span><span class="p">[</span><span class="nx">facetId</span><span class="p">];</span>
                     <span class="k">if</span> <span class="p">(</span><span class="nx">val</span><span class="p">)</span> <span class="p">{</span>
-                        <span class="nx">tmp</span><span class="p">.</span><span class="nx">termsall</span><span class="p">[</span><span class="nx">val</span><span class="p">]</span> <span class="o">=</span> <span class="nx">tmp</span><span class="p">.</span><span class="nx">termsall</span><span class="p">[</span><span class="nx">val</span><span class="p">]</span> <span class="o">?</span> <span class="p">{</span><span class="nx">count</span><span class="o">:</span> <span class="nx">tmp</span><span class="p">.</span><span class="nx">termsall</span><span class="p">[</span><span class="nx">val</span><span class="p">].</span><span class="nx">count</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="nx">value</span><span class="o">:</span> <span class="nx">val</span><span class="p">}</span> <span class="o">:</span> <span class="p">{</span><span class="nx">count</span><span class="o">:</span><span class="mi">1</span><span class="p">,</span> <span class="nx">value</span><span class="o">:</span> <span class="nx">val</span><span class="p">};</span>
+                        <span class="nx">tmp</span><span class="p">.</span><span class="nx">termsall</span><span class="p">[</span><span class="nx">val</span><span class="p">]</span> <span class="o">=</span> <span class="nx">tmp</span><span class="p">.</span><span class="nx">termsall</span><span class="p">[</span><span class="nx">val</span><span class="p">]</span> <span class="o">?</span> <span class="p">{</span><span class="nx">count</span><span class="o">:</span><span class="nx">tmp</span><span class="p">.</span><span class="nx">termsall</span><span class="p">[</span><span class="nx">val</span><span class="p">].</span><span class="nx">count</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="nx">value</span><span class="o">:</span><span class="nx">val</span><span class="p">}</span> <span class="o">:</span> <span class="p">{</span><span class="nx">count</span><span class="o">:</span><span class="mi">1</span><span class="p">,</span> <span class="nx">value</span><span class="o">:</span><span class="nx">val</span><span class="p">};</span>
                     <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
                         <span class="nx">tmp</span><span class="p">.</span><span class="nx">missing</span> <span class="o">=</span> <span class="nx">tmp</span><span class="p">.</span><span class="nx">missing</span> <span class="o">+</span> <span class="mi">1</span><span class="p">;</span>
                     <span class="p">}</span>
@@ -145,11 +145,13 @@ if (!matches) return false;</p>             </td>             <td class="code"> 
                 <span class="kd">var</span> <span class="nx">termsWithZeroCount</span> <span class="o">=</span>
                     <span class="nx">_</span><span class="p">.</span><span class="nx">difference</span><span class="p">(</span>
                         <span class="nx">self</span><span class="p">.</span><span class="nx">distinctFieldsValues</span><span class="p">[</span><span class="nx">facetId</span><span class="p">],</span>
-                        <span class="nx">_</span><span class="p">.</span><span class="nx">map</span><span class="p">(</span><span class="nx">tmp</span><span class="p">.</span><span class="nx">termsall</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">d</span><span class="p">)</span> <span class="p">{</span> <span class="k">return</span> <span class="nx">d</span><span class="p">.</span><span class="nx">value</span><span class="p">})</span>
-                        <span class="p">);</span>
+                        <span class="nx">_</span><span class="p">.</span><span class="nx">map</span><span class="p">(</span><span class="nx">tmp</span><span class="p">.</span><span class="nx">termsall</span><span class="p">,</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">d</span><span class="p">)</span> <span class="p">{</span>
+                            <span class="k">return</span> <span class="nx">d</span><span class="p">.</span><span class="nx">value</span>
+                        <span class="p">})</span>
+                    <span class="p">);</span>
 
                 <span class="nx">_</span><span class="p">.</span><span class="nx">each</span><span class="p">(</span><span class="nx">termsWithZeroCount</span><span class="p">,</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">d</span><span class="p">)</span> <span class="p">{</span>
-                    <span class="nx">tmp</span><span class="p">.</span><span class="nx">termsall</span><span class="p">[</span><span class="nx">d</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="nx">count</span><span class="o">:</span> <span class="mi">0</span><span class="p">,</span> <span class="nx">value</span><span class="o">:</span> <span class="nx">d</span><span class="p">};</span>
+                    <span class="nx">tmp</span><span class="p">.</span><span class="nx">termsall</span><span class="p">[</span><span class="nx">d</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="nx">count</span><span class="o">:</span><span class="mi">0</span><span class="p">,</span> <span class="nx">value</span><span class="o">:</span><span class="nx">d</span><span class="p">};</span>
                 <span class="p">});</span>
 
             <span class="p">});</span>
@@ -167,7 +169,7 @@ if (!matches) return false;</p>             </td>             <td class="code"> 
 
             <span class="k">return</span> <span class="nx">facetResults</span><span class="p">;</span>
         <span class="p">};</span></pre></div>             </td>           </tr>                               <tr id="section-14">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-14">&#182;</a>               </div>               <p>update uniq values for each terms present in facets with value all_terms</p>             </td>             <td class="code">               <div class="highlight"><pre>        <span class="k">this</span><span class="p">.</span><span class="nx">updateDistinctFieldsForFaceting</span> <span class="o">=</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">queryObj</span><span class="p">)</span> <span class="p">{</span>
-            <span class="kd">var</span> <span class="nx">self</span><span class="o">=</span><span class="k">this</span><span class="p">;</span>
+            <span class="kd">var</span> <span class="nx">self</span> <span class="o">=</span> <span class="k">this</span><span class="p">;</span>
             <span class="k">if</span> <span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">distinctFieldsValues</span> <span class="o">==</span> <span class="kc">null</span><span class="p">)</span>
                 <span class="k">this</span><span class="p">.</span><span class="nx">distinctFieldsValues</span> <span class="o">=</span> <span class="p">{};</span>
 
