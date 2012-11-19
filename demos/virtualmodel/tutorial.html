@@ -137,7 +137,7 @@ var dataset = new recline.Model.Dataset({
                 </pre>
             </div>
         </div>
-        <div class="span5">
+        <div class="span4">
 		    <div class="row-fluid">
 	            <div class="bs2">
 	                <div id="grid2" style="height: 30px;"></div>
@@ -161,7 +161,7 @@ var virtual1 = new recline.Model.VirtualDataset({
 </pre>
 	        </div>
         </div>
-        <div class="span4">
+        <div class="span5">
 		    <div class="row-fluid">
 	            <div class="bs3">
 	                <div id="grid3" style="height: 250px;"></div>
@@ -169,7 +169,6 @@ var virtual1 = new recline.Model.VirtualDataset({
 		    </div>
 		    <div class="row-fluid">
     <pre>
-var $el = $('#grid3');
 var grid3 = new recline.View.SlickGrid({
     model:virtual1,
     el:$el,
@@ -179,16 +178,14 @@ var grid3 = new recline.View.SlickGrid({
         useStripedStyle:true,
         useCondensedStyle:true,
 		showPartitionedData: {
-        	measures:               [{field: "visits", aggregation: "sum" }],
-        	partition:             "agebin",
+        	measures:      [ {field: "visits", aggregation: "sum" } ],
+        	partition:     "agebin",
         	showSubTotals: true
         },
         showTotals: [ {field: "visits_sum", aggregation: "sum" } ]
     }
 
 });
-grid3.visible = true;
-grid3.render();
     </pre>
    		</div>
 </div>
