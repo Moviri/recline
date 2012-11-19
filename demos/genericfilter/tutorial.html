@@ -573,9 +573,9 @@ function redrawBackground() {
 
 
     _.each(filter, function (d) {
-        d.options.state["showBackground"] = showBackground;
+        d.showBackground = showBackground;
         if(backgroundColor)
-            d.options.state["backgroundColor"] = backgroundColor;
+            d.backgroundColor = backgroundColor;
         d.render();
     });
 }
