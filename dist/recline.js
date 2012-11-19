@@ -8631,34 +8631,53 @@ my.SlickGrid = Backbone.View.extend({
 		var allPartitionValues = _.map(modelAggregatFields, function(f){ return f.attributes.partitionValue; });
 		var partitionValues = _.uniq(allPartitionValues); // should be already sorted
     		
-    	var row = [];
-    	for (var d in dimensionValues)
+    	var row = {};
+    	var useSingleDimension = false;
+    	if (dimensionFieldnames.length == 1)
 		{
-    		var dimensionFieldname = dimensionFieldnames[d];
-	    	for (var i0 in dimensionValues[d])
+    		useSingleDimension = true;
+    		dimensionValues[1] = [""]
+    		dimensionFieldnames[1] = "___fake____";
+		}
+    	
+    	for (var i0 in dimensionValues[0])
+		{
+    		row = {};
+    		var dimensionFieldname0 = dimensionFieldnames[0];
+	    	for (var i1 in dimensionValues[1])
 			{
-		    	for (var i1 in partitionValues)
+	    		row = {};
+	    		var dimensionFieldname1 = dimensionFieldnames[1];
+    			var rec = _.find(records, function(r) { return r.attributes[dimensionFieldname0] == dimensionValues[0][i0] && (useSingleDimension || r.attributes[dimensionFieldname1] == dimensionValues[1][i1]); });
+		    	for (var i2 in partitionValues)
 		    	{
-		    		var row = {schema_colors: []};
-		    		if (i1 == 0)
-		    			row[dimensionFieldname] = dimensionValues[d][i0];
+		    		row = {};
+		    		if (i1 == 0 && i2 == 0)
+		    			row[dimensionFieldname0] = dimensionValues[0][i0];
+
+		    		if (i2 == 0)
+		    			row[dimensionFieldname1] = dimensionValues[1][i1];
 		    		
-		    		row[partitionFieldname] = partitionValues[i1];
+		    		row[partitionFieldname] = partitionValues[i2];
 		    		
-	    			var rec = _.find(records, function(r) { return r.attributes[dimensionFieldname] ==dimensionValues[d][i0]; });
-	    			if (rec)
-					{
-	    	    		for (var m in options.showPartitionedData.measures)
-	        			{
-	    	    			var measureField = options.showPartitionedData.measures[m];
-	    	    			var measureFieldName = measureField.field
-	    	    			var modelAggregationFields = self.model.getPartitionedFields(partitionFieldname, measureFieldName);
-	    	    			var modelField = _.find(modelAggregationFields, function(f) { return f.attributes.partitionValue == partitionValues[i1]});
-	    	    			if (modelField)
-	    	    				row[measureFieldName+"_"+measureField.aggregation] = rec.getFieldValue(modelField);
-	    	    			else row[measureFieldName+"_"+measureField.aggregation] = 0;
-	        			}
-					}
+    	    		for (var m in options.showPartitionedData.measures)
+        			{
+    	    			var measureField = options.showPartitionedData.measures[m];
+    	    			var measureFieldName = measureField.field
+    	    			var modelAggregationFields = self.model.getPartitionedFields(partitionFieldname, measureFieldName);
+    	    			var modelField = _.find(modelAggregationFields, function(f) { return f.attributes.partitionValue == partitionValues[i2]});
+    	    			if (modelField)
+	    				{
+    	    				if (rec)
+	    					{
+    	    					var formattedValue = rec.getFieldValue(modelField);
+    	    					if (formattedValue)
+        	    					row[measureFieldName+"_"+measureField.aggregation] = rec.getFieldValue(modelField);
+            	    			else row[measureFieldName+"_"+measureField.aggregation] = 0;
+	    					}
+        	    			else row[measureFieldName+"_"+measureField.aggregation] = 0;
+	    				}
+        			}
 	
 		    		if (options.showLineNumbers == true)
 					    row['lineNumberField'] = jj;
@@ -8667,15 +8686,20 @@ my.SlickGrid = Backbone.View.extend({
 		    	}
 		    	if (options.showPartitionedData.showSubTotals)
 	    		{
-		    		var row = [];
-		    		row[dimensionFieldname] = "<b>Total(s)</b>";
+		    		row = {};
+		    		row[partitionFieldname] = "<b>Total(s)</b>";
     	    		for (var m in options.showPartitionedData.measures)
         			{
     	    			var measureField = options.showPartitionedData.measures[m];
     	    			var measureFieldName = measureField.field+"_"+measureField.aggregation
     	    			var modelField = _.find(self.model.getFields(self.resultType).models, function(f) { return f.attributes.id == measureFieldName});
-    	    			if (modelField)
-    	    				row[measureFieldName] = "<b>"+rec.getFieldValue(modelField)+"</b>";
+    	    			if (modelField && rec)
+	    				{
+	    					var formattedValue = rec.getFieldValue(modelField);
+	    					if (formattedValue)
+    	    					row[measureFieldName] = "<b>"+rec.getFieldValue(modelField)+"</b>";
+        	    			else row[measureFieldName] = "<b>"+0+"</b>";
+	    				}
     	    			else row[measureFieldName] = "<b>"+0+"</b>";
         			}
     	    		unselectableRowIds.push(data.length)
