@@ -1125,8 +1125,23 @@ my.GenericFilter = Backbone.View.extend({
     	currTemplate = this.templateHoriz
     	
     if (self.showBackground == false)
+	{
     	self.className = self.className.replace("well", "")
-    else tmplData.backgroundColor = self.backgroundColor;
+		$(self).removeClass("well");
+		$(self.el).removeClass("well");
+	}
+    else 
+	{
+    	tmplData.backgroundColor = self.backgroundColor;
+    	if (self.showBackground == true)
+		{
+    		if (self.className.indexOf("well") < 0)
+    			self.className += " well";
+    		
+    		$(self).addClass("well");
+    		$(self.el).addClass("well");
+		}
+	}
 
     var out = Mustache.render(currTemplate, tmplData);
     this.el.html(out);
