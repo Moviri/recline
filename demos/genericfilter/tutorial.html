@@ -1,6 +1,6 @@
 ---
 layout: moviri
-title: Demos - NVD3 Integration
+title: Demos - Filters
 recline-deps: true
 root: ../../
 ---
@@ -60,6 +60,11 @@ root: ../../
     <div class="row-fluid">
         <div class="span9">
             <div id="horizontal2"></div>
+        </div>
+    </div>
+    <div class="row-fluid">
+        <div class="span9">
+            <div id="horizontal3"></div>
         </div>
     </div>
 
@@ -508,10 +513,10 @@ function drawGraph() {
     filterhorizontal = new recline.View.GenericFilter({
         sourceDataset:dataset,
         sourceFields:[
-            {field:"age", controlType:'color_legend', fieldType:"integer", label: "Select age", labelPosition: "left"  },
-            {field:"age", controlType:'dropdown', fieldType:"integer" , label: "Select age", labelPosition: "left"  },
-            {field:"age", controlType:'listbox_styled', fieldType:"integer", label: "Select age", labelPosition: "inside"  },
-            {field:"age", controlType:'multibutton', fieldType:"integer", label: "Select age", labelPosition: "none" },
+            {field:"age",       controlType:'color_legend', fieldType:"integer", label: "Select age", labelPosition: "left"  },
+            {field:"age",       controlType:'dropdown', fieldType:"integer" , label: "Select age", labelPosition: "left"  },
+            {field:"age",       controlType:'listbox_styled', fieldType:"integer", label: "Select age", labelPosition: "inside"  },
+            {field:"age",       controlType:'multibutton', fieldType:"integer", label: "Select age", labelPosition: "none" }
 
 
         ],
@@ -554,6 +559,26 @@ function drawGraph() {
         ]
     });
     $('#horizontal2').append(filterhorizontal2.el);
+
+    filterhorizontal3 = new recline.View.GenericFilter({
+        sourceFields:[
+            {field:"daydate",   controlType:'dropdown_date_range', fieldType: 'date', label: "Select period", labelPosition: "left" }
+        ],
+        state:{
+            useHorizontalLayout:true,
+        },
+        actions:[
+            {
+                action:action1,
+                mapping:[
+                    {srcField:"daydate", filter:"filter_date_range"}
+                ],
+                event:["selection"]
+            }
+        ]
+    });
+    $('#horizontal3').append(filterhorizontal3.el);
+    filterhorizontal3.render();
 
 }
 
