@@ -315,8 +315,8 @@
 						'<div class="comparison-daterange">'+
 							'<input type="text" class="dr dr2 from" lastSel="2" /> - <input type="text" class="dr dr2 to" lastSel="3" />'+
 						'</div>'+
-						'<button class="btn btn-small">Ok</button>'+
-						'<button class="btn btn-small">Cancel</button>'+
+						'<button class="btn btn-small" id="button-ok">Ok</button>'+
+						'<button class="btn btn-small" id="button-cancel">Cancel</button>'+
 					'</div>'+
 				'</div>');
 				$dropdown.appendTo($('body'));
@@ -410,7 +410,7 @@
 				/**
 				 * Handle clicking on OK button.
 				 */
-				$('button.ok', $dropdown).click(function() {
+				$('#button-ok', $dropdown).click(function() {
 					internal.retractDropdown($current_target);
 					internal.saveValues($current_target);
 					internal.updateDateField($current_target);
@@ -420,7 +420,7 @@
 				/**
 				 * Handle clicking on OK button.
 				 */
-				$('button.cancel', $dropdown).click(function() {
+				$('#button-cancel', $dropdown).click(function() {
 					//console.log('cancel')
 					var $this = $(this);
 					internal.retractDropdown($current_target);
@@ -452,7 +452,7 @@
 			var date_preset = internal.getDaterangePreset();
 			
 			var dates = $datepicker.DatePickerGetDate()[0];
-			console.log('original dates', dates);
+			//console.log('original dates', dates);
 			
 			// TODO: remove
 			if (date_preset.dates == undefined) throw date_preset.title + " doesn't have dates()";
@@ -462,7 +462,7 @@
 				dates[0] = d[0];
 				dates[1] = d[1];
 			}
-			console.log('new dates', dates);
+			//console.log('new dates', dates);
 			$datepicker.DatePickerSetDate(dates);
 			internal.recalculateComparison();
 			/*
@@ -477,7 +477,7 @@
 			var dates = $datepicker.DatePickerGetDate()[0];
 			if (dates.length >= 2) {
 				var comparisonPreset = internal.getComparisonPreset();
-				console.log(comparisonPreset);
+				//console.log(comparisonPreset);
 				switch (comparisonPreset) {
 					case 'previousperiod':
 						var days = parseInt((dates[1]-dates[0])/(24*3600*1000));
@@ -514,7 +514,7 @@
 		 */
 		loadValues : function($target) {
 			var values = $target.data('DateRangesWidget').options.values;
-			console.log('load', values);
+			//console.log('load', values);
 			// handle initial values
 			$('.dr1.from', $dropdown).val(values.dr1from);
 			$('.dr1.from', $dropdown).change();
@@ -558,7 +558,7 @@
 			values.dr2from = $('.dr2.from', $dropdown).val()
 			values.dr2to = $('.dr2.to', $dropdown).val()
 			$target.data('DateRangesWidget', data);
-			console.log('save', data);
+			//console.log('save', data);
 		},
 		
 		/**
