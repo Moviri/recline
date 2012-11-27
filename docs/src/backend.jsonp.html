@@ -254,8 +254,11 @@ todo verify if could cause performance problems</p>             </td>           
           <span class="k">return</span> <span class="nx">ret</span><span class="p">;</span>
 
       <span class="p">}</span>
+      <span class="kd">var</span> <span class="nx">outdata</span> <span class="o">=</span> <span class="p">{};</span>
+      <span class="k">if</span><span class="p">(</span><span class="nx">data</span><span class="p">.</span><span class="nx">length</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="nx">outdata</span><span class="p">[</span><span class="s2">&quot;filters&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nx">data</span><span class="p">.</span><span class="nx">toString</span><span class="p">();</span>
 
-      <span class="k">return</span> <span class="p">{</span><span class="nx">filters</span><span class="o">:</span> <span class="nx">data</span><span class="p">.</span><span class="nx">toString</span><span class="p">()};</span>
+      <span class="k">return</span> <span class="nx">outdata</span><span class="p">;</span>
 
   <span class="p">}</span></pre></div>             </td>           </tr>                               <tr id="section-21">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-21">&#182;</a>               </div>               <h2>_wrapInTimeout</h2>
 

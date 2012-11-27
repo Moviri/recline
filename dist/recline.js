@@ -1505,8 +1505,11 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
           return ret;
 
       }
+      var outdata = {};
+      if(data.length > 0)
+        outdata["filters"] = data.toString();
 
-      return {filters: data.toString()};
+      return outdata;
 
   }
 
