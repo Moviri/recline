@@ -255,7 +255,7 @@ this.recline.View = this.recline.View || {};
     		<select class="drop-down fields data-control-id dimmed" onchange="updateColor($(this))"> \
 			<option class="dimmedDropDownText">{{innerLabel}}</option> \
             {{#values}} \
-            <option class="normalDropDownText" value="{{val}}" {{selected}}>{{val}}</option> \
+            <option class="normalDropDownText" value="{{val}}" {{selected}}><span>{{val}}</span><span><b>[{{count}}]</b></span></option> \
             {{/values}} \
           </select> \
         </fieldset> \
@@ -274,7 +274,7 @@ this.recline.View = this.recline.View || {};
     		<select class="chzn-select-deselect data-control-id" data-placeholder="{{innerLabel}}"> \
     		<option></option> \
             {{#values}} \
-            <option value="{{val}}" {{selected}}>{{val}}</option> \
+            <option value="{{val}}" {{selected}}>{{valCount}}</option> \
             {{/values}} \
           </select> \
         </fieldset> \
@@ -312,7 +312,7 @@ this.recline.View = this.recline.View || {};
 				<table class="table table-striped table-hover table-condensed" style="width:100%" data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" > \
 				<tbody>\
 				{{#values}} \
-				<tr class="{{selected}}"><td class="list-filter-item" >{{val}}</td></tr> \
+				<tr class="{{selected}}"><td class="list-filter-item" >{{val}}</td><td style="text-align:right">{{count}}</td></tr> \
 				{{/values}} \
 				</tbody>\
 			  </table> \
@@ -327,7 +327,7 @@ this.recline.View = this.recline.View || {};
     		<div style="float:left;padding-right:10px;display:{{useLeftLabel}}">{{label}}</div> \
 			<select class="fields data-control-id"  multiple SIZE=10> \
             {{#values}} \
-            <option value="{{val}}" {{selected}}>{{val}}</option> \
+            <option value="{{val}}" {{selected}}>{{valCount}}</option> \
             {{/values}} \
           </select> \
 		  <br> \
@@ -348,7 +348,7 @@ this.recline.View = this.recline.View || {};
     		<div style="float:left;padding-right:10px;padding-top:4px;display:{{useLeftLabel}}">{{label}}</div> \
 			<select class="chzn-select-deselect data-control-id" multiple data-placeholder="{{innerLabel}}"> \
             {{#values}} \
-            <option value="{{val}}" {{selected}}>{{val}}</option> \
+            <option value="{{val}}" {{selected}}>{{valCount}}</option> \
             {{/values}} \
           </select> \
         </fieldset> \
@@ -1011,8 +1011,9 @@ this.recline.View = this.recline.View || {};
                 for (var i in facetTerms) {
                     var selected = "";
                     var v = facetTerms[i].term;
+                    var count = facetTerms[i].count
                     if (currActiveFilter.controlType == "list") {
-                        if (facetTerms[i].count > 0)
+                        if (count > 0)
                             selected = self._selectedClassName;
                     }
                     else if (currActiveFilter.controlType == "radiobuttons") {
@@ -1041,8 +1042,10 @@ this.recline.View = this.recline.View || {};
                                     selected = "selected"
                         }
                     }
+                    if (currActiveFilter.showCount)
+                    	currActiveFilter.values.push({val:v, selected:selected, valCount: v+"\t["+count+"]", count: "["+count+"]" });
+                    else currActiveFilter.values.push({val:v, selected:selected, valCount: v });
 
-                    currActiveFilter.values.push({val:v, selected:selected });
                     if (currActiveFilter.controlType.indexOf('slider') >= 0) {
                         if (v > currActiveFilter.max)
                             currActiveFilter.max = v;

@@ -242,12 +242,12 @@ vdataset = new recline.Model.VirtualDataset({
     dataset:dataset,
     aggregation:{
         dimensions:["state"],
-        aggregatedFields:["value"],
+        measures:["value"],
         aggregationFunctions:["sum", "ratioToReport", "runningTotal"]
     },
     totals: {
         aggregationFunctions:   ["sum"],
-        aggregatedFields:       ["value_sum"]
+        measures:               ["value_sum"]
     }
 });
 

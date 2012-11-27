@@ -112,6 +112,7 @@
   <script type="text/javascript" src="../../src/widget.genericfilter.js"></script>
   <script type="text/javascript" src="../../src/widget.facetviewer.js"></script>
   <script type="text/javascript" src="../../src/widget.currentfilter.js"></script>
+  <script type="text/javascript" src="../../src/widget.datepicker.js"></script>
 
   <script type="text/javascript" src="../../src/action.js"></script>
 
@@ -195,6 +196,13 @@
    
     <script type="text/javascript" src="../../vendor/chosen/chosen.jquery.min.js"></script>
 <link rel="stylesheet" href="../../vendor/chosen/chosen.css" />
+
+    <script type="text/javascript" src="../../vendor/datepicker/1.0.0/js/datepicker.js"></script>
+<script type="text/javascript" src="../../vendor/datepicker/1.0.0/js/DateRange.js"></script>
+<script type="text/javascript" src="../../vendor/datepicker/1.0.0/js/DateRangesWidget.js"></script>
+
+<link rel="stylesheet" type="text/css" href="../../vendor/datepicker/1.0.0/css/datepicker/base.css" />
+<link rel="stylesheet" type="text/css" href="../../vendor/datepicker/1.0.0/css/DateRangesWidget/base.css" />
 
 
 
@@ -567,7 +575,7 @@
             var filter2 = new recline.View.GenericFilter({
                 sourceDataset: virtualdatasetAge,
 				sourceFields: [
-								{field: 'age', controlType: 'list', fieldType: 'number', label:"Set desired age"}
+								{field: 'age', controlType: 'list', fieldType: 'number', label:"Set desired age", showCount: true}
 							],
 				useFilteredData : false,
                 actions: [{
@@ -622,8 +630,8 @@
  				sourceFields: [
  								//{field: 'age', controlType: 'multibutton', fieldType: 'number', labelPosition: "left"},
  								{field: 'age', controlType: 'radiobuttons', fieldType: 'number', labelPosition: "left"},
- 								{field: 'age', controlType: 'dropdown_styled', fieldType: 'number', labelPosition: "inside", label: "Select age"},
- 								{field: 'age', controlType: 'listbox_styled', fieldType: 'number', labelPosition: "left"},
+ 								{field: 'age', controlType: 'dropdown_styled', fieldType: 'number', labelPosition: "inside", label: "Select age", showCount: true},
+ 								{field: 'age', controlType: 'listbox_styled', fieldType: 'number', labelPosition: "left", showCount: true},
  								//{field: 'age', controlType: 'range_slider', fieldType: 'number', labelPosition: "left"},
  								{field: 'age', controlType: 'range_slider_styled', fieldType: 'number', labelPosition: "left"},
  							],

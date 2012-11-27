@@ -112,6 +112,7 @@
   <script type="text/javascript" src="../../src/widget.genericfilter.js"></script>
   <script type="text/javascript" src="../../src/widget.facetviewer.js"></script>
   <script type="text/javascript" src="../../src/widget.currentfilter.js"></script>
+  <script type="text/javascript" src="../../src/widget.datepicker.js"></script>
 
   <script type="text/javascript" src="../../src/action.js"></script>
 
@@ -196,6 +197,13 @@
     <script type="text/javascript" src="../../vendor/chosen/chosen.jquery.min.js"></script>
 <link rel="stylesheet" href="../../vendor/chosen/chosen.css" />
 
+    <script type="text/javascript" src="../../vendor/datepicker/1.0.0/js/datepicker.js"></script>
+<script type="text/javascript" src="../../vendor/datepicker/1.0.0/js/DateRange.js"></script>
+<script type="text/javascript" src="../../vendor/datepicker/1.0.0/js/DateRangesWidget.js"></script>
+
+<link rel="stylesheet" type="text/css" href="../../vendor/datepicker/1.0.0/css/datepicker/base.css" />
+<link rel="stylesheet" type="text/css" href="../../vendor/datepicker/1.0.0/css/DateRangesWidget/base.css" />
+
 
 
 
@@ -263,6 +271,11 @@
     <div class="row-fluid">
         <div class="span9">
             <div id="horizontal3"></div>
+        </div>
+    </div>
+    <div class="row-fluid">
+        <div class="span9">
+            <div id="horizontal4"></div>
         </div>
     </div>
 
@@ -713,9 +726,7 @@ function drawGraph() {
         sourceFields:[
             {field:"age",       controlType:'color_legend', fieldType:"integer", label: "Select age", labelPosition: "left"  },
             {field:"age",       controlType:'dropdown', fieldType:"integer" , label: "Select age", labelPosition: "left"  },
-            {field:"age",       controlType:'listbox_styled', fieldType:"integer", label: "Select age", labelPosition: "inside"  },
-            {field:"age",       controlType:'multibutton', fieldType:"integer", label: "Select age", labelPosition: "none" }
-
+            {field:"age",       controlType:'listbox_styled', fieldType:"integer", label: "Select age", labelPosition: "inside"  }
 
         ],
         state:{
@@ -777,6 +788,11 @@ function drawGraph() {
     });
     $('#horizontal3').append(filterhorizontal3.el);
     filterhorizontal3.render();
+
+    filterhorizontal4 = new recline.View.DatePicker({});
+    $('#horizontal4').append(filterhorizontal4.el);
+    filterhorizontal4.render();
+
 
 }
 
