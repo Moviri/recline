@@ -6,12 +6,25 @@ this.recline.Data = this.recline.Data || {};
 
 my.Filters = {};
 
-    // in place filtering
+    // in place filtering (records.toJSON must be passed)
     my.Filters.applyFiltersOnData = function(filters, records, fields) {
         // filter records
         return _.filter(records, function (record) {
             var passes = _.map(filters, function (filter) {
             	return recline.Data.Filters._isNullFilter[filter.type](filter) || recline.Data.Filters._filterFunctions[filter.type](record, filter, fields);
+            });
+
+            // return only these records that pass all filters
+            return _.all(passes, _.identity);
+        });
+    };
+
+    // in place filtering  (records model must be used)
+    my.Filters.applyFiltersOnRecords = function(filters, records, fields) {
+        // filter records
+        return _.filter(records.models, function (record) {
+            var passes = _.map(filters, function (filter) {
+                return recline.Data.Filters._isNullFilter[filter.type](filter) || recline.Data.Filters._filterFunctions[filter.type](record.toJSON(), filter, fields.toJSON());
             });
 
             // return only these records that pass all filters

@@ -40,12 +40,13 @@ this.recline.View = this.recline.View || {};
             var to = new Date();
             var from = new Date(to.getTime() - 1000 * 60 * 60 * 24 * 14);
 
+
             $('#datepicker-calendar-'+uid).DateRangesWidget(
                 {
                     aggregations: [],
                     values: {
                         comparisonEnabled: false,
-                        daterangePreset: "yesterday",
+                        daterangePreset: "lastweeks",
                         comparisonPreset: "previousperiod"
                     }
                 });

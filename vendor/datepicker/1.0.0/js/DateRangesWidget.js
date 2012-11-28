@@ -18,7 +18,7 @@
 	var default_options = {
 		
 		aggregations : ['-', 'daily', 'weekly', 'monthly', 'yearly'],
-        values : {},
+        values : {}
 
 	};
 
@@ -579,7 +579,12 @@
 			if (values.dr1from && values.dr1to) {
 				$('span.main', $target).text(values.dr1from + ' - ' + values.dr1to);
 				
-			} else {
+			} else if(values.daterangePreset) {
+                var dates = db.date_presets[values.daterangePreset].dates();
+                $('span.main', $target).text(dates[0] + ' - ' + dates[1]);
+
+            }
+            else {
 				$('span.main', $target).text('N/A');
 			}
 			if (values.comparisonEnabled && values.dr2from && values.dr2to) {
