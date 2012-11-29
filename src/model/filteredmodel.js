@@ -36,9 +36,6 @@ this.recline.Model.FilteredDataset = this.recline.Model.FilteredDataset || {};
                 self.query();
             });
 
-            if (this.attributes.dataset.records.models.length > 0)
-                self.query();
-
         },
 
         query:function (queryObj) {
@@ -110,6 +107,10 @@ this.recline.Model.FilteredDataset = this.recline.Model.FilteredDataset || {};
         getFieldsSummary:function () {
             return this.attributes.dataset.getFieldsSummary();
         }
+
+
+
+
     })
 
 
