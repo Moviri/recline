@@ -1,92 +1,155 @@
 ---
 layout: moviri
-title: Demos - Filtered Dataset
+title: Demos - Composed View
 recline-deps: true
 root: ../../
 ---
 
-
-<body>
-
 <div class="container-fluid">
     <div class="row-fluid">
 
-        <div class="span4">
+        <div class="span3">
+<pre>
+var dataset = new recline.Model.Dataset({
+ records:[
+  {gender:"Female", age:5, visits:10},
+  {gender:"Female", age:12, visits:30},
+  {gender:"Male", age:13, visits:40},
+  {gender:"Male", age:14, visits:50}],
+fields:[
+  {id:'gender', type:'string'},
+  {id:'age', type:'integer' },
+  {id:'visits', type:'integer' }]
+});
+
+dataset.queryState.addFacetNoEvent("gender");
+
+</pre>
+
             <div id="grid1"></div>
 
 
         </div>
 
         <div class="span4">
+<pre>
+var $el = $('#composed');
+var composed = new recline.View.Composed({
+ model: dataset,
+ el:$el,
+ groupBy: "gender",
+ template: "horizontal",
+ measures: [{
+  title: "Visits",
+  view: "NVD3Graph",
+  props: {
+   state: {
+    group: ["age"],
+    series: {type: "byFieldName", valuesField: ["visits"]},
+    graphType: "pieChart"
+    }
+  }
+ }]
+});
+</pre>
+
             <div id="composed"></div>
         </div>
 
-        <div class="span4">
+        <div class="span3">
+<pre>
+var $el = $('#composed');
+var composed = new recline.View.Composed({
+ model: dataset,
+ el:$el,
+ dimension: "gender",
+ template: "vertical",
+ measures: [{
+  title: "Visits",
+  view: "NVD3Graph",
+  props: {
+   state: {
+    group: ["age"],
+    series: {type: "byFieldName", valuesField: ["visits"]},
+    graphType: "multiBarChart"
+    }
+  }
+ }]
+});
+</pre>
+
             <div id="composed2"></div>
+        </div>
+        <div class="span3">
+<pre>
+    <style>
+                .composedview_table {
+                    display: table ;
+                }
+                .composedview_table .cell {
+                    display: table-cell ;
+                    border: 1px solid
+                }
+                .composedview_table .cell_name {
+                }
+                .composedview_table .cell_graph {
+                    height: 300px;
+                }
+                .composedview_table .cell_title {
+                }
+                .composedview_table .c_row {
+                    display: table-row;
+                }
+                .composedview_table .c_group {
+                }
+                .composedview_table .c_header {
+                    display: table-header-group;
+                }
+                .composedview_table .c_body {
+                    display: table-row-group;
+                }
+                .composedview_table .c_footer {
+                    display: table-footer-group;
+                }
+            </style>
+</pre>
         </div>
 
 
     </div>
-
+</div>
     <style>
         .composedview_table {
             display: table ;
-
         }
-
         .composedview_table .cell {
             display: table-cell ;
             border: 1px solid
         }
-
-        .composedview_table .cell_name {
-
+       .composedview_table .cell_name {
         }
-
         .composedview_table .cell_graph {
            height: 300px;
         }
-
         .composedview_table .cell_title {
-
         }
-
         .composedview_table .c_row {
             display: table-row;
         }
-
         .composedview_table .c_group {
-
         }
-
         .composedview_table .c_header {
             display: table-header-group;
         }
-
         .composedview_table .c_body {
             display: table-row-group;
-
         }
-
         .composedview_table .c_footer {
             display: table-footer-group;
         }
-
-
-
     </style>
 
     <script>
-
-        var agebin = function (value, field, record) {
-            var v = record.attributes["age"];
-            if (v < 10)
-                return " 1-10";
-            else if (v < 20)
-                return "11-20";
-
-            return v;
-        }
 
         var dataset = new recline.Model.Dataset({
             records:[
@@ -101,7 +164,6 @@ root: ../../
                 {id:'country', type:'string'},
                 {id:'gender', type:'string'},
                 {id:'age', type:'integer' },
-                {id:'agebin', type:'integer', deriver:agebin},
                 {id:'visits', type:'integer' }
             ]
         });
@@ -128,7 +190,7 @@ root: ../../
             model:          dataset,
             el:$el,
             groupBy: "gender",
-
+            template: "horizontal",
             measures: [{
                 title: "Visits",
                 view: "NVD3Graph",
@@ -145,35 +207,8 @@ root: ../../
             ]
 
         });
-        composed.visible = true;
 
-        var ss = '<div id="{{uid}}" puoo ';
-        var pp = "<div{{ciccio}}></div>";
-        var oo = "<div>'{{asd}}'</div>";
 
-        var customTemplate = {s: '<div id="{{uid}}"> ' +
-                '<div class="composedview_table">' +
-                '<div class="c_group c_header">' +
-                '<div class="c_row">' +
-                    '<div class="cell cell_empty"></div>' +
-                        '{{#measures}}' +
-                            '<div class="cell cell_title">{{title}}</div>' +
-                        '{{/measures}}' +
-                    '</div>' +
-                '</div>' +
-                '<div class="c_group c_body">' +
-                    '{{#dimensions}}' +
-                        '<div class="c_row">' +
-                        '<div class="cell cell_name">{{term}}</div>' +
-                            '{{#measures}}' +
-                                '<div class="cell cell_graph" id="{{id}}"></div>' +
-                            '{{/measures}}' +
-                        '</div>' +
-                    '{{/dimensions}}' +
-                '</div>' +
-                '<div class="c_group c_footer"></div>' +
-                '</div>' +
-                '<div> '};
 
 
         var $el = $('#composed2');
@@ -181,7 +216,7 @@ root: ../../
             model:          dataset,
             el:$el,
             dimension: "gender",
-            customTemplate: customTemplate,
+            template: "vertical",
             measures: [{
                 title: "Visits",
                 view: "NVD3Graph",
@@ -191,7 +226,7 @@ root: ../../
                         series: {type: "byFieldName", valuesField: ["visits"]},
                         options: {trendlines:true, minmax: true, tooltips: true, tooltip: "Key: {key} X: {x} Y: {y}",
                             staggerLabels: true, showValues: true},
-                        graphType: "pieChart"
+                        graphType: "multiBarChart"
                     }
                 }
             }

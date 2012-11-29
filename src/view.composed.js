@@ -5,31 +5,59 @@ this.recline.View = this.recline.View || {};
 	
 	"use strict";	
 
+    // dimension: female male
+    // measures: visits
 
     view.Composed = Backbone.View.extend({
-        template: '<div id="{{uid}}"> ' +
-            '<div class="composedview_table">' +
+        templates: {
+        horizontal: '<div id="{{uid}}"> ' +
+                '<div class="composedview_table">' +
                 '<div class="c_group c_header">' +
-                    '<div class="c_row">' +
-                        '<div class="cell cell_empty"></div>' +
-                        '{{#measures}}' +
-                            '<div class="cell cell_title">{{title}}</div>' +
-                        '{{/measures}}' +
+                '<div class="c_row">' +
+                    '<div class="cell cell_empty"></div>' +
+                        '{{#dimensions}}' +
+                            '<div class="cell cell_name">{{term}}</div>' +
+                        '{{/dimensions}}' +
                     '</div>' +
                 '</div>' +
                 '<div class="c_group c_body">' +
-                    '{{#dimensions}}' +
-                        '<div class="c_row">' +
-                            '<div class="cell cell_name">{{term}}</div>' +
-                            '{{#measures}}' +
-                                      '<div class="cell cell_graph" id="{{id}}"></div>' +
-                            '{{/measures}}' +
-                        '</div>' +
-                    '{{/dimensions}}' +
+                    '<div class="c_row">' +
+            '<div class="cell cell_title">{{title}}</div>' +
+            '{{#dimensions}}' +
+            '{{#measures}}' +
+                            '<div class="cell cell_graph" id="{{id}}"></div>' +
+                    '{{/measures}}' +
+                 '{{/dimensions}}' +
+            '</div>' +
                 '</div>' +
                 '<div class="c_group c_footer"></div>' +
+                '</div>' +
+                '<div> ',
+
+        vertical: '<div id="{{uid}}"> ' +
+            '<div class="composedview_table">' +
+            '<div class="c_group c_header">' +
+            '<div class="c_row">' +
+            '<div class="cell cell_empty"></div>' +
+            '{{#measures}}' +
+            '<div class="cell cell_title">{{title}}</div>' +
+            '{{/measures}}' +
             '</div>' +
-        '<div> ',
+            '</div>' +
+            '<div class="c_group c_body">' +
+            '{{#dimensions}}' +
+            '<div class="c_row">' +
+            '<div class="cell cell_name">{{term}}</div>' +
+            '{{#measures}}' +
+            '<div class="cell cell_graph" id="{{id}}"></div>' +
+            '{{/measures}}' +
+            '</div>' +
+            '{{/dimensions}}' +
+            '</div>' +
+            '<div class="c_group c_footer"></div>' +
+            '</div>' +
+            '<div> '
+        },
 
         initialize: function (options) {
 
@@ -103,9 +131,9 @@ this.recline.View = this.recline.View || {};
             }
             this.measures=this.options.measures;
 
-            var tmpl = this.template;
-            //if(this.options.template)
-            //    tmpl = this.options.template;
+            var tmpl = this.templates.vertical;
+            if(this.options.template)
+                tmpl = this.templates[this.options.template];
 
             var out = Mustache.render(tmpl, self);
             this.el.html(out);
