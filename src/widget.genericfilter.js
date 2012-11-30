@@ -760,11 +760,11 @@ this.recline.View = this.recline.View || {};
 
             if (filterTemplate.needFacetedField) {
                 currActiveFilter.facet = self._sourceDataset.getFacetByFieldId(currActiveFilter.field);
-                facetTerms = currActiveFilter.facet.attributes.terms;
 
-                if (currActiveFilter.facet == null) {
-                    throw "GenericFilter: no facet present for field [" + currActiveFilter.field + "]. Define a facet before filter render";
-                }
+                if (currActiveFilter.facet == null)
+                    throw "GenericFilter: no facet present for field [" + currActiveFilter.field + "]. Define a facet before filter render"
+                    
+                facetTerms = currActiveFilter.facet.attributes.terms;
                 if (typeof currActiveFilter.label == "undefined" || currActiveFilter.label == null)
                     currActiveFilter.label = currActiveFilter.field;
             }
