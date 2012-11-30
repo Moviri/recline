@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="utf-8" />
-  <title>Demos - NVD3 Integration - Recline Data Explorer and Library</title>
+  <title>Demos - Composed View</title>
 
     <script type="text/javascript" src="../../vendor/jquery/jquery-1.8.2.js"></script>
 <script type="text/javascript" src="../../vendor/jquery/jquery.1.2.1.ba-bbq.min.js"></script>
@@ -56,69 +56,9 @@
 <script type="text/javascript" src="../../vendor/crossfilter/1.1.0/crossfilter.min.js"></script>
 <script type="text/javascript" src="../../vendor/kartograph/unversioned/chroma.min.js"></script>
 
-<script type="text/javascript" src="../../vendor/date/date.js"></script>
 
-<!--
-    ## Just use the all in one library version rather than individual files
-
-  <script type="text/javascript" src="../../dist/recline.js"></script>
-
-  -->
-
-  <!-- model and backends -->
-  <script type="text/javascript" src="../../src/model.js"></script>
-  <script type="text/javascript" src="../../src/model/virtualmodel.js"></script>
-  <script type="text/javascript" src="../../src/model/filteredmodel.js"></script>
-
-  <script type="text/javascript" src="../../src/backend.memory.js"></script>
-  <script type="text/javascript" src="../../src/backend.dataproxy.js"></script>
-  <script type="text/javascript" src="../../src/backend.gdocs.js"></script>
-  <script type="text/javascript" src="../../src/backend.elasticsearch.js"></script>
-  <script type="text/javascript" src="../../src/backend.csv.js"></script>
-  <script type="text/javascript" src="../../src/backend.jsonp.js"></script>
-
-  <!-- views -->
-  <script type="text/javascript" src="../../src/view.grid.js"></script>
-  <script type="text/javascript" src="../../src/view.slickgrid.js"></script>
-  <script type="text/javascript" src="../../src/view.transform.js"></script>
-  <script type="text/javascript" src="../../src/view.graph.js"></script>
-  <script type="text/javascript" src="../../src/view.map.js"></script>
-  <script type="text/javascript" src="../../src/view.timeline.js"></script>
-  <script type="text/javascript" src="../../src/view.multiview.js"></script>
-  <script type="text/javascript" src="../../src/view.nvd3.graph.js"></script>
-  <script type="text/javascript" src="../../src/view.indicator.js"></script>
-
-  <script type="text/javascript" src="../../src/view.kartograph.js"></script>
-  <script type="text/javascript" src="../../src/view.composed.js"></script>
-
-  <script type="text/javascript" src="../../src/d3/view.d3.table.js"></script>
-  <script type="text/javascript" src="../../src/d3/view.d3.sparkline.js"></script>
-  <script type="text/javascript" src="../../src/d3/view.d3.treemap.js"></script>
-
-  <script type="text/javascript" src="../../src/view.rickshaw.js"></script>
-
-  <script type="text/javascript" src="../../src/data.transform.js"></script>
-  <script type="text/javascript" src="../../src/data.aggregations.js"></script>
-  <script type="text/javascript" src="../../src/data.formatters.js"></script>
-  <script type="text/javascript" src="../../src/data.filters.js"></script>
-  <script type="text/javascript" src="../../src/data.colors.js"></script>
-  <script type="text/javascript" src="../../src/data.shapes.js"></script>
-  <script type="text/javascript" src="../../src/data.statemanagement.js"></script>
-  <script type="text/javascript" src="../../src/data.fieldsutilities.js"></script>
-
-  <script type="text/javascript" src="../../src/widget.pager.js"></script>
-  <script type="text/javascript" src="../../src/widget.queryeditor.js"></script>
-  <script type="text/javascript" src="../../src/widget.filtereditor.js"></script>
-  <script type="text/javascript" src="../../src/widget.fields.js"></script>
-  <script type="text/javascript" src="../../src/widget.genericfilter.js"></script>
-  <script type="text/javascript" src="../../src/widget.facetviewer.js"></script>
-  <script type="text/javascript" src="../../src/widget.currentfilter.js"></script>
-  <script type="text/javascript" src="../../src/widget.datepicker.js"></script>
-
-  <script type="text/javascript" src="../../src/action.js"></script>
-
-  <script type="text/javascript" src="../../src/template.shapes.js"></script>
-
+<script type="text/javascript" src="../..//dist/recline.dataset.js"></script>
+<script type="text/javascript" src="../..//dist/recline.js"></script>
 
     <script type="text/javascript" src="../../vendor/bootstrap/2.1.1/js/bootstrap.js"></script>
 <link rel="stylesheet" href="../../vendor/bootstrap/2.1.1/css/moda/bootstrap.css" />
@@ -198,94 +138,260 @@
     <script type="text/javascript" src="../../vendor/chosen/chosen.jquery.min.js"></script>
 <link rel="stylesheet" href="../../vendor/chosen/chosen.css" />
 
-    <script type="text/javascript" src="../../vendor/datepicker/1.0.0/js/datepicker.js"></script>
-<script type="text/javascript" src="../../vendor/datepicker/1.0.0/js/DateRange.js"></script>
-<script type="text/javascript" src="../../vendor/datepicker/1.0.0/js/DateRangesWidget.js"></script>
 
-<link rel="stylesheet" type="text/css" href="../../vendor/datepicker/1.0.0/css/datepicker/base.css" />
-<link rel="stylesheet" type="text/css" href="../../vendor/datepicker/1.0.0/css/DateRangesWidget/base.css" />
+    <script type="text/javascript">
 
+        var _gaq = _gaq || [];
+        _gaq.push(['_setAccount', 'UA-36323657-1']);
+        _gaq.push(['_trackPageview']);
 
+        (function() {
+            var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+            ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+            var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+        })();
 
+    </script>
 
 
 </head>
 <body>
 
 
-<body>
-
 <div class="container-fluid">
-<div class="row-fluid">
-    <div class="span9"><div id="map1"></div></div>
-</div>
     <div class="row-fluid">
-        <div class="span9"><div id="map2"></div></div>
-    </div>
-    <div class="row-fluid">
-        <div class="span9"><div id="mygrid"></div></div>
 
+        <div class="span3">
+            <div id="grid1"></div>
+<pre>
+var dataset = new recline.Model.Dataset({
+ records:[
+  {gender:"Female", age:5, visits:10},
+  {gender:"Female", age:12, visits:30},
+  {gender:"Male", age:13, visits:40},
+  {gender:"Male", age:14, visits:50}],
+fields:[
+  {id:'gender', type:'string'},
+  {id:'age', type:'integer' },
+  {id:'visits', type:'integer' }]
+});
 
-    </div>
-    <div class="row-fluid">
-    <div class="span9"><div id="mygrid2"></div>
-    </div>
-</div>
+dataset.queryState.addFacetNoEvent("gender");
 
-<script>
+</pre>
 
-    mycolorschema = new recline.Data.ColorSchema({
-        type: "scaleWithDistinctData",
-        colors: ['#F7E1C5', '#6A000B']
-    });
-
-    var dataset =   new recline.Model.Dataset({
-        records: [
-            {id:0, date: '2011-01-01', gender: "M", y: 1, z: 3, region: 'Trentino', title: 'first', lat:52.56, lon:13.40},
-            {id:1, date: '2011-01-01', gender: "F", y: 1, z: 24, region: 'Toscana', title: 'second', lat:54.97, lon:-1.60},
-            {id:2, date: '2011-01-01', gender: "M", y: 1, z: 100, region: 'Aosta', title: 'first', lat:52.56, lon:13.40},
-            {id:3, date: '2011-01-01', gender: "M", y: 2, z: 5, region: 'Umbria', title: 'first', lat:52.56, lon:13.40},
-            {id:4, date: '2011-01-01', gender: "M", y: 3, z: 3, region: 'Molise', title: 'first', lat:52.56, lon:13.40},
-            {id:5, date: '2011-01-01', gender: "F", y: 4, z: 3, region: 'Trentino', title: 'first', lat:52.56, lon:13.40},
-            {id:6, date: '2011-01-01', gender: "M", y: 5, z: 0, region: 'Trentino', title: 'first', lat:52.56, lon:13.40}
-        ],
-        // let's be really explicit about fields
-        // Plus take opportunity to set date to be a date field and set some labels
-        fields: [
-            {id: 'id'},
-            {id: 'date', type: 'date'},
-            {id: 'gender'},
-            {id: 'y'},
-            {id: 'z'},
-            {id: 'region', 'label': 'Country'},
-            {id: 'title', 'label': 'Title'},
-            {id: 'lat'},
-            {id: 'lon'}
-        ]
-    });
-
-    mycolorschema.setDataset(dataset, "z");
-
-    var cgraph =  new recline.View.KartoGraph({
-        model: dataset,
-        state: {
-            id: 'cgraph_1',
-            svgURI: 'italy.svg',
-            layers: ['ITA', 'context'],
-            mapping: [{srcShapeField: "region", srcValueField: "z", destAttribute: "name", destLayer: "ITA"}],
-            type: "choropletmap"
+<pre>
+    style
+        .composedview_table {
+            display: table ;
         }
-    });
-    $('#map1').append(cgraph.el);
+        .composedview_table .cell {
+            display: table-cell ;
+            border: 1px solid
+        }
+        .composedview_table .cell_name {
+        }
+        .composedview_table .cell_graph {
+            height: 300px;
+        }
+        .composedview_table .cell_title {
+        }
+        .composedview_table .c_row {
+            display: table-row;
+        }
+        .composedview_table .c_group {
+        }
+        .composedview_table .c_header {
+            display: table-header-group;
+        }
+        .composedview_table .c_body {
+            display: table-row-group;
+        }
+        .composedview_table .c_footer {
+            display: table-footer-group;
+        }
 
-    cgraph.render();
-    cgraph.redraw();
+</pre>
 
 
 
-</script>
 
-</body>
+        </div>
+
+        <div class="span4">
+<pre>
+var $el = $('#composed');
+var composed = new recline.View.Composed({
+ model: dataset,
+ el:$el,
+ groupBy: "gender",
+ template: "horizontal",
+ measures: [{
+  title: "Visits",
+  view: "NVD3Graph",
+  props: {
+   state: {
+    group: ["age"],
+    series: {type: "byFieldName", valuesField: ["visits"]},
+    graphType: "pieChart"
+    }
+  }
+ }]
+});
+</pre>
+
+            <div id="composed"></div>
+        </div>
+
+        <div class="span4">
+<pre>
+var $el = $('#composed');
+var composed = new recline.View.Composed({
+ model: dataset,
+ el:$el,
+ dimension: "gender",
+ template: "vertical",
+ measures: [{
+  title: "Visits",
+  view: "NVD3Graph",
+  props: {
+   state: {
+    group: ["age"],
+    series: {type: "byFieldName", valuesField: ["visits"]},
+    graphType: "multiBarChart"
+    }
+  }
+ }]
+});
+</pre>
+
+            <div id="composed2"></div>
+        </div>
+
+
+    </div>
+</div>
+    <style>
+        .composedview_table {
+            display: table ;
+        }
+        .composedview_table .cell {
+            display: table-cell ;
+            border: 1px solid
+        }
+       .composedview_table .cell_name {
+        }
+        .composedview_table .cell_graph {
+           height: 300px;
+        }
+        .composedview_table .cell_title {
+        }
+        .composedview_table .c_row {
+            display: table-row;
+        }
+        .composedview_table .c_group {
+        }
+        .composedview_table .c_header {
+            display: table-header-group;
+        }
+        .composedview_table .c_body {
+            display: table-row-group;
+        }
+        .composedview_table .c_footer {
+            display: table-footer-group;
+        }
+    </style>
+
+    <script>
+
+        var dataset = new recline.Model.Dataset({
+            records:[
+                {id:0, country:'Italy', gender:"Female", age:5, visits:10},
+                {id:2, country:'Italy', gender:"Female", age:12, visits:30},
+                {id:3, country:'Italy', gender:"Male", age:13, visits:40},
+                {id:4, country:'Italy', gender:"Male", age:14, visits:50}
+            ],
+
+            fields:[
+                {id:'id'},
+                {id:'country', type:'string'},
+                {id:'gender', type:'string'},
+                {id:'age', type:'integer' },
+                {id:'visits', type:'integer' }
+            ]
+        });
+
+        dataset.queryState.addFacetNoEvent("gender");
+
+        var $el = $('#grid1');
+        var grid1 = new recline.View.SlickGrid({
+            model:dataset,
+            el:$el,
+            state:{
+                fitColumns:true,
+                useHoverStyle:true,
+                useStripedStyle:true,
+                useCondensedStyle:true
+            }
+        });
+        grid1.visible = true;
+        grid1.render();
+
+
+        var $el = $('#composed');
+        var composed = new recline.View.Composed({
+            model:          dataset,
+            el:$el,
+            groupBy: "gender",
+            template: "horizontal",
+            measures: [{
+                title: "Visits",
+                view: "NVD3Graph",
+                props: {
+                    state: {
+                        group: ["age"],
+                        series: {type: "byFieldName", valuesField: ["visits"]},
+                        options: {trendlines:true, minmax: true, tooltips: true, tooltip: "Key: {key} X: {x} Y: {y}",
+                            staggerLabels: true, showValues: true},
+                        graphType: "pieChart"
+                    }
+                }
+            }
+            ]
+
+        });
+
+
+
+
+        var $el = $('#composed2');
+        var composed2 = new recline.View.Composed({
+            model:          dataset,
+            el:$el,
+            dimension: "gender",
+            template: "vertical",
+            measures: [{
+                title: "Visits",
+                view: "NVD3Graph",
+                props: {
+                    state: {
+                        group: ["age"],
+                        series: {type: "byFieldName", valuesField: ["visits"]},
+                        options: {trendlines:true, minmax: true, tooltips: true, tooltip: "Key: {key} X: {x} Y: {y}",
+                            staggerLabels: true, showValues: true},
+                        graphType: "multiBarChart"
+                    }
+                }
+            }
+            ]
+
+        });
+        composed2.visible = true;
+
+        dataset.fetch();
+    </script>
+
+
 
 
 
