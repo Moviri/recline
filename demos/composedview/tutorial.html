@@ -1,5 +1,5 @@
 ---
-layout: moviri
+layout: moviri-release
 title: Demos - Composed View
 recline-deps: true
 root: ../../
@@ -9,6 +9,7 @@ root: ../../
     <div class="row-fluid">
 
         <div class="span3">
+            <div id="grid1"></div>
 <pre>
 var dataset = new recline.Model.Dataset({
  records:[
@@ -26,7 +27,40 @@ dataset.queryState.addFacetNoEvent("gender");
 
 </pre>
 
-            <div id="grid1"></div>
+<pre>
+    style
+        .composedview_table {
+            display: table ;
+        }
+        .composedview_table .cell {
+            display: table-cell ;
+            border: 1px solid
+        }
+        .composedview_table .cell_name {
+        }
+        .composedview_table .cell_graph {
+            height: 300px;
+        }
+        .composedview_table .cell_title {
+        }
+        .composedview_table .c_row {
+            display: table-row;
+        }
+        .composedview_table .c_group {
+        }
+        .composedview_table .c_header {
+            display: table-header-group;
+        }
+        .composedview_table .c_body {
+            display: table-row-group;
+        }
+        .composedview_table .c_footer {
+            display: table-footer-group;
+        }
+
+</pre>
+
+
 
 
         </div>
@@ -56,7 +90,7 @@ var composed = new recline.View.Composed({
             <div id="composed"></div>
         </div>
 
-        <div class="span3">
+        <div class="span4">
 <pre>
 var $el = $('#composed');
 var composed = new recline.View.Composed({
@@ -79,40 +113,6 @@ var composed = new recline.View.Composed({
 </pre>
 
             <div id="composed2"></div>
-        </div>
-        <div class="span3">
-<pre>
-    <style>
-                .composedview_table {
-                    display: table ;
-                }
-                .composedview_table .cell {
-                    display: table-cell ;
-                    border: 1px solid
-                }
-                .composedview_table .cell_name {
-                }
-                .composedview_table .cell_graph {
-                    height: 300px;
-                }
-                .composedview_table .cell_title {
-                }
-                .composedview_table .c_row {
-                    display: table-row;
-                }
-                .composedview_table .c_group {
-                }
-                .composedview_table .c_header {
-                    display: table-header-group;
-                }
-                .composedview_table .c_body {
-                    display: table-row-group;
-                }
-                .composedview_table .c_footer {
-                    display: table-footer-group;
-                }
-            </style>
-</pre>
         </div>
 
 
