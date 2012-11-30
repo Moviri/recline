@@ -5,7 +5,7 @@ this.recline = this.recline || {};
     my.ActionUtility = {};
 
 
-        my.ActionUtility.doAction =    function(actions, eventType, eventData, actionType) {
+        my.ActionUtility.doAction =    function(actions, eventType, eventData) {
 
         // find all actions configured for eventType
         var targetActions = _.filter(actions, function(d) {
@@ -80,6 +80,22 @@ my.Action = Backbone.Model.extend({
 		});
 		this._internalDoAction(params, "add");
 	},
+
+    doActionWithValues: function(valuesarray, mapping) {
+        var params = [];
+        mapping.forEach(function(mapp) {
+            var values = [];
+            //{srcField: "daydate", filter: "filter_daydate"}
+            _.each(valuesarray, function(row) {
+                values.push(row);
+            });
+            params.push({
+                filter : mapp.filter,
+                value : values
+            });
+        });
+        this._internalDoAction(params, "add");
+    },
 
 
     // action could be add/remove
@@ -213,7 +229,7 @@ my.Action = Backbone.Model.extend({
 				//empty list
             	filter["start"] = null;
             	filter["stop"]  = null;			
-			} else if(data===null){
+			} else if(data[0]===null || data[1]===null){
 				//null list
 				filter["remove"] = true;
 			} else if(data.length===2){
@@ -1259,7 +1275,7 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
         }
 
         // verify if filters on memory are changed since last query
-        if((dataset.inMemoryQueryFields.length> 0
+        if((dataset.inMemoryQueryFields && dataset.inMemoryQueryFields.length> 0
             && !_.isEqual(my.queryStateInMemory.attributes.filters, tmpQueryStateInMemory.attributes.filters))
             )
         {
@@ -1410,7 +1426,7 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
 
 
 
-    // todo remove it after wal update
+    // todo should be in backend
     function getDate(temp) {
         var tmp = new Date();
 
@@ -1550,7 +1566,7 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
       var res = [];
       for (var k in description) {
 
-              res.push({id: k, type: dataMapping[description[k]]});
+              res.push({id:k, type: dataMapping[description[k]]});
         }
 
       return res;
@@ -5038,7 +5054,8 @@ this.recline.Model = this.recline.Model || {};
 
         setFilter:function (filter) {
             if (filter["remove"]) {
-                removeFilterByField(filter.field);
+                this.removeFilterByField(filter.field);
+                delete filter["remove"];
             } else {
 
                 var filters = this.get('filters');
@@ -5070,7 +5087,7 @@ this.recline.Model = this.recline.Model || {};
             var filters = this.get('filters');
             for (var j in filters) {
                 if (filters[j].field == field) {
-                    removeFilter(j);
+                    this.removeFilter(j);
                 }
             }
         },
@@ -10788,29 +10805,83 @@ this.recline.View = this.recline.View || {};
 
         },
 
+        onChange: function(view) {
+            var exec = function (data, widget) {
+
+            var actions = view.getActionsForEvent("selection");
+
+            if (actions.length > 0) {
+                var startDate= new Date(data.dr1from_millis);
+                var endDate= new Date(data.dr1to_millis);
+
+                /*var date_a = [
+                    new Date(startDate.getYear(), startDate.getMonth(), startDate.getDay(), 0, 0, 0, 0),
+                    new Date(endDate.getYear(), endDate.getMonth(), endDate.getDay(), 23, 59, 59, 999)
+                ];*/
+                view.doActions(actions, [startDate, endDate]);
+            }
+
+            var actions_compare = view.getActionsForEvent("selection_compare");
+
+            if (actions_compare.length > 0) {
+                var date_compare = [null, null];
+
+                if (data.comparisonEnabled) {
+                    var startDate= new Date(data.dr2from_millis);
+                    var endDate= new Date(data.dr2to_millis);
+                    if(startDate != null && endDate != null)
+                        date_compare=[startDate, endDate];
+                }
+                else {
+                    date_compare = [null,null];
+                }
+
+                view.doActions(actions_compare, date_compare);
+            }
+
+        }
+            return exec;
+        },
+
+        doActions:function (actions, values) {
+
+            _.each(actions, function (d) {
+                d.action.doActionWithValues(values, d.mapping);
+            });
+
+        },
+
         render:function () {
             var self = this;
             var uid = this.uid;
 
-            var to = new Date();
-            var from = new Date(to.getTime() - 1000 * 60 * 60 * 24 * 14);
-
-
-            $('#datepicker-calendar-'+uid).DateRangesWidget(
+            $('#datepicker-calendar-' + uid).DateRangesWidget(
                 {
-                    aggregations: [],
-                    values: {
-                        comparisonEnabled: false,
-                        daterangePreset: "lastweeks",
-                        comparisonPreset: "previousperiod"
-                    }
-                });
+                    aggregations:[],
+                    values:{
+                        comparisonEnabled:false,
+                        daterangePreset:"lastweeks",
+                        comparisonPreset:"previousperiod"
+                    },
+                    onChange: self.onChange(self)
 
+                });
 
         },
 
         redraw:function () {
 
+        },
+
+        getActionsForEvent:function (eventType) {
+            var actions = [];
+
+            _.each(this.options.actions, function (d) {
+                if (_.contains(d.event, eventType))
+                    actions.push(d);
+            });
+
+            return actions;
         }
 
 
@@ -11607,7 +11678,7 @@ this.recline.View = this.recline.View || {};
       </div> \
 	',
             color_legend:' \
-	<div class="filter-{{type}} filter" style="width:{{totWidth2}}px"> \
+	<div class="filter-{{type}} filter" style="width:{{totWidth2}}px;max-height:{{totHeight2}}px"> \
         <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}"> \
             <legend style="display:{{useLegend}}">{{label}}</legend>  \
 				<div style="float:left;padding-right:10px;height:{{lineHeight}}px;display:{{useLeftLabel}}"> \
@@ -12186,6 +12257,7 @@ this.recline.View = this.recline.View || {};
                 currActiveFilter.totWidth = colsPerRow * pixelW;
                 currActiveFilter.totWidth2 = currActiveFilter.totWidth + (currActiveFilter.labelPosition == 'left' ? currActiveFilter.label.length * 10 : 10)
                 currActiveFilter.totHeight = totRighe * currActiveFilter.lineHeight;
+                currActiveFilter.totHeight2 = currActiveFilter.totHeight + 40;
 
                 var riga = 0;
                 var colonna = 0;

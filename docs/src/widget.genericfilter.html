@@ -409,7 +409,7 @@
 <span class="s1">      &lt;/div&gt; \</span>
 <span class="s1">  &#39;</span><span class="p">,</span>
             <span class="nx">color_legend</span><span class="o">:</span><span class="s1">&#39; \</span>
-<span class="s1">  &lt;div class=&quot;filter-{{type}} filter&quot; style=&quot;width:{{totWidth2}}px&quot;&gt; \</span>
+<span class="s1">  &lt;div class=&quot;filter-{{type}} filter&quot; style=&quot;width:{{totWidth2}}px;max-height:{{totHeight2}}px&quot;&gt; \</span>
 <span class="s1">        &lt;fieldset data-filter-field=&quot;{{field}}&quot; data-filter-id=&quot;{{id}}&quot; data-filter-type=&quot;{{type}}&quot;&gt; \</span>
 <span class="s1">            &lt;legend style=&quot;display:{{useLegend}}&quot;&gt;{{label}}&lt;/legend&gt;  \</span>
 <span class="s1">        &lt;div style=&quot;float:left;padding-right:10px;height:{{lineHeight}}px;display:{{useLeftLabel}}&quot;&gt; \</span>
@@ -951,6 +951,7 @@ For instance comparing a Date obj with its corresponding timer value now returns
                 <span class="nx">currActiveFilter</span><span class="p">.</span><span class="nx">totWidth</span> <span class="o">=</span> <span class="nx">colsPerRow</span> <span class="o">*</span> <span class="nx">pixelW</span><span class="p">;</span>
                 <span class="nx">currActiveFilter</span><span class="p">.</span><span class="nx">totWidth2</span> <span class="o">=</span> <span class="nx">currActiveFilter</span><span class="p">.</span><span class="nx">totWidth</span> <span class="o">+</span> <span class="p">(</span><span class="nx">currActiveFilter</span><span class="p">.</span><span class="nx">labelPosition</span> <span class="o">==</span> <span class="s1">&#39;left&#39;</span> <span class="o">?</span> <span class="nx">currActiveFilter</span><span class="p">.</span><span class="nx">label</span><span class="p">.</span><span class="nx">length</span> <span class="o">*</span> <span class="mi">10</span> <span class="o">:</span> <span class="mi">10</span><span class="p">)</span>
                 <span class="nx">currActiveFilter</span><span class="p">.</span><span class="nx">totHeight</span> <span class="o">=</span> <span class="nx">totRighe</span> <span class="o">*</span> <span class="nx">currActiveFilter</span><span class="p">.</span><span class="nx">lineHeight</span><span class="p">;</span>
+                <span class="nx">currActiveFilter</span><span class="p">.</span><span class="nx">totHeight2</span> <span class="o">=</span> <span class="nx">currActiveFilter</span><span class="p">.</span><span class="nx">totHeight</span> <span class="o">+</span> <span class="mi">40</span><span class="p">;</span>
 
                 <span class="kd">var</span> <span class="nx">riga</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
                 <span class="kd">var</span> <span class="nx">colonna</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
