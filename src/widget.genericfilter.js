@@ -255,7 +255,7 @@ this.recline.View = this.recline.View || {};
     		<select class="drop-down fields data-control-id dimmed" onchange="updateColor($(this))"> \
 			<option class="dimmedDropDownText">{{innerLabel}}</option> \
             {{#values}} \
-            <option class="normalDropDownText" value="{{val}}" {{selected}}><span>{{val}}</span><span><b>[{{count}}]</b></span></option> \
+            <option class="normalDropDownText" value="{{val}}" {{selected}}>{{valCount}}</option> \
             {{/values}} \
           </select> \
         </fieldset> \
