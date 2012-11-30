@@ -409,7 +409,7 @@ this.recline.View = this.recline.View || {};
       </div> \
 	',
             color_legend:' \
-	<div class="filter-{{type}} filter" style="width:{{totWidth2}}px"> \
+	<div class="filter-{{type}} filter" style="width:{{totWidth2}}px;max-height:{{totHeight2}}px"> \
         <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}"> \
             <legend style="display:{{useLegend}}">{{label}}</legend>  \
 				<div style="float:left;padding-right:10px;height:{{lineHeight}}px;display:{{useLeftLabel}}"> \
@@ -988,6 +988,7 @@ this.recline.View = this.recline.View || {};
                 currActiveFilter.totWidth = colsPerRow * pixelW;
                 currActiveFilter.totWidth2 = currActiveFilter.totWidth + (currActiveFilter.labelPosition == 'left' ? currActiveFilter.label.length * 10 : 10)
                 currActiveFilter.totHeight = totRighe * currActiveFilter.lineHeight;
+                currActiveFilter.totHeight2 = currActiveFilter.totHeight + 40;
 
                 var riga = 0;
                 var colonna = 0;
