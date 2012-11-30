@@ -33,29 +33,83 @@ this.recline.View = this.recline.View || {};
 
         },
 
+        onChange: function(view) {
+            var exec = function (data, widget) {
+
+            var actions = view.getActionsForEvent("selection");
+
+            if (actions.length > 0) {
+                var startDate= new Date(data.dr1from_millis);
+                var endDate= new Date(data.dr1to_millis);
+
+                /*var date_a = [
+                    new Date(startDate.getYear(), startDate.getMonth(), startDate.getDay(), 0, 0, 0, 0),
+                    new Date(endDate.getYear(), endDate.getMonth(), endDate.getDay(), 23, 59, 59, 999)
+                ];*/
+                view.doActions(actions, [startDate, endDate]);
+            }
+
+            var actions_compare = view.getActionsForEvent("selection_compare");
+
+            if (actions_compare.length > 0) {
+                var date_compare = [null, null];
+
+                if (data.comparisonEnabled) {
+                    var startDate= new Date(data.dr2from_millis);
+                    var endDate= new Date(data.dr2to_millis);
+                    if(startDate != null && endDate != null)
+                        date_compare=[startDate, endDate];
+                }
+                else {
+                    date_compare = [null,null];
+                }
+
+                view.doActions(actions_compare, date_compare);
+            }
+
+        }
+            return exec;
+        },
+
+        doActions:function (actions, values) {
+
+            _.each(actions, function (d) {
+                d.action.doActionWithValues(values, d.mapping);
+            });
+
+        },
+
         render:function () {
             var self = this;
             var uid = this.uid;
 
-            var to = new Date();
-            var from = new Date(to.getTime() - 1000 * 60 * 60 * 24 * 14);
-
-
-            $('#datepicker-calendar-'+uid).DateRangesWidget(
+            $('#datepicker-calendar-' + uid).DateRangesWidget(
                 {
-                    aggregations: [],
-                    values: {
-                        comparisonEnabled: false,
-                        daterangePreset: "lastweeks",
-                        comparisonPreset: "previousperiod"
-                    }
-                });
+                    aggregations:[],
+                    values:{
+                        comparisonEnabled:false,
+                        daterangePreset:"lastweeks",
+                        comparisonPreset:"previousperiod"
+                    },
+                    onChange: self.onChange(self)
 
+                });
 
         },
 
         redraw:function () {
 
+        },
+
+        getActionsForEvent:function (eventType) {
+            var actions = [];
+
+            _.each(this.options.actions, function (d) {
+                if (_.contains(d.event, eventType))
+                    actions.push(d);
+            });
+
+            return actions;
         }
 
 

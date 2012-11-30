@@ -783,7 +783,8 @@ this.recline.Model = this.recline.Model || {};
 
         setFilter:function (filter) {
             if (filter["remove"]) {
-                removeFilterByField(filter.field);
+                this.removeFilterByField(filter.field);
+                delete filter["remove"];
             } else {
 
                 var filters = this.get('filters');
@@ -815,7 +816,7 @@ this.recline.Model = this.recline.Model || {};
             var filters = this.get('filters');
             for (var j in filters) {
                 if (filters[j].field == field) {
-                    removeFilter(j);
+                    this.removeFilter(j);
                 }
             }
         },
