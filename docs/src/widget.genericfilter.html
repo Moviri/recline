@@ -255,7 +255,7 @@
 <span class="s1">        &lt;select class=&quot;drop-down fields data-control-id dimmed&quot; onchange=&quot;updateColor($(this))&quot;&gt; \</span>
 <span class="s1">      &lt;option class=&quot;dimmedDropDownText&quot;&gt;{{innerLabel}}&lt;/option&gt; \</span>
 <span class="s1">            {{#values}} \</span>
-<span class="s1">            &lt;option class=&quot;normalDropDownText&quot; value=&quot;{{val}}&quot; {{selected}}&gt;&lt;span&gt;{{val}}&lt;/span&gt;&lt;span&gt;&lt;b&gt;[{{count}}]&lt;/b&gt;&lt;/span&gt;&lt;/option&gt; \</span>
+<span class="s1">            &lt;option class=&quot;normalDropDownText&quot; value=&quot;{{val}}&quot; {{selected}}&gt;{{valCount}}&lt;/option&gt; \</span>
 <span class="s1">            {{/values}} \</span>
 <span class="s1">          &lt;/select&gt; \</span>
 <span class="s1">        &lt;/fieldset&gt; \</span>
@@ -409,7 +409,7 @@
 <span class="s1">      &lt;/div&gt; \</span>
 <span class="s1">  &#39;</span><span class="p">,</span>
             <span class="nx">color_legend</span><span class="o">:</span><span class="s1">&#39; \</span>
-<span class="s1">  &lt;div class=&quot;filter-{{type}} filter&quot; style=&quot;width:{{totWidth2}}px&quot;&gt; \</span>
+<span class="s1">  &lt;div class=&quot;filter-{{type}} filter&quot; style=&quot;width:{{totWidth2}}px;max-height:{{totHeight2}}px&quot;&gt; \</span>
 <span class="s1">        &lt;fieldset data-filter-field=&quot;{{field}}&quot; data-filter-id=&quot;{{id}}&quot; data-filter-type=&quot;{{type}}&quot;&gt; \</span>
 <span class="s1">            &lt;legend style=&quot;display:{{useLegend}}&quot;&gt;{{label}}&lt;/legend&gt;  \</span>
 <span class="s1">        &lt;div style=&quot;float:left;padding-right:10px;height:{{lineHeight}}px;display:{{useLeftLabel}}&quot;&gt; \</span>
@@ -735,11 +735,16 @@ For instance comparing a Date obj with its corresponding timer value now returns
 
             <span class="k">if</span> <span class="p">(</span><span class="nx">filterTemplate</span><span class="p">.</span><span class="nx">needFacetedField</span><span class="p">)</span> <span class="p">{</span>
                 <span class="nx">currActiveFilter</span><span class="p">.</span><span class="nx">facet</span> <span class="o">=</span> <span class="nx">self</span><span class="p">.</span><span class="nx">_sourceDataset</span><span class="p">.</span><span class="nx">getFacetByFieldId</span><span class="p">(</span><span class="nx">currActiveFilter</span><span class="p">.</span><span class="nx">field</span><span class="p">);</span>
-                <span class="nx">facetTerms</span> <span class="o">=</span> <span class="nx">currActiveFilter</span><span class="p">.</span><span class="nx">facet</span><span class="p">.</span><span class="nx">attributes</span><span class="p">.</span><span class="nx">terms</span><span class="p">;</span>
 
-                <span class="k">if</span> <span class="p">(</span><span class="nx">currActiveFilter</span><span class="p">.</span><span class="nx">facet</span> <span class="o">==</span> <span class="kc">null</span><span class="p">)</span> <span class="p">{</span>
-                    <span class="k">throw</span> <span class="s2">&quot;GenericFilter: no facet present for field [&quot;</span> <span class="o">+</span> <span class="nx">currActiveFilter</span><span class="p">.</span><span class="nx">field</span> <span class="o">+</span> <span class="s2">&quot;]. Define a facet before filter render&quot;</span><span class="p">;</span>
-                <span class="p">}</span>
+                <span class="k">if</span> <span class="p">(</span><span class="nx">currActiveFilter</span><span class="p">.</span><span class="nx">facet</span> <span class="o">==</span> <span class="kc">null</span><span class="p">)</span>
+                    <span class="k">throw</span> <span class="s2">&quot;GenericFilter: no facet present for field [&quot;</span> <span class="o">+</span> <span class="nx">currActiveFilter</span><span class="p">.</span><span class="nx">field</span> <span class="o">+</span> <span class="s2">&quot;]. Define a facet before filter render&quot;</span>
+                
+                <span class="k">if</span> <span class="p">(</span><span class="nx">currActiveFilter</span><span class="p">.</span><span class="nx">fieldType</span> <span class="o">==</span> <span class="s2">&quot;integer&quot;</span> <span class="o">||</span> <span class="nx">currActiveFilter</span><span class="p">.</span><span class="nx">fieldType</span> <span class="o">==</span> <span class="s2">&quot;number&quot;</span><span class="p">)</span> <span class="c1">// sort if numeric (Chrome issue)</span>
+                  <span class="nx">currActiveFilter</span><span class="p">.</span><span class="nx">facet</span><span class="p">.</span><span class="nx">attributes</span><span class="p">.</span><span class="nx">terms</span> <span class="o">=</span> <span class="nx">_</span><span class="p">.</span><span class="nx">sortBy</span><span class="p">(</span><span class="nx">currActiveFilter</span><span class="p">.</span><span class="nx">facet</span><span class="p">.</span><span class="nx">attributes</span><span class="p">.</span><span class="nx">terms</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">currObj</span><span class="p">)</span> <span class="p">{</span>
+                    <span class="k">return</span> <span class="nx">currObj</span><span class="p">.</span><span class="nx">term</span><span class="p">;</span>
+                  <span class="p">});</span>
+                    
+                <span class="nx">facetTerms</span> <span class="o">=</span> <span class="nx">currActiveFilter</span><span class="p">.</span><span class="nx">facet</span><span class="p">.</span><span class="nx">attributes</span><span class="p">.</span><span class="nx">terms</span><span class="p">;</span>
                 <span class="k">if</span> <span class="p">(</span><span class="k">typeof</span> <span class="nx">currActiveFilter</span><span class="p">.</span><span class="nx">label</span> <span class="o">==</span> <span class="s2">&quot;undefined&quot;</span> <span class="o">||</span> <span class="nx">currActiveFilter</span><span class="p">.</span><span class="nx">label</span> <span class="o">==</span> <span class="kc">null</span><span class="p">)</span>
                     <span class="nx">currActiveFilter</span><span class="p">.</span><span class="nx">label</span> <span class="o">=</span> <span class="nx">currActiveFilter</span><span class="p">.</span><span class="nx">field</span><span class="p">;</span>
             <span class="p">}</span>
@@ -934,6 +939,8 @@ For instance comparing a Date obj with its corresponding timer value now returns
                 <span class="p">}</span>
                 <span class="kd">var</span> <span class="nx">maxWidth</span> <span class="o">=</span> <span class="mi">250</span><span class="p">;</span>
                 <span class="nx">currActiveFilter</span><span class="p">.</span><span class="nx">colorValues</span> <span class="o">=</span> <span class="p">[];</span>
+                
+                
 
                 <span class="nx">currActiveFilter</span><span class="p">.</span><span class="nx">tmpValues</span> <span class="o">=</span> <span class="nx">_</span><span class="p">.</span><span class="nx">pluck</span><span class="p">(</span><span class="nx">currActiveFilter</span><span class="p">.</span><span class="nx">facet</span><span class="p">.</span><span class="nx">attributes</span><span class="p">.</span><span class="nx">terms</span><span class="p">,</span> <span class="s2">&quot;term&quot;</span><span class="p">);</span>
 
@@ -951,6 +958,7 @@ For instance comparing a Date obj with its corresponding timer value now returns
                 <span class="nx">currActiveFilter</span><span class="p">.</span><span class="nx">totWidth</span> <span class="o">=</span> <span class="nx">colsPerRow</span> <span class="o">*</span> <span class="nx">pixelW</span><span class="p">;</span>
                 <span class="nx">currActiveFilter</span><span class="p">.</span><span class="nx">totWidth2</span> <span class="o">=</span> <span class="nx">currActiveFilter</span><span class="p">.</span><span class="nx">totWidth</span> <span class="o">+</span> <span class="p">(</span><span class="nx">currActiveFilter</span><span class="p">.</span><span class="nx">labelPosition</span> <span class="o">==</span> <span class="s1">&#39;left&#39;</span> <span class="o">?</span> <span class="nx">currActiveFilter</span><span class="p">.</span><span class="nx">label</span><span class="p">.</span><span class="nx">length</span> <span class="o">*</span> <span class="mi">10</span> <span class="o">:</span> <span class="mi">10</span><span class="p">)</span>
                 <span class="nx">currActiveFilter</span><span class="p">.</span><span class="nx">totHeight</span> <span class="o">=</span> <span class="nx">totRighe</span> <span class="o">*</span> <span class="nx">currActiveFilter</span><span class="p">.</span><span class="nx">lineHeight</span><span class="p">;</span>
+                <span class="nx">currActiveFilter</span><span class="p">.</span><span class="nx">totHeight2</span> <span class="o">=</span> <span class="nx">currActiveFilter</span><span class="p">.</span><span class="nx">totHeight</span> <span class="o">+</span> <span class="mi">40</span><span class="p">;</span>
 
                 <span class="kd">var</span> <span class="nx">riga</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
                 <span class="kd">var</span> <span class="nx">colonna</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>

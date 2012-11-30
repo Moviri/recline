@@ -65,7 +65,7 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
         }
 
         // verify if filters on memory are changed since last query
-        if((dataset.inMemoryQueryFields.length> 0
+        if((dataset.inMemoryQueryFields && dataset.inMemoryQueryFields.length> 0
             && !_.isEqual(my.queryStateInMemory.attributes.filters, tmpQueryStateInMemory.attributes.filters))
             )
         {
@@ -216,7 +216,7 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
 
 
 
-    // todo remove it after wal update
+    // todo should be in backend
     function getDate(temp) {
         var tmp = new Date();
 
@@ -356,7 +356,7 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
       var res = [];
       for (var k in description) {
 
-              res.push({id: k, type: dataMapping[description[k]]});
+              res.push({id:k, type: dataMapping[description[k]]});
         }
 
       return res;

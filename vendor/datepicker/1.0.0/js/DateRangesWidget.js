@@ -258,7 +258,10 @@
 			if (newFrom != oldFrom || newTo != oldTo) {
 				$('.dr1.from', $dropdown).val(newFrom);
 				$('.dr1.to', $dropdown).val(newTo);
-				
+
+                $('.dr1.from_millis', $dropdown).val(dates[0]);
+                $('.dr1.to_millis', $dropdown).val(dates[1]);
+
 				//console.log('origin', origin);
 				//if (origin != 'daterange-preset') {
 					//$('.daterange-preset').val('custom');
@@ -268,6 +271,9 @@
 			
 			$('.dr2.from', $dropdown).val(dates[2].getDate() + '/' + (dates[2].getMonth()+1) + '/' + dates[2].getFullYear());
 			$('.dr2.to', $dropdown).val(dates[3].getDate() + '/' + (dates[3].getMonth()+1) + '/' + dates[3].getFullYear());
+
+            $('.dr2.from_millis', $dropdown).val(dates[2]);
+            $('.dr2.to_millis', $dropdown).val(dates[3]);
 		},
 		
 		createElements : function($target) {
@@ -303,6 +309,7 @@
 								'</span>'+
 							'</div>'+
 							'<input type="text" class="dr dr1 from" lastSel="0" /> - <input type="text" class="dr dr1 to" lastSel="1" />'+
+                            '<input type="hidden" class="dr dr1 from_millis" lastSel="2" /><input type="hidden" class="dr dr1 to_millis" lastSel="3" />'+
 						'</div>'+
 						'<div>'+
 							'<input type="checkbox" checked="checked" class="enable-comparison" /> Compare to:'+
@@ -314,7 +321,8 @@
 						'</div>'+
 						'<div class="comparison-daterange">'+
 							'<input type="text" class="dr dr2 from" lastSel="2" /> - <input type="text" class="dr dr2 to" lastSel="3" />'+
-						'</div>'+
+                            '<input type="hidden" class="dr dr2 from_millis" lastSel="2" /><input type="hidden" class="dr dr2 to_millis" lastSel="3" />'+
+           			'</div>'+
 						'<button class="btn btn-small" id="button-ok">Ok</button>'+
 						'<button class="btn btn-small" id="button-cancel">Cancel</button>'+
 					'</div>'+
@@ -346,6 +354,7 @@
 					onChange: function(dates, el, options) {
 						// user clicked on datepicker
 						internal.setDaterangePreset('custom');
+                        console.log("onchange datepicker");
 					}
 				});
 				
@@ -552,14 +561,23 @@
 			values.parameter1 = internal.getParameter1();
 			values.dr1from = $('.dr1.from', $dropdown).val()
 			values.dr1to = $('.dr1.to', $dropdown).val()
+            values.dr1from_millis = $('.dr1.from_millis', $dropdown).val()
+            values.dr1to_millis = $('.dr1.to_millis', $dropdown).val()
 			
 			values.comparisonEnabled = internal.getComparisonEnabled();
 			values.comparisonPreset = internal.getComparisonPreset();
 			values.dr2from = $('.dr2.from', $dropdown).val()
 			values.dr2to = $('.dr2.to', $dropdown).val()
+
+            values.dr2from_millis = $('.dr2.from_millis', $dropdown).val()
+            values.dr2to_millis = $('.dr2.to_millis', $dropdown).val()
 			$target.data('DateRangesWidget', data);
-			//console.log('save', data);
+
+            if($target.data().DateRangesWidget.options.onChange)
+                $target.data().DateRangesWidget.options.onChange(values);
+
 		},
+
 		
 		/**
 		 * Updates target div with data from target element's data
@@ -753,7 +771,9 @@
 	};
 	
 	$.fn.DateRangesWidget = function(method) {
-    
+
+
+
 		if (methods[method]) {
 			return methods[method].apply(this, Array.prototype.slice.call(arguments, 1));
 		} else if (typeof method === 'object' || !method) {
