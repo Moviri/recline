@@ -9726,6 +9726,7 @@ my.SlickGrid = Backbone.View.extend({
       this.model.records.bind('add', this.render);
     this.model.records.bind('reset', this.render);
     this.model.records.bind('remove', this.render);
+    this.model.queryState.bind('selection:done', this.render);
 
     var state = _.extend({
         hiddenColumns: [],
@@ -12029,11 +12030,11 @@ this.recline.View = this.recline.View || {};
 
             if (filterTemplate.needFacetedField) {
                 currActiveFilter.facet = self._sourceDataset.getFacetByFieldId(currActiveFilter.field);
-                facetTerms = currActiveFilter.facet.attributes.terms;
 
-                if (currActiveFilter.facet == null) {
-                    throw "GenericFilter: no facet present for field [" + currActiveFilter.field + "]. Define a facet before filter render";
-                }
+                if (currActiveFilter.facet == null)
+                    throw "GenericFilter: no facet present for field [" + currActiveFilter.field + "]. Define a facet before filter render"
+                    
+                facetTerms = currActiveFilter.facet.attributes.terms;
                 if (typeof currActiveFilter.label == "undefined" || currActiveFilter.label == null)
                     currActiveFilter.label = currActiveFilter.field;
             }
