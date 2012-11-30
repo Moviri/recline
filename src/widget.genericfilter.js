@@ -763,6 +763,11 @@ this.recline.View = this.recline.View || {};
 
                 if (currActiveFilter.facet == null)
                     throw "GenericFilter: no facet present for field [" + currActiveFilter.field + "]. Define a facet before filter render"
+                
+                if (currActiveFilter.fieldType == "integer" || currActiveFilter.fieldType == "number") // sort if numeric (Chrome issue)
+                	currActiveFilter.facet.attributes.terms = _.sortBy(currActiveFilter.facet.attributes.terms, function(currObj) {
+                		return currObj.term;
+                	});
                     
                 facetTerms = currActiveFilter.facet.attributes.terms;
                 if (typeof currActiveFilter.label == "undefined" || currActiveFilter.label == null)
@@ -966,6 +971,8 @@ this.recline.View = this.recline.View || {};
                 }
                 var maxWidth = 250;
                 currActiveFilter.colorValues = [];
+                
+                
 
                 currActiveFilter.tmpValues = _.pluck(currActiveFilter.facet.attributes.terms, "term");
 
