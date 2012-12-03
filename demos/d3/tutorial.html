@@ -1,5 +1,5 @@
 ---
-layout: moviri-release
+layout: moviri
 title: Demos - D3 Integration
 recline-deps: true
 root: ../../
@@ -42,6 +42,17 @@ root: ../../
     .border-free-table td, th {
         border: 0 !important;
     }
+
+    .bullet { font: 10px sans-serif; }
+    .bullet .marker { stroke: #000; stroke-width: 2px; }
+    .bullet .tick line { stroke: #666; stroke-width: .5px; }
+    .bullet .range.s0 { fill: #eee; }
+    .bullet .range.s1 { fill: #ddd; }
+    .bullet .range.s2 { fill: #ccc; }
+    .bullet .measure.s0 { fill: lightsteelblue; }
+    .bullet .measure.s1 { fill: steelblue; }
+    .bullet .title { font-size: 14px; font-weight: bold; }
+    .bullet .subtitle { fill: #999; }
 </style>
 
     <div class="row-fluid">
@@ -53,6 +64,7 @@ root: ../../
             <select id="s1" onChange="reDraw();">
                 <option value="sparkline">Select Viz</option>
                 <option value="sparkline">sparkline</option>
+                <option value="bullet">bullet</option>
                 <option value="treemap">treemap</option>
             </select>
             <div class="bs">
@@ -164,7 +176,19 @@ function reDraw() {
             fieldValue: "value",
             fieldName: "state",
             height: 800,
-            width: 600,
+            width: 300,
+            duration: 10000,
+            delay: 200
+        });
+    }else if(type == "bullet") {
+        d = new recline.View.d3.Bullet({
+            model: dataset,
+            resultType: "unfiltered",
+            fieldRanges: ["value", "rand"],
+            fieldMeasures: ["value", "rand"],
+            fieldMarkers: ["value"],
+            height: 50,
+            width: 400,
             duration: 10000,
             delay: 200
         });

@@ -55,6 +55,7 @@
 	border: 1px solid #CCCCCC;
 	display:none;
 	padding:10px 0 0 10px;
+    z-index: 99;
 }
 
 /* Remove default border from the custom widget since we're adding our own.  TBD: rework the dropdown calendar to use the default borders */

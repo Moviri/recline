@@ -54,12 +54,14 @@ this.recline.View = this.recline.View || {};
             if (actions.length > 0) {
                 var startDate= new Date(data.dr1from_millis);
                 var endDate= new Date(data.dr1to_millis);
+                var rangetype = view.daterange[data.daterangePreset];
 
-                /*var date_a = [
-                    new Date(startDate.getYear(), startDate.getMonth(), startDate.getDay(), 0, 0, 0, 0),
-                    new Date(endDate.getYear(), endDate.getMonth(), endDate.getDay(), 23, 59, 59, 999)
-                ];*/
-                view.doActions(actions, [startDate, endDate], this.daterange[data.daterangePreset]);
+                var value =   [
+                    {field: "date", value: [startDate, endDate]},
+                    {field: "rangetype", value: [rangetype]}
+                ];
+
+                view.doActions(actions, value );
             }
 
 
@@ -67,16 +69,20 @@ this.recline.View = this.recline.View || {};
             var actions_compare = view.getActionsForEvent("selection_compare");
 
             if (actions_compare.length > 0) {
-                var date_compare = [null, null];
+                var rangetype = view.daterange[data.daterangePreset];
+                if(data.comparisonPreset != "previousperiod")
+                    rangetype = view.daterange[data.comparisonPreset];
+
+                var date_compare = [{field: "date", value: [null, null]}];
 
                 if (data.comparisonEnabled) {
                     var startDate= new Date(data.dr2from_millis);
                     var endDate= new Date(data.dr2to_millis);
                     if(startDate != null && endDate != null)
-                        date_compare=[startDate, endDate];
-                }
-                else {
-                    date_compare = [null,null];
+                        var date_compare =   [
+                            {field: "date", value: [startDate, endDate]},
+                            {field: "rangetype", value: [rangetype]}
+                        ];
                 }
 
                 view.doActions(actions_compare, date_compare);
@@ -86,7 +92,7 @@ this.recline.View = this.recline.View || {};
             return exec;
         },
 
-        doActions:function (actions, dateValues, rangeType) {
+        doActions:function (actions, values) {
 
             _.each(actions, function (d) {
                 d.action.doActionWithValues(values, d.mapping);

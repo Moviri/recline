@@ -87,12 +87,13 @@ my.Action = Backbone.Model.extend({
             var values = [];
             //{srcField: "daydate", filter: "filter_daydate"}
             _.each(valuesarray, function(row) {
-                values.push(row);
+                if(row.field === mapp.srcField )
+                    params.push({
+                        filter : mapp.filter,
+                        value : row.value
+                    });
             });
-            params.push({
-                filter : mapp.filter,
-                value : values
-            });
+
         });
         this._internalDoAction(params);
     },

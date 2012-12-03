@@ -33,7 +33,16 @@
 
         <span class="p">},</span>
 
-        <span class="nx">onChange</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">view</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nx">daterange</span><span class="o">:</span> <span class="p">{</span>
+            <span class="nx">yesterday</span><span class="o">:</span> <span class="s2">&quot;day&quot;</span><span class="p">,</span>
+            <span class="nx">lastweeks</span><span class="o">:</span> <span class="s2">&quot;week&quot;</span><span class="p">,</span>
+            <span class="nx">lastdays</span><span class="o">:</span> <span class="s2">&quot;month&quot;</span><span class="p">,</span>
+            <span class="nx">lastmonths</span><span class="o">:</span> <span class="s2">&quot;month&quot;</span><span class="p">,</span>
+            <span class="nx">lastquarters</span><span class="o">:</span> <span class="s2">&quot;quarter&quot;</span><span class="p">,</span>
+            <span class="nx">lastyears</span><span class="o">:</span> <span class="s2">&quot;year&quot;</span><span class="p">,</span>
+            <span class="nx">previousyear</span><span class="o">:</span> <span class="s2">&quot;year&quot;</span><span class="p">,</span>
+            <span class="nx">custom</span><span class="o">:</span> <span class="s2">&quot;day&quot;</span>
+        <span class="p">},</span></pre></div>             </td>           </tr>                               <tr id="section-2">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-2">&#182;</a>               </div>               <p>previousperiod</p>             </td>             <td class="code">               <div class="highlight"><pre>        <span class="nx">onChange</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">view</span><span class="p">)</span> <span class="p">{</span>
             <span class="kd">var</span> <span class="nx">exec</span> <span class="o">=</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">data</span><span class="p">,</span> <span class="nx">widget</span><span class="p">)</span> <span class="p">{</span>
 
             <span class="kd">var</span> <span class="nx">actions</span> <span class="o">=</span> <span class="nx">view</span><span class="p">.</span><span class="nx">getActionsForEvent</span><span class="p">(</span><span class="s2">&quot;selection&quot;</span><span class="p">);</span>
@@ -41,27 +50,35 @@
             <span class="k">if</span> <span class="p">(</span><span class="nx">actions</span><span class="p">.</span><span class="nx">length</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
                 <span class="kd">var</span> <span class="nx">startDate</span><span class="o">=</span> <span class="k">new</span> <span class="nb">Date</span><span class="p">(</span><span class="nx">data</span><span class="p">.</span><span class="nx">dr1from_millis</span><span class="p">);</span>
                 <span class="kd">var</span> <span class="nx">endDate</span><span class="o">=</span> <span class="k">new</span> <span class="nb">Date</span><span class="p">(</span><span class="nx">data</span><span class="p">.</span><span class="nx">dr1to_millis</span><span class="p">);</span>
+                <span class="kd">var</span> <span class="nx">rangetype</span> <span class="o">=</span> <span class="nx">view</span><span class="p">.</span><span class="nx">daterange</span><span class="p">[</span><span class="nx">data</span><span class="p">.</span><span class="nx">daterangePreset</span><span class="p">];</span>
 
-                <span class="cm">/*var date_a = [</span>
-<span class="cm">                    new Date(startDate.getYear(), startDate.getMonth(), startDate.getDay(), 0, 0, 0, 0),</span>
-<span class="cm">                    new Date(endDate.getYear(), endDate.getMonth(), endDate.getDay(), 23, 59, 59, 999)</span>
-<span class="cm">                ];*/</span>
-                <span class="nx">view</span><span class="p">.</span><span class="nx">doActions</span><span class="p">(</span><span class="nx">actions</span><span class="p">,</span> <span class="p">[</span><span class="nx">startDate</span><span class="p">,</span> <span class="nx">endDate</span><span class="p">]);</span>
+                <span class="kd">var</span> <span class="nx">value</span> <span class="o">=</span>   <span class="p">[</span>
+                    <span class="p">{</span><span class="nx">field</span><span class="o">:</span> <span class="s2">&quot;date&quot;</span><span class="p">,</span> <span class="nx">value</span><span class="o">:</span> <span class="p">[</span><span class="nx">startDate</span><span class="p">,</span> <span class="nx">endDate</span><span class="p">]},</span>
+                    <span class="p">{</span><span class="nx">field</span><span class="o">:</span> <span class="s2">&quot;rangetype&quot;</span><span class="p">,</span> <span class="nx">value</span><span class="o">:</span> <span class="p">[</span><span class="nx">rangetype</span><span class="p">]}</span>
+                <span class="p">];</span>
+
+                <span class="nx">view</span><span class="p">.</span><span class="nx">doActions</span><span class="p">(</span><span class="nx">actions</span><span class="p">,</span> <span class="nx">value</span> <span class="p">);</span>
             <span class="p">}</span>
+
+
 
             <span class="kd">var</span> <span class="nx">actions_compare</span> <span class="o">=</span> <span class="nx">view</span><span class="p">.</span><span class="nx">getActionsForEvent</span><span class="p">(</span><span class="s2">&quot;selection_compare&quot;</span><span class="p">);</span>
 
             <span class="k">if</span> <span class="p">(</span><span class="nx">actions_compare</span><span class="p">.</span><span class="nx">length</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
-                <span class="kd">var</span> <span class="nx">date_compare</span> <span class="o">=</span> <span class="p">[</span><span class="kc">null</span><span class="p">,</span> <span class="kc">null</span><span class="p">];</span>
+                <span class="kd">var</span> <span class="nx">rangetype</span> <span class="o">=</span> <span class="nx">view</span><span class="p">.</span><span class="nx">daterange</span><span class="p">[</span><span class="nx">data</span><span class="p">.</span><span class="nx">daterangePreset</span><span class="p">];</span>
+                <span class="k">if</span><span class="p">(</span><span class="nx">data</span><span class="p">.</span><span class="nx">comparisonPreset</span> <span class="o">!=</span> <span class="s2">&quot;previousperiod&quot;</span><span class="p">)</span>
+                    <span class="nx">rangetype</span> <span class="o">=</span> <span class="nx">view</span><span class="p">.</span><span class="nx">daterange</span><span class="p">[</span><span class="nx">data</span><span class="p">.</span><span class="nx">comparisonPreset</span><span class="p">];</span>
+
+                <span class="kd">var</span> <span class="nx">date_compare</span> <span class="o">=</span> <span class="p">[{</span><span class="nx">field</span><span class="o">:</span> <span class="s2">&quot;date&quot;</span><span class="p">,</span> <span class="nx">value</span><span class="o">:</span> <span class="p">[</span><span class="kc">null</span><span class="p">,</span> <span class="kc">null</span><span class="p">]}];</span>
 
                 <span class="k">if</span> <span class="p">(</span><span class="nx">data</span><span class="p">.</span><span class="nx">comparisonEnabled</span><span class="p">)</span> <span class="p">{</span>
                     <span class="kd">var</span> <span class="nx">startDate</span><span class="o">=</span> <span class="k">new</span> <span class="nb">Date</span><span class="p">(</span><span class="nx">data</span><span class="p">.</span><span class="nx">dr2from_millis</span><span class="p">);</span>
                     <span class="kd">var</span> <span class="nx">endDate</span><span class="o">=</span> <span class="k">new</span> <span class="nb">Date</span><span class="p">(</span><span class="nx">data</span><span class="p">.</span><span class="nx">dr2to_millis</span><span class="p">);</span>
                     <span class="k">if</span><span class="p">(</span><span class="nx">startDate</span> <span class="o">!=</span> <span class="kc">null</span> <span class="o">&amp;&amp;</span> <span class="nx">endDate</span> <span class="o">!=</span> <span class="kc">null</span><span class="p">)</span>
-                        <span class="nx">date_compare</span><span class="o">=</span><span class="p">[</span><span class="nx">startDate</span><span class="p">,</span> <span class="nx">endDate</span><span class="p">];</span>
-                <span class="p">}</span>
-                <span class="k">else</span> <span class="p">{</span>
-                    <span class="nx">date_compare</span> <span class="o">=</span> <span class="p">[</span><span class="kc">null</span><span class="p">,</span><span class="kc">null</span><span class="p">];</span>
+                        <span class="kd">var</span> <span class="nx">date_compare</span> <span class="o">=</span>   <span class="p">[</span>
+                            <span class="p">{</span><span class="nx">field</span><span class="o">:</span> <span class="s2">&quot;date&quot;</span><span class="p">,</span> <span class="nx">value</span><span class="o">:</span> <span class="p">[</span><span class="nx">startDate</span><span class="p">,</span> <span class="nx">endDate</span><span class="p">]},</span>
+                            <span class="p">{</span><span class="nx">field</span><span class="o">:</span> <span class="s2">&quot;rangetype&quot;</span><span class="p">,</span> <span class="nx">value</span><span class="o">:</span> <span class="p">[</span><span class="nx">rangetype</span><span class="p">]}</span>
+                        <span class="p">];</span>
                 <span class="p">}</span>
 
                 <span class="nx">view</span><span class="p">.</span><span class="nx">doActions</span><span class="p">(</span><span class="nx">actions_compare</span><span class="p">,</span> <span class="nx">date_compare</span><span class="p">);</span>

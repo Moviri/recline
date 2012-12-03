@@ -7,8 +7,8 @@ root: ../../
 
 
 <div class="row-fluid">
-    <div class="span3" style="height: 200px;">
-        <div id="filter_period"></div>
+    <div class="span3" style="height: 50px;">
+       Select period <div id="filter_period"></div>
     </div>
 
 
@@ -40,72 +40,74 @@ root: ../../
 <script>
     var dataset = new recline.Model.Dataset({
         records:[
-            {id:1,  date:new Date(2012, 9, 1, 9, 0, 0, 0)},
-            {id:2,  date:new Date(2012, 9, 2, 10, 0, 0, 0)},
-            {id:3,  date:new Date(2012, 9, 3, 11, 0, 0, 0)},
-            {id:4,  date:new Date(2012, 9, 4, 12, 0, 0, 0)},
-            {id:5, date:new Date(2012, 9, 4, 12, 0, 0, 0)},
-            {id:6,  date:new Date(2012, 9, 4, 12, 0, 0, 0)},
-            {id:7,  date:new Date(2012, 9, 4, 12, 0, 0, 0)},
-            {id:8,  date:new Date(2012, 9, 4, 12, 0, 0, 0)},
-            {id:9,  date:new Date(2012, 9, 4, 12, 0, 0, 0)},
-            {id:10,  date:new Date(2012, 9, 4, 12, 0, 0, 0)},
-            {id:11,  date:new Date(2012, 9, 4, 12, 0, 0, 0)},
-            {id:12,  date:new Date(2012, 9, 4, 12, 0, 0, 0)},
-            {id:13,  date:new Date(2012, 9, 4, 12, 0, 0, 0)},
-            {id:14,  date:new Date(2012, 9, 4, 12, 0, 0, 0)},
-            {id:15,  y:450, date:new Date(2012, 9, 4, 12, 0, 0, 0)},
-            {id:16,  date:new Date(2012, 9, 4, 12, 0, 0, 0)},
-            {id:17,  date:new Date(2012, 9, 4, 12, 0, 0, 0)},
-            {id:18,  date:new Date(2012, 9, 4, 12, 0, 0, 0)},
-            {id:19, date:new Date(2012, 9, 4, 12, 0, 0, 0)}
+            {id:1,  date:new Date(2012, 9, 1, 9, 0, 0, 0), periodtype: "month"},
+            {id:2,  date:new Date(2012, 9, 2, 10, 0, 0, 0), periodtype: "year"},
+            {id:3,  date:new Date(2012, 9, 3, 11, 0, 0, 0), periodtype: "year"},
+            {id:4,  date:new Date(2012, 9, 4, 12, 0, 0, 0), periodtype: "year"},
+            {id:5,  date:new Date(2012, 9, 4, 12, 0, 0, 0), periodtype: "week"},
+            {id:6,  date:new Date(2012, 9, 4, 12, 0, 0, 0), periodtype: "week"},
+            {id:7,  date:new Date(2012, 9, 4, 12, 0, 0, 0), periodtype: "week"},
+            {id:8,  date:new Date(2012, 9, 4, 12, 0, 0, 0), periodtype: "week"},
+            {id:9,  date:new Date(2012, 9, 4, 12, 0, 0, 0), periodtype: "day"},
+            {id:10, date:new Date(2012, 9, 4, 12, 0, 0, 0), periodtype: "day"},
+            {id:11, date:new Date(2012, 9, 4, 12, 0, 0, 0), periodtype: "day"},
+            {id:12, date:new Date(2012, 9, 4, 12, 0, 0, 0), periodtype: "month"},
+            {id:13, date:new Date(2012, 9, 4, 12, 0, 0, 0), periodtype: "day"},
+            {id:14, date:new Date(2012, 9, 4, 12, 0, 0, 0), periodtype: "day"},
+            {id:15, date:new Date(2012, 9, 4, 12, 0, 0, 0), periodtype: "month"},
+            {id:16, date:new Date(2012, 9, 4, 12, 0, 0, 0), periodtype: "week"},
+            {id:17, date:new Date(2012, 9, 4, 12, 0, 0, 0), periodtype: "week"},
+            {id:18, date:new Date(2012, 9, 4, 12, 0, 0, 0), periodtype: "week"},
+            {id:19, date:new Date(2012, 9, 4, 12, 0, 0, 0), periodtype: "month"}
 
 
         ],
         fields:[
-            {id:'date', type:"date"}
+            {id:'date', type:"date"},
+            {id:'periodtype', type:"string"}
         ]
     });
 
     var dataset_compare = new recline.Model.Dataset({
         records:[
-            {id:1,  date:new Date(2012, 9, 1, 9, 0, 0, 0)},
-            {id:2,  date:new Date(2012, 9, 2, 10, 0, 0, 0)},
-            {id:3,  date:new Date(2012, 9, 3, 11, 0, 0, 0)},
-            {id:4,  date:new Date(2012, 9, 4, 12, 0, 0, 0)},
-            {id:5, date:new Date(2012, 9, 4, 12, 0, 0, 0)},
-            {id:6,  date:new Date(2012, 9, 4, 12, 0, 0, 0)},
-            {id:7,  date:new Date(2012, 9, 4, 12, 0, 0, 0)},
-            {id:8,  date:new Date(2012, 9, 4, 12, 0, 0, 0)},
-            {id:9,  date:new Date(2012, 9, 4, 12, 0, 0, 0)},
-            {id:10,  date:new Date(2012, 9, 4, 12, 0, 0, 0)},
-            {id:11,  date:new Date(2012, 9, 4, 12, 0, 0, 0)},
-            {id:12,  date:new Date(2012, 9, 4, 12, 0, 0, 0)},
-            {id:13,  date:new Date(2012, 9, 4, 12, 0, 0, 0)},
-            {id:14,  date:new Date(2012, 9, 4, 12, 0, 0, 0)},
-            {id:15,  y:450, date:new Date(2012, 9, 4, 12, 0, 0, 0)},
-            {id:16,  date:new Date(2012, 9, 4, 12, 0, 0, 0)},
-            {id:17,  date:new Date(2012, 9, 4, 12, 0, 0, 0)},
-            {id:18,  date:new Date(2012, 9, 4, 12, 0, 0, 0)},
-            {id:19, date:new Date(2012, 9, 4, 12, 0, 0, 0)}
+            {id:1,  date:new Date(2012, 9, 1, 9, 0, 0, 0), periodtype: "month"},
+            {id:2,  date:new Date(2012, 9, 2, 10, 0, 0, 0), periodtype: "year"},
+            {id:3,  date:new Date(2012, 9, 3, 11, 0, 0, 0), periodtype: "year"},
+            {id:4,  date:new Date(2012, 9, 4, 12, 0, 0, 0), periodtype: "year"},
+            {id:5,  date:new Date(2012, 9, 4, 12, 0, 0, 0), periodtype: "week"},
+            {id:6,  date:new Date(2012, 9, 4, 12, 0, 0, 0), periodtype: "week"},
+            {id:7,  date:new Date(2012, 9, 4, 12, 0, 0, 0), periodtype: "week"},
+            {id:8,  date:new Date(2012, 9, 4, 12, 0, 0, 0), periodtype: "week"},
+            {id:9,  date:new Date(2012, 9, 4, 12, 0, 0, 0), periodtype: "day"},
+            {id:10, date:new Date(2012, 9, 4, 12, 0, 0, 0), periodtype: "day"},
+            {id:11, date:new Date(2012, 9, 4, 12, 0, 0, 0), periodtype: "day"},
+            {id:12, date:new Date(2012, 9, 4, 12, 0, 0, 0), periodtype: "month"},
+            {id:13, date:new Date(2012, 9, 4, 12, 0, 0, 0), periodtype: "day"},
+            {id:14, date:new Date(2012, 9, 4, 12, 0, 0, 0), periodtype: "day"},
+            {id:15, date:new Date(2012, 9, 4, 12, 0, 0, 0), periodtype: "month"},
+            {id:16, date:new Date(2012, 9, 4, 12, 0, 0, 0), periodtype: "week"},
+            {id:17, date:new Date(2012, 9, 4, 12, 0, 0, 0), periodtype: "week"},
+            {id:18, date:new Date(2012, 9, 4, 12, 0, 0, 0), periodtype: "week"},
+            {id:19, date:new Date(2012, 9, 4, 12, 0, 0, 0), periodtype: "month"}
 
 
         ],
         fields:[
-            {id:'date', type:"date"}
+            {id:'date', type:"date"},
+            {id:'periodtype', type:"string"}
         ]
     });
 
 
     var action = new recline.Action({
         filters:{
-            filter_date_range:{type:"range", field:"date", fieldType:"date"},
-            filter_date_range:{type:"term", field:"rangetype", fieldType:"string"}
+            filter_date_range:      {type:"range", field:"date", fieldType:"date"},
+            filter_date_rangetype:  {type:"term", field:"periodtype", fieldType:"string"}
         },
         models:[
             {
                 model:dataset,
-                filters:["filter_date_range"]
+                filters:["filter_date_range", "filter_date_rangetype"]
             }
         ],
         type:["filter"]
@@ -113,12 +115,13 @@ root: ../../
 
     var action_compare = new recline.Action({
         filters:{
-            filter_date_range:{type:"range", field:"date", fieldType:"date"}
+            filter_date_range:{type:"range", field:"date", fieldType:"date"},
+            filter_date_rangetype:  {type:"term", field:"periodtype", fieldType:"string"}
         },
         models:[
             {
                 model:dataset_compare,
-                filters:["filter_date_range"]
+                filters:["filter_date_range", "filter_date_rangetype"]
             }
         ],
         type:["filter"]
@@ -138,7 +141,8 @@ root: ../../
             {
                 action:action_compare,
                 mapping:[
-                    {srcField:"date", filter:"filter_date_range"}
+                    {srcField:"date", filter:"filter_date_range"},
+                    {srcField:"rangetype", filter:"filter_date_rangetype"}
                 ],
                 event:["selection_compare"]
             }
