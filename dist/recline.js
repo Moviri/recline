@@ -7473,9 +7473,7 @@ this.recline.View = this.recline.View || {};
     _.bindAll(this, 'render');
       this.uid = options.id || ("" + new Date().getTime() + Math.floor(Math.random() * 10000)); // generating an unique id for the chart
 
-      this.options.state.kpi.dataset.bind('query:done', this.render);
-      if(this.options.state.compareWith)
-          this.options.state.compareWith.dataset.bind('query:done', this.render);
+      this.model.bind('query:done', this.render);
 
   },
 
@@ -7485,13 +7483,14 @@ this.recline.View = this.recline.View || {};
         tmplData["viewId"] = this.uid;
 		tmplData.label = this.options.state && this.options.state["label"];
 
-        var kpi     = self.options.state.kpi.dataset.getRecords(self.options.state.kpi.type);
-        //var field   = self.options.state.kpi.dataset.getFields(self.options.state.kpi.type).get(self.options.state.kpi.field);
+        var kpi     = self.model.getRecords(self.options.state.kpi.type);
+
+
         var field;
         if(self.options.state.kpi.aggr)
-            field = self.options.state.kpi.dataset.getField_byAggregationFunction(self.options.state.kpi.type, self.options.state.kpi.field, self.options.state.kpi.aggr);
+            field = self.model.getField_byAggregationFunction(self.options.state.kpi.type, self.options.state.kpi.field, self.options.state.kpi.aggr);
         else
-            field = self.options.state.kpi.dataset.getFields(self.options.state.kpi.type).get(self.options.state.kpi.field);
+            field = self.model.getFields(self.options.state.kpi.type).get(self.options.state.kpi.field);
 
         var kpiValue;
 
@@ -7508,13 +7507,13 @@ this.recline.View = this.recline.View || {};
         var template = this.templateBase;
 
         if(self.options.state.compareWith) {
-            var compareWithRecord  = self.options.state.compareWith.dataset.getRecords(self.options.state.compareWith.type);
+            var compareWithRecord  = self.model.getRecords(self.options.state.compareWith.type);
             var compareWithField;
 
             if(self.options.state.kpi.aggr)
-                compareWithField= self.options.state.compareWith.dataset.getField_byAggregationFunction(self.options.state.compareWith.type, self.options.state.compareWith.field, self.options.state.compareWith.aggr);
+                compareWithField= self.model.getField_byAggregationFunction(self.options.state.compareWith.type, self.options.state.compareWith.field, self.options.state.compareWith.aggr);
             else
-                compareWithField= self.options.state.compareWith.dataset.getFields(self.options.state.compareWith.type).get(self.options.state.compareWith.field);
+                compareWithField= self.options.model.getFields(self.options.state.compareWith.type).get(self.options.state.compareWith.field);
 
             tmplData["compareWithValue"]  = compareWithRecord[0].getFieldValue(compareWithField);
             var compareWithValue =  compareWithRecord[0].getFieldValueUnrendered(compareWithField);
