@@ -666,7 +666,8 @@ here that are not actually strings</p>             </td>             <td class="
 
         <span class="p">},</span></pre></div>             </td>           </tr>                               <tr id="section-45">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-45">&#182;</a>               </div>               <p>update or add the selected filter(s), a change event is not triggered after the update</p>             </td>             <td class="code">               <div class="highlight"><pre>        <span class="nx">setFilter</span><span class="o">:</span><span class="kd">function</span> <span class="p">(</span><span class="nx">filter</span><span class="p">)</span> <span class="p">{</span>
             <span class="k">if</span> <span class="p">(</span><span class="nx">filter</span><span class="p">[</span><span class="s2">&quot;remove&quot;</span><span class="p">])</span> <span class="p">{</span>
-                <span class="nx">removeFilterByField</span><span class="p">(</span><span class="nx">filter</span><span class="p">.</span><span class="nx">field</span><span class="p">);</span>
+                <span class="k">this</span><span class="p">.</span><span class="nx">removeFilterByField</span><span class="p">(</span><span class="nx">filter</span><span class="p">.</span><span class="nx">field</span><span class="p">);</span>
+                <span class="k">delete</span> <span class="nx">filter</span><span class="p">[</span><span class="s2">&quot;remove&quot;</span><span class="p">];</span>
             <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
 
                 <span class="kd">var</span> <span class="nx">filters</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">&#39;filters&#39;</span><span class="p">);</span>
@@ -696,7 +697,7 @@ here that are not actually strings</p>             </td>             <td class="
             <span class="kd">var</span> <span class="nx">filters</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">&#39;filters&#39;</span><span class="p">);</span>
             <span class="k">for</span> <span class="p">(</span><span class="kd">var</span> <span class="nx">j</span> <span class="k">in</span> <span class="nx">filters</span><span class="p">)</span> <span class="p">{</span>
                 <span class="k">if</span> <span class="p">(</span><span class="nx">filters</span><span class="p">[</span><span class="nx">j</span><span class="p">].</span><span class="nx">field</span> <span class="o">==</span> <span class="nx">field</span><span class="p">)</span> <span class="p">{</span>
-                    <span class="nx">removeFilter</span><span class="p">(</span><span class="nx">j</span><span class="p">);</span>
+                    <span class="k">this</span><span class="p">.</span><span class="nx">removeFilter</span><span class="p">(</span><span class="nx">j</span><span class="p">);</span>
                 <span class="p">}</span>
             <span class="p">}</span>
         <span class="p">},</span>
