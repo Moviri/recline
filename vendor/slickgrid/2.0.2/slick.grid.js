@@ -2873,7 +2873,7 @@ if (typeof Slick === "undefined") {
       scrollTo(row * options.rowHeight);
       render();
     }
-
+    
     function getColspan(row, cell) {
       var metadata = data.getItemMetadata && data.getItemMetadata(row);
       if (!metadata || !metadata.columns) {
@@ -3410,6 +3410,7 @@ if (typeof Slick === "undefined") {
       "updateRowCount": updateRowCount,
       "scrollRowIntoView": scrollRowIntoView,
       "scrollRowToTop": scrollRowToTop,
+      "scrollRowToTopNoEvent": scrollRowToTopNoEvent,
       "scrollCellIntoView": scrollCellIntoView,
       "getCanvasNode": getCanvasNode,
       "focus": setFocus,
