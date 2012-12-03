@@ -33,6 +33,19 @@ this.recline.View = this.recline.View || {};
 
         },
 
+        daterange: {
+            yesterday: "day",
+            lastweeks: "week",
+            lastdays: "month",
+            lastmonths: "month",
+            lastquarters: "quarter",
+            lastyears: "year",
+            previousyear: "year",
+            custom: "day"
+        },
+
+        //previousperiod
+
         onChange: function(view) {
             var exec = function (data, widget) {
 
@@ -46,8 +59,10 @@ this.recline.View = this.recline.View || {};
                     new Date(startDate.getYear(), startDate.getMonth(), startDate.getDay(), 0, 0, 0, 0),
                     new Date(endDate.getYear(), endDate.getMonth(), endDate.getDay(), 23, 59, 59, 999)
                 ];*/
-                view.doActions(actions, [startDate, endDate]);
+                view.doActions(actions, [startDate, endDate], this.daterange[data.daterangePreset]);
             }
+
+
 
             var actions_compare = view.getActionsForEvent("selection_compare");
 
@@ -71,7 +86,7 @@ this.recline.View = this.recline.View || {};
             return exec;
         },
 
-        doActions:function (actions, values) {
+        doActions:function (actions, dateValues, rangeType) {
 
             _.each(actions, function (d) {
                 d.action.doActionWithValues(values, d.mapping);

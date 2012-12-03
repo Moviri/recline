@@ -99,7 +99,8 @@ root: ../../
 
     var action = new recline.Action({
         filters:{
-            filter_date_range:{type:"range", field:"date", fieldType:"date"}
+            filter_date_range:{type:"range", field:"date", fieldType:"date"},
+            filter_date_range:{type:"term", field:"rangetype", fieldType:"string"}
         },
         models:[
             {
@@ -129,7 +130,8 @@ root: ../../
             {
                 action:action,
                 mapping:[
-                    {srcField:"date", filter:"filter_date_range"}
+                    {srcField:"date", filter:"filter_date_range"},
+                    {srcField:"rangetype", filter:"filter_date_rangetype"}
                 ],
                 event:["selection"]
             },
