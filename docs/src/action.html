@@ -28,7 +28,7 @@
             <span class="p">});</span>
 
             <span class="k">if</span><span class="p">(</span> <span class="nx">actionParameters</span><span class="p">.</span><span class="nx">length</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>  <span class="p">{</span>
-                <span class="nx">currentAction</span><span class="p">.</span><span class="nx">action</span><span class="p">.</span><span class="nx">_internalDoAction</span><span class="p">(</span><span class="nx">actionParameters</span><span class="p">,</span> <span class="nx">actionType</span><span class="p">);</span>
+                <span class="nx">currentAction</span><span class="p">.</span><span class="nx">action</span><span class="p">.</span><span class="nx">_internalDoAction</span><span class="p">(</span><span class="nx">actionParameters</span><span class="p">);</span>
             <span class="p">}</span>
         <span class="p">});</span>
     <span class="p">},</span>
@@ -65,21 +65,22 @@
         <span class="nx">value</span> <span class="o">:</span> <span class="nx">values</span>
       <span class="p">});</span>
     <span class="p">});</span>
-    <span class="k">this</span><span class="p">.</span><span class="nx">_internalDoAction</span><span class="p">(</span><span class="nx">params</span><span class="p">,</span> <span class="s2">&quot;add&quot;</span><span class="p">);</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">_internalDoAction</span><span class="p">(</span><span class="nx">params</span><span class="p">);</span>
   <span class="p">},</span>
 
     <span class="nx">doActionWithValues</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">valuesarray</span><span class="p">,</span> <span class="nx">mapping</span><span class="p">)</span> <span class="p">{</span>
         <span class="kd">var</span> <span class="nx">params</span> <span class="o">=</span> <span class="p">[];</span>
         <span class="nx">mapping</span><span class="p">.</span><span class="nx">forEach</span><span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">mapp</span><span class="p">)</span> <span class="p">{</span>
             <span class="kd">var</span> <span class="nx">values</span> <span class="o">=</span> <span class="p">[];</span></pre></div>             </td>           </tr>                               <tr id="section-7">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-7">&#182;</a>               </div>               <p>{srcField: "daydate", filter: "filter_daydate"}</p>             </td>             <td class="code">               <div class="highlight"><pre>            <span class="nx">_</span><span class="p">.</span><span class="nx">each</span><span class="p">(</span><span class="nx">valuesarray</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">row</span><span class="p">)</span> <span class="p">{</span>
-                <span class="nx">values</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="nx">row</span><span class="p">);</span>
+                <span class="k">if</span><span class="p">(</span><span class="nx">row</span><span class="p">.</span><span class="nx">field</span> <span class="o">===</span> <span class="nx">mapp</span><span class="p">.</span><span class="nx">srcField</span> <span class="p">)</span>
+                    <span class="nx">params</span><span class="p">.</span><span class="nx">push</span><span class="p">({</span>
+                        <span class="nx">filter</span> <span class="o">:</span> <span class="nx">mapp</span><span class="p">.</span><span class="nx">filter</span><span class="p">,</span>
+                        <span class="nx">value</span> <span class="o">:</span> <span class="nx">row</span><span class="p">.</span><span class="nx">value</span>
+                    <span class="p">});</span>
             <span class="p">});</span>
-            <span class="nx">params</span><span class="p">.</span><span class="nx">push</span><span class="p">({</span>
-                <span class="nx">filter</span> <span class="o">:</span> <span class="nx">mapp</span><span class="p">.</span><span class="nx">filter</span><span class="p">,</span>
-                <span class="nx">value</span> <span class="o">:</span> <span class="nx">values</span>
-            <span class="p">});</span>
+
         <span class="p">});</span>
-        <span class="k">this</span><span class="p">.</span><span class="nx">_internalDoAction</span><span class="p">(</span><span class="nx">params</span><span class="p">,</span> <span class="s2">&quot;add&quot;</span><span class="p">);</span>
+        <span class="k">this</span><span class="p">.</span><span class="nx">_internalDoAction</span><span class="p">(</span><span class="nx">params</span><span class="p">);</span>
     <span class="p">},</span></pre></div>             </td>           </tr>                               <tr id="section-8">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-8">&#182;</a>               </div>               <p>action could be add/remove</p>             </td>             <td class="code">               <div class="highlight"><pre>   <span class="nx">_internalDoAction</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">data</span><span class="p">)</span> <span class="p">{</span>
        <span class="kd">var</span> <span class="nx">self</span><span class="o">=</span><span class="k">this</span><span class="p">;</span>
 

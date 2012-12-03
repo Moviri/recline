@@ -95,6 +95,7 @@
   <script type="text/javascript" src="../../src/d3/view.d3.table.js"></script>
   <script type="text/javascript" src="../../src/d3/view.d3.sparkline.js"></script>
   <script type="text/javascript" src="../../src/d3/view.d3.treemap.js"></script>
+  <script type="text/javascript" src="../../src/d3/view.d3.bullet.js"></script>
 
   <script type="text/javascript" src="../../src/view.rickshaw.js"></script>
 
@@ -443,9 +444,10 @@
   													useStripedStyle: true,
   													useCondensedStyle: true,
   													showLineNumbers: true,
+  													selectedCellFocus: true,
 													visibleColumns: ['totalviewed_sum', 'price_sum_sum', 'age', 'inner_chart'],
 													columnsOrder: ['age', 'totalviewed_sum', 'price_sum_sum', 'innerChart'],
- 													useInnerChart:true, 
+ 													useInnerChart:false, 
  													innerChartSerie1:'totalviewed_by_gender_Male_sum', 
  													innerChartSerie2:'totalviewed_by_gender_Female_sum', 
  													innerChartHeader:'Views by Gender',

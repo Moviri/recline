@@ -66,6 +66,7 @@ var dataset = new recline.Model.Dataset({
         {id: 'state', type: "string"},
         {id: 'abbr', type: "string"},
         {id: 'postalcode', type: "string"} ,
-        {id: 'value', type: "integer"}
+        {id: 'value', type: "integer"},
+        {id: 'rand', type: 'integer', deriver: function() {return Math.random()*1000}},
     ]
 });

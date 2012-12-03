@@ -36,7 +36,7 @@ this.recline = this.recline || {};
             });
 
             if( actionParameters.length > 0)  {
-                currentAction.action._internalDoAction(actionParameters, actionType);
+                currentAction.action._internalDoAction(actionParameters);
             }
         });
     },
@@ -78,7 +78,7 @@ my.Action = Backbone.Model.extend({
 				value : values
 			});
 		});
-		this._internalDoAction(params, "add");
+		this._internalDoAction(params);
 	},
 
     doActionWithValues: function(valuesarray, mapping) {
@@ -87,14 +87,15 @@ my.Action = Backbone.Model.extend({
             var values = [];
             //{srcField: "daydate", filter: "filter_daydate"}
             _.each(valuesarray, function(row) {
-                values.push(row);
+                if(row.field === mapp.srcField )
+                    params.push({
+                        filter : mapp.filter,
+                        value : row.value
+                    });
             });
-            params.push({
-                filter : mapp.filter,
-                value : values
-            });
+
         });
-        this._internalDoAction(params, "add");
+        this._internalDoAction(params);
     },
 
 
