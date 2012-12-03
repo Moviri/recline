@@ -17,9 +17,11 @@ my.SlickGrid = Backbone.View.extend({
   initialize: function(modelEtc) {
     var self = this;
     this.el = $(this.el);
+    this.discardSelectionEvents = false;
     this.el.addClass('recline-slickgrid');
     _.bindAll(this, 'render');
     _.bindAll(this, 'onSelectionChanged');
+    _.bindAll(this, 'handleRequestOfRowSelection');
 
       this.resultType = "filtered";
       if(self.options.resultType !== null)
@@ -30,7 +32,7 @@ my.SlickGrid = Backbone.View.extend({
       this.model.records.bind('add', this.render);
     this.model.records.bind('reset', this.render);
     this.model.records.bind('remove', this.render);
-    this.model.queryState.bind('selection:done', this.render);
+    this.model.queryState.bind('selection:done', this.handleRequestOfRowSelection);
 
     var state = _.extend({
         hiddenColumns: [],
@@ -64,6 +66,7 @@ my.SlickGrid = Backbone.View.extend({
       showLineNumbers: this.state.get('showLineNumbers'),
       showTotals: this.state.get('showTotals'),
       showPartitionedData: this.state.get('showPartitionedData'),
+      selectedCellFocus: this.state.get('selectedCellFocus'),
 	};
 
     // We need all columns, even the hidden ones, to show on the column picker
@@ -427,9 +430,13 @@ my.SlickGrid = Backbone.View.extend({
 	
 	this.grid.setSelectionModel(new Slick.RowSelectionModel());
 	this.grid.getSelectionModel().setSelectedRows(rowsToSelect);
+
 	
     this.grid.onSelectedRowsChanged.subscribe(function(e, args){
-		self.onSelectionChanged(args.rows)
+    	if (!self.discardSelectionEvents)
+    		self.onSelectionChanged(args.rows)
+    	
+    	self.discardSelectionEvents = false
 	});
 
     // Column sorting
@@ -479,8 +486,6 @@ my.SlickGrid = Backbone.View.extend({
     var columnpicker = new Slick.Controls.ColumnPicker(columns, this.grid,
                                                        _.extend(options,{state:this.state}));
 
-    this.model.queryState.bind('selection:done', self.grid.render);
-    
     if (self.visible){
       self.grid.init();
       self.rendered = true;
@@ -513,6 +518,22 @@ my.SlickGrid = Backbone.View.extend({
     
     return this;
  },
+  handleRequestOfRowSelection: function() {
+	  this.discardSelectionEvents = true;
+	  var rowsToSelect = [];
+	  var myRecords = this.model.getRecords(self.resultType); 
+	  var selRow;
+	  for (row in myRecords) 
+	      if (myRecords[row].is_selected)
+	      {
+	    	  rowsToSelect.push(row)
+	    	  selRow = row
+	      }
+	  
+	  this.grid.getSelectionModel().setSelectedRows(rowsToSelect)
+	  if (selRow && this.options.state.selectedCellFocus)
+		  this.grid.scrollRowToTop(selRow);
+  },
   onSelectionChanged: function(rows) {
 	var self = this;
 	var selectedRecords = [];
