@@ -1,5 +1,5 @@
 ---
-layout: moviri-release
+layout: moviri
 title: Demos - NVD3 Integration
 recline-deps: true
 root: ../../
@@ -152,22 +152,24 @@ grid1.render();
 
 
 var indicator1 = new recline.View.Indicator({
+    model: vdataset,
     state: {
         label:"Values 1",
         labelColor: "red",
         description: "show total views",
         descriptionColor: "red",
         textColor: "red",
-        kpi:            {dataset: vdataset, type: "totals", field: "value_sum", aggr: "sum"},
-        compareWith:    {dataset: vdataset, type: "totals_unfiltered", field: "value_sum", aggr: "sum", compareType: "percentage"}
+        kpi:            { type: "totals", field: "value_sum", aggr: "sum"},
+        compareWith:    { type: "totals_unfiltered", field: "value_sum", aggr: "sum", compareType: "percentage"}
     }
 });
 $('#indicator').append(indicator1.el);
 
 var indicator2 = new recline.View.Indicator({
-    state: {
+    model: vdataset,
+        state: {
         label:          "Values 2",
-        kpi:            {dataset: vdataset, type: "totals", field: "value_sum", aggr: "sum"}
+        kpi:            {type: "totals", field: "value_sum", aggr: "sum"}
     }
 });
 $('#indicator2').append(indicator2.el);
