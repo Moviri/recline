@@ -198,6 +198,7 @@
 			return this.each(function() {
 				var $this = $(this);
 				var data = $this.data('DateRangesWidget');
+                $this.data('test', internal);
          
 				// initialize data in dom element
 				if (!data) {
@@ -207,6 +208,7 @@
 					$this.data('DateRangesWidget', {
 						options : effective_options
 					});
+
 				}
 				internal.createElements($this);
 				internal.updateDateField($this);
@@ -238,7 +240,7 @@
 		
 		refreshForm : function() {
 			var lastSel = $datepicker.DatePickerGetLastSel();
-			
+
 			if ($('.comparison-preset', $dropdown).val() != 'custom') {
 				lastSel = lastSel % 2;
 				$datepicker.DatePickerSetLastSel(lastSel);
