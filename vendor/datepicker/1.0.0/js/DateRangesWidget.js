@@ -261,15 +261,10 @@
 				$('.dr1.from', $dropdown).val(newFrom);
 				$('.dr1.to', $dropdown).val(newTo);
 
-                $('.dr1.from_millis', $dropdown).val(dates[0]);
-                $('.dr1.to_millis', $dropdown).val(dates[1]);
-
-				//console.log('origin', origin);
-				//if (origin != 'daterange-preset') {
-					//$('.daterange-preset').val('custom');
-					//$('.daterange-preset').change();
-				//}
 			}
+
+            $('.dr1.from_millis', $dropdown).val(dates[0]);
+            $('.dr1.to_millis', $dropdown).val(dates[1]);
 			
 			$('.dr2.from', $dropdown).val(dates[2].getDate() + '/' + (dates[2].getMonth()+1) + '/' + dates[2].getFullYear());
 			$('.dr2.to', $dropdown).val(dates[3].getDate() + '/' + (dates[3].getMonth()+1) + '/' + dates[3].getFullYear());
