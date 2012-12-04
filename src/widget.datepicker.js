@@ -14,11 +14,15 @@ this.recline.View = this.recline.View || {};
         initialize:function (options) {
 
             this.el = $(this.el);
-            _.bindAll(this, 'render', 'redraw');
+            _.bindAll(this, 'render', 'redraw', 'redrawCompare');
 
             if (this.model) {
                 this.model.bind('query:done', this.redraw);
                 this.model.queryState.bind('selection:done', this.redraw);
+            }
+            if(this.options.compareModel) {
+                this.options.compareModel.bind('query:done', this.redrawCompare);
+                this.options.compareModel.queryState.bind('selection:done', this.redrawCompare);
             }
 
             $(window).resize(this.resize);
@@ -113,6 +117,9 @@ this.recline.View = this.recline.View || {};
 
                 });
 
+            self.redraw();
+            self.redrawCompare();
+
         },
 
         redraw:function () {
@@ -122,21 +129,55 @@ this.recline.View = this.recline.View || {};
 
             var self=this;
 
-            var currentdate = $('.date-ranges-picker').DatePickerGetDate()[0];
-            var period = [null,null,null,null];
+            var period = $('.date-ranges-picker').DatePickerGetDate()[0];
 
             var f = self.model.queryState.getFilterByFieldName(self.options.fields.date)
                 if(f && f.type == "range") {
                     period[0] = new Date(f.start);
                     period[1] = new Date(f.stop);
-
-                    $('.dr1.from').val(period[0]);
                 }
             var f = self.model.queryState.getFilterByFieldName(self.options.fields.type)
             if(f && f.type == "term") {
                 // check custom weeks/month
 
             }
+
+
+            var values = self.datepicker.data("DateRangesWidget").options.values;
+
+
+            if(!period[0] || !period[1]) {
+                values.dr1from = "N/A";
+                values.dr1from_millis = "";
+                values.dr1to = "N/A";
+                values.dr1to_millis = "";
+            }
+            else {
+                values.daterangePreset = "custom";
+                values.dr1from = period[0].getDate() + '/' + (period[0].getMonth()+1) + '/' + period[0].getFullYear();
+                values.dr1from_millis = (new Date(period[0])).getTime();
+                values.dr1to = period[1].getDate() + '/' + (period[1].getMonth()+1) + '/' + period[1].getFullYear();
+                values.dr1to_millis = (new Date(period[1])).getTime();
+            }
+
+
+            $('.date-ranges-picker').DatePickerSetDate(period, true);
+
+            if (values.dr1from && values.dr1to) {
+                $('span.main', self.datepicker).text(values.dr1from + ' - ' + values.dr1to);
+            }
+            $('.dr1.from', self.datepicker).val(values.dr1from);
+            $('.dr1.to', self.datepicker).val(values.dr1to);
+            $('.dr1.from_millis', self.datepicker).val(values.dr1from_millis);
+            $('.dr1.to_millis', self.datepicker).val(values.dr1to_millis);
+
+
+        },
+
+        redrawCompare:function () {
+            var self=this;
+
+            var period = $('.date-ranges-picker').DatePickerGetDate()[0];
 
             if(this.options.compareModel) {
                 var f = self.options.compareModel.queryState.getFilterByFieldName(self.options.compareFields.date)
@@ -149,75 +190,45 @@ this.recline.View = this.recline.View || {};
                     // check custom weeks/month
 
                 }
+                var values = self.datepicker.data("DateRangesWidget").options.values;
+
+                if(period[2] && period[3]) {
+                    values.comparisonEnabled = true;
+                    values.comparisonPreset = "custom"
+                    values.dr2from = period[2].getDate() + '/' + (period[2].getMonth()+1) + '/' + period[2].getFullYear();
+                    values.dr2from_millis = (new Date(period[2])).getTime();
+                    values.dr2to = period[3].getDate() + '/' + (period[3].getMonth()+1) + '/' + period[3].getFullYear();
+                    values.dr2to_millis = (new Date(period[3])).getTime();
+                } else
+                {
+                    values.comparisonEnabled = false;
+                    values.dr2from = "N/A";
+                    values.dr2from_millis = "";
+                    values.dr2to = "N/A";
+                    values.dr2to_millis = "";
+                }
+
+                $('.date-ranges-picker').DatePickerSetDate(period, true);
+
+                if (values.comparisonEnabled && values.dr2from && values.dr2to) {
+                    $('span.comparison', self.datepicker).text(values.dr2from + ' - ' + values.dr2to);
+                    $('span.comparison', self.datepicker).show();
+                    $('span.comparison-divider', self.datepicker).show();
+                } else {
+                    $('span.comparison-divider', self.datepicker).hide();
+                    $('span.comparison', self.datepicker).hide();
+                }
+
+                $('.dr2.from', self.datepicker).val(values.dr2from );
+                $('.dr2.to', self.datepicker).val(values.dr2to);
+
+                $('.dr2.from_millis', self.datepicker).val(values.dr2from_millis);
+                $('.dr2.to_millis', self.datepicker).val(values.dr2to_millis);
 
             }
-            var values = self.datepicker.data("DateRangesWidget").options.values;
-            values.daterangePreset = "custom";
-            values.comparisonEnabled = true;
-
-            if(!period[0] || !period[1]) {
-                values.dr1from = "N/A";
-                values.dr1from_millis = "";
-                values.dr1to = "N/A";
-                values.dr1to_millis = "";
-            }
-            else {
-                values.dr1from = period[0].getDate() + '/' + (period[0].getMonth()+1) + '/' + period[0].getFullYear();
-                values.dr1from_millis = new Date(period[0]);
-                values.dr1to = period[1].getDate() + '/' + (period[1].getMonth()+1) + '/' + period[1].getFullYear();
-                values.dr1to_millis = new Date(period[1]);
-            }
-
-
-
-            if(period[2] && period[3]) {
-                values.comparisonPreset = "custom"
-                values.dr2from = period[2].getDate() + '/' + (period[2].getMonth()+1) + '/' + period[2].getFullYear();
-                values.dr2from_millis = new Date(period[2]);
-                values.dr2to = period[3].getDate() + '/' + (period[3].getMonth()+1) + '/' + period[3].getFullYear();
-                values.dr2to_millis = new Date(period[3]);
-            } else
-            {
-                values.dr2from = "N/A";
-                values.dr2from_millis = "";
-                values.dr2to = "N/A";
-                values.dr2to_millis = "";
-            }
-
-
-
-
-            $('.date-ranges-picker').DatePickerSetDate(period, true);
-
-            if (values.dr1from && values.dr1to) {
-                $('span.main', self.datepicker).text(values.dr1from + ' - ' + values.dr1to);
-            }
-
-            if (values.comparisonEnabled && values.dr2from && values.dr2to) {
-                $('span.comparison', self.datepicker).text(values.dr2from + ' - ' + values.dr2to);
-                $('span.comparison', self.datepicker).show();
-                $('span.comparison-divider', self.datepicker).show();
-            } else {
-                $('span.comparison-divider', self.datepicker).hide();
-                $('span.comparison', self.datepicker).hide();
-            }
-
-            self.refreshForm(values);
         },
 
-        refreshForm: function(values) {
-          var self=this;
-            $('.dr1.from', self.datepicker).val(values.dr1from);
-            $('.dr1.to', self.datepicker).val(values.dr1to);
-            $('.dr1.from_millis', self.datepicker).val(values.dr1from_millis);
-            $('.dr1.to_millis', self.datepicker).val(values.dr1to_millis);
 
-            $('.dr2.from', self.datepicker).val(values.dr2from );
-            $('.dr2.to', self.datepicker).val(values.dr2to);
-
-            $('.dr2.from_millis', self.datepicker).val(values.dr2from_millis);
-            $('.dr2.to_millis', self.datepicker).val(values.dr2to_millis);
-        },
 
         getActionsForEvent:function (eventType) {
             var actions = [];

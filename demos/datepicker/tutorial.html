@@ -308,10 +308,11 @@
     });
 
     var dateFilter = {field: "date", type: "range", start:new Date(2012,9,01,00,00,00,0), stop:new Date(2012,9,3,00,00,00,0), fieldType: "date" };
+    var compareFilter = {field: "date", type: "range", start:new Date(2012,8,01,00,00,00,0), stop:new Date(2012,8,3,00,00,00,0), fieldType: "date" };
     dataset.queryState.addFilter(dateFilter);
     dataset.query();
 
-    dataset_compare.queryState.addFilter(dateFilter);
+    dataset_compare.queryState.addFilter(compareFilter);
     dataset_compare.query();
 
     var action = new recline.Action({
@@ -346,7 +347,7 @@
     var filter_period = new recline.View.DatePicker({
         model: dataset,
         fields: {date: "date", type: "periodtype"},
-        compareModel: dataset,
+        compareModel: dataset_compare,
         compareFields: {date: "date", type: "periodtype"},
         actions:[
             {
@@ -369,7 +370,7 @@
     });
     $('#filter_period').append(filter_period.el);
     filter_period.render();
-    filter_period.redraw();
+
 
 
     var $el = $('#grid');
