@@ -185,6 +185,8 @@ this.recline.View = this.recline.View || {};
             }
 
 
+
+
             $('.date-ranges-picker').DatePickerSetDate(period, true);
 
             if (values.dr1from && values.dr1to) {
@@ -200,7 +202,21 @@ this.recline.View = this.recline.View || {};
                 $('span.comparison', self.datepicker).hide();
             }
 
+            self.refreshForm(values);
+        },
 
+        refreshForm: function(values) {
+          var self=this;
+            $('.dr1.from', self.datepicker).val(values.dr1from);
+            $('.dr1.to', self.datepicker).val(values.dr1to);
+            $('.dr1.from_millis', self.datepicker).val(values.dr1from_millis);
+            $('.dr1.to_millis', self.datepicker).val(values.dr1to_millis);
+
+            $('.dr2.from', self.datepicker).val(values.dr2from );
+            $('.dr2.to', self.datepicker).val(values.dr2to);
+
+            $('.dr2.from_millis', self.datepicker).val(values.dr2from_millis);
+            $('.dr2.to_millis', self.datepicker).val(values.dr2to_millis);
         },
 
         getActionsForEvent:function (eventType) {

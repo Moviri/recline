@@ -171,6 +171,8 @@
             <span class="p">}</span>
 
 
+
+
             <span class="nx">$</span><span class="p">(</span><span class="s1">&#39;.date-ranges-picker&#39;</span><span class="p">).</span><span class="nx">DatePickerSetDate</span><span class="p">(</span><span class="nx">period</span><span class="p">,</span> <span class="kc">true</span><span class="p">);</span>
 
             <span class="k">if</span> <span class="p">(</span><span class="nx">values</span><span class="p">.</span><span class="nx">dr1from</span> <span class="o">&amp;&amp;</span> <span class="nx">values</span><span class="p">.</span><span class="nx">dr1to</span><span class="p">)</span> <span class="p">{</span>
@@ -186,7 +188,21 @@
                 <span class="nx">$</span><span class="p">(</span><span class="s1">&#39;span.comparison&#39;</span><span class="p">,</span> <span class="nx">self</span><span class="p">.</span><span class="nx">datepicker</span><span class="p">).</span><span class="nx">hide</span><span class="p">();</span>
             <span class="p">}</span>
 
+            <span class="nx">self</span><span class="p">.</span><span class="nx">refreshForm</span><span class="p">(</span><span class="nx">values</span><span class="p">);</span>
+        <span class="p">},</span>
 
+        <span class="nx">refreshForm</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">values</span><span class="p">)</span> <span class="p">{</span>
+          <span class="kd">var</span> <span class="nx">self</span><span class="o">=</span><span class="k">this</span><span class="p">;</span>
+            <span class="nx">$</span><span class="p">(</span><span class="s1">&#39;.dr1.from&#39;</span><span class="p">,</span> <span class="nx">self</span><span class="p">.</span><span class="nx">datepicker</span><span class="p">).</span><span class="nx">val</span><span class="p">(</span><span class="nx">values</span><span class="p">.</span><span class="nx">dr1from</span><span class="p">);</span>
+            <span class="nx">$</span><span class="p">(</span><span class="s1">&#39;.dr1.to&#39;</span><span class="p">,</span> <span class="nx">self</span><span class="p">.</span><span class="nx">datepicker</span><span class="p">).</span><span class="nx">val</span><span class="p">(</span><span class="nx">values</span><span class="p">.</span><span class="nx">dr1to</span><span class="p">);</span>
+            <span class="nx">$</span><span class="p">(</span><span class="s1">&#39;.dr1.from_millis&#39;</span><span class="p">,</span> <span class="nx">self</span><span class="p">.</span><span class="nx">datepicker</span><span class="p">).</span><span class="nx">val</span><span class="p">(</span><span class="nx">values</span><span class="p">.</span><span class="nx">dr1from_millis</span><span class="p">);</span>
+            <span class="nx">$</span><span class="p">(</span><span class="s1">&#39;.dr1.to_millis&#39;</span><span class="p">,</span> <span class="nx">self</span><span class="p">.</span><span class="nx">datepicker</span><span class="p">).</span><span class="nx">val</span><span class="p">(</span><span class="nx">values</span><span class="p">.</span><span class="nx">dr1to_millis</span><span class="p">);</span>
+
+            <span class="nx">$</span><span class="p">(</span><span class="s1">&#39;.dr2.from&#39;</span><span class="p">,</span> <span class="nx">self</span><span class="p">.</span><span class="nx">datepicker</span><span class="p">).</span><span class="nx">val</span><span class="p">(</span><span class="nx">values</span><span class="p">.</span><span class="nx">dr2from</span> <span class="p">);</span>
+            <span class="nx">$</span><span class="p">(</span><span class="s1">&#39;.dr2.to&#39;</span><span class="p">,</span> <span class="nx">self</span><span class="p">.</span><span class="nx">datepicker</span><span class="p">).</span><span class="nx">val</span><span class="p">(</span><span class="nx">values</span><span class="p">.</span><span class="nx">dr2to</span><span class="p">);</span>
+
+            <span class="nx">$</span><span class="p">(</span><span class="s1">&#39;.dr2.from_millis&#39;</span><span class="p">,</span> <span class="nx">self</span><span class="p">.</span><span class="nx">datepicker</span><span class="p">).</span><span class="nx">val</span><span class="p">(</span><span class="nx">values</span><span class="p">.</span><span class="nx">dr2from_millis</span><span class="p">);</span>
+            <span class="nx">$</span><span class="p">(</span><span class="s1">&#39;.dr2.to_millis&#39;</span><span class="p">,</span> <span class="nx">self</span><span class="p">.</span><span class="nx">datepicker</span><span class="p">).</span><span class="nx">val</span><span class="p">(</span><span class="nx">values</span><span class="p">.</span><span class="nx">dr2to_millis</span><span class="p">);</span>
         <span class="p">},</span>
 
         <span class="nx">getActionsForEvent</span><span class="o">:</span><span class="kd">function</span> <span class="p">(</span><span class="nx">eventType</span><span class="p">)</span> <span class="p">{</span>
