@@ -1,5 +1,5 @@
 ---
-layout: moviri-release
+layout: moviri
 title: Demos - Composed View
 recline-deps: true
 root: ../../
@@ -208,15 +208,12 @@ var composed = new recline.View.Composed({
 
         });
 
-
-
-
         var $el = $('#composed2');
         var composed2 = new recline.View.Composed({
             model:          dataset,
             el:$el,
             dimension: "gender",
-            template: "vertical",
+            customTemplate: template,
             measures: [{
                 title: "Visits",
                 view: "NVD3Graph",

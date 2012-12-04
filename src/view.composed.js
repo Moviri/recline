@@ -134,6 +134,8 @@ this.recline.View = this.recline.View || {};
             var tmpl = this.templates.vertical;
             if(this.options.template)
                 tmpl = this.templates[this.options.template];
+            if(this.options.customTemplate)
+                tmpl = this.options.customTemplate;
 
             var out = Mustache.render(tmpl, self);
             this.el.html(out);
