@@ -1936,9 +1936,7 @@ this.recline.View = this.recline.View || {};
 
     "use strict";
 
-    view.d3 = view.d3 || {};
-
-    view.d3.Bullet = Backbone.View.extend({
+    view.D3Bullet = Backbone.View.extend({
         template:'<div id="{{uid}}" style="width: {{width}}px; height: {{height}}px;"> <div> ',
 
         initialize:function (options) {
@@ -2310,11 +2308,9 @@ this.recline.View = this.recline.View || {};
 
 (function ($, view) {
 	
-	"use strict";	
+	"use strict";
 
-	view.d3 = view.d3 || {};
-
-    view.d3.Sparkline = Backbone.View.extend({
+    view.D3Sparkline = Backbone.View.extend({
         template: '<div id="{{uid}}" style="width: {{width}}px; height: {{height}}px;"> <div> ',
 
         initialize: function (options) {
@@ -2577,10 +2573,9 @@ this.recline.View = this.recline.View || {};
             	return column.computed_width;
             });
 	};
-	
-	view.d3 = view.d3 || {};
 
-    view.d3.table = Backbone.View.extend({
+
+    view.D3table = Backbone.View.extend({
         className: 'recline-table-editor',
         template: ' \
   				<div id="{{graphId}}" class="g-table g-table-hover g-table-striped g-table-bordered"> \
@@ -3015,11 +3010,9 @@ this.recline.View = this.recline.View || {};
 
 (function ($, view) {
 	
-	"use strict";	
+	"use strict";
 
-	view.d3 = view.d3 || {};
-
-    view.d3.Treemap = Backbone.View.extend({
+    view.D3Treemap = Backbone.View.extend({
         template: '<div id="{{uid}}" style="width: {{width}}px; height: {{height}}px;"> <div> ',
 
         initialize: function (options) {
@@ -4451,6 +4444,8 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
         initialize:function () {
             var self = this;
 
+            self.ds1_fetched = false;
+            self.ds1_fetched = false;
 
             this.fields = new my.FieldList();
 
@@ -4481,14 +4476,19 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
             }
 
             this.attributes.dataset1.bind('query:done', function () {
-                self.query();
+                self.ds1_fetched = true;
+                if(self.ds2_fetched)
+                    self.query();
             })
             this.attributes.dataset2.bind('query:done', function () {
-                self.query();
+                self.ds2_fetched = true;
+                if(self.ds1_fetched)
+                    self.query();
             })
 
             this.queryState.bind('change', function () {
-                self.query();
+                if(self.ds1_fetched && self.ds2_fetched)
+                    self.query();
             });
 
         },

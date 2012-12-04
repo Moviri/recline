@@ -159,10 +159,9 @@ this.recline.View = this.recline.View || {};
             	return column.computed_width;
             });
 	};
-	
-	view.d3 = view.d3 || {};
 
-    view.d3.table = Backbone.View.extend({
+
+    view.D3table = Backbone.View.extend({
         className: 'recline-table-editor',
         template: ' \
   				<div id="{{graphId}}" class="g-table g-table-hover g-table-striped g-table-bordered"> \

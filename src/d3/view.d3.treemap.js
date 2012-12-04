@@ -3,11 +3,9 @@ this.recline.View = this.recline.View || {};
 
 (function ($, view) {
 	
-	"use strict";	
+	"use strict";
 
-	view.d3 = view.d3 || {};
-
-    view.d3.Treemap = Backbone.View.extend({
+    view.D3Treemap = Backbone.View.extend({
         template: '<div id="{{uid}}" style="width: {{width}}px; height: {{height}}px;"> <div> ',
 
         initialize: function (options) {

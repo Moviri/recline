@@ -157,7 +157,7 @@ function reDraw() {
     var d;
     if(type == "sparkline") {
 
-        d = new recline.View.d3.Sparkline({
+        d = new recline.View.D3Sparkline({
             model: dataset,
             resultType: "unfiltered",
             field: "value",
@@ -170,7 +170,7 @@ function reDraw() {
 
 
     } else if(type == "treemap") {
-        d = new recline.View.d3.Treemap({
+        d = new recline.View.D3Treemap({
             model: dataset,
             resultType: "unfiltered",
             fieldValue: "value",
@@ -181,7 +181,7 @@ function reDraw() {
             delay: 200
         });
     }else if(type == "bullet") {
-        d = new recline.View.d3.Bullet({
+        d = new recline.View.D3Bullet({
             model: dataset,
             resultType: "unfiltered",
             fieldRanges: ["value", "rand"],
