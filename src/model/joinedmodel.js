@@ -16,12 +16,23 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
         initialize:function () {
             var self = this;
 
-            this.fields = this.attributes.dataset1.fields;
+
+            this.fields = new my.FieldList();
+
+            var tmpFields = [];
+            _.each(this.attributes.dataset1.fields.models, function(f) {
+                var c = f.toJSON();
+                c.id = "DS1." + c.id;
+                tmpFields.push(c);
+            });
 
             _.each(this.attributes.dataset2.fields.models, function(f) {
-               if(!self.fields.get(f.id))
-                self.fields.add(f);
+                var c = f.toJSON();
+                c.id = "DS2." + c.id;
+                tmpFields.push(c);
             });
+
+            this.fields.reset(tmpFields);
 
             this.records = new my.RecordList();
             //todo
@@ -118,16 +129,20 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
                 })
 
                 var resultsFromDataset2 = recline.Data.Filters.applyFiltersOnData(filters, dataset2.records.toJSON(), dataset2.fields.toJSON());
-                var record1 = r.toJSON();
+                var record = {};
+                _.each(r.toJSON(), function(f, index) {
+                   record["DS1." + index] = f;
+                });
 
                 _.each(resultsFromDataset2, function(res) {
                     _.each(res, function(field_value, index) {
-                        record1[index] = field_value;
+                        record["DS2." + index] = field_value;
                     })
-                    results.push(record1);
+                    results.push(record);
                 })
 
             })
+
 
             return results;
         },

@@ -4315,65 +4315,7 @@ if (!('some' in Array.prototype)) {
                 return true;
         return false;
     };
-}/*
-this.recline = this.recline || {};
-
-this.recline.Backend = this.recline.Backend || {};
-this.recline.Backend.Joined = this.recline.Backend.Joined || {};
-
-(function($, my) {
-  my.__type__ = 'joined';
-
-
-  my.Store = function(joiningmodel) {
-    var self = this;
-
-
-    self.joiningmodel = joiningmodel;
-
-    var startModel = {records: joiningmodel.primaryDataset.records, fields: primaryDataset.fields};
-
-      _.each(joiningmodel.joinedmodel, function(d) {
-        startModel = self.join(startModel, d.joinType, d.on, d.sourceField, d.destField);
-      });
-
-    self._store = new recline.Backend.Memory.Store(out.records, out.fields);
-
-  };
-
-    my.join = function(model, joinType, on, sourceField, destField) {
-        var self=this;
-        var newFields   = self.getJoinedFields[joinType](model.fields, on.fields);
-        var newRecords  = self.getJoinedRecords[joinType](model.fields, model.records, on.fields, on.records, sourceField, destField);
-
-        return {records: newRecords, fields: newFields};
-    };
-
-    my.getJoinedRecords = {
-        "union": function(sourceFields, sourceRecords, destFields, destRecords, onSourceField, onDestField) {
-           var records = sourceRecords;
-            _.each(destRecords, function(d) {
-                sourceRecords.push(d);
-            });
-            return records;
-        }
-    };
-
-    my.getJoinedFields = {
-        "union": function(sourceFields, destFields) {
-         var fields = sourceFields;
-            _.each(destFields, function(d) {
-                if(sourceFields.get(d.id) == null)
-                    throw "backend.joined.js: union error, field " + d.id + " not present in master dataset"
-            });
-          return fields;
-        }
-    };
-
-}(this.recline.Backend.joined));
-
-*/
-// # Recline Backbone Models
+}// # Recline Backbone Models
 this.recline = this.recline || {};
 this.recline.Model = this.recline.Model || {};
 this.recline.Model.FilteredDataset = this.recline.Model.FilteredDataset || {};
@@ -4509,12 +4451,23 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
         initialize:function () {
             var self = this;
 
-            this.fields = this.attributes.dataset1.fields;
+
+            this.fields = new my.FieldList();
+
+            var tmpFields = [];
+            _.each(this.attributes.dataset1.fields.models, function(f) {
+                var c = f.toJSON();
+                c.id = "DS1." + c.id;
+                tmpFields.push(c);
+            });
 
             _.each(this.attributes.dataset2.fields.models, function(f) {
-               if(!self.fields.get(f.id))
-                self.fields.add(f);
+                var c = f.toJSON();
+                c.id = "DS2." + c.id;
+                tmpFields.push(c);
             });
+
+            this.fields.reset(tmpFields);
 
             this.records = new my.RecordList();
             //todo
@@ -4611,16 +4564,20 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
                 })
 
                 var resultsFromDataset2 = recline.Data.Filters.applyFiltersOnData(filters, dataset2.records.toJSON(), dataset2.fields.toJSON());
-                var record1 = r.toJSON();
+                var record = {};
+                _.each(r.toJSON(), function(f, index) {
+                   record["DS1." + index] = f;
+                });
 
                 _.each(resultsFromDataset2, function(res) {
                     _.each(res, function(field_value, index) {
-                        record1[index] = field_value;
+                        record["DS2." + index] = field_value;
                     })
-                    results.push(record1);
+                    results.push(record);
                 })
 
             })
+
 
             return results;
         },
