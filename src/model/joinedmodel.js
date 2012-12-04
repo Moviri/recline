@@ -16,6 +16,8 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
         initialize:function () {
             var self = this;
 
+            self.ds1_fetched = false;
+            self.ds1_fetched = false;
 
             this.fields = new my.FieldList();
 
@@ -46,14 +48,19 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
             }
 
             this.attributes.dataset1.bind('query:done', function () {
-                self.query();
+                self.ds1_fetched = true;
+                if(self.ds2_fetched)
+                    self.query();
             })
             this.attributes.dataset2.bind('query:done', function () {
-                self.query();
+                self.ds2_fetched = true;
+                if(self.ds1_fetched)
+                    self.query();
             })
 
             this.queryState.bind('change', function () {
-                self.query();
+                if(self.ds1_fetched && self.ds2_fetched)
+                    self.query();
             });
 
         },
