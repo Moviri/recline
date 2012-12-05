@@ -23,8 +23,8 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
 
 
             this.records = new my.RecordList();
-            //todo
-            //this.facets = new my.FacetList();
+
+            this.facets = new my.FacetList();
             this.recordCount = null;
 
             this.queryState = new my.Query();
@@ -76,13 +76,13 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
             if(!_.contains(self.ds_fetched, "model"))
                 return false;
 
-             _.each(this.attributes.join, function(p) {
+             _.each(self.attributes.join, function(p) {
                  if(!_.contains(self.ds_fetched, p.id)) {
                      ret = false;
                  }
              });
 
-             return false;
+             return ret;
         },
 
         generatefields:function () {
@@ -96,7 +96,7 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
             _.each(this.attributes.join, function(p) {
                 _.each(p.model.fields.models, function (f) {
                     var c = f.toJSON();
-                    c.id = p.id + c.id;
+                    c.id = p.id + "." + c.id;
                     tmpFields.push(c);
                 });
             });
@@ -134,6 +134,8 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
             });
 
             results = results.slice(start, start + numRows);
+            facets = recline.Data.Faceting.computeFacets(results, queryObj);
+
             self.recordCount = results.length;
 
             var docs = _.map(results, function (hit) {
@@ -148,7 +150,18 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
                 return _doc;
             });
 
+
             self.records.reset(docs);
+
+            if (facets) {
+                var facets = _.map(facets, function (facetResult, facetId) {
+                    facetResult.id = facetId;
+                    var result = new my.Facet(facetResult);
+
+                    return result;
+                });
+                self.facets.reset(facets);
+            }
 
             self.trigger('query:done');
         },
@@ -189,7 +202,7 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
 
                     _.each(resultsFromDataset2, function (res) {
                         _.each(res, function (field_value, index) {
-                            record[p.id + index] = field_value;
+                            record[p.id + "." + index] = field_value;
                         })
                     })
 
@@ -217,8 +230,14 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
             data.recordCount = this.recordCount;
             data.fields = this.fields.toJSON();
             return data;
-        }
+        },
 
+
+        getFacetByFieldId:function (fieldId) {
+            return _.find(this.facets.models, function (facet) {
+                return facet.id == fieldId;
+            });
+        },
 
     })
 

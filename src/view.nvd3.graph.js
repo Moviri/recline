@@ -135,7 +135,7 @@ this.recline.View = this.recline.View || {};
 
                 nv.utils.windowResize(self.graphResize);
                 nv.utils.windowResize(self.graphResize);
-                self.graphResize()
+                //self.graphResize()
                 return  self.chart;
             });
         },
@@ -555,6 +555,8 @@ this.recline.View = this.recline.View || {};
             var records = self.model.getRecords(resultType);  //self.model.records.models;
 
             var xfield = self.model.fields.get(self.state.attributes.group);
+            if(!xfield)
+                throw "View.nvd3: unable to find field [" + self.state.attributes.group + "] on model"
 
             if (xfield.get('type') === 'date') {
                 xAxisIsDate = true;
@@ -564,6 +566,9 @@ this.recline.View = this.recline.View || {};
             var sizeField;
             if (seriesAttr.sizeField) {
                 sizeField = self.model.fields.get(seriesAttr.sizeField);
+
+                if(!sizeField)
+                    throw "View.nvd3: unable to find field [" + seriesAttr.sizeField + "] on model"
             }
 
 
@@ -571,7 +576,13 @@ this.recline.View = this.recline.View || {};
             if (seriesAttr.type == "byFieldValue") {
                 var seriesTmp = {};
                 var seriesNameField = self.model.fields.get(seriesAttr.seriesField);
+                if(!seriesNameField)
+                    throw "View.nvd3: unable to find field [" + seriesAttr.seriesField + "] on model"
+
                 var fieldValue = self.model.fields.get(seriesAttr.valuesField);
+                if(!fieldValue)
+                    throw "View.nvd3: unable to find field [" + seriesAttr.valuesField + "] on model"
+
 
                 _.each(records, function (doc, index) {
 
@@ -640,6 +651,9 @@ this.recline.View = this.recline.View || {};
 
                 _.each(serieNames, function (field) {
                     var yfield = self.model.fields.get(field);
+
+                    if(!yfield)
+                        throw "View.nvd3: unable to find field [" + field + "] on model"
 
                     var points = [];
 

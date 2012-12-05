@@ -255,6 +255,7 @@ var joined1 = new recline.Model.JoinedDataset( {
                 joinType: "left"
             }
     );
+    joined1.queryState.addFacetNoEvent("model.country");
 
     joined1.query();
 
