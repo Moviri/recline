@@ -22,7 +22,7 @@ root: ../../
         }
 
         .bs::after {
-            content: "dataset 1";
+            content: "model";
             position: absolute;
             top: -1px;
             left: -1px;
@@ -49,7 +49,7 @@ root: ../../
         }
 
         .bs2::after {
-            content: "dataset 2";
+            content: "dataset 1";
             position: absolute;
             top: -1px;
             left: -1px;
@@ -77,6 +77,33 @@ root: ../../
 
         .bs3::after {
             content: "Resulting joined model";
+            position: absolute;
+            top: -1px;
+            left: -1px;
+            padding: 3px 7px;
+            font-size: 12px;
+            font-weight: bold;
+            background-color: whiteSmoke;
+            border: 1px solid #DDD;
+            color: #9DA0A4;
+            -webkit-border-radius: 4px 0 4px 0;
+            -moz-border-radius: 4px 0 4px 0;
+            border-radius: 4px 0 4px 0;
+        }
+
+        .bs4 {
+            position: relative;
+            margin: 15px 0;
+            padding: 39px 19px 14px;
+            background-color: white;
+            border: 1px solid #DDD;
+            -webkit-border-radius: 4px;
+            -moz-border-radius: 4px;
+            border-radius: 4px;
+        }
+
+        .bs4::after {
+            content: "dataset 2";
             position: absolute;
             top: -1px;
             left: -1px;
@@ -130,20 +157,9 @@ var dataset1 = new recline.Model.Dataset({
 	            </div>
 	        </div>
 		    <div class="row-fluid">
-<pre>
-var dataset2 = new recline.Model.Dataset({
-  records:[
-     {country:'Italy', gender:"Female", visits:100},
-     {country:'Italy', gender:"Male",   visits:200},
-     {country:'Spain', gender:"Male",   visits:300}
-  ],
-fields:[
-  {id:'country', type:'string'},
-  {id:'gender', type:'string'},
-  {id:'visits', type:'integer' }
-  ]
-});
-</pre>
+                <div class="bs4">
+                    <div id="grid4" style="height: 30px;"></div>
+                </div>
 	        </div>
         </div>
         <div class="span5">
@@ -154,10 +170,13 @@ fields:[
 		    </div>
 		    <div class="row-fluid">
     <pre>
-var joined1 = new recline.Model.JoinedDataset({
-    dataset1: dataset1,
-    dataset2: dataset2,
-    joinon: ["country", "gender"]
+var joined1 = new recline.Model.JoinedDataset( {
+  model: dataset1,
+  join: [
+   { id: "ds1", model: dataset2, joinon:["country", "gender"]},
+   { id: "ds2", model: dataset3, joinon:["country", "gender"]}
+  ],
+  joinType: "left"
 });
 </pre>
    		</div>
@@ -172,7 +191,8 @@ var joined1 = new recline.Model.JoinedDataset({
         records:[
             {country:'Italy', gender:"Female", age:5},
             {country:'Italy', gender:"Male",   age:13},
-            {country:'Spain', gender:"Male",   age:14}
+            {country:'Spain', gender:"Male",   age:14},
+            {country:'Germany', gender:"Male",   age:14}
         ],
 
         fields:[
@@ -196,6 +216,20 @@ var joined1 = new recline.Model.JoinedDataset({
         ]
     });
 
+    var dataset3 = new recline.Model.Dataset({
+        records:[
+            {country:'Italy', gender:"Female", revenue:2},
+            {country:'Italy', gender:"Male",   revenue:3},
+            {country:'Spain', gender:"Male",   revenue:4}
+        ],
+
+        fields:[
+            {id:'country', type:'string'},
+            {id:'gender', type:'string'},
+            {id:'revenue', type:'integer' }
+        ]
+    });
+
     var action1 = new recline.Action({
         filters: {
             filter_value_list:   {type: "term",  field: "country",  fieldType: "string"}
@@ -213,9 +247,12 @@ var joined1 = new recline.Model.JoinedDataset({
 
    var joined1 = new recline.Model.JoinedDataset(
             {
-                dataset1: dataset1,
-                dataset2: dataset2,
-                joinon: ["country", "gender"]
+                model: dataset1,
+                join: [
+                    { id: "ds1", model: dataset2, joinon:["country", "gender"]},
+                    { id: "ds2", model: dataset3, joinon:["country", "gender"]}
+                ],
+                joinType: "left"
             }
     );
 
@@ -255,6 +292,21 @@ var joined1 = new recline.Model.JoinedDataset({
     });
     grid2.visible = true;
     grid2.render();
+
+    $el = $('#grid4');
+    var grid4 = new recline.View.SlickGrid({
+        model:dataset3,
+        el:$el,
+        state:{
+            fitColumns:true,
+            useHoverStyle:true,
+            useStripedStyle:true,
+            useCondensedStyle:true
+        }
+
+    });
+    grid4.visible = true;
+    grid4.render();
 
 
     $el = $('#grid3');

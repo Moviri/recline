@@ -15,26 +15,12 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
 
         initialize:function () {
             var self = this;
+            _.bindAll(this, 'generatefields');
 
-            self.ds1_fetched = false;
-            self.ds1_fetched = false;
+            self.ds_fetched = [];
 
             this.fields = new my.FieldList();
 
-            var tmpFields = [];
-            _.each(this.attributes.dataset1.fields.models, function(f) {
-                var c = f.toJSON();
-                c.id = "DS1." + c.id;
-                tmpFields.push(c);
-            });
-
-            _.each(this.attributes.dataset2.fields.models, function(f) {
-                var c = f.toJSON();
-                c.id = "DS2." + c.id;
-                tmpFields.push(c);
-            });
-
-            this.fields.reset(tmpFields);
 
             this.records = new my.RecordList();
             //todo
@@ -47,26 +33,80 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
                 this.get('initialState').setState(this);
             }
 
-            this.attributes.dataset1.bind('query:done', function () {
-                self.ds1_fetched = true;
-                if(self.ds2_fetched)
-                    self.query();
-            })
-            this.attributes.dataset2.bind('query:done', function () {
-                self.ds2_fetched = true;
-                if(self.ds1_fetched)
+            this.attributes.model.fields.bind('reset', this.generatefields);
+            this.attributes.model.fields.bind('add', this.generatefields);
+
+            _.each(this.attributes.join, function(p) {
+                p.model.fields.bind('reset', self.generatefields);
+                p.model.fields.bind('add', self.generatefields);
+
+            });
+
+            this.generatefields();
+
+            this.attributes.model.bind('query:done', function () {
+                self.ds_fetched.push("model");
+
+                if (self.allDsFetched())
                     self.query();
             })
 
-            this.queryState.bind('change', function () {
-                if(self.ds1_fetched && self.ds2_fetched)
-                    self.query();
+            _.each(this.attributes.join, function(p) {
+
+                p.model.bind('query:done', function () {
+                    self.ds_fetched.push(p.id);
+
+                    if (self.allDsFetched())
+                        self.query();
+                });
+
+                p.model.queryState.bind('change', function () {
+                    if (self.allDsFetched())
+                        self.query();
+                });
+
             });
 
         },
 
-        query:function (queryObj) {
+        allDsFetched: function() {
             var self=this;
+            var ret= true;
+
+            if(!_.contains(self.ds_fetched, "model"))
+                return false;
+
+             _.each(this.attributes.join, function(p) {
+                 if(!_.contains(self.ds_fetched, p.id)) {
+                     ret = false;
+                 }
+             });
+
+             return false;
+        },
+
+        generatefields:function () {
+            var tmpFields = [];
+            _.each(this.attributes.model.fields.models, function (f) {
+                var c = f.toJSON();
+                c.id = "model." + c.id;
+                tmpFields.push(c);
+            });
+
+            _.each(this.attributes.join, function(p) {
+                _.each(p.model.fields.models, function (f) {
+                    var c = f.toJSON();
+                    c.id = p.id + c.id;
+                    tmpFields.push(c);
+                });
+            });
+
+
+            this.fields.reset(tmpFields);
+        },
+
+        query:function (queryObj) {
+            var self = this;
             this.trigger('query:start');
 
             if (queryObj) {
@@ -77,16 +117,10 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
 
             console.log("Query on model query [" + JSON.stringify(queryObj) + "]");
 
-            var dataset1 = self.attributes.dataset1;
-            var dataset2 = self.attributes.dataset2;
-
             var results = self.join();
 
             var numRows = queryObj.size || results.length;
             var start = queryObj.from || 0;
-
-            //todo use records filtering in order to inherit all record properties
-            //todo perhaps need a new applyfiltersondata
 
             _.each(queryObj.sort, function (sortObj) {
                 var fieldName = sortObj.field;
@@ -119,34 +153,50 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
             self.trigger('query:done');
         },
 
-        join: function() {
-            var joinon      = this.attributes.joinon;
-            var dataset1    = this.attributes.dataset1;
-            var dataset2    = this.attributes.dataset2;
+        join:function () {
+            var joinon = this.attributes.joinon;
+            var joinType = this.attributes.joinType;
+            var model = this.attributes.model;
+            var joinModel = this.attributes.join;
 
 
             var results = [];
 
-            _.each(dataset1.getRecords(), function(r) {
+            _.each(model.getRecords(), function (r) {
                 var filters = [];
                 // creation of a filter on dataset2 based on dataset1 field value of joinon field
-                _.each(joinon, function(f) {
-                    var field = dataset1.fields.get(f);
-                    filters.push({field: field.id, type: "term", term:r.getFieldValueUnrendered(field), fieldType:field.attributes.type });
-                })
 
-                var resultsFromDataset2 = recline.Data.Filters.applyFiltersOnData(filters, dataset2.records.toJSON(), dataset2.fields.toJSON());
+
+                var recordMustBeAdded = true;
+
+                // define the record with all data from model
                 var record = {};
-                _.each(r.toJSON(), function(f, index) {
-                   record["DS1." + index] = f;
+                _.each(r.toJSON(), function (f, index) {
+                    record["model." + index] = f;
                 });
 
-                _.each(resultsFromDataset2, function(res) {
-                    _.each(res, function(field_value, index) {
-                        record["DS2." + index] = field_value;
+                _.each(joinModel, function(p) {
+                    // retrieve records from secondary model
+                    _.each(p.joinon, function (f) {
+                        var field = p.model.fields.get(f);
+                        filters.push({field:field.id, type:"term", term:r.getFieldValueUnrendered(field), fieldType:field.attributes.type });
                     })
+
+                    var resultsFromDataset2 = recline.Data.Filters.applyFiltersOnData(filters, p.model.records.toJSON(), p.model.fields.toJSON());
+
+                    if(resultsFromDataset2.length == 0)
+                        recordMustBeAdded = false;
+
+                    _.each(resultsFromDataset2, function (res) {
+                        _.each(res, function (field_value, index) {
+                            record[p.id + index] = field_value;
+                        })
+                    })
+
+                });
+
+               if(joinType=="left" || recordMustBeAdded)
                     results.push(record);
-                })
 
             })
 
