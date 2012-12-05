@@ -83,10 +83,6 @@ this.recline.View = this.recline.View || {};
             //    this.template = this.options.template;
 
         },
-        
-        resize: function(){
-
-        },
 
         render: function () {
             var self=this;
@@ -95,7 +91,6 @@ this.recline.View = this.recline.View || {};
             if(self.graph)
                 jQuery(graphid).empty();
 
-            //self.graph =
         },
 
         redraw: function () {
@@ -122,6 +117,8 @@ this.recline.View = this.recline.View || {};
             } else
             {
                 var field = this.model.fields.get(self.options.dimension);
+                if(!field)
+                    throw("View.Composed: unable to find dimension field [" + self.options.dimension + "] on dataset")
 
                 _.each(self.model.getRecords(self.options.resultType), function(r) {
                     var uid = (new Date().getTime() + Math.floor(Math.random() * 10000)); // generating an unique id for the chart

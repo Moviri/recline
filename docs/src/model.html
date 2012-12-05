@@ -384,11 +384,20 @@ for this record.</p>             </td>             <td class="code">            
 
 <p>For the provided Field get the corresponding computed data value
 for this record.</p>             </td>             <td class="code">               <div class="highlight"><pre>        <span class="nx">getFieldValueUnrendered</span><span class="o">:</span><span class="kd">function</span> <span class="p">(</span><span class="nx">field</span><span class="p">)</span> <span class="p">{</span>
-            <span class="kd">var</span> <span class="nx">val</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="nx">field</span><span class="p">.</span><span class="nx">id</span><span class="p">);</span>
+            <span class="kd">var</span> <span class="nx">val</span><span class="p">;</span>
+            <span class="k">try</span> <span class="p">{</span>
+                <span class="nx">val</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="nx">field</span><span class="p">.</span><span class="nx">id</span><span class="p">);</span>
+            <span class="p">}</span>
+            <span class="k">catch</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span> <span class="p">{</span>
+                <span class="k">throw</span> <span class="s2">&quot;Model: unable to read field [&quot;</span> <span class="o">+</span> <span class="nx">field</span><span class="p">.</span><span class="nx">id</span> <span class="o">+</span> <span class="s2">&quot;] from dataset&quot;</span><span class="p">;</span>
+            <span class="p">}</span>
+
             <span class="k">if</span> <span class="p">(</span><span class="nx">field</span><span class="p">.</span><span class="nx">deriver</span><span class="p">)</span> <span class="p">{</span>
                 <span class="nx">val</span> <span class="o">=</span> <span class="nx">field</span><span class="p">.</span><span class="nx">deriver</span><span class="p">(</span><span class="nx">val</span><span class="p">,</span> <span class="nx">field</span><span class="p">,</span> <span class="k">this</span><span class="p">);</span>
             <span class="p">}</span>
             <span class="k">return</span> <span class="nx">val</span><span class="p">;</span>
+
+
         <span class="p">},</span>
 
 

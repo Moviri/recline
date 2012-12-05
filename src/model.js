@@ -457,11 +457,20 @@ this.recline.Model = this.recline.Model || {};
         // For the provided Field get the corresponding computed data value
         // for this record.
         getFieldValueUnrendered:function (field) {
-            var val = this.get(field.id);
+            var val;
+            try {
+                val = this.get(field.id);
+            }
+            catch(err) {
+                throw "Model: unable to read field [" + field.id + "] from dataset";
+            }
+
             if (field.deriver) {
                 val = field.deriver(val, field, this);
             }
             return val;
+
+
         },
 
 
