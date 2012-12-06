@@ -13,7 +13,7 @@ this.recline.View = this.recline.View || {};
                         '<div class="c_row">' +
                             '<div class="cell cell_empty"></div>' +
                                 '{{#dimensions}}' +
-                                    '<div class="cell cell_name"><span class="title">{{term}}</span><span class="shape">{{shape}}</span></div>' +
+                                    '<div class="cell cell_name"><span class="title">{{term}}</span><span class="shape">{{{shape}}}</span></div>' +
                                 '{{/dimensions}}' +
                         '</div>' +
                     '</div>' +
