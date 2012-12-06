@@ -80,17 +80,26 @@ this.recline.Data.ShapeSchema = this.recline.Data.ShapeSchema || {};
             if(this.schema == null)
                 throw "data.shape.js: shape schema not yet initialized, datasource not fetched?"
 
-            var shape = recline.Template.Shapes[this._shapeName(fieldValue)];
-            if(shape == null)
-                throw "data.shape.js: shape [" +  this._shapeName(fieldValue) + "] not defined in template.shapes";
-            return  shape(fieldColor, isNode, isSVG);
+            if(!self.attributes.shapeType || self.attributes.shapeType == "svg") {
+                var shape = recline.Template.Shapes[this._shapeName(fieldValue)];
+                if(shape == null)
+                    throw "data.shape.js: shape [" +  this._shapeName(fieldValue) + "] not defined in template.shapes";
+                return  shape(fieldColor, isNode, isSVG);
+            } else if( self.attributes.shapeType == "text") {
+                return this._shapeName(this._shapeName(fieldValue));
+            } else if( self.attributes.shapeType == "image") {
+                return '<img src="' + this._shapeName(fieldValue) + '" class="shape_image">';
+            } else {
+                throw "data.shape.js: unsupported shapeType ["+ self.attributes.shapeType  +"]";
+            }
+
         },
 
         _shapeName: function(fieldValue) {
             var self=this;
 
             // find the correct shape, limits must be ordered
-            if(self.attributes.type && this.attributes.type == "fixedLimits") {
+            if(self.attributes.limitType && this.attributes.limitType == "fixedLimits") {
                 var shape = self.attributes.shapes[0];
 
 
@@ -104,7 +113,7 @@ this.recline.Data.ShapeSchema = this.recline.Data.ShapeSchema || {};
 
                 return shape;
             } else
-                return self.schema[fieldValue];
+                return self.schema[recline.Data.Transform.getFieldHash(fieldValue)];
         },
 
 
@@ -147,4 +156,18 @@ this.recline.Data.ShapeSchema = this.recline.Data.ShapeSchema || {};
         }
 
     })
+
+    my.ShapeSchema.addShapesToTerms = function (field, terms, shapeSchema) {
+        _.each(terms, function (t) {
+
+            // assignment of color schema to fields
+            if (shapeSchema) {
+                _.each(shapeSchema, function (d) {
+                    if (d.field === field)
+                        t.shape = d.schema.getShapeFor(t.term, t.color, false, false);
+                })
+            }
+        });
+    };
+
 }(jQuery, this.recline.Data));

@@ -157,6 +157,8 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
                 var facets = _.map(facets, function (facetResult, facetId) {
                     facetResult.id = facetId;
                     var result = new my.Facet(facetResult);
+                    recline.Data.ColorSchema.addColorsToTerms(facetId, result.attributes.terms, self.attributes.colorSchema);
+                    recline.Data.ShapeSchema.addShapesToTerms(facetId, result.attributes.terms, self.attributes.shapeSchema);
 
                     return result;
                 });
@@ -238,6 +240,31 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
                 return facet.id == fieldId;
             });
         },
+
+        setColorSchema:function () {
+            var self = this;
+            _.each(self.attributes.colorSchema, function (d) {
+                var field = _.find(self.fields.models, function (f) {
+                    return d.field === f.id
+                });
+                if (field != null)
+                    field.attributes.colorSchema = d.schema;
+            })
+        },
+
+        setShapeSchema:function () {
+            var self = this;
+            _.each(self.attributes.shapeSchema, function (d) {
+                var field = _.find(self.fields.models, function (f) {
+                    return d.field === f.id
+                });
+                if (field != null)
+                    field.attributes.shapeSchema = d.schema;
+            })
+        },
+        isFieldPartitioned:function (field) {
+            return false
+        }
 
     })
 
