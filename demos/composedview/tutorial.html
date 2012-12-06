@@ -54,7 +54,7 @@
 
 <script type="text/javascript" src="../../vendor/moment/1.6.2/moment.js"></script>
 <script type="text/javascript" src="../../vendor/crossfilter/1.1.0/crossfilter.min.js"></script>
-<script type="text/javascript" src="../../vendor/kartograph/unversioned/chroma.min.js"></script>
+<script type="text/javascript" src="../../vendor/chroma.js/chroma.min.js"></script>
 
 <script type="text/javascript" src="../../vendor/date/date.js"></script>
 
@@ -107,6 +107,7 @@
   <script type="text/javascript" src="../../src/data.shapes.js"></script>
   <script type="text/javascript" src="../../src/data.statemanagement.js"></script>
   <script type="text/javascript" src="../../src/data.fieldsutilities.js"></script>
+  <script type="text/javascript" src="../../src/data.faceting.js"></script>
 
   <script type="text/javascript" src="../../src/widget.pager.js"></script>
   <script type="text/javascript" src="../../src/widget.queryeditor.js"></script>
@@ -400,17 +401,20 @@ var composed = new recline.View.Composed({
             model:          dataset,
             el:$el,
             groupBy: "gender",
-            template: "horizontal",
+            template: "vertical",
             measures: [{
                 title: "Visits",
-                view: "NVD3Graph",
+                subtitle: "Visits sub",
+                shape: "test shape",
+                view: "Indicator",
                 props: {
                     state: {
-                        group: ["age"],
-                        series: {type: "byFieldName", valuesField: ["visits"]},
-                        options: {trendlines:true, minmax: true, tooltips: true, tooltip: "Key: {key} X: {x} Y: {y}",
-                            staggerLabels: true, showValues: true},
-                        graphType: "pieChart"
+                        label:"Values 1",
+                        labelColor: "red",
+                        description: "show total views",
+                        descriptionColor: "red",
+                        textColor: "red",
+                        kpi:            { type: "filtered", field: "visits"}
                     }
                 }
             }
@@ -418,22 +422,26 @@ var composed = new recline.View.Composed({
 
         });
 
+
         var $el = $('#composed2');
         var composed2 = new recline.View.Composed({
             model:          dataset,
             el:$el,
-            dimension: "gender",
-            template: "vertical",
+            groupBy: "gender",
+            template: "horizontal",
             measures: [{
                 title: "Visits",
-                view: "NVD3Graph",
+                subtitle: "Visits sub",
+                shape: "test shape",
+                view: "Indicator",
                 props: {
                     state: {
-                        group: ["age"],
-                        series: {type: "byFieldName", valuesField: ["visits"]},
-                        options: {trendlines:true, minmax: true, tooltips: true, tooltip: "Key: {key} X: {x} Y: {y}",
-                            staggerLabels: true, showValues: true},
-                        graphType: "multiBarChart"
+                        label:"Values 1",
+                        labelColor: "red",
+                        description: "show total views",
+                        descriptionColor: "red",
+                        textColor: "red",
+                        kpi:            { type: "filtered", field: "visits"}
                     }
                 }
             }
@@ -441,6 +449,7 @@ var composed = new recline.View.Composed({
 
         });
         composed2.visible = true;
+
 
         dataset.fetch();
     </script>

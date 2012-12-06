@@ -54,7 +54,7 @@
 
 <script type="text/javascript" src="../../vendor/moment/1.6.2/moment.js"></script>
 <script type="text/javascript" src="../../vendor/crossfilter/1.1.0/crossfilter.min.js"></script>
-<script type="text/javascript" src="../../vendor/kartograph/unversioned/chroma.min.js"></script>
+<script type="text/javascript" src="../../vendor/chroma.js/chroma.min.js"></script>
 
 <script type="text/javascript" src="../../vendor/date/date.js"></script>
 
@@ -107,6 +107,7 @@
   <script type="text/javascript" src="../../src/data.shapes.js"></script>
   <script type="text/javascript" src="../../src/data.statemanagement.js"></script>
   <script type="text/javascript" src="../../src/data.fieldsutilities.js"></script>
+  <script type="text/javascript" src="../../src/data.faceting.js"></script>
 
   <script type="text/javascript" src="../../src/widget.pager.js"></script>
   <script type="text/javascript" src="../../src/widget.queryeditor.js"></script>
@@ -464,6 +465,7 @@ var joined1 = new recline.Model.JoinedDataset( {
                 joinType: "left"
             }
     );
+    joined1.queryState.addFacetNoEvent("model.country");
 
     joined1.query();
 

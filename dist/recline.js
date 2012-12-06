@@ -1502,7 +1502,7 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
           var value = filter.field;
           var start = parse(filter.start);
           var stop  = parse(filter.stop);
-          return (value + " lt " + stop + "," + value + " gt "  + start);
+          return (value + " lte " + stop + "," + value + " gte "  + start);
 
       }
 
@@ -3304,7 +3304,6 @@ this.recline.Data.ColorSchema = this.recline.Data.ColorSchema || {};
 
 (function ($, my) {
 
-
     my.ColorSchema = Backbone.Model.extend({
         constructor:function ColorSchema() {
             Backbone.Model.prototype.constructor.apply(this, arguments);
@@ -3530,8 +3529,126 @@ this.recline.Data.ColorSchema = this.recline.Data.ColorSchema || {};
 
 
 
-    })
+
+
+    });
+
+    my.ColorSchema.addColorsToTerms = function (field, terms, colorSchema) {
+        _.each(terms, function (t) {
+
+            // assignment of color schema to fields
+            if (colorSchema) {
+                _.each(colorSchema, function (d) {
+                    if (d.field === field)
+                        t.color = d.schema.getColorFor(t.term);
+                })
+            }
+        });
+    };
 }(jQuery, this.recline.Data));
+this.recline = this.recline || {};
+this.recline.Data = this.recline.Data || {};
+
+(function(my) {
+
+
+my.Faceting = {};
+    my.Faceting.computeFacets = function (records, queryObj) {
+        var self = this;
+        var facetResults = {};
+        if (!queryObj.facets) {
+            return facetResults;
+        }
+        _.each(queryObj.facets, function (query, facetId) {
+            // TODO: remove dependency on recline.Model
+            facetResults[facetId] = new recline.Model.Facet({id:facetId}).toJSON();
+            facetResults[facetId].termsall = {};
+        });
+        // faceting
+        _.each(records, function (doc) {
+            _.each(queryObj.facets, function (query, facetId) {
+                var fieldId = query.terms.field;
+                var val = doc[fieldId];
+                var tmp = facetResults[facetId];
+                if (val) {
+                    tmp.termsall[val] = tmp.termsall[val] ? {count:tmp.termsall[val].count + 1, value:val} : {count:1, value:val};
+                } else {
+                    tmp.missing = tmp.missing + 1;
+                }
+            });
+        });
+
+        // if all_terms is specified add terms not presents
+        self.updateDistinctFieldsForFaceting(queryObj);
+
+        _.each(queryObj.facets, function (query, facetId) {
+            var tmp = facetResults[facetId];
+
+            var termsWithZeroCount =
+                _.difference(
+                    self.distinctFieldsValues[facetId],
+                    _.map(tmp.termsall, function (d) {
+                        return d.value
+                    })
+                );
+
+            _.each(termsWithZeroCount, function (d) {
+                tmp.termsall[d] = {count:0, value:d};
+            });
+
+        });
+
+
+        _.each(queryObj.facets, function (query, facetId) {
+            var tmp = facetResults[facetId];
+            var terms = _.map(tmp.termsall, function (res, term) {
+                return { term:res.value, count:res.count };
+            });
+            tmp.terms = _.sortBy(terms, function (item) {
+                // want descending order
+                return -item.count;
+            });
+        });
+
+
+        return facetResults;
+    };
+
+
+    //update uniq values for each terms present in facets with value all_terms
+    my.Faceting.updateDistinctFieldsForFaceting = function (queryObj) {
+        var self = this;
+        if (this.distinctFieldsValues == null)
+            this.distinctFieldsValues = {};
+
+        var fieldsToBeCalculated = [];
+
+        _.each(queryObj.facets, function (query, fieldId) {
+            if (query.terms.all_terms && self.distinctFieldsValues[fieldId] == null) {
+                fieldsToBeCalculated.push(fieldId);
+            }
+        });
+
+        if (fieldsToBeCalculated.length > 0) {
+            _.each(fieldsToBeCalculated, function (d) {
+                self.distinctFieldsValues[d] = []
+            });
+
+            _.each(self.data, function (d) {
+                _.each(fieldsToBeCalculated, function (field) {
+                    self.distinctFieldsValues[field].push(d[field]);
+                });
+            });
+        }
+
+        _.each(fieldsToBeCalculated, function (d) {
+            self.distinctFieldsValues[d] = _.uniq(self.distinctFieldsValues[d])
+        });
+
+    };
+
+
+}(this.recline.Data))
 // # Recline Backbone Models
 this.recline = this.recline || {};
 this.recline.Data = this.recline.Data || {};
@@ -3788,7 +3905,7 @@ my.Filters = {};
     my.Filters._dataParsers = {
             integer: function (e) { return parseFloat(e, 10); },
             float: function (e) { return parseFloat(e, 10); },
-            string : function (e) { return e.toString() },
+            string : function (e) { if(!e) return null; else return e.toString(); },
             date   : function (e) { return new Date(e).valueOf() },
             datetime   : function (e) { return new Date(e).valueOf()},
             number: function (e) { return parseFloat(e, 10); }
@@ -4011,17 +4128,26 @@ this.recline.Data.ShapeSchema = this.recline.Data.ShapeSchema || {};
             if(this.schema == null)
                 throw "data.shape.js: shape schema not yet initialized, datasource not fetched?"
 
-            var shape = recline.Template.Shapes[this._shapeName(fieldValue)];
-            if(shape == null)
-                throw "data.shape.js: shape [" +  this._shapeName(fieldValue) + "] not defined in template.shapes";
-            return  shape(fieldColor, isNode, isSVG);
+            if(!self.attributes.shapeType || self.attributes.shapeType == "svg") {
+                var shape = recline.Template.Shapes[this._shapeName(fieldValue)];
+                if(shape == null)
+                    throw "data.shape.js: shape [" +  this._shapeName(fieldValue) + "] not defined in template.shapes";
+                return  shape(fieldColor, isNode, isSVG);
+            } else if( self.attributes.shapeType == "text") {
+                return this._shapeName(this._shapeName(fieldValue));
+            } else if( self.attributes.shapeType == "image") {
+                return '<img src="' + this._shapeName(fieldValue) + '" class="shape_image">';
+            } else {
+                throw "data.shape.js: unsupported shapeType ["+ self.attributes.shapeType  +"]";
+            }
+
         },
 
         _shapeName: function(fieldValue) {
             var self=this;
 
             // find the correct shape, limits must be ordered
-            if(self.attributes.type && this.attributes.type == "fixedLimits") {
+            if(self.attributes.limitType && this.attributes.limitType == "fixedLimits") {
                 var shape = self.attributes.shapes[0];
 
 
@@ -4035,7 +4161,7 @@ this.recline.Data.ShapeSchema = this.recline.Data.ShapeSchema || {};
 
                 return shape;
             } else
-                return self.schema[fieldValue];
+                return self.schema[recline.Data.Transform.getFieldHash(fieldValue)];
         },
 
 
@@ -4078,6 +4204,20 @@ this.recline.Data.ShapeSchema = this.recline.Data.ShapeSchema || {};
         }
 
     })
+
+    my.ShapeSchema.addShapesToTerms = function (field, terms, shapeSchema) {
+        _.each(terms, function (t) {
+
+            // assignment of color schema to fields
+            if (shapeSchema) {
+                _.each(shapeSchema, function (d) {
+                    if (d.field === field)
+                        t.shape = d.schema.getShapeFor(t.term, t.color, false, false);
+                })
+            }
+        });
+    };
+
 }(jQuery, this.recline.Data));
 this.recline = this.recline || {};
 this.recline.Data = this.recline.Data || {};
@@ -4224,6 +4364,9 @@ my.Transform.mapDocs = function(docs, editFunc) {
 };
 
     my.Transform.getFieldHash = function(value) {
+        if(!value)
+            return "0";
+
         if(isNaN(value))
             return  recline.Data.Transform.hashCode(value);
         else
@@ -4451,8 +4594,8 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
 
 
             this.records = new my.RecordList();
-            //todo
-            //this.facets = new my.FacetList();
+
+            this.facets = new my.FacetList();
             this.recordCount = null;
 
             this.queryState = new my.Query();
@@ -4504,13 +4647,13 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
             if(!_.contains(self.ds_fetched, "model"))
                 return false;
 
-             _.each(this.attributes.join, function(p) {
+             _.each(self.attributes.join, function(p) {
                  if(!_.contains(self.ds_fetched, p.id)) {
                      ret = false;
                  }
              });
 
-             return false;
+             return ret;
         },
 
         generatefields:function () {
@@ -4524,7 +4667,7 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
             _.each(this.attributes.join, function(p) {
                 _.each(p.model.fields.models, function (f) {
                     var c = f.toJSON();
-                    c.id = p.id + c.id;
+                    c.id = p.id + "." + c.id;
                     tmpFields.push(c);
                 });
             });
@@ -4562,6 +4705,8 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
             });
 
             results = results.slice(start, start + numRows);
+            facets = recline.Data.Faceting.computeFacets(results, queryObj);
+
             self.recordCount = results.length;
 
             var docs = _.map(results, function (hit) {
@@ -4576,7 +4721,20 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
                 return _doc;
             });
 
+
             self.records.reset(docs);
+
+            if (facets) {
+                var facets = _.map(facets, function (facetResult, facetId) {
+                    facetResult.id = facetId;
+                    var result = new my.Facet(facetResult);
+                    recline.Data.ColorSchema.addColorsToTerms(facetId, result.attributes.terms, self.attributes.colorSchema);
+                    recline.Data.ShapeSchema.addShapesToTerms(facetId, result.attributes.terms, self.attributes.shapeSchema);
+
+                    return result;
+                });
+                self.facets.reset(facets);
+            }
 
             self.trigger('query:done');
         },
@@ -4617,7 +4775,7 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
 
                     _.each(resultsFromDataset2, function (res) {
                         _.each(res, function (field_value, index) {
-                            record[p.id + index] = field_value;
+                            record[p.id + "." + index] = field_value;
                         })
                     })
 
@@ -4645,8 +4803,39 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
             data.recordCount = this.recordCount;
             data.fields = this.fields.toJSON();
             return data;
-        }
+        },
 
+
+        getFacetByFieldId:function (fieldId) {
+            return _.find(this.facets.models, function (facet) {
+                return facet.id == fieldId;
+            });
+        },
+
+        setColorSchema:function () {
+            var self = this;
+            _.each(self.attributes.colorSchema, function (d) {
+                var field = _.find(self.fields.models, function (f) {
+                    return d.field === f.id
+                });
+                if (field != null)
+                    field.attributes.colorSchema = d.schema;
+            })
+        },
+
+        setShapeSchema:function () {
+            var self = this;
+            _.each(self.attributes.shapeSchema, function (d) {
+                var field = _.find(self.fields.models, function (f) {
+                    return d.field === f.id
+                });
+                if (field != null)
+                    field.attributes.shapeSchema = d.schema;
+            })
+        },
+        isFieldPartitioned:function (field) {
+            return false
+        }
 
     })
 
@@ -4941,7 +5130,8 @@ this.recline.Model = this.recline.Model || {};
                 var facets = _.map(queryResult.facets, function (facetResult, facetId) {
                     facetResult.id = facetId;
                     var result = new my.Facet(facetResult);
-                    self.addColorsToTerms(facetId, result.attributes.terms);
+                    recline.Data.ColorSchema.addColorsToTerms(facetId, result.attributes.terms, self.attributes.colorSchema);
+                    recline.Data.ShapeSchema.addShapesToTerms(facetId, result.attributes.terms, self.attributes.shapeSchema);
 
                     return result;
                 });
@@ -4949,19 +5139,9 @@ this.recline.Model = this.recline.Model || {};
             }
         },
 
-        addColorsToTerms:function (field, terms) {
-            var self = this;
-            _.each(terms, function (t) {
 
-                // assignment of color schema to fields
-                if (self.attributes.colorSchema) {
-                    _.each(self.attributes.colorSchema, function (d) {
-                        if (d.field === field)
-                            t.color = d.schema.getColorFor(t.term);
-                    })
-                }
-            });
-        },
+
+
 
 
         selection:function (queryObj) {
@@ -6497,62 +6677,59 @@ this.recline.View = this.recline.View || {};
 	
 	"use strict";	
 
-    // dimension: female male
-    // measures: visits
-
     view.Composed = Backbone.View.extend({
         templates: {
-        horizontal: '<div id="{{uid}}"> ' +
+           vertical: '<div id="{{uid}}"> ' +
                 '<div class="composedview_table">' +
-                '<div class="c_group c_header">' +
-                '<div class="c_row">' +
-                    '<div class="cell cell_empty"></div>' +
-                        '{{#dimensions}}' +
-                            '<div class="cell cell_name">{{term}}</div>' +
-                        '{{/dimensions}}' +
+                    '<div class="c_group c_header">' +
+                        '<div class="c_row">' +
+                            '<div class="cell cell_empty"></div>' +
+                                '{{#dimensions}}' +
+                                    '<div class="cell cell_name"><span class="title">{{term}}</span><span class="shape">{{{shape}}}</span></div>' +
+                                '{{/dimensions}}' +
+                        '</div>' +
                     '</div>' +
+                    '<div class="c_group c_body">' +
+                        '{{#measures}}' +
+                            '<div class="c_row">' +
+                                '<div class="cell cell_title"><div class="rawhtml">{{{rawhtml}}}</div><span class="title">{{title}}</span> <span class="subtitle">{{subtitle}}</span><span class="shape">{{{shape}}}</span></div>' +
+                                    '{{#dimensions}}' +
+                                        '<div class="cell cell_graph" id="{{#getDimensionIDbyMeasureID}}{{measure_id}}{{/getDimensionIDbyMeasureID}}" term="{{measure_id}}"></div>' +
+                                    '{{/dimensions}}' +
+                            '</div>' +
+                        '{{/measures}}' +
+                    '</div>' +
+                    '<div class="c_group c_footer"></div>' +
                 '</div>' +
-                '<div class="c_group c_body">' +
-                    '<div class="c_row">' +
-            '<div class="cell cell_title">{{title}}</div>' +
-            '{{#dimensions}}' +
-            '{{#measures}}' +
-                            '<div class="cell cell_graph" id="{{id}}"></div>' +
-                    '{{/measures}}' +
-                 '{{/dimensions}}' +
-            '</div>' +
-                '</div>' +
-                '<div class="c_group c_footer"></div>' +
-                '</div>' +
-                '<div> ',
+                '</div> ',
 
-        vertical: '<div id="{{uid}}"> ' +
+           horizontal: '<div id="{{uid}}"> ' +
             '<div class="composedview_table">' +
             '<div class="c_group c_header">' +
             '<div class="c_row">' +
             '<div class="cell cell_empty"></div>' +
             '{{#measures}}' +
-            '<div class="cell cell_title">{{title}}</div>' +
+            '<div class="cell cell_title"><div class="rawhtml">{{{rawhtml}}}</div><span class="title">{{title}}</span> <span class="subtitle">{{subtitle}}</span><span class="shape">{{{shape}}}</span></div>' +
             '{{/measures}}' +
             '</div>' +
             '</div>' +
             '<div class="c_group c_body">' +
             '{{#dimensions}}' +
             '<div class="c_row">' +
-            '<div class="cell cell_name">{{term}}</div>' +
+            '<div class="cell cell_name"><span class="title">{{term}}</span><span class="shape">{{{shape}}}</span></div>' +
             '{{#measures}}' +
-            '<div class="cell cell_graph" id="{{id}}"></div>' +
+            '<div class="cell cell_graph" id="{{viewid}}"></div>' +
             '{{/measures}}' +
             '</div>' +
             '{{/dimensions}}' +
             '</div>' +
             '<div class="c_group c_footer"></div>' +
             '</div>' +
-            '<div> '
+            '</div> '
         },
 
         initialize: function (options) {
-
+            var self=this;
             this.el = $(this.el);
     		_.bindAll(this, 'render', 'redraw');
                      
@@ -6567,6 +6744,9 @@ this.recline.View = this.recline.View || {};
 
 			this.uid = options.id || ("composed_" + new Date().getTime() + Math.floor(Math.random() * 10000)); // generating an unique id for the chart
 
+            _.each(this.options.measures, function(m, index) {
+                self.options.measures[index]["measure_id"] = new Date().getTime() + Math.floor(Math.random() * 10000);
+            });
 
             //contains the array of views contained in the composed view
             this.views = [];
@@ -6596,26 +6776,46 @@ this.recline.View = this.recline.View || {};
                 var field = this.model.fields.get(self.options.groupBy);
 
                 if (!facets) {
-                    throw "ComposedView: no facet present for dimension [" + this.attributes.dimension + "]. Define a facet on the model before view render";
+                    throw "ComposedView: no facet present for groupby field [" + this.attributes.dimension + "]. Define a facet on the model before view render";
                 }
 
                 _.each(facets.attributes.terms, function(t) {
                     if(t.count > 0)  {
                         var uid = (new Date().getTime() + Math.floor(Math.random() * 10000)); // generating an unique id for the chart
-                        self.dimensions.push(self.addFilteredMeasuresToDimension({term:t.term, id: uid}, field));
+                        var dim = {term: t.term, id_dimension: uid, shape: t.shape};
+
+                        dim["getDimensionIDbyMeasureID"] = function () { return function(measureID) {
+                            var measure =_.find(this.measures, function(f) {
+                                return f.measure_id==measureID;
+                            });
+                            return measure.viewid;
+                        }};
+
+                        self.dimensions.push(self.addFilteredMeasuresToDimension(dim, field));
                     }
                 })
 
             } else
             {
-                var field = this.model.fields.get(self.options.dimension);
+                /*var field = this.model.fields.get(self.options.dimension);
                 if(!field)
                     throw("View.Composed: unable to find dimension field [" + self.options.dimension + "] on dataset")
 
                 _.each(self.model.getRecords(self.options.resultType), function(r) {
                     var uid = (new Date().getTime() + Math.floor(Math.random() * 10000)); // generating an unique id for the chart
                     self.dimensions.push( self.addMeasuresToDimension({term: r.getFieldValue(field), id: uid}, field, r));
-                });
+                });*/
+                var uid = (new Date().getTime() + Math.floor(Math.random() * 10000)); // generating an unique id for the chart
+                var dim =  self.addMeasuresToDimension({term: self.options.dimension, id_dimension: uid});
+
+                dim["getDimensionIDbyMeasureID"] = function () { return function(measureID) {
+                    var measure =_.find(this.measures, function(f) {
+                        return f.measure_id==measureID;
+                    });
+                    return measure.viewid;
+                }};
+
+                self.dimensions.push( dim );
 
             }
             this.measures=this.options.measures;
@@ -6625,6 +6825,11 @@ this.recline.View = this.recline.View || {};
                 tmpl = this.templates[this.options.template];
             if(this.options.customTemplate)
                 tmpl = this.options.customTemplate;
+
+            console.log(tmpl);
+            console.log(self);
+
+            //throw "ss";
 
             var out = Mustache.render(tmpl, self);
             this.el.html(out);
@@ -6645,7 +6850,7 @@ this.recline.View = this.recline.View || {};
             var self=this;
             _.each(self.dimensions, function(dim) {
                 _.each(dim.measures, function(m) {
-                    var $el = $('#' + m.id);
+                    var $el = $('#' + m.viewid);
                     m.props["el"] = $el;
                     m.props["model"] = m.dataset;
                     var view =  new recline.View[m.view](m.props);
@@ -6674,8 +6879,17 @@ this.recline.View = this.recline.View || {};
 
             var data = [];
             _.each(self.options.measures, function(d) {
-                var uid = (new Date().getTime() + Math.floor(Math.random() * 10000)); // generating an unique id for the chart
-                var val = {view: d.view, id: uid, props:d.props, dataset: filtereddataset, title:d.title};
+                var val = {
+                    view: d.view,
+                    viewid: new Date().getTime() + Math.floor(Math.random() * 10000),
+                    measure_id:d.measure_id,
+                    props:d.props,
+                    dataset: filtereddataset,
+                    title:d.title,
+                    subtitle:d.subtitle,
+                    rawhtml: d.rawhtml
+                };
+
                 data.push(val);
             });
 
@@ -6684,19 +6898,19 @@ this.recline.View = this.recline.View || {};
 
         },
 
-        addMeasuresToDimension: function(currentRow, dimensionField, record) {
+        addMeasuresToDimension: function(currentRow) {
             var self=this;
-
-            var ds = new recline.Model.Dataset({
-                     records: [record.toJSON()],
-                    fields: self.model.fields.toJSON()
-                });
-
 
             var data = [];
             _.each(self.options.measures, function(d) {
-                var uid = (new Date().getTime() + Math.floor(Math.random() * 10000)); // generating an unique id for the chart
-                var val = {view: d.view, id: uid, props:d.props, dataset: ds, title:d.title};
+                var val = {
+                    view: d.view, viewid: new Date().getTime() + Math.floor(Math.random() * 10000),
+                    measure_id:d.measure_id,
+                    props:d.props,
+                    dataset: self.model,
+                    title:d.title,
+                    subtitle:d.subtitle,
+                    rawhtml: d.rawhtml};
                 data.push(val);
             });
 
@@ -7433,7 +7647,7 @@ my.GridRow = Backbone.View.extend({
 this.recline = this.recline || {};
 this.recline.View = this.recline.View || {};
 
-(function($, my) {
+(function ($, my) {
 
 // ## Indicator view for a Dataset 
 //
@@ -7450,122 +7664,172 @@ this.recline.View = this.recline.View || {};
 // NB: should *not* provide an el argument to the view but must let the view
 // generate the element itself (you can then append view.el to the DOM.
     my.Indicator = Backbone.View.extend({
-	  defaults: {
-		format: 'd'
-	  },
+        defaults:{
+            format:'d'
+        },
 
-  templateBase: '<div class="recline-indicator"> \
-      <div class="panel indicator_{{viewId}}" style="display: block;"> \
-        <div id="indicator_{{viewId}}"> \
-			<table class="condensed-table border-free-table"> \
-                <tr><td></td><td style="text-align: center;">{{label}}</td></tr>    \
-                <tr><td></td><td style="text-align: center;"><small>{{description}}</small></td></tr>    \
-                <tr><td><div>{{& shape}}</div></td><td style="text-align: center;"><strong>{{value}}</strong></td></tr>  \
-             </table>  \
-		</div>\
-      </div> \
-    </div> ',
-  templatePercentageCompare: '<div class="recline-indicator"> \
-      <div class="panel indicator_{{viewId}}" style="display: block;"> \
-        <div id="indicator_{{viewId}}"> \
-			 <table class="condensed-table border-free-table"> \
-                <tr><td></td><td style="text-align: center;">{{label}}</td></tr>    \
-                <tr><td></td><td style="text-align: center;"><small>{{description}}</small></td></tr>    \
-                <tr><td><div>{{& shape}}</div></td><td style="text-align: center;"><strong>{{value}}</strong></td></tr>  \
-                <tr><td></td><td style="text-align: center;"><small>% of total: {{comparePercentage}} ({{compareWithValue}})</small></td></tr>  \
-             </table>  \
-		</div>\
-      </div> \
-    </div> ',
+        compareType:{
+            self:this,
+            percentage:function (kpi, compare, templates) {
+                var tmpField = new recline.Model.Field({type:"number", format:"percentage"});
+                var unrenderedValue = kpi / compare * 100;
+                var data = recline.Data.Renderers(unrenderedValue, tmpField);
+                var template = templates.templatePercentageCompare;
 
+                return {data:data, template:template, unrenderedValue: unrenderedValue};
+            },
+            percentageVariation:function (kpi, compare, templates) {
+                var tmpField = new recline.Model.Field({type:"number", format:"percentage"});
+                var unrenderedValue = (kpi-compare) / compare * 100;
+                var data = recline.Data.Renderers( unrenderedValue, tmpField);
+                var template = templates.templatePercentageVariation;
 
-
-
-  initialize: function(options) {
-    var self = this;
-
-    this.el = $(this.el);
-    _.bindAll(this, 'render');
-      this.uid = options.id || ("" + new Date().getTime() + Math.floor(Math.random() * 10000)); // generating an unique id for the chart
-
-      this.model.bind('query:done', this.render);
-
-  },
-
-    render: function() {
-        var self = this;
-        var tmplData = {};
-        tmplData["viewId"] = this.uid;
-		tmplData.label = this.options.state && this.options.state["label"];
-
-        var kpi     = self.model.getRecords(self.options.state.kpi.type);
-
-
-        var field;
-        if(self.options.state.kpi.aggr)
-            field = self.model.getField_byAggregationFunction(self.options.state.kpi.type, self.options.state.kpi.field, self.options.state.kpi.aggr);
-        else
-            field = self.model.getFields(self.options.state.kpi.type).get(self.options.state.kpi.field);
-
-        var kpiValue;
-
-
-
-
-        if(kpi.length > 0) {
-            kpiValue = kpi[0].getFieldValueUnrendered(field);
-            tmplData["value"] = kpi[0].getFieldValue(field);
-            tmplData["shape"] = kpi[0].getFieldShape(field, true, false);
-        }
-        else tmplData["value"] = "N/A"
-
-        var template = this.templateBase;
-
-        if(self.options.state.compareWith) {
-            var compareWithRecord  = self.model.getRecords(self.options.state.compareWith.type);
-            var compareWithField;
-
-            if(self.options.state.kpi.aggr)
-                compareWithField= self.model.getField_byAggregationFunction(self.options.state.compareWith.type, self.options.state.compareWith.field, self.options.state.compareWith.aggr);
-            else
-                compareWithField= self.options.model.getFields(self.options.state.compareWith.type).get(self.options.state.compareWith.field);
-
-            tmplData["compareWithValue"]  = compareWithRecord[0].getFieldValue(compareWithField);
-            var compareWithValue =  compareWithRecord[0].getFieldValueUnrendered(compareWithField);
-
-            var compareValue;
-            if(self.options.state.compareWith.compareType == "percentage") {
-                var tmpField = new recline.Model.Field({type: "number", format: "percentage"});
-
-                tmplData["comparePercentage"]  =  recline.Data.Renderers(kpiValue / compareWithValue * 100, tmpField);
-                template = this.templatePercentageCompare;
+                return {data:data, template:template, unrenderedValue: unrenderedValue};
+            },
+            nocompare: function (kpi, compare, templates){
+                return {data:null, template:templates.templateBase, unrenderedValue:null};
             }
+
+        },
+
+        templates:{
+             templateBase:'<div class="indicator"> \
+      <div class="panel indicator_{{viewId}}"> \
+        <div id="indicator_{{viewId}}"> \
+			<table> \
+                <tr><td></td><td style="text-align: center;">{{label}}</td></tr>    \
+                <tr><td></td><td style="text-align: center;"><small>{{description}}</small></td></tr>    \
+                <tr><td><div class="shape">{{& shape}}</div><div class="compareshape">{{{compareShape}}}</div></td><td>{{value}}</td></tr>  \
+             </table>  \
+		</div>\
+      </div> \
+    </div> ',
+            templatePercentageCompare:'<div class="indicator"> \
+      <div class="panel indicator_{{viewId}}"> \
+        <div id="indicator_{{viewId}}"> \
+			 <table> \
+                <tr><td></td><td>{{label}}</td></tr>    \
+                <tr><td></td><td><small>{{description}}</small></td></tr>    \
+                <tr><td><div class="shape">{{& shape}}</div><div class="compareshape">{{{compareShape}}}</div></td><td>{{value}}</td></tr>  \
+                <tr><td></td><td>% of total: {{compareValue}} ({{compareWithValue}})</td></tr>  \
+             </table>  \
+		</div>\
+      </div> \
+    </div> ',
+            templatePercentageVariation:'<div class="indicator"> \
+      <div class="panel indicator_{{viewId}}"> \
+        <div id="indicator_{{viewId}}"> \
+			 <table> \
+                <tr><td></td><td>{{label}}</td></tr>    \
+                <tr><td></td><td><small>{{description}}</small></td></tr>    \
+                <tr><td><div class="shape">{{& shape}}</div><div class="compareshape">{{{compareShape}}}</div></td><td>{{value}}</td></tr>  \
+                <tr><td></td><td>% variation: {{compareValue}} ({{compareWithValue}})</td></tr>  \
+             </table>  \
+		</div>\
+      </div> \
+    </div> '
+        },
+
+
+        initialize:function (options) {
+            var self = this;
+
+            this.el = $(this.el);
+            _.bindAll(this, 'render');
+            this.uid = options.id || ("" + new Date().getTime() + Math.floor(Math.random() * 10000)); // generating an unique id for the chart
+
+            this.model.bind('query:done', this.render);
+
+        },
+
+        render:function () {
+            var self = this;
+            var tmplData = {};
+            tmplData["viewId"] = this.uid;
+            tmplData.label = this.options.state && this.options.state["label"];
+
+            var kpi = self.model.getRecords(self.options.state.kpi.type);
+
+
+            var field;
+            if (self.options.state.kpi.aggr)
+                field = self.model.getField_byAggregationFunction(self.options.state.kpi.type, self.options.state.kpi.field, self.options.state.kpi.aggr);
+            else
+                field = self.model.getFields(self.options.state.kpi.type).get(self.options.state.kpi.field);
+
+            if (!field)
+                throw "View.Indicator: unable to find field [" + self.options.state.kpi.field + "] on model"
+
+
+            var kpiValue;
+
+
+            if (kpi.length > 0) {
+                kpiValue = kpi[0].getFieldValueUnrendered(field);
+                tmplData["value"] = kpi[0].getFieldValue(field);
+                tmplData["shape"] = kpi[0].getFieldShape(field, true, false);
+            }
+            else tmplData["value"] = "N/A"
+
+            var template = this.templates.templateBase;
+
+            if (self.options.state.compareWith) {
+                var compareWithRecord = self.model.getRecords(self.options.state.compareWith.type);
+                var compareWithField;
+
+                if (self.options.state.kpi.aggr)
+                    compareWithField = self.model.getField_byAggregationFunction(self.options.state.compareWith.type, self.options.state.compareWith.field, self.options.state.compareWith.aggr);
+                else
+                    compareWithField = self.options.model.getFields(self.options.state.compareWith.type).get(self.options.state.compareWith.field);
+
+                if (!compareWithField)
+                    throw "View.Indicator: unable to find field [" + self.options.state.compareWith.field + "] on model"
+
+                tmplData["compareWithValue"] = compareWithRecord[0].getFieldValue(compareWithField);
+                var compareWithValue = compareWithRecord[0].getFieldValueUnrendered(compareWithField);
+
+                var compareValue;
+
+                var compareValue = self.compareType[self.options.state.compareWith.compareType](kpiValue, compareWithValue, self.templates);
+                if(!compareValue)
+                    throw "View.Indicator: unable to find compareType [" + self.options.state.compareWith.compareType + "]";
+
+                tmplData["compareValue"] = compareValue.data;
+
+                if(self.options.state.compareWith.shapes) {
+                    if(compareValue.unrenderedValue == 0)
+                        tmplData["compareShape"] = self.options.state.compareWith.shapes.constant;
+                    else if(compareValue.unrenderedValue > 0)
+                        tmplData["compareShape"] = self.options.state.compareWith.shapes.increase;
+                    else if(compareValue.unrenderedValue < 0)
+                        tmplData["compareShape"] = self.options.state.compareWith.shapes.decrease;
+                }
+
+                if(compareValue.template)
+                    template = compareValue.template;
+
+            }
+
+
+            if (this.options.state.description)
+                tmplData["description"] = this.options.state.description;
+
+            var htmls = Mustache.render(template, tmplData);
+            $(this.el).html(htmls);
+
+
+            //this.$graph = this.el.find('.panel.indicator_' + tmplData["viewId"]);
+
+
+            return this;
         }
 
 
-        if(this.options.state.description)
-            tmplData["description"] = this.options.state.description;
-
-        if(this.options.state.labelColor)
-            tmplData["labelColor"] = this.options.state.labelColor;
-        if(this.options.state.descriptionColor)
-            tmplData["descriptionColor"] = this.options.state.descriptionColor;
-        if(this.options.state.textColor)
-            tmplData["textColor"] = this.options.state.textColor;
-
-        var htmls = Mustache.render(template, tmplData);
-        $(this.el).html(htmls);
-
-
-        //this.$graph = this.el.find('.panel.indicator_' + tmplData["viewId"]);
-
-
-        return this;
-    }
 
 
 
-});
+
+    });
 
 
 })(jQuery, recline.View);
@@ -9170,7 +9434,7 @@ this.recline.View = this.recline.View || {};
 
                 nv.utils.windowResize(self.graphResize);
                 nv.utils.windowResize(self.graphResize);
-                self.graphResize()
+                //self.graphResize()
                 return  self.chart;
             });
         },
@@ -9590,6 +9854,8 @@ this.recline.View = this.recline.View || {};
             var records = self.model.getRecords(resultType);  //self.model.records.models;
 
             var xfield = self.model.fields.get(self.state.attributes.group);
+            if(!xfield)
+                throw "View.nvd3: unable to find field [" + self.state.attributes.group + "] on model"
 
             if (xfield.get('type') === 'date') {
                 xAxisIsDate = true;
@@ -9599,6 +9865,9 @@ this.recline.View = this.recline.View || {};
             var sizeField;
             if (seriesAttr.sizeField) {
                 sizeField = self.model.fields.get(seriesAttr.sizeField);
+
+                if(!sizeField)
+                    throw "View.nvd3: unable to find field [" + seriesAttr.sizeField + "] on model"
             }
 
 
@@ -9606,7 +9875,13 @@ this.recline.View = this.recline.View || {};
             if (seriesAttr.type == "byFieldValue") {
                 var seriesTmp = {};
                 var seriesNameField = self.model.fields.get(seriesAttr.seriesField);
+                if(!seriesNameField)
+                    throw "View.nvd3: unable to find field [" + seriesAttr.seriesField + "] on model"
+
                 var fieldValue = self.model.fields.get(seriesAttr.valuesField);
+                if(!fieldValue)
+                    throw "View.nvd3: unable to find field [" + seriesAttr.valuesField + "] on model"
+
 
                 _.each(records, function (doc, index) {
 
@@ -9675,6 +9950,9 @@ this.recline.View = this.recline.View || {};
 
                 _.each(serieNames, function (field) {
                     var yfield = self.model.fields.get(field);
+
+                    if(!yfield)
+                        throw "View.nvd3: unable to find field [" + field + "] on model"
 
                     var points = [];
 

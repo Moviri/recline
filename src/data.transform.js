@@ -65,6 +65,9 @@ my.Transform.mapDocs = function(docs, editFunc) {
 };
 
     my.Transform.getFieldHash = function(value) {
+        if(!value)
+            return "0";
+
         if(isNaN(value))
             return  recline.Data.Transform.hashCode(value);
         else

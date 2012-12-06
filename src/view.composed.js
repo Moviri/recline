@@ -5,62 +5,59 @@ this.recline.View = this.recline.View || {};
 	
 	"use strict";	
 
-    // dimension: female male
-    // measures: visits
-
     view.Composed = Backbone.View.extend({
         templates: {
-        horizontal: '<div id="{{uid}}"> ' +
+           vertical: '<div id="{{uid}}"> ' +
                 '<div class="composedview_table">' +
-                '<div class="c_group c_header">' +
-                '<div class="c_row">' +
-                    '<div class="cell cell_empty"></div>' +
-                        '{{#dimensions}}' +
-                            '<div class="cell cell_name">{{term}}</div>' +
-                        '{{/dimensions}}' +
+                    '<div class="c_group c_header">' +
+                        '<div class="c_row">' +
+                            '<div class="cell cell_empty"></div>' +
+                                '{{#dimensions}}' +
+                                    '<div class="cell cell_name"><span class="title">{{term}}</span><span class="shape">{{{shape}}}</span></div>' +
+                                '{{/dimensions}}' +
+                        '</div>' +
                     '</div>' +
+                    '<div class="c_group c_body">' +
+                        '{{#measures}}' +
+                            '<div class="c_row">' +
+                                '<div class="cell cell_title"><div class="rawhtml">{{{rawhtml}}}</div><span class="title">{{title}}</span> <span class="subtitle">{{subtitle}}</span><span class="shape">{{{shape}}}</span></div>' +
+                                    '{{#dimensions}}' +
+                                        '<div class="cell cell_graph" id="{{#getDimensionIDbyMeasureID}}{{measure_id}}{{/getDimensionIDbyMeasureID}}" term="{{measure_id}}"></div>' +
+                                    '{{/dimensions}}' +
+                            '</div>' +
+                        '{{/measures}}' +
+                    '</div>' +
+                    '<div class="c_group c_footer"></div>' +
                 '</div>' +
-                '<div class="c_group c_body">' +
-                    '<div class="c_row">' +
-            '<div class="cell cell_title">{{title}}</div>' +
-            '{{#dimensions}}' +
-            '{{#measures}}' +
-                            '<div class="cell cell_graph" id="{{id}}"></div>' +
-                    '{{/measures}}' +
-                 '{{/dimensions}}' +
-            '</div>' +
-                '</div>' +
-                '<div class="c_group c_footer"></div>' +
-                '</div>' +
-                '<div> ',
+                '</div> ',
 
-        vertical: '<div id="{{uid}}"> ' +
+           horizontal: '<div id="{{uid}}"> ' +
             '<div class="composedview_table">' +
             '<div class="c_group c_header">' +
             '<div class="c_row">' +
             '<div class="cell cell_empty"></div>' +
             '{{#measures}}' +
-            '<div class="cell cell_title">{{title}}</div>' +
+            '<div class="cell cell_title"><div class="rawhtml">{{{rawhtml}}}</div><span class="title">{{title}}</span> <span class="subtitle">{{subtitle}}</span><span class="shape">{{{shape}}}</span></div>' +
             '{{/measures}}' +
             '</div>' +
             '</div>' +
             '<div class="c_group c_body">' +
             '{{#dimensions}}' +
             '<div class="c_row">' +
-            '<div class="cell cell_name">{{term}}</div>' +
+            '<div class="cell cell_name"><span class="title">{{term}}</span><span class="shape">{{{shape}}}</span></div>' +
             '{{#measures}}' +
-            '<div class="cell cell_graph" id="{{id}}"></div>' +
+            '<div class="cell cell_graph" id="{{viewid}}"></div>' +
             '{{/measures}}' +
             '</div>' +
             '{{/dimensions}}' +
             '</div>' +
             '<div class="c_group c_footer"></div>' +
             '</div>' +
-            '<div> '
+            '</div> '
         },
 
         initialize: function (options) {
-
+            var self=this;
             this.el = $(this.el);
     		_.bindAll(this, 'render', 'redraw');
                      
@@ -75,6 +72,9 @@ this.recline.View = this.recline.View || {};
 
 			this.uid = options.id || ("composed_" + new Date().getTime() + Math.floor(Math.random() * 10000)); // generating an unique id for the chart
 
+            _.each(this.options.measures, function(m, index) {
+                self.options.measures[index]["measure_id"] = new Date().getTime() + Math.floor(Math.random() * 10000);
+            });
 
             //contains the array of views contained in the composed view
             this.views = [];
@@ -104,26 +104,46 @@ this.recline.View = this.recline.View || {};
                 var field = this.model.fields.get(self.options.groupBy);
 
                 if (!facets) {
-                    throw "ComposedView: no facet present for dimension [" + this.attributes.dimension + "]. Define a facet on the model before view render";
+                    throw "ComposedView: no facet present for groupby field [" + this.attributes.dimension + "]. Define a facet on the model before view render";
                 }
 
                 _.each(facets.attributes.terms, function(t) {
                     if(t.count > 0)  {
                         var uid = (new Date().getTime() + Math.floor(Math.random() * 10000)); // generating an unique id for the chart
-                        self.dimensions.push(self.addFilteredMeasuresToDimension({term:t.term, id: uid}, field));
+                        var dim = {term: t.term, id_dimension: uid, shape: t.shape};
+
+                        dim["getDimensionIDbyMeasureID"] = function () { return function(measureID) {
+                            var measure =_.find(this.measures, function(f) {
+                                return f.measure_id==measureID;
+                            });
+                            return measure.viewid;
+                        }};
+
+                        self.dimensions.push(self.addFilteredMeasuresToDimension(dim, field));
                     }
                 })
 
             } else
             {
-                var field = this.model.fields.get(self.options.dimension);
+                /*var field = this.model.fields.get(self.options.dimension);
                 if(!field)
                     throw("View.Composed: unable to find dimension field [" + self.options.dimension + "] on dataset")
 
                 _.each(self.model.getRecords(self.options.resultType), function(r) {
                     var uid = (new Date().getTime() + Math.floor(Math.random() * 10000)); // generating an unique id for the chart
                     self.dimensions.push( self.addMeasuresToDimension({term: r.getFieldValue(field), id: uid}, field, r));
-                });
+                });*/
+                var uid = (new Date().getTime() + Math.floor(Math.random() * 10000)); // generating an unique id for the chart
+                var dim =  self.addMeasuresToDimension({term: self.options.dimension, id_dimension: uid});
+
+                dim["getDimensionIDbyMeasureID"] = function () { return function(measureID) {
+                    var measure =_.find(this.measures, function(f) {
+                        return f.measure_id==measureID;
+                    });
+                    return measure.viewid;
+                }};
+
+                self.dimensions.push( dim );
 
             }
             this.measures=this.options.measures;
@@ -133,6 +153,11 @@ this.recline.View = this.recline.View || {};
                 tmpl = this.templates[this.options.template];
             if(this.options.customTemplate)
                 tmpl = this.options.customTemplate;
+
+            console.log(tmpl);
+            console.log(self);
+
+            //throw "ss";
 
             var out = Mustache.render(tmpl, self);
             this.el.html(out);
@@ -153,7 +178,7 @@ this.recline.View = this.recline.View || {};
             var self=this;
             _.each(self.dimensions, function(dim) {
                 _.each(dim.measures, function(m) {
-                    var $el = $('#' + m.id);
+                    var $el = $('#' + m.viewid);
                     m.props["el"] = $el;
                     m.props["model"] = m.dataset;
                     var view =  new recline.View[m.view](m.props);
@@ -182,8 +207,17 @@ this.recline.View = this.recline.View || {};
 
             var data = [];
             _.each(self.options.measures, function(d) {
-                var uid = (new Date().getTime() + Math.floor(Math.random() * 10000)); // generating an unique id for the chart
-                var val = {view: d.view, id: uid, props:d.props, dataset: filtereddataset, title:d.title};
+                var val = {
+                    view: d.view,
+                    viewid: new Date().getTime() + Math.floor(Math.random() * 10000),
+                    measure_id:d.measure_id,
+                    props:d.props,
+                    dataset: filtereddataset,
+                    title:d.title,
+                    subtitle:d.subtitle,
+                    rawhtml: d.rawhtml
+                };
+
                 data.push(val);
             });
 
@@ -192,19 +226,19 @@ this.recline.View = this.recline.View || {};
 
         },
 
-        addMeasuresToDimension: function(currentRow, dimensionField, record) {
+        addMeasuresToDimension: function(currentRow) {
             var self=this;
-
-            var ds = new recline.Model.Dataset({
-                     records: [record.toJSON()],
-                    fields: self.model.fields.toJSON()
-                });
-
 
             var data = [];
             _.each(self.options.measures, function(d) {
-                var uid = (new Date().getTime() + Math.floor(Math.random() * 10000)); // generating an unique id for the chart
-                var val = {view: d.view, id: uid, props:d.props, dataset: ds, title:d.title};
+                var val = {
+                    view: d.view, viewid: new Date().getTime() + Math.floor(Math.random() * 10000),
+                    measure_id:d.measure_id,
+                    props:d.props,
+                    dataset: self.model,
+                    title:d.title,
+                    subtitle:d.subtitle,
+                    rawhtml: d.rawhtml};
                 data.push(val);
             });
 
