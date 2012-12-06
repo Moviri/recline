@@ -193,7 +193,7 @@ my.Filters = {};
     my.Filters._dataParsers = {
             integer: function (e) { return parseFloat(e, 10); },
             float: function (e) { return parseFloat(e, 10); },
-            string : function (e) { return e.toString() },
+            string : function (e) { if(!e) return null; else return e.toString(); },
             date   : function (e) { return new Date(e).valueOf() },
             datetime   : function (e) { return new Date(e).valueOf()},
             number: function (e) { return parseFloat(e, 10); }

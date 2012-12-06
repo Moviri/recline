@@ -291,7 +291,7 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
           var value = filter.field;
           var start = parse(filter.start);
           var stop  = parse(filter.stop);
-          return (value + " lt " + stop + "," + value + " gt "  + start);
+          return (value + " lte " + stop + "," + value + " gte "  + start);
 
       }
 

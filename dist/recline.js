@@ -1502,7 +1502,7 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
           var value = filter.field;
           var start = parse(filter.start);
           var stop  = parse(filter.stop);
-          return (value + " lt " + stop + "," + value + " gt "  + start);
+          return (value + " lte " + stop + "," + value + " gte "  + start);
 
       }
 
@@ -3933,7 +3933,7 @@ my.Filters = {};
     my.Filters._dataParsers = {
             integer: function (e) { return parseFloat(e, 10); },
             float: function (e) { return parseFloat(e, 10); },
-            string : function (e) { return e.toString() },
+            string : function (e) { if(!e) return null; else return e.toString(); },
             date   : function (e) { return new Date(e).valueOf() },
             datetime   : function (e) { return new Date(e).valueOf()},
             number: function (e) { return parseFloat(e, 10); }
@@ -4392,6 +4392,9 @@ my.Transform.mapDocs = function(docs, editFunc) {
 };
 
     my.Transform.getFieldHash = function(value) {
+        if(!value)
+            return "0";
+
         if(isNaN(value))
             return  recline.Data.Transform.hashCode(value);
         else
@@ -7697,56 +7700,58 @@ this.recline.View = this.recline.View || {};
             self:this,
             percentage:function (kpi, compare, templates) {
                 var tmpField = new recline.Model.Field({type:"number", format:"percentage"});
-                var data = recline.Data.Renderers(kpi / compare * 100, tmpField);
+                var unrenderedValue = kpi / compare * 100;
+                var data = recline.Data.Renderers(unrenderedValue, tmpField);
                 var template = templates.templatePercentageCompare;
 
-                return {data:data, template:template};
+                return {data:data, template:template, unrenderedValue: unrenderedValue};
             },
             percentageVariation:function (kpi, compare, templates) {
                 var tmpField = new recline.Model.Field({type:"number", format:"percentage"});
-                var data = recline.Data.Renderers( (kpi-compare) / compare * 100, tmpField);
+                var unrenderedValue = (kpi-compare) / compare * 100;
+                var data = recline.Data.Renderers( unrenderedValue, tmpField);
                 var template = templates.templatePercentageVariation;
 
-                return {data:data, template:template};
+                return {data:data, template:template, unrenderedValue: unrenderedValue};
             },
             nocompare: function (kpi, compare, templates){
-                return {data:null, template:templates.templateBase};
+                return {data:null, template:templates.templateBase, unrenderedValue:null};
             }
 
         },
 
         templates:{
-             templateBase:'<div class="recline-indicator"> \
-      <div class="panel indicator_{{viewId}}" style="display: block;"> \
+             templateBase:'<div class="indicator"> \
+      <div class="panel indicator_{{viewId}}"> \
         <div id="indicator_{{viewId}}"> \
-			<table class="condensed-table border-free-table"> \
+			<table> \
                 <tr><td></td><td style="text-align: center;">{{label}}</td></tr>    \
                 <tr><td></td><td style="text-align: center;"><small>{{description}}</small></td></tr>    \
-                <tr><td><div>{{& shape}}</div></td><td style="text-align: center;"><strong>{{value}}</strong></td></tr>  \
+                <tr><td><div class="shape">{{& shape}}</div><div class="compareshape">{{{compareShape}}}</div></td><td>{{value}}</td></tr>  \
              </table>  \
 		</div>\
       </div> \
     </div> ',
-            templatePercentageCompare:'<div class="recline-indicator"> \
-      <div class="panel indicator_{{viewId}}" style="display: block;"> \
+            templatePercentageCompare:'<div class="indicator"> \
+      <div class="panel indicator_{{viewId}}"> \
         <div id="indicator_{{viewId}}"> \
-			 <table class="condensed-table border-free-table"> \
-                <tr><td></td><td style="text-align: center;">{{label}}</td></tr>    \
-                <tr><td></td><td style="text-align: center;"><small>{{description}}</small></td></tr>    \
-                <tr><td><div>{{& shape}}</div></td><td style="text-align: center;"><strong>{{value}}</strong></td></tr>  \
-                <tr><td></td><td style="text-align: center;"><small>% of total: {{compareValue}} ({{compareWithValue}})</small></td></tr>  \
+			 <table> \
+                <tr><td></td><td>{{label}}</td></tr>    \
+                <tr><td></td><td><small>{{description}}</small></td></tr>    \
+                <tr><td><div class="shape">{{& shape}}</div><div class="compareshape">{{{compareShape}}}</div></td><td>{{value}}</td></tr>  \
+                <tr><td></td><td>% of total: {{compareValue}} ({{compareWithValue}})</td></tr>  \
              </table>  \
 		</div>\
       </div> \
     </div> ',
-            templatePercentageVariation:'<div class="recline-indicator"> \
-      <div class="panel indicator_{{viewId}}" style="display: block;"> \
+            templatePercentageVariation:'<div class="indicator"> \
+      <div class="panel indicator_{{viewId}}"> \
         <div id="indicator_{{viewId}}"> \
-			 <table class="condensed-table border-free-table"> \
-                <tr><td></td><td style="text-align: center;">{{label}}</td></tr>    \
-                <tr><td></td><td style="text-align: center;"><small>{{description}}</small></td></tr>    \
-                <tr><td><div>{{& shape}}</div></td><td style="text-align: center;"><strong>{{value}}</strong></td></tr>  \
-                <tr><td></td><td style="text-align: center;"><small>% variation: {{compareValue}} ({{compareWithValue}})</small></td></tr>  \
+			 <table> \
+                <tr><td></td><td>{{label}}</td></tr>    \
+                <tr><td></td><td><small>{{description}}</small></td></tr>    \
+                <tr><td><div class="shape">{{& shape}}</div><div class="compareshape">{{{compareShape}}}</div></td><td>{{value}}</td></tr>  \
+                <tr><td></td><td>% variation: {{compareValue}} ({{compareWithValue}})</td></tr>  \
              </table>  \
 		</div>\
       </div> \
@@ -7818,6 +7823,16 @@ this.recline.View = this.recline.View || {};
                     throw "View.Indicator: unable to find compareType [" + self.options.state.compareWith.compareType + "]";
 
                 tmplData["compareValue"] = compareValue.data;
+
+                if(self.options.state.compareWith.shapes) {
+                    if(compareValue.unrenderedValue == 0)
+                        tmplData["compareShape"] = self.options.state.compareWith.shapes.constant;
+                    else if(compareValue.unrenderedValue > 0)
+                        tmplData["compareShape"] = self.options.state.compareWith.shapes.increase;
+                    else if(compareValue.unrenderedValue < 0)
+                        tmplData["compareShape"] = self.options.state.compareWith.shapes.decrease;
+                }
+
                 if(compareValue.template)
                     template = compareValue.template;
 
@@ -7826,13 +7841,6 @@ this.recline.View = this.recline.View || {};
 
             if (this.options.state.description)
                 tmplData["description"] = this.options.state.description;
-
-            if (this.options.state.labelColor)
-                tmplData["labelColor"] = this.options.state.labelColor;
-            if (this.options.state.descriptionColor)
-                tmplData["descriptionColor"] = this.options.state.descriptionColor;
-            if (this.options.state.textColor)
-                tmplData["textColor"] = this.options.state.textColor;
 
             var htmls = Mustache.render(template, tmplData);
             $(this.el).html(htmls);
