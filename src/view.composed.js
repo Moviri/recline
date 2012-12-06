@@ -13,7 +13,7 @@ this.recline.View = this.recline.View || {};
                         '<div class="c_row">' +
                             '<div class="cell cell_empty"></div>' +
                                 '{{#dimensions}}' +
-                                    '<div class="cell cell_name"><span class="title">{{term}}</span><span class="shape">{{shape}}</span></div>' +
+                                    '<div class="cell cell_name"><span class="title">{{term}}</span><span class="shape">{{{shape}}}</span></div>' +
                                 '{{/dimensions}}' +
                         '</div>' +
                     '</div>' +
@@ -44,7 +44,7 @@ this.recline.View = this.recline.View || {};
             '<div class="c_group c_body">' +
             '{{#dimensions}}' +
             '<div class="c_row">' +
-            '<div class="cell cell_name"><span class="title">{{term}}</span><span class="shape">{{shape}}</span></div>' +
+            '<div class="cell cell_name"><span class="title">{{term}}</span><span class="shape">{{{shape}}}</span></div>' +
             '{{#measures}}' +
             '<div class="cell cell_graph" id="{{viewid}}"></div>' +
             '{{/measures}}' +
@@ -110,7 +110,7 @@ this.recline.View = this.recline.View || {};
                 _.each(facets.attributes.terms, function(t) {
                     if(t.count > 0)  {
                         var uid = (new Date().getTime() + Math.floor(Math.random() * 10000)); // generating an unique id for the chart
-                        var dim = {term:t.term, id_dimension: uid, shape: "test"};
+                        var dim = {term: t.term, id_dimension: uid, shape: t.shape};
 
                         dim["getDimensionIDbyMeasureID"] = function () { return function(measureID) {
                             var measure =_.find(this.measures, function(f) {
@@ -134,7 +134,7 @@ this.recline.View = this.recline.View || {};
                     self.dimensions.push( self.addMeasuresToDimension({term: r.getFieldValue(field), id: uid}, field, r));
                 });*/
                 var uid = (new Date().getTime() + Math.floor(Math.random() * 10000)); // generating an unique id for the chart
-                var dim =  self.addMeasuresToDimension({term: self.options.dimension, id_dimension: uid, shape: "test"});
+                var dim =  self.addMeasuresToDimension({term: self.options.dimension, id_dimension: uid});
 
                 dim["getDimensionIDbyMeasureID"] = function () { return function(measureID) {
                     var measure =_.find(this.measures, function(f) {

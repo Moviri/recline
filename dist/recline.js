@@ -3304,7 +3304,6 @@ this.recline.Data.ColorSchema = this.recline.Data.ColorSchema || {};
 
 (function ($, my) {
 
-
     my.ColorSchema = Backbone.Model.extend({
         constructor:function ColorSchema() {
             Backbone.Model.prototype.constructor.apply(this, arguments);
@@ -3530,7 +3529,22 @@ this.recline.Data.ColorSchema = this.recline.Data.ColorSchema || {};
 
 
 
-    })
+
+
+    });
+
+    my.ColorSchema.addColorsToTerms = function (field, terms, colorSchema) {
+        _.each(terms, function (t) {
+
+            // assignment of color schema to fields
+            if (colorSchema) {
+                _.each(colorSchema, function (d) {
+                    if (d.field === field)
+                        t.color = d.schema.getColorFor(t.term);
+                })
+            }
+        });
+    };
 }(jQuery, this.recline.Data));
 this.recline = this.recline || {};
 this.recline.Data = this.recline.Data || {};
@@ -4114,17 +4128,26 @@ this.recline.Data.ShapeSchema = this.recline.Data.ShapeSchema || {};
             if(this.schema == null)
                 throw "data.shape.js: shape schema not yet initialized, datasource not fetched?"
 
-            var shape = recline.Template.Shapes[this._shapeName(fieldValue)];
-            if(shape == null)
-                throw "data.shape.js: shape [" +  this._shapeName(fieldValue) + "] not defined in template.shapes";
-            return  shape(fieldColor, isNode, isSVG);
+            if(!self.attributes.shapeType || self.attributes.shapeType == "svg") {
+                var shape = recline.Template.Shapes[this._shapeName(fieldValue)];
+                if(shape == null)
+                    throw "data.shape.js: shape [" +  this._shapeName(fieldValue) + "] not defined in template.shapes";
+                return  shape(fieldColor, isNode, isSVG);
+            } else if( self.attributes.shapeType == "text") {
+                return this._shapeName(this._shapeName(fieldValue));
+            } else if( self.attributes.shapeType == "image") {
+                return '<img src="' + this._shapeName(fieldValue) + '" class="shape_image">';
+            } else {
+                throw "data.shape.js: unsupported shapeType ["+ self.attributes.shapeType  +"]";
+            }
+
         },
 
         _shapeName: function(fieldValue) {
             var self=this;
 
             // find the correct shape, limits must be ordered
-            if(self.attributes.type && this.attributes.type == "fixedLimits") {
+            if(self.attributes.limitType && this.attributes.limitType == "fixedLimits") {
                 var shape = self.attributes.shapes[0];
 
 
@@ -4138,7 +4161,7 @@ this.recline.Data.ShapeSchema = this.recline.Data.ShapeSchema || {};
 
                 return shape;
             } else
-                return self.schema[fieldValue];
+                return self.schema[recline.Data.Transform.getFieldHash(fieldValue)];
         },
 
 
@@ -4181,6 +4204,20 @@ this.recline.Data.ShapeSchema = this.recline.Data.ShapeSchema || {};
         }
 
     })
+
+    my.ShapeSchema.addShapesToTerms = function (field, terms, shapeSchema) {
+        _.each(terms, function (t) {
+
+            // assignment of color schema to fields
+            if (shapeSchema) {
+                _.each(shapeSchema, function (d) {
+                    if (d.field === field)
+                        t.shape = d.schema.getShapeFor(t.term, t.color, false, false);
+                })
+            }
+        });
+    };
+
 }(jQuery, this.recline.Data));
 this.recline = this.recline || {};
 this.recline.Data = this.recline.Data || {};
@@ -4688,6 +4725,8 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
                 var facets = _.map(facets, function (facetResult, facetId) {
                     facetResult.id = facetId;
                     var result = new my.Facet(facetResult);
+                    recline.Data.ColorSchema.addColorsToTerms(facetId, result.attributes.terms, self.attributes.colorSchema);
+                    recline.Data.ShapeSchema.addShapesToTerms(facetId, result.attributes.terms, self.attributes.shapeSchema);
 
                     return result;
                 });
@@ -4769,6 +4808,31 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
                 return facet.id == fieldId;
             });
         },
+
+        setColorSchema:function () {
+            var self = this;
+            _.each(self.attributes.colorSchema, function (d) {
+                var field = _.find(self.fields.models, function (f) {
+                    return d.field === f.id
+                });
+                if (field != null)
+                    field.attributes.colorSchema = d.schema;
+            })
+        },
+
+        setShapeSchema:function () {
+            var self = this;
+            _.each(self.attributes.shapeSchema, function (d) {
+                var field = _.find(self.fields.models, function (f) {
+                    return d.field === f.id
+                });
+                if (field != null)
+                    field.attributes.shapeSchema = d.schema;
+            })
+        },
+        isFieldPartitioned:function (field) {
+            return false
+        }
 
     })
 
@@ -5063,7 +5127,8 @@ this.recline.Model = this.recline.Model || {};
                 var facets = _.map(queryResult.facets, function (facetResult, facetId) {
                     facetResult.id = facetId;
                     var result = new my.Facet(facetResult);
-                    self.addColorsToTerms(facetId, result.attributes.terms);
+                    recline.Data.ColorSchema.addColorsToTerms(facetId, result.attributes.terms, self.attributes.colorSchema);
+                    recline.Data.ShapeSchema.addShapesToTerms(facetId, result.attributes.terms, self.attributes.shapeSchema);
 
                     return result;
                 });
@@ -5071,19 +5136,9 @@ this.recline.Model = this.recline.Model || {};
             }
         },
 
-        addColorsToTerms:function (field, terms) {
-            var self = this;
-            _.each(terms, function (t) {
 
-                // assignment of color schema to fields
-                if (self.attributes.colorSchema) {
-                    _.each(self.attributes.colorSchema, function (d) {
-                        if (d.field === field)
-                            t.color = d.schema.getColorFor(t.term);
-                    })
-                }
-            });
-        },
+
+
 
 
         selection:function (queryObj) {
@@ -6627,7 +6682,7 @@ this.recline.View = this.recline.View || {};
                         '<div class="c_row">' +
                             '<div class="cell cell_empty"></div>' +
                                 '{{#dimensions}}' +
-                                    '<div class="cell cell_name"><span class="title">{{term}}</span><span class="shape">{{shape}}</span></div>' +
+                                    '<div class="cell cell_name"><span class="title">{{term}}</span><span class="shape">{{{shape}}}</span></div>' +
                                 '{{/dimensions}}' +
                         '</div>' +
                     '</div>' +
@@ -6658,7 +6713,7 @@ this.recline.View = this.recline.View || {};
             '<div class="c_group c_body">' +
             '{{#dimensions}}' +
             '<div class="c_row">' +
-            '<div class="cell cell_name"><span class="title">{{term}}</span><span class="shape">{{shape}}</span></div>' +
+            '<div class="cell cell_name"><span class="title">{{term}}</span><span class="shape">{{{shape}}}</span></div>' +
             '{{#measures}}' +
             '<div class="cell cell_graph" id="{{viewid}}"></div>' +
             '{{/measures}}' +
@@ -6724,7 +6779,7 @@ this.recline.View = this.recline.View || {};
                 _.each(facets.attributes.terms, function(t) {
                     if(t.count > 0)  {
                         var uid = (new Date().getTime() + Math.floor(Math.random() * 10000)); // generating an unique id for the chart
-                        var dim = {term:t.term, id_dimension: uid, shape: "test"};
+                        var dim = {term: t.term, id_dimension: uid, shape: t.shape};
 
                         dim["getDimensionIDbyMeasureID"] = function () { return function(measureID) {
                             var measure =_.find(this.measures, function(f) {
@@ -6748,7 +6803,7 @@ this.recline.View = this.recline.View || {};
                     self.dimensions.push( self.addMeasuresToDimension({term: r.getFieldValue(field), id: uid}, field, r));
                 });*/
                 var uid = (new Date().getTime() + Math.floor(Math.random() * 10000)); // generating an unique id for the chart
-                var dim =  self.addMeasuresToDimension({term: self.options.dimension, id_dimension: uid, shape: "test"});
+                var dim =  self.addMeasuresToDimension({term: self.options.dimension, id_dimension: uid});
 
                 dim["getDimensionIDbyMeasureID"] = function () { return function(measureID) {
                     var measure =_.find(this.measures, function(f) {

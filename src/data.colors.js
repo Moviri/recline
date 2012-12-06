@@ -5,7 +5,6 @@ this.recline.Data.ColorSchema = this.recline.Data.ColorSchema || {};
 
 (function ($, my) {
 
-
     my.ColorSchema = Backbone.Model.extend({
         constructor:function ColorSchema() {
             Backbone.Model.prototype.constructor.apply(this, arguments);
@@ -231,5 +230,20 @@ this.recline.Data.ColorSchema = this.recline.Data.ColorSchema || {};
 
 
 
-    })
+
+
+    });
+
+    my.ColorSchema.addColorsToTerms = function (field, terms, colorSchema) {
+        _.each(terms, function (t) {
+
+            // assignment of color schema to fields
+            if (colorSchema) {
+                _.each(colorSchema, function (d) {
+                    if (d.field === field)
+                        t.color = d.schema.getColorFor(t.term);
+                })
+            }
+        });
+    };
 }(jQuery, this.recline.Data));
