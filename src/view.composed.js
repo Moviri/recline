@@ -20,7 +20,7 @@ this.recline.View = this.recline.View || {};
                     '<div class="c_group c_body">' +
                         '{{#measures}}' +
                             '<div class="c_row">' +
-                                '<div class="cell cell_title"><div class="rawhtml">{{{rawhtml}}}</div><span class="title">{{title}}</span> <span class="subtitle">{{subtitle}}</span><span class="shape">{{shape}}</span></div>' +
+                                '<div class="cell cell_title"><div class="rawhtml">{{{rawhtml}}}</div><span class="title">{{title}}</span> <span class="subtitle">{{subtitle}}</span><span class="shape">{{{shape}}}</span></div>' +
                                     '{{#dimensions}}' +
                                         '<div class="cell cell_graph" id="{{#getDimensionIDbyMeasureID}}{{measure_id}}{{/getDimensionIDbyMeasureID}}" term="{{measure_id}}"></div>' +
                                     '{{/dimensions}}' +
@@ -37,14 +37,14 @@ this.recline.View = this.recline.View || {};
             '<div class="c_row">' +
             '<div class="cell cell_empty"></div>' +
             '{{#measures}}' +
-            '<div class="cell cell_title"><div class="rawhtml">{{{rawhtml}}}</div><span class="title">{{title}}</span> <span class="subtitle">{{subtitle}}</span><span class="shape">{{shape}}</span></div>' +
+            '<div class="cell cell_title"><div class="rawhtml">{{{rawhtml}}}</div><span class="title">{{title}}</span> <span class="subtitle">{{subtitle}}</span><span class="shape">{{{shape}}}</span></div>' +
             '{{/measures}}' +
             '</div>' +
             '</div>' +
             '<div class="c_group c_body">' +
             '{{#dimensions}}' +
             '<div class="c_row">' +
-            '<div class="cell cell_name"><span class="title">{{term}}</span><span class="shape">{{shape}}</span></div>' +
+            '<div class="cell cell_name"><span class="title">{{term}}</span><span class="shape">{{{shape}}}</span></div>' +
             '{{#measures}}' +
             '<div class="cell cell_graph" id="{{viewid}}"></div>' +
             '{{/measures}}' +
