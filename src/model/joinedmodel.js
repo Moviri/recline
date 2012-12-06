@@ -103,6 +103,10 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
 
 
             this.fields.reset(tmpFields);
+            this.setColorSchema();
+            this.setShapeSchema();
+
+
         },
 
         query:function (queryObj) {
