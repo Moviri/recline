@@ -3487,7 +3487,7 @@ this.recline.Data.ColorSchema = this.recline.Data.ColorSchema || {};
             }
             else {
                 var fields = [dataset.field];
-                ;
+
                 _.each(dataset.dataset.getRecords(dataset.type), function (d) {
                     _.each(fields, function (field) {
                         ret.push(d.attributes[field]);
@@ -4674,6 +4674,10 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
 
 
             this.fields.reset(tmpFields);
+            this.setColorSchema();
+            this.setShapeSchema();
+
+
         },
 
         query:function (queryObj) {
