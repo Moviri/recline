@@ -2010,6 +2010,7 @@ this.recline.View = this.recline.View || {};
             	self.resize();
 	        	self.resize();
 	        	self.resize();
+	        	self.resize();
         	}
         },
 
@@ -6724,7 +6725,7 @@ this.recline.View = this.recline.View || {};
                     '<div class="c_group c_body">' +
                         '{{#measures}}' +
                             '<div class="c_row">' +
-                                '<div class="cell cell_title"><div class="rawhtml">{{{rawhtml}}}</div><div><span style="vertical-align:middle;float:left"><div class="title"><b>{{title}}</b></div><div class="subtitle">{{subtitle}}</div></span><span class="shape" style="vertical-align:middle;float:left">{{shape}}</span></div></div>' +
+                                '<div class="cell cell_title"><div><span class="rawhtml" style="vertical-align:middle;float:left">{{{rawhtml}}}</span><span style="vertical-align:middle;float:left"><div class="title"><b>{{title}}</b></div><div class="subtitle">{{subtitle}}</div></span><span class="shape" style="vertical-align:middle;float:left">{{shape}}</span></div></div>' +
                                     '{{#dimensions}}' +
                                         '<div class="cell cell_graph" id="{{#getDimensionIDbyMeasureID}}{{measure_id}}{{/getDimensionIDbyMeasureID}}" term="{{measure_id}}"></div>' +
                                     '{{/dimensions}}' +
@@ -6741,7 +6742,7 @@ this.recline.View = this.recline.View || {};
             '<div class="c_row">' +
             '<div class="cell cell_empty"></div>' +
             '{{#measures}}' +
-            '<div class="cell cell_title"><div class="rawhtml">{{{rawhtml}}}</div><div><span style="float:left;vertical-align:middle"><div class="title"><b>{{title}}</b></div><div class="subtitle">{{subtitle}}</div></span><span class="shape" style="float:left;vertical-align:middle">{{shape}}</span></div></div>' +
+            '<div class="cell cell_title"><div><span class="rawhtml" style="vertical-align:middle;float:left">{{{rawhtml}}}</span><span style="float:left;vertical-align:middle"><div class="title"><b>{{title}}</b></div><div class="subtitle">{{subtitle}}</div></span><span class="shape" style="float:left;vertical-align:middle">{{shape}}</span></div></div>' +
             '{{/measures}}' +
             '</div>' +
             '</div>' +

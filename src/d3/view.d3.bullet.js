@@ -79,6 +79,7 @@ this.recline.View = this.recline.View || {};
             	self.resize();
 	        	self.resize();
 	        	self.resize();
+	        	self.resize();
         	}
         },
 
