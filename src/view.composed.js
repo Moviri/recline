@@ -7,7 +7,7 @@ this.recline.View = this.recline.View || {};
 
     view.Composed = Backbone.View.extend({
         templates: {
-           horizontal: '<div id="{{uid}}"> ' +
+           vertical: '<div id="{{uid}}"> ' +
                 '<div class="composedview_table">' +
                     '<div class="c_group c_header">' +
                         '<div class="c_row">' +
@@ -31,7 +31,7 @@ this.recline.View = this.recline.View || {};
                 '</div>' +
                 '</div> ',
 
-           vertical: '<div id="{{uid}}"> ' +
+           horizontal: '<div id="{{uid}}"> ' +
             '<div class="composedview_table">' +
             '<div class="c_group c_header">' +
             '<div class="c_row">' +
