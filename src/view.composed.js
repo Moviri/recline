@@ -20,7 +20,7 @@ this.recline.View = this.recline.View || {};
                     '<div class="c_group c_body">' +
                         '{{#measures}}' +
                             '<div class="c_row">' +
-                                '<div class="cell cell_title"><span class="title">{{title}}</span> <span class="subtitle">{{subtitle}}</span><span class="shape">{{shape}}</span></div>' +
+                                '<div class="cell cell_title"><div class="rawhtml">{{{rawhtml}}}</div><span class="title">{{title}}</span> <span class="subtitle">{{subtitle}}</span><span class="shape">{{shape}}</span></div>' +
                                     '{{#dimensions}}' +
                                         '<div class="cell cell_graph" id="{{#getDimensionIDbyMeasureID}}{{measure_id}}{{/getDimensionIDbyMeasureID}}" term="{{measure_id}}"></div>' +
                                     '{{/dimensions}}' +
@@ -37,7 +37,7 @@ this.recline.View = this.recline.View || {};
             '<div class="c_row">' +
             '<div class="cell cell_empty"></div>' +
             '{{#measures}}' +
-            '<div class="cell cell_title"><span class="title">{{title}}</span> <span class="subtitle">{{subtitle}}</span><span class="shape">{{shape}}</span></div>' +
+            '<div class="cell cell_title"><div class="rawhtml">{{{rawhtml}}}</div><span class="title">{{title}}</span> <span class="subtitle">{{subtitle}}</span><span class="shape">{{shape}}</span></div>' +
             '{{/measures}}' +
             '</div>' +
             '</div>' +
@@ -207,7 +207,16 @@ this.recline.View = this.recline.View || {};
 
             var data = [];
             _.each(self.options.measures, function(d) {
-                var val = {view: d.view, viewid: new Date().getTime() + Math.floor(Math.random() * 10000), measure_id:d.measure_id, props:d.props, dataset: filtereddataset, title:d.title, subtitle:d.subtitle, rawhtml: d.rawhtml};
+                var val = {
+                    view: d.view,
+                    viewid: new Date().getTime() + Math.floor(Math.random() * 10000),
+                    measure_id:d.measure_id,
+                    props:d.props,
+                    dataset: filtereddataset,
+                    title:d.title,
+                    subtitle:d.subtitle,
+                    rawhtml: d.rawhtml
+                };
 
                 data.push(val);
             });
@@ -222,7 +231,14 @@ this.recline.View = this.recline.View || {};
 
             var data = [];
             _.each(self.options.measures, function(d) {
-                var val = {view: d.view, viewid: new Date().getTime() + Math.floor(Math.random() * 10000), measure_id:d.measure_id, props:d.props, dataset: self.model, title:d.title, subtitle:d.subtitle, rawhtml: d.rawhtml};
+                var val = {
+                    view: d.view, viewid: new Date().getTime() + Math.floor(Math.random() * 10000),
+                    measure_id:d.measure_id,
+                    props:d.props,
+                    dataset: self.model,
+                    title:d.title,
+                    subtitle:d.subtitle,
+                    rawhtml: d.rawhtml};
                 data.push(val);
             });
 
