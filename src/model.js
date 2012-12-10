@@ -267,9 +267,13 @@ this.recline.Model = this.recline.Model || {};
         _handleQueryResult:function (queryResult) {
             var self = this;
             self.recordCount = queryResult.total;
+            if(queryResult.fields && self.fields.length == 0)
+                self.fields.reset(queryResult.fields);
+
             var docs = _.map(queryResult.hits, function (hit) {
                 var _doc = new my.Record(hit);
                 _doc.fields = self.fields;
+
                 _doc.bind('change', function (doc) {
                     self._changes.updates.push(doc.toJSON());
                 });
@@ -839,7 +843,10 @@ this.recline.Model = this.recline.Model || {};
             else
                 currentSort.push({field: field, order: order});
 
-          this.set({sort: currentSort });
+            this.attributes["sort"] = currentSort;
+
+            this.trigger('change:filters:sort');
+
         },
 
 
