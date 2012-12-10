@@ -7729,10 +7729,10 @@ this.recline.View = this.recline.View || {};
              templateBase:'<div class="indicator"> \
       <div class="panel indicator_{{viewId}}"> \
         <div id="indicator_{{viewId}}"> \
-			<table> \
-                <tr><td></td><td style="text-align: center;">{{label}}</td></tr>    \
-                <tr><td></td><td style="text-align: center;"><small>{{description}}</small></td></tr>    \
-                <tr><td><div class="shape">{{& shape}}</div><div class="compareshape">{{{compareShape}}}</div></td><td>{{value}}</td></tr>  \
+			<table class="indicator-table"> \
+                <tr class="titlerow"><td></td><td style="text-align: center;" class="title">{{label}}</td></tr>    \
+                <tr class="descriptionrow"><td></td><td style="text-align: center;" class="description"><small>{{description}}</small></td></tr>    \
+                <tr class="shaperow"><td><div class="shape">{{& shape}}</div><div class="compareshape">{{{compareShape}}}</div></td><td>{{value}}</td></tr>  \
              </table>  \
 		</div>\
       </div> \
@@ -7740,11 +7740,11 @@ this.recline.View = this.recline.View || {};
             templatePercentageCompare:'<div class="indicator"> \
       <div class="panel indicator_{{viewId}}"> \
         <div id="indicator_{{viewId}}"> \
-			 <table> \
-                <tr><td></td><td>{{label}}</td></tr>    \
-                <tr><td></td><td><small>{{description}}</small></td></tr>    \
-                <tr><td><div class="shape">{{& shape}}</div><div class="compareshape">{{{compareShape}}}</div></td><td>{{value}}</td></tr>  \
-                <tr><td></td><td>% of total: {{compareValue}} ({{compareWithValue}})</td></tr>  \
+			 <table class="indicator-table"> \
+                <tr class="titlerow"><td></td><td class="title">{{label}}</td></tr>    \
+                <tr class="descriptionrow"><td></td><td class="description"><small>{{description}}</small></td></tr>    \
+                <tr class="shaperow"><td><div class="shape">{{& shape}}</div><div class="compareshape">{{{compareShape}}}</div></td><td>{{value}}</td></tr>  \
+                <tr class="comparerow"><td></td><td class="comparelabel">% of total: {{compareValue}} ({{compareWithValue}})</td></tr>  \
              </table>  \
 		</div>\
       </div> \
@@ -7752,11 +7752,11 @@ this.recline.View = this.recline.View || {};
             templatePercentageVariation:'<div class="indicator"> \
       <div class="panel indicator_{{viewId}}"> \
         <div id="indicator_{{viewId}}"> \
-			 <table> \
-                <tr><td></td><td>{{label}}</td></tr>    \
-                <tr><td></td><td><small>{{description}}</small></td></tr>    \
-                <tr><td><div class="shape">{{& shape}}</div><div class="compareshape">{{{compareShape}}}</div></td><td>{{value}}</td></tr>  \
-                <tr><td></td><td>% variation: {{compareValue}} ({{compareWithValue}})</td></tr>  \
+			 <table class="indicator-table"> \
+                <tr class="titlerow"><td></td><td class="title">{{label}}</td></tr>    \
+                <tr class="descriptionrow"><td></td><td class="description"><small>{{description}}</small></td></tr>    \
+                <tr class="shaperow"><td><div class="shape">{{& shape}}</div><div class="compareshape">{{{compareShape}}}</div></td><td>{{value}}</td></tr>  \
+                <tr class="comparerow"><td></td><td class="comparelabel">% variation: {{compareValue}} ({{compareWithValue}})</td></tr>  \
              </table>  \
 		</div>\
       </div> \
