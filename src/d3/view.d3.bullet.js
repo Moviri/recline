@@ -84,8 +84,7 @@ this.recline.View = this.recline.View || {};
         },
 
         redraw:function () {
-            console.log("redraw");
-            var self = this;
+                var self = this;
             var field = this.model.fields.get(this.options.fieldRanges);
             var fieldMeasure = this.model.fields.get(this.options.fieldMeasures);
 
