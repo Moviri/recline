@@ -5747,7 +5747,7 @@ this.recline.Model = this.recline.Model || {};
             if(!currentSort)
                 currentSort = [{field: field, order: order}];
             else
-                currentSor.push({field: field, order: order});
+                currentSort.push({field: field, order: order});
 
           this.set({sort: currentSort });
         },
