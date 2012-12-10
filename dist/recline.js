@@ -7776,7 +7776,7 @@ this.recline.View = this.recline.View || {};
 			<table class="indicator-table"> \
                 <tr class="titlerow"><td></td><td style="text-align: center;" class="title">{{label}}</td></tr>    \
                 <tr class="descriptionrow"><td></td><td style="text-align: center;" class="description"><small>{{description}}</small></td></tr>    \
-                <tr class="shaperow"><td><div class="shape">{{& shape}}</div><div class="compareshape">{{{compareShape}}}</div></td><td>{{value}}</td></tr>  \
+                <tr class="shaperow"><td><div class="shape">{{& shape}}</div><div class="compareshape">{{{compareShape}}}</div></td><td class="value-cell">{{value}}</td></tr>  \
              </table>  \
 		</div>\
       </div> \
@@ -7787,7 +7787,7 @@ this.recline.View = this.recline.View || {};
 			 <table class="indicator-table"> \
                 <tr class="titlerow"><td></td><td class="title">{{label}}</td></tr>    \
                 <tr class="descriptionrow"><td></td><td class="description"><small>{{description}}</small></td></tr>    \
-                <tr class="shaperow"><td><div class="shape">{{& shape}}</div><div class="compareshape">{{{compareShape}}}</div></td><td>{{value}}</td></tr>  \
+                <tr class="shaperow"><td><div class="shape">{{& shape}}</div><div class="compareshape">{{{compareShape}}}</div></td><td class="value-cell">{{value}}</td></tr>  \
                 <tr class="comparerow"><td></td><td class="comparelabel">% of total: {{compareValue}} ({{compareWithValue}})</td></tr>  \
              </table>  \
 		</div>\
@@ -7799,7 +7799,7 @@ this.recline.View = this.recline.View || {};
 			 <table class="indicator-table"> \
                 <tr class="titlerow"><td></td><td class="title">{{label}}</td></tr>    \
                 <tr class="descriptionrow"><td></td><td class="description"><small>{{description}}</small></td></tr>    \
-                <tr class="shaperow"><td><div class="shape">{{& shape}}</div><div class="compareshape">{{{compareShape}}}</div></td><td>{{value}}</td></tr>  \
+                <tr class="shaperow"><td><div class="shape">{{& shape}}</div><div class="compareshape">{{{compareShape}}}</div></td><td class="value-cell">{{value}}</td></tr>  \
                 <tr class="comparerow"><td></td><td class="comparelabel">% variation: {{compareValue}} ({{compareWithValue}})</td></tr>  \
              </table>  \
 		</div>\
