@@ -832,6 +832,17 @@ this.recline.Model = this.recline.Model || {};
             }
         },
 
+        addSortCondition: function(field, order){
+          var currentSort = this.get("sort");
+            if(!currentSort)
+                currentSort = [{field: field, order: order}];
+            else
+                currentSor.push({field: field, order: order});
+
+          this.set({sort: currentSort });
+        },
+
+
         // ### addSelection
         //
         // Add a new selection (appended to the list of selections)
