@@ -88,7 +88,7 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
         var data = buildRequestFromQuery(queryObj);
         console.log("Querying backend for ");
         console.log(data);
-        return requestJson(dataset, data);
+        return requestJson(dataset, data, queryObj);
         //}
 
         /*if (self.inMemoryStore == null) {
@@ -109,7 +109,7 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
     ;
 
 
-    function requestJson(dataset, data) {
+    function requestJson(dataset, data, queryObj) {
         var dfd = $.Deferred();
 
         var jqxhr = $.ajax({
@@ -128,7 +128,7 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
 
                 dfd.reject(results.results[0].status);
             } else
-                dfd.resolve(_handleJsonResult(results.results[0].result));
+                dfd.resolve(_handleJsonResult(results.results[0].result, queryObj));
 
         })
             .fail(function (arguments) {
@@ -141,7 +141,7 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
 
     ;
 
-    function _handleJsonResult(data) {
+    function _handleJsonResult(data, queryObj) {
             if (data.data == null) {
                 return {
                     fields:_handleFieldDescription(data.description),
@@ -150,9 +150,12 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
             }
             else {
                 var fields = _handleFieldDescription(data.description);
+                var facets = recline.Data.Faceting.computeFacets(data.data, queryObj);
+
                 return {
                     hits:_normalizeRecords(data.data, fields),
                     fields: fields,
+                    facets: facets,
                     useMemoryStore:false
                 }
             }
