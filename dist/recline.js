@@ -1372,7 +1372,7 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
 
             // verify if returned data is not an error
             if (results.results.length != 1 || results.results[0].status.code != 0) {
-                console.log("Error in fetching data: " + results.results[0].status.message + " Statuscode:[" + results.results[0].status.code + "]");
+                console.log("Error in fetching data: " + results.results[0].status.message + " Statuscode:[" + results.results[0].status.code + "] AdditionalInfo:["+results.results[0].status.additionalInfo+"]");
 
                 dfd.reject(results.results[0].status);
             } else
