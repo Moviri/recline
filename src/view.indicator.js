@@ -44,7 +44,8 @@ this.recline.View = this.recline.View || {};
             },
             nocompare: function (kpi, compare, templates){
                 return {data:null, template:templates.templateBase, unrenderedValue:null};
-            }
+            },
+
 
         },
 

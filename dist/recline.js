@@ -6963,7 +6963,7 @@ this.recline.View = this.recline.View || {};
                     }
                 })
 
-            } else if(self.options.dimension)
+            } else
             {
                 /*var field = this.model.fields.get(self.options.dimension);
                 if(!field)
@@ -6974,7 +6974,12 @@ this.recline.View = this.recline.View || {};
                     self.dimensions.push( self.addMeasuresToDimension({term: r.getFieldValue(field), id: uid}, field, r));
                 });*/
                 var uid = (new Date().getTime() + Math.floor(Math.random() * 10000)); // generating an unique id for the chart
-                var dim =  self.addMeasuresToDimension({term: self.options.dimension, id_dimension: uid});
+                var dim;
+
+                if(self.options.type == "groupByRecord")
+                    dim = self.addMeasuresToDimension({id_dimension: uid});
+                else
+                    dim = self.addMeasuresToDimensionAllModel({id_dimension: uid});
 
                 dim["getDimensionIDbyMeasureID"] = function () { return function(measureID) {
                     var measure =_.find(this.measures, function(f) {
@@ -6986,9 +6991,7 @@ this.recline.View = this.recline.View || {};
                 self.dimensions.push( dim );
 
             }
-            else {
-                throw "Composed.view: nor groupBy or dimension parameter specified";
-            }
+
 
             this.measures=this.options.measures;
 
@@ -7083,6 +7086,29 @@ this.recline.View = this.recline.View || {};
                     data.push(val);
                 });
             });
+
+            currentRow["measures"] = data;
+            return currentRow;
+
+        },
+        addMeasuresToDimensionAllModel: function(currentRow) {
+            var self=this;
+
+            var data = [];
+
+                _.each(self.options.measures, function(d) {
+
+                    var val = {
+                        view: d.view, viewid: new Date().getTime() + Math.floor(Math.random() * 10000),
+                        measure_id:d.measure_id,
+                        props:d.props,
+                        dataset: self.model,
+                        title:d.title,
+                        subtitle:d.subtitle,
+                        rawhtml: d.rawhtml};
+                    data.push(val);
+                });
+
 
             currentRow["measures"] = data;
             return currentRow;
@@ -7858,7 +7884,8 @@ this.recline.View = this.recline.View || {};
             },
             nocompare: function (kpi, compare, templates){
                 return {data:null, template:templates.templateBase, unrenderedValue:null};
-            }
+            },
+
 
         },
 
