@@ -849,6 +849,22 @@ this.recline.Model = this.recline.Model || {};
 
         },
 
+        setSortCondition: function(sortCondition){
+            var currentSort = this.get("sort");
+            if(!currentSort)
+                currentSort = [sortCondition];
+            else
+                currentSort.push(sortCondition);
+
+            this.attributes["sort"] = currentSort;
+
+        },
+
+        clearSortCondition: function() {
+            this.attributes["sort"] = null;
+        },
+
+
 
         // ### addSelection
         //
