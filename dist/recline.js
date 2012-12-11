@@ -6769,7 +6769,7 @@ this.recline.View = this.recline.View || {};
                     '<div class="c_group c_body">' +
                         '{{#measures}}' +
                             '<div class="c_row">' +
-                                '<div class="cell cell_title"><div><div class="rawhtml" style="vertical-align:middle;float:left">{{{rawhtml}}}</div><div style="vertical-align:middle;float:left"><div class="title"><b>{{title}}</b></div><div class="subtitle">{{subtitle}}</div></div><div class="shape" style="vertical-align:middle;float:left">{{shape}}</div></div></div>' +
+                                '<div class="cell cell_title"><div><div class="rawhtml" style="vertical-align:middle;float:left">{{{rawhtml}}}</div><div style="vertical-align:middle;float:left"><div class="title">{{title}}</div><div class="subtitle">{{{subtitle}}}</div></div><div class="shape" style="vertical-align:middle;float:left">{{shape}}</div></div></div>' +
                                     '{{#dimensions}}' +
                                         '<div class="cell cell_graph" id="{{#getDimensionIDbyMeasureID}}{{measure_id}}{{/getDimensionIDbyMeasureID}}" term="{{measure_id}}"></div>' +
                                     '{{/dimensions}}' +
@@ -6786,7 +6786,7 @@ this.recline.View = this.recline.View || {};
             '<div class="c_row">' +
             '<div class="cell cell_empty"></div>' +
             '{{#measures}}' +
-            '<div class="cell cell_title"><div><div class="rawhtml" style="vertical-align:middle;float:left">{{{rawhtml}}}</div><div style="float:left;vertical-align:middle"><div class="title"><b>{{title}}</b></div><div class="subtitle">{{subtitle}}</div></div><div class="shape" style="float:left;vertical-align:middle">{{shape}}</div></div></div>' +
+            '<div class="cell cell_title"><div><div class="rawhtml" style="vertical-align:middle;float:left">{{{rawhtml}}}</div><div style="float:left;vertical-align:middle"><div class="title">{{title}}</div><div class="subtitle">{{{subtitle}}}</div></div><div class="shape" style="float:left;vertical-align:middle">{{shape}}</div></div></div>' +
             '{{/measures}}' +
             '</div>' +
             '</div>' +
@@ -6974,7 +6974,6 @@ this.recline.View = this.recline.View || {};
             return currentRow;
 
         },
-
         addMeasuresToDimension: function(currentRow) {
             var self=this;
 
