@@ -29,7 +29,7 @@ this.recline.View = this.recline.View || {};
             percentage:function (kpi, compare, templates) {
                 var tmpField = new recline.Model.Field({type:"number", format:"percentage"});
                 var unrenderedValue = kpi / compare * 100;
-                var data = recline.Data.Renderers(unrenderedValue, tmpField);
+                var data = recline.Data.Formatters.Renderers(unrenderedValue, tmpField);
                 var template = templates.templatePercentageCompare;
 
                 return {data:data, template:template, unrenderedValue: unrenderedValue};
@@ -37,7 +37,7 @@ this.recline.View = this.recline.View || {};
             percentageVariation:function (kpi, compare, templates) {
                 var tmpField = new recline.Model.Field({type:"number", format:"percentage"});
                 var unrenderedValue = (kpi-compare) / compare * 100;
-                var data = recline.Data.Renderers( unrenderedValue, tmpField);
+                var data = recline.Data.Formatters.Renderers( unrenderedValue, tmpField);
                 var template = templates.templatePercentageVariation;
 
                 return {data:data, template:template, unrenderedValue: unrenderedValue};

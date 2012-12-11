@@ -303,7 +303,7 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
             this._store = new recline.Backend.Memory.Store(result, fields);
 
             recline.Data.FieldsUtility.setFieldsAttributes(fields, self);
-            this.fields.reset(fields, {renderer:recline.Data.Renderers});
+            this.fields.reset(fields, {renderer:recline.Data.Formatters.Renderers});
             this.clearUnfilteredTotals();
 
             this.query();
@@ -366,12 +366,12 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
             if(filtered) {
                 if(this.totals == null) { this.totals = {records: new my.RecordList(), fields: new my.FieldList() }}
 
-                    this.totals.fields.reset(fields, {renderer:recline.Data.Renderers}) ;
+                    this.totals.fields.reset(fields, {renderer:recline.Data.Formatters.Renderers}) ;
                     this.totals.records.reset(result);
             }   else   {
                 if(this.totals_unfiltered == null) { this.totals_unfiltered = {records: new my.RecordList(), fields: new my.FieldList() }}
 
-                    this.totals_unfiltered.fields.reset(fields, {renderer:recline.Data.Renderers}) ;
+                    this.totals_unfiltered.fields.reset(fields, {renderer:recline.Data.Formatters.Renderers}) ;
                     this.totals_unfiltered.records.reset(result);
             }
 

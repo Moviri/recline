@@ -20,7 +20,7 @@
                     <span class="s1">&#39;&lt;div class=&quot;c_group c_body&quot;&gt;&#39;</span> <span class="o">+</span>
                         <span class="s1">&#39;{{#measures}}&#39;</span> <span class="o">+</span>
                             <span class="s1">&#39;&lt;div class=&quot;c_row&quot;&gt;&#39;</span> <span class="o">+</span>
-                                <span class="s1">&#39;&lt;div class=&quot;cell cell_title&quot;&gt;&lt;div&gt;&lt;div class=&quot;rawhtml&quot; style=&quot;vertical-align:middle;float:left&quot;&gt;{{{rawhtml}}}&lt;/div&gt;&lt;div style=&quot;vertical-align:middle;float:left&quot;&gt;&lt;div class=&quot;title&quot;&gt;&lt;b&gt;{{title}}&lt;/b&gt;&lt;/div&gt;&lt;div class=&quot;subtitle&quot;&gt;{{subtitle}}&lt;/div&gt;&lt;/div&gt;&lt;div class=&quot;shape&quot; style=&quot;vertical-align:middle;float:left&quot;&gt;{{shape}}&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;&#39;</span> <span class="o">+</span>
+                                <span class="s1">&#39;&lt;div class=&quot;cell cell_title&quot;&gt;&lt;div&gt;&lt;div class=&quot;rawhtml&quot; style=&quot;vertical-align:middle;float:left&quot;&gt;{{{rawhtml}}}&lt;/div&gt;&lt;div style=&quot;vertical-align:middle;float:left&quot;&gt;&lt;div class=&quot;title&quot;&gt;{{title}}&lt;/div&gt;&lt;div class=&quot;subtitle&quot;&gt;{{{subtitle}}}&lt;/div&gt;&lt;/div&gt;&lt;div class=&quot;shape&quot; style=&quot;vertical-align:middle;float:left&quot;&gt;{{shape}}&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;&#39;</span> <span class="o">+</span>
                                     <span class="s1">&#39;{{#dimensions}}&#39;</span> <span class="o">+</span>
                                         <span class="s1">&#39;&lt;div class=&quot;cell cell_graph&quot; id=&quot;{{#getDimensionIDbyMeasureID}}{{measure_id}}{{/getDimensionIDbyMeasureID}}&quot; term=&quot;{{measure_id}}&quot;&gt;&lt;/div&gt;&#39;</span> <span class="o">+</span>
                                     <span class="s1">&#39;{{/dimensions}}&#39;</span> <span class="o">+</span>
@@ -37,7 +37,7 @@
             <span class="s1">&#39;&lt;div class=&quot;c_row&quot;&gt;&#39;</span> <span class="o">+</span>
             <span class="s1">&#39;&lt;div class=&quot;cell cell_empty&quot;&gt;&lt;/div&gt;&#39;</span> <span class="o">+</span>
             <span class="s1">&#39;{{#measures}}&#39;</span> <span class="o">+</span>
-            <span class="s1">&#39;&lt;div class=&quot;cell cell_title&quot;&gt;&lt;div&gt;&lt;div class=&quot;rawhtml&quot; style=&quot;vertical-align:middle;float:left&quot;&gt;{{{rawhtml}}}&lt;/div&gt;&lt;div style=&quot;float:left;vertical-align:middle&quot;&gt;&lt;div class=&quot;title&quot;&gt;&lt;b&gt;{{title}}&lt;/b&gt;&lt;/div&gt;&lt;div class=&quot;subtitle&quot;&gt;{{subtitle}}&lt;/div&gt;&lt;/div&gt;&lt;div class=&quot;shape&quot; style=&quot;float:left;vertical-align:middle&quot;&gt;{{shape}}&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;&#39;</span> <span class="o">+</span>
+            <span class="s1">&#39;&lt;div class=&quot;cell cell_title&quot;&gt;&lt;div&gt;&lt;div class=&quot;rawhtml&quot; style=&quot;vertical-align:middle;float:left&quot;&gt;{{{rawhtml}}}&lt;/div&gt;&lt;div style=&quot;float:left;vertical-align:middle&quot;&gt;&lt;div class=&quot;title&quot;&gt;{{title}}&lt;/div&gt;&lt;div class=&quot;subtitle&quot;&gt;{{{subtitle}}}&lt;/div&gt;&lt;/div&gt;&lt;div class=&quot;shape&quot; style=&quot;float:left;vertical-align:middle&quot;&gt;{{shape}}&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;&#39;</span> <span class="o">+</span>
             <span class="s1">&#39;{{/measures}}&#39;</span> <span class="o">+</span>
             <span class="s1">&#39;&lt;/div&gt;&#39;</span> <span class="o">+</span>
             <span class="s1">&#39;&lt;/div&gt;&#39;</span> <span class="o">+</span>
@@ -198,7 +198,6 @@ a filtered dataset should be created on the original data and must be associated
             <span class="k">return</span> <span class="nx">currentRow</span><span class="p">;</span>
 
         <span class="p">},</span>
-
         <span class="nx">addMeasuresToDimension</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">currentRow</span><span class="p">)</span> <span class="p">{</span>
             <span class="kd">var</span> <span class="nx">self</span><span class="o">=</span><span class="k">this</span><span class="p">;</span>
 

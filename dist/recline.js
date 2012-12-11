@@ -4035,6 +4035,7 @@ this.recline.Data = this.recline.Data || {};
 (function(my){
 
 	my.Format = {};
+    my.Formatters = {};
 
     // formatters define how data is rapresented in internal dataset
     my.FormattersMODA = {
@@ -4090,8 +4091,8 @@ this.recline.Data = this.recline.Data || {};
 		};
 	};
 
-    my.Renderers = function(val, field, doc)   {
-        var r = my.RenderersImpl[field.attributes.type];
+    my.Formatters.Renderers = function(val, field, doc)   {
+        var r = my.Formatters.RenderersImpl[field.attributes.type];
         if(r==null) {
             throw "No renderers defined for field type " + field.attributes.type;
         }
@@ -4100,7 +4101,7 @@ this.recline.Data = this.recline.Data || {};
     };
 
     // renderers use fieldtype and fieldformat to generate output for getFieldValue
-    my.RenderersImpl = {
+    my.Formatters.RenderersImpl = {
         object: function(val, field, doc) {
             return JSON.stringify(val);
         },
@@ -4131,7 +4132,7 @@ this.recline.Data = this.recline.Data || {};
             }
 
             try {
-                return parseFloat(val.toFixed(2));
+                return parseFloat(val.toFixed(2)) + "x";
             }
             catch(err) {
                 console.log("Error in conferting val " + val + " toFixed");
@@ -4791,7 +4792,10 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
             });
 
 
-            this.fields.reset(tmpFields);
+
+            var options = {renderer:recline.Data.Formatters.Renderers};
+
+            this.fields.reset(tmpFields, options);
             this.setColorSchema();
             this.setShapeSchema();
 
@@ -5049,7 +5053,7 @@ this.recline.Model = this.recline.Model || {};
 
 
                 recline.Data.FieldsUtility.setFieldsAttributes(out.fields, self);
-                var options = {renderer:recline.Data.Renderers};
+                var options = {renderer:recline.Data.Formatters.Renderers};
 
                 self.fields.reset(out.fields, options);
 
@@ -5233,8 +5237,12 @@ this.recline.Model = this.recline.Model || {};
         _handleQueryResult:function (queryResult) {
             var self = this;
             self.recordCount = queryResult.total;
-            if(queryResult.fields && self.fields.length == 0)
-                self.fields.reset(queryResult.fields);
+            if(queryResult.fields && self.fields.length == 0){
+                recline.Data.FieldsUtility.setFieldsAttributes(out.fields, self);
+                var options = {renderer:recline.Data.Formatters.Renderers};
+                self.fields.reset(queryResult.fields, options);
+
+            }
 
             var docs = _.map(queryResult.hits, function (hit) {
                 var _doc = new my.Record(hit);
@@ -6279,7 +6287,7 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
             this._store = new recline.Backend.Memory.Store(result, fields);
 
             recline.Data.FieldsUtility.setFieldsAttributes(fields, self);
-            this.fields.reset(fields, {renderer:recline.Data.Renderers});
+            this.fields.reset(fields, {renderer:recline.Data.Formatters.Renderers});
             this.clearUnfilteredTotals();
 
             this.query();
@@ -6342,12 +6350,12 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
             if(filtered) {
                 if(this.totals == null) { this.totals = {records: new my.RecordList(), fields: new my.FieldList() }}
 
-                    this.totals.fields.reset(fields, {renderer:recline.Data.Renderers}) ;
+                    this.totals.fields.reset(fields, {renderer:recline.Data.Formatters.Renderers}) ;
                     this.totals.records.reset(result);
             }   else   {
                 if(this.totals_unfiltered == null) { this.totals_unfiltered = {records: new my.RecordList(), fields: new my.FieldList() }}
 
-                    this.totals_unfiltered.fields.reset(fields, {renderer:recline.Data.Renderers}) ;
+                    this.totals_unfiltered.fields.reset(fields, {renderer:recline.Data.Formatters.Renderers}) ;
                     this.totals_unfiltered.records.reset(result);
             }
 
@@ -7828,7 +7836,7 @@ this.recline.View = this.recline.View || {};
             percentage:function (kpi, compare, templates) {
                 var tmpField = new recline.Model.Field({type:"number", format:"percentage"});
                 var unrenderedValue = kpi / compare * 100;
-                var data = recline.Data.Renderers(unrenderedValue, tmpField);
+                var data = recline.Data.Formatters.Renderers(unrenderedValue, tmpField);
                 var template = templates.templatePercentageCompare;
 
                 return {data:data, template:template, unrenderedValue: unrenderedValue};
@@ -7836,7 +7844,7 @@ this.recline.View = this.recline.View || {};
             percentageVariation:function (kpi, compare, templates) {
                 var tmpField = new recline.Model.Field({type:"number", format:"percentage"});
                 var unrenderedValue = (kpi-compare) / compare * 100;
-                var data = recline.Data.Renderers( unrenderedValue, tmpField);
+                var data = recline.Data.Formatters.Renderers( unrenderedValue, tmpField);
                 var template = templates.templatePercentageVariation;
 
                 return {data:data, template:template, unrenderedValue: unrenderedValue};
@@ -10961,11 +10969,12 @@ my.SlickGrid = Backbone.View.extend({
 
     // Column sorting
     var sortInfo = this.model.queryState.get('sort');
-    if (sortInfo){
+    // TODO sort is not present in slickgrid
+    /*if (sortInfo){
       var column = sortInfo[0].field;
       var sortAsc = !(sortInfo[0].order == 'desc');
       this.grid.sort(column, sortAsc);
-    }
+    }*/
 
     this.grid.onSort.subscribe(function(e, args){
       var order = (args.sortAsc) ? 'asc':'desc';

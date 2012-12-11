@@ -69,7 +69,7 @@ tells us to use memory store</p>             </td>             <td class="code">
 
 
                 <span class="nx">recline</span><span class="p">.</span><span class="nx">Data</span><span class="p">.</span><span class="nx">FieldsUtility</span><span class="p">.</span><span class="nx">setFieldsAttributes</span><span class="p">(</span><span class="nx">out</span><span class="p">.</span><span class="nx">fields</span><span class="p">,</span> <span class="nx">self</span><span class="p">);</span>
-                <span class="kd">var</span> <span class="nx">options</span> <span class="o">=</span> <span class="p">{</span><span class="nx">renderer</span><span class="o">:</span><span class="nx">recline</span><span class="p">.</span><span class="nx">Data</span><span class="p">.</span><span class="nx">Renderers</span><span class="p">};</span>
+                <span class="kd">var</span> <span class="nx">options</span> <span class="o">=</span> <span class="p">{</span><span class="nx">renderer</span><span class="o">:</span><span class="nx">recline</span><span class="p">.</span><span class="nx">Data</span><span class="p">.</span><span class="nx">RenderersImpl</span><span class="p">};</span>
 
                 <span class="nx">self</span><span class="p">.</span><span class="nx">fields</span><span class="p">.</span><span class="nx">reset</span><span class="p">(</span><span class="nx">out</span><span class="p">.</span><span class="nx">fields</span><span class="p">,</span> <span class="nx">options</span><span class="p">);</span>
 
@@ -227,8 +227,12 @@ also returned.</p>             </td>             <td class="code">              
         <span class="nx">_handleQueryResult</span><span class="o">:</span><span class="kd">function</span> <span class="p">(</span><span class="nx">queryResult</span><span class="p">)</span> <span class="p">{</span>
             <span class="kd">var</span> <span class="nx">self</span> <span class="o">=</span> <span class="k">this</span><span class="p">;</span>
             <span class="nx">self</span><span class="p">.</span><span class="nx">recordCount</span> <span class="o">=</span> <span class="nx">queryResult</span><span class="p">.</span><span class="nx">total</span><span class="p">;</span>
-            <span class="k">if</span><span class="p">(</span><span class="nx">queryResult</span><span class="p">.</span><span class="nx">fields</span> <span class="o">&amp;&amp;</span> <span class="nx">self</span><span class="p">.</span><span class="nx">fields</span><span class="p">.</span><span class="nx">length</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
-                <span class="nx">self</span><span class="p">.</span><span class="nx">fields</span><span class="p">.</span><span class="nx">reset</span><span class="p">(</span><span class="nx">queryResult</span><span class="p">.</span><span class="nx">fields</span><span class="p">);</span>
+            <span class="k">if</span><span class="p">(</span><span class="nx">queryResult</span><span class="p">.</span><span class="nx">fields</span> <span class="o">&amp;&amp;</span> <span class="nx">self</span><span class="p">.</span><span class="nx">fields</span><span class="p">.</span><span class="nx">length</span> <span class="o">==</span> <span class="mi">0</span><span class="p">){</span>
+                <span class="nx">recline</span><span class="p">.</span><span class="nx">Data</span><span class="p">.</span><span class="nx">FieldsUtility</span><span class="p">.</span><span class="nx">setFieldsAttributes</span><span class="p">(</span><span class="nx">out</span><span class="p">.</span><span class="nx">fields</span><span class="p">,</span> <span class="nx">self</span><span class="p">);</span>
+                <span class="kd">var</span> <span class="nx">options</span> <span class="o">=</span> <span class="p">{</span><span class="nx">renderer</span><span class="o">:</span><span class="nx">recline</span><span class="p">.</span><span class="nx">Data</span><span class="p">.</span><span class="nx">RenderersImpl</span><span class="p">};</span>
+                <span class="nx">self</span><span class="p">.</span><span class="nx">fields</span><span class="p">.</span><span class="nx">reset</span><span class="p">(</span><span class="nx">queryResult</span><span class="p">.</span><span class="nx">fields</span><span class="p">,</span> <span class="nx">options</span><span class="p">);</span>
+
+            <span class="p">}</span>
 
             <span class="kd">var</span> <span class="nx">docs</span> <span class="o">=</span> <span class="nx">_</span><span class="p">.</span><span class="nx">map</span><span class="p">(</span><span class="nx">queryResult</span><span class="p">.</span><span class="nx">hits</span><span class="p">,</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">hit</span><span class="p">)</span> <span class="p">{</span>
                 <span class="kd">var</span> <span class="nx">_doc</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">my</span><span class="p">.</span><span class="nx">Record</span><span class="p">(</span><span class="nx">hit</span><span class="p">);</span>
@@ -731,6 +735,21 @@ here that are not actually strings</p>             </td>             <td class="
 
             <span class="k">this</span><span class="p">.</span><span class="nx">trigger</span><span class="p">(</span><span class="s1">&#39;change:filters:sort&#39;</span><span class="p">);</span>
 
+        <span class="p">},</span>
+
+        <span class="nx">setSortCondition</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">sortCondition</span><span class="p">){</span>
+            <span class="kd">var</span> <span class="nx">currentSort</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s2">&quot;sort&quot;</span><span class="p">);</span>
+            <span class="k">if</span><span class="p">(</span><span class="o">!</span><span class="nx">currentSort</span><span class="p">)</span>
+                <span class="nx">currentSort</span> <span class="o">=</span> <span class="p">[</span><span class="nx">sortCondition</span><span class="p">];</span>
+            <span class="k">else</span>
+                <span class="nx">currentSort</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="nx">sortCondition</span><span class="p">);</span>
+
+            <span class="k">this</span><span class="p">.</span><span class="nx">attributes</span><span class="p">[</span><span class="s2">&quot;sort&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nx">currentSort</span><span class="p">;</span>
+
+        <span class="p">},</span>
+
+        <span class="nx">clearSortCondition</span><span class="o">:</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+            <span class="k">this</span><span class="p">.</span><span class="nx">attributes</span><span class="p">[</span><span class="s2">&quot;sort&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">null</span><span class="p">;</span>
         <span class="p">},</span></pre></div>             </td>           </tr>                               <tr id="section-46">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-46">&#182;</a>               </div>               <h3>addSelection</h3>
 
 <p>Add a new selection (appended to the list of selections)</p>

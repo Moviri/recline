@@ -102,7 +102,10 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
             });
 
 
-            this.fields.reset(tmpFields);
+
+            var options = {renderer:recline.Data.Formatters.Renderers};
+
+            this.fields.reset(tmpFields, options);
             this.setColorSchema();
             this.setShapeSchema();
 

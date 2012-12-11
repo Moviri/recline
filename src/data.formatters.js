@@ -4,6 +4,7 @@ this.recline.Data = this.recline.Data || {};
 (function(my){
 
 	my.Format = {};
+    my.Formatters = {};
 
     // formatters define how data is rapresented in internal dataset
     my.FormattersMODA = {
@@ -59,8 +60,8 @@ this.recline.Data = this.recline.Data || {};
 		};
 	};
 
-    my.Renderers = function(val, field, doc)   {
-        var r = my.RenderersImpl[field.attributes.type];
+    my.Formatters.Renderers = function(val, field, doc)   {
+        var r = my.Formatters.RenderersImpl[field.attributes.type];
         if(r==null) {
             throw "No renderers defined for field type " + field.attributes.type;
         }
@@ -69,7 +70,7 @@ this.recline.Data = this.recline.Data || {};
     };
 
     // renderers use fieldtype and fieldformat to generate output for getFieldValue
-    my.RenderersImpl = {
+    my.Formatters.RenderersImpl = {
         object: function(val, field, doc) {
             return JSON.stringify(val);
         },
