@@ -51,10 +51,10 @@ generate the element itself (you can then append view.el to the DOM.</p>        
              <span class="nx">templateBase</span><span class="o">:</span><span class="s1">&#39;&lt;div class=&quot;indicator&quot;&gt; \</span>
 <span class="s1">      &lt;div class=&quot;panel indicator_{{viewId}}&quot;&gt; \</span>
 <span class="s1">        &lt;div id=&quot;indicator_{{viewId}}&quot;&gt; \</span>
-<span class="s1">      &lt;table&gt; \</span>
-<span class="s1">                &lt;tr&gt;&lt;td&gt;&lt;/td&gt;&lt;td style=&quot;text-align: center;&quot;&gt;{{label}}&lt;/td&gt;&lt;/tr&gt;    \</span>
-<span class="s1">                &lt;tr&gt;&lt;td&gt;&lt;/td&gt;&lt;td style=&quot;text-align: center;&quot;&gt;&lt;small&gt;{{description}}&lt;/small&gt;&lt;/td&gt;&lt;/tr&gt;    \</span>
-<span class="s1">                &lt;tr&gt;&lt;td&gt;&lt;div class=&quot;shape&quot;&gt;{{&amp; shape}}&lt;/div&gt;&lt;div class=&quot;compareshape&quot;&gt;{{{compareShape}}}&lt;/div&gt;&lt;/td&gt;&lt;td&gt;{{value}}&lt;/td&gt;&lt;/tr&gt;  \</span>
+<span class="s1">      &lt;table class=&quot;indicator-table&quot;&gt; \</span>
+<span class="s1">                &lt;tr class=&quot;titlerow&quot;&gt;&lt;td&gt;&lt;/td&gt;&lt;td style=&quot;text-align: center;&quot; class=&quot;title&quot;&gt;{{label}}&lt;/td&gt;&lt;/tr&gt;    \</span>
+<span class="s1">                &lt;tr class=&quot;descriptionrow&quot;&gt;&lt;td&gt;&lt;/td&gt;&lt;td style=&quot;text-align: center;&quot; class=&quot;description&quot;&gt;&lt;small&gt;{{description}}&lt;/small&gt;&lt;/td&gt;&lt;/tr&gt;    \</span>
+<span class="s1">                &lt;tr class=&quot;shaperow&quot;&gt;&lt;td&gt;&lt;div class=&quot;shape&quot;&gt;{{&amp; shape}}&lt;/div&gt;&lt;div class=&quot;compareshape&quot;&gt;{{{compareShape}}}&lt;/div&gt;&lt;/td&gt;&lt;td class=&quot;value-cell&quot;&gt;{{value}}&lt;/td&gt;&lt;/tr&gt;  \</span>
 <span class="s1">             &lt;/table&gt;  \</span>
 <span class="s1">    &lt;/div&gt;\</span>
 <span class="s1">      &lt;/div&gt; \</span>
@@ -62,11 +62,11 @@ generate the element itself (you can then append view.el to the DOM.</p>        
             <span class="nx">templatePercentageCompare</span><span class="o">:</span><span class="s1">&#39;&lt;div class=&quot;indicator&quot;&gt; \</span>
 <span class="s1">      &lt;div class=&quot;panel indicator_{{viewId}}&quot;&gt; \</span>
 <span class="s1">        &lt;div id=&quot;indicator_{{viewId}}&quot;&gt; \</span>
-<span class="s1">       &lt;table&gt; \</span>
-<span class="s1">                &lt;tr&gt;&lt;td&gt;&lt;/td&gt;&lt;td&gt;{{label}}&lt;/td&gt;&lt;/tr&gt;    \</span>
-<span class="s1">                &lt;tr&gt;&lt;td&gt;&lt;/td&gt;&lt;td&gt;&lt;small&gt;{{description}}&lt;/small&gt;&lt;/td&gt;&lt;/tr&gt;    \</span>
-<span class="s1">                &lt;tr&gt;&lt;td&gt;&lt;div class=&quot;shape&quot;&gt;{{&amp; shape}}&lt;/div&gt;&lt;div class=&quot;compareshape&quot;&gt;{{{compareShape}}}&lt;/div&gt;&lt;/td&gt;&lt;td&gt;{{value}}&lt;/td&gt;&lt;/tr&gt;  \</span>
-<span class="s1">                &lt;tr&gt;&lt;td&gt;&lt;/td&gt;&lt;td&gt;% of total: {{compareValue}} ({{compareWithValue}})&lt;/td&gt;&lt;/tr&gt;  \</span>
+<span class="s1">       &lt;table class=&quot;indicator-table&quot;&gt; \</span>
+<span class="s1">                &lt;tr class=&quot;titlerow&quot;&gt;&lt;td&gt;&lt;/td&gt;&lt;td class=&quot;title&quot;&gt;{{label}}&lt;/td&gt;&lt;/tr&gt;    \</span>
+<span class="s1">                &lt;tr class=&quot;descriptionrow&quot;&gt;&lt;td&gt;&lt;/td&gt;&lt;td class=&quot;description&quot;&gt;&lt;small&gt;{{description}}&lt;/small&gt;&lt;/td&gt;&lt;/tr&gt;    \</span>
+<span class="s1">                &lt;tr class=&quot;shaperow&quot;&gt;&lt;td&gt;&lt;div class=&quot;shape&quot;&gt;{{&amp; shape}}&lt;/div&gt;&lt;div class=&quot;compareshape&quot;&gt;{{{compareShape}}}&lt;/div&gt;&lt;/td&gt;&lt;td class=&quot;value-cell&quot;&gt;{{value}}&lt;/td&gt;&lt;/tr&gt;  \</span>
+<span class="s1">                &lt;tr class=&quot;comparerow&quot;&gt;&lt;td&gt;&lt;/td&gt;&lt;td class=&quot;comparelabel&quot;&gt;% of total: {{compareValue}} ({{compareWithValue}})&lt;/td&gt;&lt;/tr&gt;  \</span>
 <span class="s1">             &lt;/table&gt;  \</span>
 <span class="s1">    &lt;/div&gt;\</span>
 <span class="s1">      &lt;/div&gt; \</span>
@@ -74,11 +74,11 @@ generate the element itself (you can then append view.el to the DOM.</p>        
             <span class="nx">templatePercentageVariation</span><span class="o">:</span><span class="s1">&#39;&lt;div class=&quot;indicator&quot;&gt; \</span>
 <span class="s1">      &lt;div class=&quot;panel indicator_{{viewId}}&quot;&gt; \</span>
 <span class="s1">        &lt;div id=&quot;indicator_{{viewId}}&quot;&gt; \</span>
-<span class="s1">       &lt;table&gt; \</span>
-<span class="s1">                &lt;tr&gt;&lt;td&gt;&lt;/td&gt;&lt;td&gt;{{label}}&lt;/td&gt;&lt;/tr&gt;    \</span>
-<span class="s1">                &lt;tr&gt;&lt;td&gt;&lt;/td&gt;&lt;td&gt;&lt;small&gt;{{description}}&lt;/small&gt;&lt;/td&gt;&lt;/tr&gt;    \</span>
-<span class="s1">                &lt;tr&gt;&lt;td&gt;&lt;div class=&quot;shape&quot;&gt;{{&amp; shape}}&lt;/div&gt;&lt;div class=&quot;compareshape&quot;&gt;{{{compareShape}}}&lt;/div&gt;&lt;/td&gt;&lt;td&gt;{{value}}&lt;/td&gt;&lt;/tr&gt;  \</span>
-<span class="s1">                &lt;tr&gt;&lt;td&gt;&lt;/td&gt;&lt;td&gt;% variation: {{compareValue}} ({{compareWithValue}})&lt;/td&gt;&lt;/tr&gt;  \</span>
+<span class="s1">       &lt;table class=&quot;indicator-table&quot;&gt; \</span>
+<span class="s1">                &lt;tr class=&quot;titlerow&quot;&gt;&lt;td&gt;&lt;/td&gt;&lt;td class=&quot;title&quot;&gt;{{label}}&lt;/td&gt;&lt;/tr&gt;    \</span>
+<span class="s1">                &lt;tr class=&quot;descriptionrow&quot;&gt;&lt;td&gt;&lt;/td&gt;&lt;td class=&quot;description&quot;&gt;&lt;small&gt;{{description}}&lt;/small&gt;&lt;/td&gt;&lt;/tr&gt;    \</span>
+<span class="s1">                &lt;tr class=&quot;shaperow&quot;&gt;&lt;td&gt;&lt;div class=&quot;shape&quot;&gt;{{&amp; shape}}&lt;/div&gt;&lt;div class=&quot;compareshape&quot;&gt;{{{compareShape}}}&lt;/div&gt;&lt;/td&gt;&lt;td class=&quot;value-cell&quot;&gt;{{value}}&lt;/td&gt;&lt;/tr&gt;  \</span>
+<span class="s1">                &lt;tr class=&quot;comparerow&quot;&gt;&lt;td&gt;&lt;/td&gt;&lt;td class=&quot;comparelabel&quot;&gt;% variation: {{compareValue}} ({{compareWithValue}})&lt;/td&gt;&lt;/tr&gt;  \</span>
 <span class="s1">             &lt;/table&gt;  \</span>
 <span class="s1">    &lt;/div&gt;\</span>
 <span class="s1">      &lt;/div&gt; \</span>
