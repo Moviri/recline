@@ -7878,7 +7878,7 @@ this.recline.View = this.recline.View || {};
                 <tr class="titlerow"><td></td><td class="title">{{label}}</td></tr>    \
                 <tr class="descriptionrow"><td></td><td class="description"><small>{{description}}</small></td></tr>    \
                 <tr class="shaperow"><td><div class="shape">{{& shape}}</div><div class="compareshape">{{{compareShape}}}</div></td><td class="value-cell">{{value}}</td></tr>  \
-                <tr class="comparerow"><td></td><td class="comparelabel">% of total: {{compareValue}} ({{compareWithValue}})</td></tr>  \
+                <tr class="comparerow"><td></td><td class="comparelabel">% of total: <b>{{compareValue}}</b> (<b>{{compareWithValue}}</b>)</td></tr>  \
              </table>  \
 		</div>\
       </div> \
@@ -7890,7 +7890,7 @@ this.recline.View = this.recline.View || {};
                 <tr class="titlerow"><td></td><td class="title">{{label}}</td></tr>    \
                 <tr class="descriptionrow"><td></td><td class="description"><small>{{description}}</small></td></tr>    \
                 <tr class="shaperow"><td><div class="shape">{{& shape}}</div><div class="compareshape">{{{compareShape}}}</div></td><td class="value-cell">{{value}}</td></tr>  \
-                <tr class="comparerow"><td></td><td class="comparelabel">% variation: {{compareValue}} ({{compareWithValue}})</td></tr>  \
+                <tr class="comparerow"><td></td><td class="comparelabel">% variation: <b>{{compareValue}}</b> (<b>{{compareWithValue}}</b>)</td></tr>  \
              </table>  \
 		</div>\
       </div> \
