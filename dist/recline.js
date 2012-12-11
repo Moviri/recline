@@ -4040,7 +4040,11 @@ this.recline.Data = this.recline.Data || {};
     // formatters define how data is rapresented in internal dataset
     my.FormattersMODA = {
         integer : function (e) { return parseInt(e); },
-        string  : function (e) { return e.toString() },
+        string  : function (e) {
+            if(e!=null)
+                return e.toString();
+            else
+                return null; },
         date    : function (e) { return new Date(parseInt(e)).valueOf() },
         float   : function (e) { return parseFloat(e, 10); },
         number  : function (e) { return parseFloat(e, 10); }
@@ -4132,7 +4136,7 @@ this.recline.Data = this.recline.Data || {};
             }
 
             try {
-                return parseFloat(val.toFixed(2)) + "x";
+                return parseFloat(val.toFixed(2));
             }
             catch(err) {
                 console.log("Error in conferting val " + val + " toFixed");
