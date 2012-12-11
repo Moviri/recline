@@ -5242,7 +5242,7 @@ this.recline.Model = this.recline.Model || {};
             var self = this;
             self.recordCount = queryResult.total;
             if(queryResult.fields && self.fields.length == 0){
-                recline.Data.FieldsUtility.setFieldsAttributes(out.fields, self);
+
                 var options = {renderer:recline.Data.Formatters.Renderers};
                 self.fields.reset(queryResult.fields, options);
 
@@ -6963,7 +6963,7 @@ this.recline.View = this.recline.View || {};
                     }
                 })
 
-            } else
+            } else if(self.options.dimension)
             {
                 /*var field = this.model.fields.get(self.options.dimension);
                 if(!field)
@@ -6986,6 +6986,10 @@ this.recline.View = this.recline.View || {};
                 self.dimensions.push( dim );
 
             }
+            else {
+                throw "Composed.view: nor groupBy or dimension parameter specified";
+            }
+
             this.measures=this.options.measures;
 
             var tmpl = this.templates.vertical;
@@ -6993,11 +6997,6 @@ this.recline.View = this.recline.View || {};
                 tmpl = this.templates[this.options.template];
             if(this.options.customTemplate)
                 tmpl = this.options.customTemplate;
-
-            console.log(tmpl);
-            console.log(self);
-
-            //throw "ss";
 
             var out = Mustache.render(tmpl, self);
             this.el.html(out);
@@ -7069,16 +7068,20 @@ this.recline.View = this.recline.View || {};
             var self=this;
 
             var data = [];
-            _.each(self.options.measures, function(d) {
-                var val = {
-                    view: d.view, viewid: new Date().getTime() + Math.floor(Math.random() * 10000),
-                    measure_id:d.measure_id,
-                    props:d.props,
-                    dataset: self.model,
-                    title:d.title,
-                    subtitle:d.subtitle,
-                    rawhtml: d.rawhtml};
-                data.push(val);
+            _.each(self.model.records.models, function(r) {
+                _.each(self.options.measures, function(d) {
+                    var model = new recline.Model.Dataset({ records: [r.toJSON()], fields:r.fields.toJSON() });
+
+                    var val = {
+                        view: d.view, viewid: new Date().getTime() + Math.floor(Math.random() * 10000),
+                        measure_id:d.measure_id,
+                        props:d.props,
+                        dataset: model,
+                        title:d.title,
+                        subtitle:d.subtitle,
+                        rawhtml: d.rawhtml};
+                    data.push(val);
+                });
             });
 
             currentRow["measures"] = data;
