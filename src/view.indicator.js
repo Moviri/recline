@@ -50,7 +50,8 @@ this.recline.View = this.recline.View || {};
         },
 
         templates:{
-             templateBase:'<div class="indicator"> \
+             templateBase:
+   '<div class="indicator"> \
       <div class="panel indicator_{{viewId}}"> \
         <div id="indicator_{{viewId}}"> \
 			<table class="indicator-table"> \
@@ -61,7 +62,25 @@ this.recline.View = this.recline.View || {};
 		</div>\
       </div> \
     </div> ',
-            templatePercentageCompare:'<div class="indicator"> \
+    templateBaseCondensed:
+   '<div class="indicator"> \
+	    <div class="panel indicator_{{viewId}}" style="width:100%;"> \
+	      <div id="indicator_{{viewId}}" class="well" style="width:100%;"> \
+				<div class="indicator-table" style="width:100%;"> \
+					<fieldset style="width:100%;"> \
+						<legend style="width:100%;"> \
+	  	                <div class="value-cell" style="float:left">{{label}}</div> \
+	  	                <div class="shape" style="float:right">{{& shape}}</div> \
+						</legend> \
+		                <div style="text-align:justify;width:100%;" class="title">{{title}}</div>\
+					</fieldset> \
+	           </div>  \
+			</div> \
+	    </div> \
+    </div>'
+,
+            templatePercentageCompare:
+   '<div class="indicator"> \
       <div class="panel indicator_{{viewId}}"> \
         <div id="indicator_{{viewId}}"> \
 			 <table class="indicator-table"> \
@@ -73,7 +92,8 @@ this.recline.View = this.recline.View || {};
 		</div>\
       </div> \
     </div> ',
-            templatePercentageVariation:'<div class="indicator"> \
+            templatePercentageVariation:
+   '<div class="indicator"> \
       <div class="panel indicator_{{viewId}}"> \
         <div id="indicator_{{viewId}}"> \
 			 <table class="indicator-table"> \

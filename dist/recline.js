@@ -7890,7 +7890,8 @@ this.recline.View = this.recline.View || {};
         },
 
         templates:{
-             templateBase:'<div class="indicator"> \
+             templateBase:
+   '<div class="indicator"> \
       <div class="panel indicator_{{viewId}}"> \
         <div id="indicator_{{viewId}}"> \
 			<table class="indicator-table"> \
@@ -7901,7 +7902,25 @@ this.recline.View = this.recline.View || {};
 		</div>\
       </div> \
     </div> ',
-            templatePercentageCompare:'<div class="indicator"> \
+    templateBaseCondensed:
+   '<div class="indicator"> \
+	    <div class="panel indicator_{{viewId}}" style="width:100%;"> \
+	      <div id="indicator_{{viewId}}" class="well" style="width:100%;"> \
+				<div class="indicator-table" style="width:100%;"> \
+					<fieldset style="width:100%;"> \
+						<legend style="width:100%;"> \
+	  	                <div class="value-cell" style="float:left">{{label}}</div> \
+	  	                <div class="shape" style="float:right">{{& shape}}</div> \
+						</legend> \
+		                <div style="text-align:justify;width:100%;" class="title">{{title}}</div>\
+					</fieldset> \
+	           </div>  \
+			</div> \
+	    </div> \
+    </div>'
+,
+            templatePercentageCompare:
+   '<div class="indicator"> \
       <div class="panel indicator_{{viewId}}"> \
         <div id="indicator_{{viewId}}"> \
 			 <table class="indicator-table"> \
@@ -7913,7 +7932,8 @@ this.recline.View = this.recline.View || {};
 		</div>\
       </div> \
     </div> ',
-            templatePercentageVariation:'<div class="indicator"> \
+            templatePercentageVariation:
+   '<div class="indicator"> \
       <div class="panel indicator_{{viewId}}"> \
         <div id="indicator_{{viewId}}"> \
 			 <table class="indicator-table"> \
@@ -12647,7 +12667,9 @@ this.recline.View = this.recline.View || {};
                 <legend style="display:{{useLegend}}">{{label}}</legend>  \
     			<div style="float:left;padding-right:10px;padding-top:4px;display:{{useLeftLabel}}">{{label}}</div> \
     			<div class="btn-group data-control-id" > \
-    				<button class="btn grouped-button btn-primary">All</button> \
+            		{{#useAllButton}} \
+            		<button class="btn grouped-button btn-primary">All</button> \
+            		{{/useAllButton}} \
     	            {{#values}} \
     	    		<button class="btn grouped-button {{selected}}">{{val}}</button> \
     	            {{/values}} \
@@ -12972,10 +12994,11 @@ this.recline.View = this.recline.View || {};
                         }
                     }
                 }
-                else if (valueList.length == 0)
-                    $(buttons[0]).addClass("btn-primary"); // select button "All"
+                else if (valueList.length == 0 && !currActiveFilter.noAllButton)
+                    $(buttons[0]).addClass("btn-primary"); // select button "All" if present
             }
-            else $(buttons[0]).addClass("btn-primary"); // select button "All"
+            else if (!currActiveFilter.noAllButton)
+            	$(buttons[0]).addClass("btn-primary"); // select button "All" if present
         },
         updateRangeSlider:function (filterContainer, currActiveFilter, filterCtrl) {
             var valueList = this.computeUserChoices(currActiveFilter);
@@ -13558,7 +13581,7 @@ this.recline.View = this.recline.View || {};
             if (controlType == "multibutton")
                 currActiveFilter.list = listaValori;
             else if (controlType == "radiobuttons") {
-                if (listaValori.length == 1 && listaValori[0] == "All") {
+                if (listaValori.length == 1 && listaValori[0] == "All" && !currActiveFilter.noAllButton) {
                     listaValori = [];
                     currActiveFilter.term = "";
                 }
@@ -13873,6 +13896,11 @@ this.recline.View = this.recline.View || {};
 
             if (typeof newFilter.fieldType == 'undefined')
                 newFilter.fieldType = this.getFieldType(newFilter.field)
+
+            if (newFilter.controlType == "radiobuttons")
+            	if (newFilter.noAllButton && newFilter.noAllButton == true)
+            		newFilter.useAllButton = false 
+            	else newFilter.useAllButton = true
 
             if (newFilter.controlType == "month_week_calendar") {
                 if (typeof newFilter.period == "undefined")
