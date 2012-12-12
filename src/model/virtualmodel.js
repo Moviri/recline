@@ -56,6 +56,9 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
             var self = this;
 
             if (type === 'filtered' || type == null) {
+                if(self.needsTableCalculation && self.totals == null)
+                    self.rebuildTotals();
+
                 return self.records.models;
             } else if (type === 'totals') {
                 if(self.totals == null)
@@ -376,6 +379,13 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
             }
 
 
+        },
+
+        needsTableCalculation: function() {
+            if(recline.Data.Aggregations.checkTableCalculation(self.attributes.aggregation.aggregationFunctions, self.attributes.totals).length > 0)
+                return true;
+            else
+                return false;
         },
 
         buildResult:function (reducedResult, originalFields, partitionFields, dimensions, aggregationFunctions, aggregatedFields, partitions) {
