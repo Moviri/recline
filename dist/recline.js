@@ -7903,18 +7903,16 @@ this.recline.View = this.recline.View || {};
       </div> \
     </div> ',
     templateBaseCondensed:
-   '<div class="indicator"> \
+   '<div class="indicator" style="width:100%;"> \
 	    <div class="panel indicator_{{viewId}}" style="width:100%;"> \
-	      <div id="indicator_{{viewId}}" class="well" style="width:100%;"> \
-				<div class="indicator-table" style="width:100%;"> \
-					<fieldset style="width:100%;"> \
-						<legend style="width:100%;"> \
-	  	                <div class="value-cell" style="float:left">{{label}}</div> \
-	  	                <div class="shape" style="float:right">{{& shape}}</div> \
-						</legend> \
-		                <div style="text-align:justify;width:100%;" class="title">{{title}}</div>\
-					</fieldset> \
-	           </div>  \
+	      <div id="indicator_{{viewId}}" class="indicator-container well" style="width:85%;"> \
+			<fieldset style="width:100%;"> \
+				<legend style="width:100%;"> \
+                <div class="value-cell" style="float:left">{{value}}</div> \
+                <div class="shape" style="float:right">{{{shape}}}</div> \
+				</legend> \
+                <div style="text-align:justify;width:100%;" class="title">{{label}}</div>\
+			</fieldset> \
 			</div> \
 	    </div> \
     </div>'
@@ -8026,7 +8024,8 @@ this.recline.View = this.recline.View || {};
                     template = compareValue.template;
 
             }
-
+            else if (self.options.state.condensed == true)
+            	template = this.templates.templateBaseCondensed;
 
             if (this.options.state.description)
                 tmplData["description"] = this.options.state.description;
