@@ -360,7 +360,9 @@ this.recline.View = this.recline.View || {};
                 <legend style="display:{{useLegend}}">{{label}}</legend>  \
     			<div style="float:left;padding-right:10px;padding-top:4px;display:{{useLeftLabel}}">{{label}}</div> \
     			<div class="btn-group data-control-id" > \
-    				<button class="btn grouped-button btn-primary">All</button> \
+            		{{#useAllButton}} \
+            		<button class="btn grouped-button btn-primary">All</button> \
+            		{{/useAllButton}} \
     	            {{#values}} \
     	    		<button class="btn grouped-button {{selected}}">{{val}}</button> \
     	            {{/values}} \
@@ -685,10 +687,11 @@ this.recline.View = this.recline.View || {};
                         }
                     }
                 }
-                else if (valueList.length == 0)
-                    $(buttons[0]).addClass("btn-primary"); // select button "All"
+                else if (valueList.length == 0 && !currActiveFilter.noAllButton)
+                    $(buttons[0]).addClass("btn-primary"); // select button "All" if present
             }
-            else $(buttons[0]).addClass("btn-primary"); // select button "All"
+            else if (!currActiveFilter.noAllButton)
+            	$(buttons[0]).addClass("btn-primary"); // select button "All" if present
         },
         updateRangeSlider:function (filterContainer, currActiveFilter, filterCtrl) {
             var valueList = this.computeUserChoices(currActiveFilter);
@@ -1271,7 +1274,7 @@ this.recline.View = this.recline.View || {};
             if (controlType == "multibutton")
                 currActiveFilter.list = listaValori;
             else if (controlType == "radiobuttons") {
-                if (listaValori.length == 1 && listaValori[0] == "All") {
+                if (listaValori.length == 1 && listaValori[0] == "All" && !currActiveFilter.noAllButton) {
                     listaValori = [];
                     currActiveFilter.term = "";
                 }
@@ -1586,6 +1589,11 @@ this.recline.View = this.recline.View || {};
 
             if (typeof newFilter.fieldType == 'undefined')
                 newFilter.fieldType = this.getFieldType(newFilter.field)
+
+            if (newFilter.controlType == "radiobuttons")
+            	if (newFilter.noAllButton && newFilter.noAllButton == true)
+            		newFilter.useAllButton = false 
+            	else newFilter.useAllButton = true
 
             if (newFilter.controlType == "month_week_calendar") {
                 if (typeof newFilter.period == "undefined")
