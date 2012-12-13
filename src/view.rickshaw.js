@@ -21,45 +21,56 @@ this.recline.View = this.recline.View || {};
             this.model.bind('query:done', this.redraw);
             this.model.queryState.bind('selection:done', this.redraw);
 
-
-            $(window).resize(this.resize);
             this.uid = options.id || ("d3_" + new Date().getTime() + Math.floor(Math.random() * 10000)); // generating an unique id for the chart
-            this.width = options.width;
-            this.height = options.height;
-            this.renderer = options.renderer;
 
+            this.options =options;
 
-            //render header & svg container
-            var out = Mustache.render(this.template, this);
-            this.el.html(out);
-
-        },
-
-        resize:function () {
 
         },
 
         render:function () {
+            console.log("View.Rickshaw: render");
+            var self = this;
+
+            var out = Mustache.render(this.template, this);
+            this.el.html(out);
 
 
         },
 
         redraw:function () {
-            console.log("View.Rickshaw: redraw");
-            $('#' + this.uid).empty();
-            this.draw(this.createSeries(), "#" + this.uid);
-        },
-        draw:function (data, graphid) {
-
             var self = this;
 
-            self.graph = new Rickshaw.Graph({
-                element:document.querySelector(graphid),
-                renderer: self.renderer,
+            console.log("View.Rickshaw: redraw");
 
-                series:data,
-                stroke:true
-            });
+            if(self.graph)
+                self.updateGraph();
+            else
+                self.renderGraph();
+
+        },
+
+        updateGraph: function() {
+            var self=this;
+            //self.graphOptions.series = this.createSeries();
+            self.createSeries();
+
+            self.graph.update();
+            //self.graph.render();
+        },
+
+        renderGraph: function() {
+            var self=this;
+            this.graphOptions = {
+                element: document.querySelector('#' + this.uid)
+            };
+
+            self.graphOptions = _.extend(self.graphOptions, self.options.state.options);
+            self.createSeries();
+
+            self.graphOptions.series = self.series;
+
+            self.graph = new Rickshaw.Graph(self.graphOptions);
 
             self.graph.render();
 
@@ -86,8 +97,6 @@ this.recline.View = this.recline.View || {};
                     graph:self.graph,
                     element:document.getElementById('timeline')
                 });
-
-                self.annotator.add(1,"ciccio");
 
                 var timeField = self.options.state.events.timeField;
                 var valueField = self.options.state.events.valueField;
@@ -128,14 +137,17 @@ this.recline.View = this.recline.View || {};
                 });
             }
 
-
-            self.alreadyDrawed = true;
         },
 
         createSeries:function () {
 
             var self = this;
-            var series = [];
+            if(!self.series)
+                self.series = [];
+            else
+                self.series.length = 0; // keep reference to old serie
+
+            var series = self.series;
 
             //  {type: "byFieldName", fieldvaluesField: ["y", "z"]}
             var seriesAttr = this.options.state.series;
@@ -318,7 +330,7 @@ this.recline.View = this.recline.View || {};
                 });
             }
 
-            return series;
+
         },
         getFieldLabel:function (field) {
             var self = this;

@@ -11,6 +11,10 @@ def cat():
     cmd = 'cat src/model.js src/backend.memory.js > dist/recline.dataset.js'
     os.system(cmd)
 
+    cmd = 'cat src/extensions/model/*.js src/extensions/*.js src/extensions/views/*.js> dist/recline.extensions.js'
+    os.system(cmd)
+
+
     print("** Combining css files")
     cmd = 'cat css/*.css > dist/recline.css'
     os.system(cmd)
