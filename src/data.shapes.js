@@ -29,7 +29,7 @@ this.recline.Data.ShapeSchema = this.recline.Data.ShapeSchema || {};
            var self=this;
             self.attributes.dataset.dataset.records.bind('reset',   function() { self._generateFromDataset(); });
             self.attributes.dataset.dataset.fields.bind('reset', function () {
-                self.attributes.dataset.dataset.setColorSchema(self.attributes.dataset.type);
+                self.attributes.dataset.dataset.setShapeSchema(self.attributes.dataset.type);
             });
 
             if(self.attributes.dataset.dataset.records.models.length > 0) {
