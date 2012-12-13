@@ -3473,6 +3473,10 @@ this.recline.Data.ColorSchema = this.recline.Data.ColorSchema || {};
             self.attributes.dataset.dataset.records.bind('reset', function () {
                 self._generateFromDataset();
             });
+            self.attributes.dataset.dataset.fields.bind('reset', function () {
+                self.attributes.dataset.dataset.setColorSchema(self.attributes.dataset.type);
+            });
+
             if (self.attributes.dataset.dataset.records.models.length > 0) {
                 self._generateFromDataset();
             }
@@ -3483,6 +3487,8 @@ this.recline.Data.ColorSchema = this.recline.Data.ColorSchema || {};
             self.attributes.twoDimensionalVariation.dataset.dataset.records.bind('reset', function () {
                 self._generateFromVariationDataset();
             });
+
+
             if (self.attributes.twoDimensionalVariation.dataset.dataset.records.models.length > 0) {
                 self._generateFromVariationDataset();
             }
@@ -3554,7 +3560,7 @@ this.recline.Data.ColorSchema = this.recline.Data.ColorSchema || {};
                     });
                     break;
                 default:
-                    throw "data.colors.js: unknown or not defined properties type " + this.attributes.type;
+                    throw "data.colors.js: unknown or not defined properties type [" + this.attributes.type + "] possible values are [scaleWithDataMinMax,scaleWithDistinctData,fixedLimits]";
             }
         },
 
@@ -10340,6 +10346,7 @@ this.recline.View = this.recline.View || {};
             this.uid = options.id || ("d3_" + new Date().getTime() + Math.floor(Math.random() * 10000)); // generating an unique id for the chart
             this.width = options.width;
             this.height = options.height;
+            this.renderer = options.renderer;
 
 
             //render header & svg container
@@ -10359,16 +10366,17 @@ this.recline.View = this.recline.View || {};
 
         redraw:function () {
             console.log("View.Rickshaw: redraw");
+            $('#' + this.uid).empty();
             this.draw(this.createSeries(), "#" + this.uid);
         },
         draw:function (data, graphid) {
+
             var self = this;
 
             self.graph = new Rickshaw.Graph({
                 element:document.querySelector(graphid),
-                renderer:'bar',
-                width:self.width,
-                height:self.height,
+                renderer: self.renderer,
+
                 series:data,
                 stroke:true
             });
@@ -10521,7 +10529,7 @@ this.recline.View = this.recline.View || {};
                     if (shape != null)
                         point["shape"] = shape;
 
-                    tmpS.values.push(point);
+                    tmpS.data.push(point);
 
                     if (fillEmptyValuesWith != null) {
                         uniqueX.push(x);
@@ -10619,12 +10627,12 @@ this.recline.View = this.recline.View || {};
                 uniqueX = _.unique(uniqueX);
                 _.each(series, function (s) {
                     // foreach series obtain the unique list of x
-                    var tmpValues = _.map(s.values, function (d) {
+                    var tmpValues = _.map(s.data, function (d) {
                         return d.x
                     });
                     // foreach non present field set the value
                     _.each(_.difference(uniqueX, tmpValues), function (diff) {
-                        s.values.push({x:diff, y:fillEmptyValuesWith});
+                        s.data.push({x:diff, y:fillEmptyValuesWith});
                     });
 
                 });

@@ -43,6 +43,10 @@ this.recline.Data.ColorSchema = this.recline.Data.ColorSchema || {};
             self.attributes.dataset.dataset.records.bind('reset', function () {
                 self._generateFromDataset();
             });
+            self.attributes.dataset.dataset.fields.bind('reset', function () {
+                self.attributes.dataset.dataset.setColorSchema(self.attributes.dataset.type);
+            });
+
             if (self.attributes.dataset.dataset.records.models.length > 0) {
                 self._generateFromDataset();
             }
@@ -53,6 +57,8 @@ this.recline.Data.ColorSchema = this.recline.Data.ColorSchema || {};
             self.attributes.twoDimensionalVariation.dataset.dataset.records.bind('reset', function () {
                 self._generateFromVariationDataset();
             });
+
+
             if (self.attributes.twoDimensionalVariation.dataset.dataset.records.models.length > 0) {
                 self._generateFromVariationDataset();
             }
@@ -124,7 +130,7 @@ this.recline.Data.ColorSchema = this.recline.Data.ColorSchema || {};
                     });
                     break;
                 default:
-                    throw "data.colors.js: unknown or not defined properties type " + this.attributes.type;
+                    throw "data.colors.js: unknown or not defined properties type [" + this.attributes.type + "] possible values are [scaleWithDataMinMax,scaleWithDistinctData,fixedLimits]";
             }
         },
 

@@ -129,6 +129,7 @@ grid1.render();
 
     var d =  graph1 = new recline.View.Rickshaw({
         model:dataset,
+        el: $('#chart'),
         state:{
             group:["x"],
             series:{type:"byFieldName", valuesField:["y", "z"]},
@@ -141,9 +142,6 @@ grid1.render();
 
 
     if(d) {
-
-        $('#chart').empty();
-        $('#chart').append(d.el);
         d.render();
         d.redraw();
     }
