@@ -127,6 +127,8 @@ this.recline.View = this.recline.View || {};
         },
 
         render:function () {
+            console.log("View.Indicator: render");
+
             var self = this;
             var tmplData = {};
             tmplData["viewId"] = this.uid;

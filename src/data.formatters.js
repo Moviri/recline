@@ -108,7 +108,7 @@ this.recline.Data = this.recline.Data || {};
                 return parseFloat(val.toFixed(2));
             }
             catch(err) {
-                console.log("Error in conferting val " + val + " toFixed");
+                //console.log("Error in conferting val " + val + " toFixed");
                 return "N.A.";
             }
 

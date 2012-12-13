@@ -4152,7 +4152,7 @@ this.recline.Data = this.recline.Data || {};
                 return parseFloat(val.toFixed(2));
             }
             catch(err) {
-                console.log("Error in conferting val " + val + " toFixed");
+                //console.log("Error in conferting val " + val + " toFixed");
                 return "N.A.";
             }
 
@@ -6948,6 +6948,7 @@ this.recline.View = this.recline.View || {};
         },
 
         render:function () {
+            console.log("View.Composed: render");
             var self = this;
             var graphid = "#" + this.uid;
 
@@ -8007,6 +8008,8 @@ this.recline.View = this.recline.View || {};
         },
 
         render:function () {
+            console.log("View.Indicator: render");
+
             var self = this;
             var tmplData = {};
             tmplData["viewId"] = this.uid;
@@ -10355,7 +10358,7 @@ this.recline.View = this.recline.View || {};
         },
 
         redraw:function () {
-
+            console.log("View.Rickshaw: redraw");
             this.draw(this.createSeries(), "#" + this.uid);
         },
         draw:function (data, graphid) {
@@ -10599,8 +10602,14 @@ this.recline.View = this.recline.View || {};
                         }
                     });
 
-                    if (points.length > 0)
-                        series.push({data:points, name:self.getFieldLabel(yfield), color:yfield.getColorForPartition()});
+                    if (points.length > 0)  {
+                        var color = yfield.getColorForPartition();
+                        var ret = {data:points, name:self.getFieldLabel(yfield)};
+                        if(color)
+                            ret["color"] = color;
+                        series.push(ret);
+                    }
+
                 });
 
             } else throw "views.rickshaw.graph.js: unsupported or not defined type " + seriesAttr.type;
@@ -10638,7 +10647,7 @@ this.recline.View = this.recline.View || {};
             }
 
             return fieldLabel;
-        },
+        }
 
 
     });
@@ -10693,7 +10702,8 @@ my.SlickGrid = Backbone.View.extend({
   events: {
   },
   render: function() {
-    var self = this;
+      console.log("View.Slickgrid: render");
+      var self = this;
 
     var options = {
       enableCellNavigation: true,

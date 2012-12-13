@@ -49,7 +49,8 @@ my.SlickGrid = Backbone.View.extend({
   events: {
   },
   render: function() {
-    var self = this;
+      console.log("View.Slickgrid: render");
+      var self = this;
 
     var options = {
       enableCellNavigation: true,
