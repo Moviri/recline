@@ -360,7 +360,9 @@ this.recline.View = this.recline.View || {};
                 <legend style="display:{{useLegend}}">{{label}}</legend>  \
     			<div style="float:left;padding-right:10px;padding-top:4px;display:{{useLeftLabel}}">{{label}}</div> \
     			<div class="btn-group data-control-id" > \
-    				<button class="btn grouped-button btn-primary">All</button> \
+            		{{#useAllButton}} \
+            		<button class="btn grouped-button btn-primary">All</button> \
+            		{{/useAllButton}} \
     	            {{#values}} \
     	    		<button class="btn grouped-button {{selected}}">{{val}}</button> \
     	            {{/values}} \
@@ -445,7 +447,7 @@ this.recline.View = this.recline.View || {};
             "range_slider_styled":{ needFacetedField:true},
             "color_legend":{ needFacetedField:true},
             "multibutton":{ needFacetedField:true},
-            "radiobuttons":{ needFacetedField:true}
+            "radiobuttons":{ needFacetedField:false}
 
 
         },
@@ -685,10 +687,11 @@ this.recline.View = this.recline.View || {};
                         }
                     }
                 }
-                else if (valueList.length == 0)
-                    $(buttons[0]).addClass("btn-primary"); // select button "All"
+                else if (valueList.length == 0 && !currActiveFilter.noAllButton)
+                    $(buttons[0]).addClass("btn-primary"); // select button "All" if present
             }
-            else $(buttons[0]).addClass("btn-primary"); // select button "All"
+            else if (!currActiveFilter.noAllButton)
+            	$(buttons[0]).addClass("btn-primary"); // select button "All" if present
         },
         updateRangeSlider:function (filterContainer, currActiveFilter, filterCtrl) {
             var valueList = this.computeUserChoices(currActiveFilter);
@@ -772,6 +775,10 @@ this.recline.View = this.recline.View || {};
                 facetTerms = currActiveFilter.facet.attributes.terms;
                 if (typeof currActiveFilter.label == "undefined" || currActiveFilter.label == null)
                     currActiveFilter.label = currActiveFilter.field;
+            } else if(self._sourceDataset) {
+                // if facet are not defined i use all dataset records
+
+
             }
 
             currActiveFilter.useLegend = "block";
@@ -1016,60 +1023,120 @@ this.recline.View = this.recline.View || {};
             else {
                 var lastV = null;
                 currActiveFilter.step = null;
-                for (var i in facetTerms) {
-                    var selected = "";
-                    var v = facetTerms[i].term;
-                    var count = facetTerms[i].count
-                    if (currActiveFilter.controlType == "list") {
-                        if (count > 0)
-                            selected = self._selectedClassName;
-                    }
-                    else if (currActiveFilter.controlType == "radiobuttons") {
-                        if (self.areValuesEqual(currActiveFilter.term, v) || (typeof currActiveFilter.list != "undefined" && currActiveFilter.list && currActiveFilter.list.length == 1 && self.areValuesEqual(currActiveFilter.list[0], v)))
-                            selected = 'btn-primary'
-                    }
-                    else if (currActiveFilter.controlType == "multibutton") {
-                        if (self.areValuesEqual(currActiveFilter.term, v))
-                            selected = 'btn-info'
-                        else if (typeof currActiveFilter.list != "undefined" && currActiveFilter.list != null) {
-                            for (var j in currActiveFilter.list)
-                                if (self.areValuesEqual(currActiveFilter.list[j], v))
-                                    selected = 'btn-info'
-                        }
-                    }
-                    else if (currActiveFilter.controlType == "dropdown" || currActiveFilter.controlType == "dropdown_styled") {
-                        if (self.areValuesEqual(currActiveFilter.term, v) || (typeof currActiveFilter.list != "undefined" && currActiveFilter.list && currActiveFilter.list.length == 1 && self.areValuesEqual(currActiveFilter.list[0], v)))
-                            selected = "selected"
-                    }
-                    else if (currActiveFilter.controlType == "listbox" || currActiveFilter.controlType == "listbox_styled") {
-                        if (self.areValuesEqual(currActiveFilter.term, v))
-                            selected = "selected"
-                        else if (typeof currActiveFilter.list != "undefined" && currActiveFilter.list != null) {
-                            for (var j in currActiveFilter.list)
-                                if (self.areValuesEqual(currActiveFilter.list[j], v))
-                                    selected = "selected"
-                        }
-                    }
-                    if (currActiveFilter.showCount)
-                    	currActiveFilter.values.push({val:v, selected:selected, valCount: v+"\t["+count+"]", count: "["+count+"]" });
-                    else currActiveFilter.values.push({val:v, selected:selected, valCount: v });
 
-                    if (currActiveFilter.controlType.indexOf('slider') >= 0) {
-                        if (v > currActiveFilter.max)
-                            currActiveFilter.max = v;
-
-                        if (v < currActiveFilter.min)
-                            currActiveFilter.min = v;
-
-                        if (currActiveFilter.controlType.indexOf('styled') > 0 && lastV != null) {
-                            if (currActiveFilter.step == null)
-                                currActiveFilter.step = v - lastV;
-                            else if (v - lastV != currActiveFilter.step)
-                                currActiveFilter.step = 1;
+                if(facetTerms) {
+                    for (var i in facetTerms) {
+                        var selected = "";
+                        var v = facetTerms[i].term;
+                        var count = facetTerms[i].count
+                        if (currActiveFilter.controlType == "list") {
+                            if (count > 0)
+                                selected = self._selectedClassName;
                         }
+                        else if (currActiveFilter.controlType == "radiobuttons") {
+                            if (self.areValuesEqual(currActiveFilter.term, v) || (typeof currActiveFilter.list != "undefined" && currActiveFilter.list && currActiveFilter.list.length == 1 && self.areValuesEqual(currActiveFilter.list[0], v)))
+                                selected = 'btn-primary'
+                        }
+                        else if (currActiveFilter.controlType == "multibutton") {
+                            if (self.areValuesEqual(currActiveFilter.term, v))
+                                selected = 'btn-info'
+                            else if (typeof currActiveFilter.list != "undefined" && currActiveFilter.list != null) {
+                                for (var j in currActiveFilter.list)
+                                    if (self.areValuesEqual(currActiveFilter.list[j], v))
+                                        selected = 'btn-info'
+                            }
+                        }
+                        else if (currActiveFilter.controlType == "dropdown" || currActiveFilter.controlType == "dropdown_styled") {
+                            if (self.areValuesEqual(currActiveFilter.term, v) || (typeof currActiveFilter.list != "undefined" && currActiveFilter.list && currActiveFilter.list.length == 1 && self.areValuesEqual(currActiveFilter.list[0], v)))
+                                selected = "selected"
+                        }
+                        else if (currActiveFilter.controlType == "listbox" || currActiveFilter.controlType == "listbox_styled") {
+                            if (self.areValuesEqual(currActiveFilter.term, v))
+                                selected = "selected"
+                            else if (typeof currActiveFilter.list != "undefined" && currActiveFilter.list != null) {
+                                for (var j in currActiveFilter.list)
+                                    if (self.areValuesEqual(currActiveFilter.list[j], v))
+                                        selected = "selected"
+                            }
+                        }
+                        if (currActiveFilter.showCount)
+                            currActiveFilter.values.push({val:v, selected:selected, valCount: v+"\t["+count+"]", count: "["+count+"]" });
+                        else currActiveFilter.values.push({val:v, selected:selected, valCount: v });
+
+                        if (currActiveFilter.controlType.indexOf('slider') >= 0) {
+                            if (v > currActiveFilter.max)
+                                currActiveFilter.max = v;
+
+                            if (v < currActiveFilter.min)
+                                currActiveFilter.min = v;
+
+                            if (currActiveFilter.controlType.indexOf('styled') > 0 && lastV != null) {
+                                if (currActiveFilter.step == null)
+                                    currActiveFilter.step = v - lastV;
+                                else if (v - lastV != currActiveFilter.step)
+                                    currActiveFilter.step = 1;
+                            }
+                        }
+                        lastV = v;
                     }
-                    lastV = v;
+                } else if(self._sourceDataset) {
+                    _.each(self._sourceDataset.getRecords(), function(record) {
+                        var selected = "";
+                        var field = self._sourceDataset.fields.get(currActiveFilter.field);
+                        if(!field) {
+                            throw "widget.genericfilter: unable to find field ["+currActiveFilter.field+"] in dataset";
+                        }
+
+                        var v = record.getFieldValue(field);
+                        if (currActiveFilter.controlType == "radiobuttons") {
+                            if (self.areValuesEqual(currActiveFilter.term, v) || (typeof currActiveFilter.list != "undefined" && currActiveFilter.list && currActiveFilter.list.length == 1 && self.areValuesEqual(currActiveFilter.list[0], v)))
+                                selected = 'btn-primary'
+                        }
+                        else if (currActiveFilter.controlType == "multibutton") {
+                            if (self.areValuesEqual(currActiveFilter.term, v))
+                                selected = 'btn-info'
+                            else if (typeof currActiveFilter.list != "undefined" && currActiveFilter.list != null) {
+                                for (var j in currActiveFilter.list)
+                                    if (self.areValuesEqual(currActiveFilter.list[j], v))
+                                        selected = 'btn-info'
+                            }
+                        }
+                        else if (currActiveFilter.controlType == "dropdown" || currActiveFilter.controlType == "dropdown_styled") {
+                            if (self.areValuesEqual(currActiveFilter.term, v) || (typeof currActiveFilter.list != "undefined" && currActiveFilter.list && currActiveFilter.list.length == 1 && self.areValuesEqual(currActiveFilter.list[0], v)))
+                                selected = "selected"
+                        }
+                        else if (currActiveFilter.controlType == "listbox" || currActiveFilter.controlType == "listbox_styled") {
+                            if (self.areValuesEqual(currActiveFilter.term, v))
+                                selected = "selected"
+                            else if (typeof currActiveFilter.list != "undefined" && currActiveFilter.list != null) {
+                                for (var j in currActiveFilter.list)
+                                    if (self.areValuesEqual(currActiveFilter.list[j], v))
+                                        selected = "selected"
+                            }
+                        }
+                        currActiveFilter.values.push({val:v, record:record, selected:selected, valCount: v });
+
+                        if (currActiveFilter.controlType.indexOf('slider') >= 0) {
+                            if (v > currActiveFilter.max)
+                                currActiveFilter.max = v;
+
+                            if (v < currActiveFilter.min)
+                                currActiveFilter.min = v;
+
+                            if (currActiveFilter.controlType.indexOf('styled') > 0 && lastV != null) {
+                                if (currActiveFilter.step == null)
+                                    currActiveFilter.step = v - lastV;
+                                else if (v - lastV != currActiveFilter.step)
+                                    currActiveFilter.step = 1;
+                            }
+                        }
+                        lastV = v;
+
+                    })
+                } else {
+                    throw "widget.genericfilter: nor facet or dataset present to build filter"
                 }
+
                 if (currActiveFilter.controlType.indexOf('slider') >= 0) {
                     if (typeof currActiveFilter.from == "undefined")
                         currActiveFilter.from = currActiveFilter.min;
@@ -1207,13 +1274,13 @@ this.recline.View = this.recline.View || {};
             if (controlType == "multibutton")
                 currActiveFilter.list = listaValori;
             else if (controlType == "radiobuttons") {
-                if (listaValori.length == 1 && listaValori[0] == "All") {
+                if (listaValori.length == 1 && listaValori[0] == "All" && !currActiveFilter.noAllButton) {
                     listaValori = [];
                     currActiveFilter.term = "";
                 }
                 else currActiveFilter.term = $target.html().valueOf();
             }
-            this.doAction("onButtonsetClicked", fieldId, listaValori, "add");
+            this.doAction("onButtonsetClicked", fieldId, listaValori, "add", currActiveFilter);
         },
         onLegendItemClicked:function (e) {
             e.preventDefault();
@@ -1236,7 +1303,7 @@ this.recline.View = this.recline.View || {};
                 currActiveFilter.userChanged = true;
                 currActiveFilter.legend = listaValori;
 
-                this.doAction("onLegendItemClicked", fieldId, listaValori, "add");
+                this.doAction("onLegendItemClicked", fieldId, listaValori, "add", currActiveFilter);
             }
             else $target.toggleClass("not-selected"); // reselect the item and exit
         },
@@ -1299,25 +1366,47 @@ this.recline.View = this.recline.View || {};
 
                     currFilter.term = $targetTD.attr('myValue'); // save selected item for re-rendering later
 
-                    this.doAction("onListItemClicked", fieldId, [startDate, endDate], "add");
+                    this.doAction("onListItemClicked", fieldId, [startDate, endDate], "add", currFilter);
                 }
                 else if (type == "list") {
-                    this.doAction("onListItemClicked", fieldId, listaValori, "add");
+                    this.doAction("onListItemClicked", fieldId, listaValori, "add", currFilter);
                 }
                 else if (type == "term") {
-                    this.doAction("onListItemClicked", fieldId, [$targetTD.text()], "add");
+                    this.doAction("onListItemClicked", fieldId, [$targetTD.text()], "add", currFilter);
                 }
             }
         },
 
         // action could be add or remove
-        doAction:function (eventType, fieldName, values, actionType) {
+        doAction:function (eventType, fieldName, values, actionType, currFilter) {
+            var self=this;
+            var ciccio;
+            var res = [];
+            // TODO it is not efficient, record must be indicized by term
+            // TODO conversion to string is not correct, original value must be used
+            _.each(currFilter.values, function(v) {
+              if(v.record) {
+                  var field = v.record.fields.get(currFilter.field);
+                  if(_.contains(values,v.record.getFieldValueUnrendered(field).toString()))
+                    res.push(v.record);
+              };
+            });
 
-            var actions = this.options.actions;
-            var eventData = {};
-            eventData[fieldName] = values;
+            // I'm using record (not facet) so I can pass it to actions
+            if(res.length>0) {
+                var actions = self.options.actions;
+                actions.forEach(function(currAction){
+                    currAction.action.doAction(res, currAction.mapping);
+                });
+            } else
+            {
 
-            recline.ActionUtility.doAction(actions, eventType, eventData, actionType);
+                var actions = this.options.actions;
+                var eventData = {};
+                eventData[fieldName] = values;
+
+                recline.ActionUtility.doAction(actions, eventType, eventData, actionType);
+            }
         },
 
         dateConvert:function (d) {
@@ -1348,7 +1437,7 @@ this.recline.View = this.recline.View || {};
                 activeFilter.userChanged = true;
                 activeFilter.term = term;
                 activeFilter.list = [term];
-                this.doAction("onStyledSliderValueChanged", fieldId, [term], "add");
+                this.doAction("onStyledSliderValueChanged", fieldId, [term], "add", activeFilter);
             }
             else if (fieldType == "range") {
                 var activeFilter = this.findActiveFilterByField(fieldId, controlType);
@@ -1358,7 +1447,7 @@ this.recline.View = this.recline.View || {};
                 var to = fromTo[1];
                 activeFilter.from = from;
                 activeFilter.to = to;
-                this.doAction("onStyledSliderValueChanged", fieldId, [from, to], "add");
+                this.doAction("onStyledSliderValueChanged", fieldId, [from, to], "add", activeFilter);
             }
         },
         onFilterValueChanged:function (e) {
@@ -1393,7 +1482,7 @@ this.recline.View = this.recline.View || {};
                 }
                 activeFilter.term = term;
                 activeFilter.list = [term];
-                this.doAction("onFilterValueChanged", fieldId, [term], "add");
+                this.doAction("onFilterValueChanged", fieldId, [term], "add", activeFilter);
             }
             else if (fieldType == "list") {
                 var list = new Array();
@@ -1403,7 +1492,7 @@ this.recline.View = this.recline.View || {};
                         list.push(listObj.options[i].value);
 
                 activeFilter.list = list;
-                this.doAction("onFilterValueChanged", fieldId, list, "add");
+                this.doAction("onFilterValueChanged", fieldId, list, "add", activeFilter);
             }
             else if (fieldType == "range") {
                 var from;
@@ -1438,7 +1527,7 @@ this.recline.View = this.recline.View || {};
                 }
                 activeFilter.from = from;
                 activeFilter.to = to;
-                this.doAction("onFilterValueChanged", fieldId, [from, to], "add");
+                this.doAction("onFilterValueChanged", fieldId, [from, to], "add",activeFilter);
             }
         },
         onAddFilterShow:function (e) {
@@ -1501,6 +1590,11 @@ this.recline.View = this.recline.View || {};
             if (typeof newFilter.fieldType == 'undefined')
                 newFilter.fieldType = this.getFieldType(newFilter.field)
 
+            if (newFilter.controlType == "radiobuttons")
+            	if (newFilter.noAllButton && newFilter.noAllButton == true)
+            		newFilter.useAllButton = false 
+            	else newFilter.useAllButton = true
+
             if (newFilter.controlType == "month_week_calendar") {
                 if (typeof newFilter.period == "undefined")
                     newFilter.period = "Months"
@@ -1554,7 +1648,7 @@ this.recline.View = this.recline.View || {};
                 filterCtrl.jslider("value", filterCtrl.jslider().settings.from);
             }
 
-            this.doAction("onRemoveFilter", field, [], "remove");
+            this.doAction("onRemoveFilter", field, [], "remove", currFilter);
 
         },
 

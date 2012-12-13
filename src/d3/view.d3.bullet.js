@@ -6,13 +6,12 @@ this.recline.View = this.recline.View || {};
     "use strict";
 
     view.D3Bullet = Backbone.View.extend({
-        template:'<div id="{{uid}}" style="width: {{width}}px; height: {{height}}px;"> <div> ',
-
+        template: '<div id="{{uid}}" style="width: {{width}}px; height: {{height}}px;"> <div> ',
+        firstResizeDone: false,
         initialize:function (options) {
 
             this.el = $(this.el);
-            _.bindAll(this, 'render', 'redraw');
-
+            _.bindAll(this, 'render', 'redraw', 'resize');
 
             this.model.bind('change', this.render);
             this.model.fields.bind('reset', this.render);
@@ -21,12 +20,15 @@ this.recline.View = this.recline.View || {};
             this.model.bind('query:done', this.redraw);
             this.model.queryState.bind('selection:done', this.redraw);
 
-
-            $(window).resize(this.resize);
+        	$(window).resize(this.resize);
             this.uid = options.id || ("d3_" + new Date().getTime() + Math.floor(Math.random() * 10000)); // generating an unique id for the chart
-            this.width = options.width;
-            this.height = options.height;
-
+            if (options.width)
+            	this.width = options.width;
+            else this.width = "100"
+            if (options.height)
+            	this.height = options.height;
+            else this.height = "100"
+            	
             if (!this.options.animation) {
                 this.options.animation = {
                     duration:2000,
@@ -37,11 +39,28 @@ this.recline.View = this.recline.View || {};
             //render header & svg container
             var out = Mustache.render(this.template, this);
             this.el.html(out);
-
         },
 
         resize:function () {
-
+        	this.firstResizeDone = true;
+//        	console.log($("#"+this.uid))
+        	var currH = $("#"+this.uid).height()
+        	var currW = $("#"+this.uid).width()
+        	var $parent = this.el
+        	var newH = $parent.height()
+        	var newW = $parent.width()
+//        	console.log("Resize from W"+currW+" H"+currH+" to W"+newW+" H"+newH)
+        	if (typeof this.options.width == "undefined")
+    		{
+            	$("#"+this.uid).width(newW)
+            	this.width = newW
+    		}
+        	if (typeof this.options.height == "undefined")
+    		{
+	        	$("#"+this.uid).height(newH)
+	        	this.height = newH
+    		}
+        	this.redraw();
         },
 
         render:function () {
@@ -52,11 +71,20 @@ this.recline.View = this.recline.View || {};
                 jQuery(graphid).empty();
 
             self.graph = d3.select(graphid);
+            
+            if (!self.firstResizeDone)
+        	{
+            	// bruttissimo! ogni resize avvicina alla dimensione desiderata
+            	self.resize();
+            	self.resize();
+	        	self.resize();
+	        	self.resize();
+	        	self.resize();
+        	}
         },
 
         redraw:function () {
-            console.log("redraw");
-            var self = this;
+                var self = this;
             var field = this.model.fields.get(this.options.fieldRanges);
             var fieldMeasure = this.model.fields.get(this.options.fieldMeasures);
 
@@ -79,7 +107,7 @@ this.recline.View = this.recline.View || {};
                 return {ranges:ranges, measures:measures, markers: markers};
             });
 
-            var margin = {top: 5, right: 40, bottom: 20, left: 120};
+            var margin = {top: 5, right: 40, bottom: 40, left: 40};
             var width = self.width - margin.left - margin.right;
             var height = self.height - margin.top - margin.bottom;
 

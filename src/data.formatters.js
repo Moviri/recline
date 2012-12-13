@@ -4,11 +4,16 @@ this.recline.Data = this.recline.Data || {};
 (function(my){
 
 	my.Format = {};
+    my.Formatters = {};
 
     // formatters define how data is rapresented in internal dataset
     my.FormattersMODA = {
         integer : function (e) { return parseInt(e); },
-        string  : function (e) { return e.toString() },
+        string  : function (e) {
+            if(e!=null)
+                return e.toString();
+            else
+                return null; },
         date    : function (e) { return new Date(parseInt(e)).valueOf() },
         float   : function (e) { return parseFloat(e, 10); },
         number  : function (e) { return parseFloat(e, 10); }
@@ -59,8 +64,8 @@ this.recline.Data = this.recline.Data || {};
 		};
 	};
 
-    my.Renderers = function(val, field, doc)   {
-        var r = my.RenderersImpl[field.attributes.type];
+    my.Formatters.Renderers = function(val, field, doc)   {
+        var r = my.Formatters.RenderersImpl[field.attributes.type];
         if(r==null) {
             throw "No renderers defined for field type " + field.attributes.type;
         }
@@ -69,7 +74,7 @@ this.recline.Data = this.recline.Data || {};
     };
 
     // renderers use fieldtype and fieldformat to generate output for getFieldValue
-    my.RenderersImpl = {
+    my.Formatters.RenderersImpl = {
         object: function(val, field, doc) {
             return JSON.stringify(val);
         },
@@ -103,7 +108,7 @@ this.recline.Data = this.recline.Data || {};
                 return parseFloat(val.toFixed(2));
             }
             catch(err) {
-                console.log("Error in conferting val " + val + " toFixed");
+                //console.log("Error in conferting val " + val + " toFixed");
                 return "N.A.";
             }
 

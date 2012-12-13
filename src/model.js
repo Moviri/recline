@@ -83,7 +83,7 @@ this.recline.Model = this.recline.Model || {};
 
 
                 recline.Data.FieldsUtility.setFieldsAttributes(out.fields, self);
-                var options = {renderer:recline.Data.Renderers};
+                var options = {renderer:recline.Data.Formatters.Renderers};
 
                 self.fields.reset(out.fields, options);
 
@@ -267,9 +267,17 @@ this.recline.Model = this.recline.Model || {};
         _handleQueryResult:function (queryResult) {
             var self = this;
             self.recordCount = queryResult.total;
+            if(queryResult.fields && self.fields.length == 0){
+
+                var options = {renderer:recline.Data.Formatters.Renderers};
+                self.fields.reset(queryResult.fields, options);
+
+            }
+
             var docs = _.map(queryResult.hits, function (hit) {
                 var _doc = new my.Record(hit);
                 _doc.fields = self.fields;
+
                 _doc.bind('change', function (doc) {
                     self._changes.updates.push(doc.toJSON());
                 });
@@ -831,6 +839,36 @@ this.recline.Model = this.recline.Model || {};
                 }
             }
         },
+
+        addSortCondition: function(field, order){
+          var currentSort = this.get("sort");
+            if(!currentSort)
+                currentSort = [{field: field, order: order}];
+            else
+                currentSort.push({field: field, order: order});
+
+            this.attributes["sort"] = currentSort;
+
+            this.trigger('change:filters:sort');
+
+        },
+
+        setSortCondition: function(sortCondition){
+            var currentSort = this.get("sort");
+            if(!currentSort)
+                currentSort = [sortCondition];
+            else
+                currentSort.push(sortCondition);
+
+            this.attributes["sort"] = currentSort;
+
+        },
+
+        clearSortCondition: function() {
+            this.attributes["sort"] = null;
+        },
+
+
 
         // ### addSelection
         //

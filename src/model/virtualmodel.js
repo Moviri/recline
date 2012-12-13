@@ -56,6 +56,9 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
             var self = this;
 
             if (type === 'filtered' || type == null) {
+                if(self.needsTableCalculation && self.totals == null)
+                    self.rebuildTotals();
+
                 return self.records.models;
             } else if (type === 'totals') {
                 if(self.totals == null)
@@ -303,7 +306,7 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
             this._store = new recline.Backend.Memory.Store(result, fields);
 
             recline.Data.FieldsUtility.setFieldsAttributes(fields, self);
-            this.fields.reset(fields, {renderer:recline.Data.Renderers});
+            this.fields.reset(fields, {renderer:recline.Data.Formatters.Renderers});
             this.clearUnfilteredTotals();
 
             this.query();
@@ -366,16 +369,23 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
             if(filtered) {
                 if(this.totals == null) { this.totals = {records: new my.RecordList(), fields: new my.FieldList() }}
 
-                    this.totals.fields.reset(fields, {renderer:recline.Data.Renderers}) ;
+                    this.totals.fields.reset(fields, {renderer:recline.Data.Formatters.Renderers}) ;
                     this.totals.records.reset(result);
             }   else   {
                 if(this.totals_unfiltered == null) { this.totals_unfiltered = {records: new my.RecordList(), fields: new my.FieldList() }}
 
-                    this.totals_unfiltered.fields.reset(fields, {renderer:recline.Data.Renderers}) ;
+                    this.totals_unfiltered.fields.reset(fields, {renderer:recline.Data.Formatters.Renderers}) ;
                     this.totals_unfiltered.records.reset(result);
             }
 
 
+        },
+
+        needsTableCalculation: function() {
+            if(recline.Data.Aggregations.checkTableCalculation(self.attributes.aggregation.aggregationFunctions, self.attributes.totals).length > 0)
+                return true;
+            else
+                return false;
         },
 
         buildResult:function (reducedResult, originalFields, partitionFields, dimensions, aggregationFunctions, aggregatedFields, partitions) {

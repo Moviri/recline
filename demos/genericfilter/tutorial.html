@@ -235,7 +235,9 @@
         <table>
             <tr>
                 <td>Current Filters</td>
-                <td> <div id="currentfilters"></div></td>
+                <td>
+                    <div id="currentfilters"></div>
+                </td>
             </tr>
             <tr>
                 <td>State</td>
@@ -402,7 +404,7 @@
                     </td>
                 </tr>
 
-                
+
             </table>
         </div>
     </div>
@@ -502,7 +504,7 @@ var grid1 = new recline.View.SlickGrid({
         fitColumns:true,
         useHoverStyle:true,
         useStripedStyle:true,
-        useCondensedStyle:true,
+        useCondensedStyle:true
         //groupBy: "age"
     }
 });
@@ -728,9 +730,9 @@ function drawGraph() {
     filterhorizontal = new recline.View.GenericFilter({
         sourceDataset:dataset,
         sourceFields:[
-            {field:"age",       controlType:'color_legend', fieldType:"integer", label: "Select age", labelPosition: "left"  },
-            {field:"age",       controlType:'dropdown', fieldType:"integer" , label: "Select age", labelPosition: "left"  },
-            {field:"age",       controlType:'listbox_styled', fieldType:"integer", label: "Select age", labelPosition: "inside"  }
+            {field:"age", controlType:'color_legend', fieldType:"integer", label:"Select age", labelPosition:"left"  },
+            {field:"age", controlType:'dropdown', fieldType:"integer", label:"Select age", labelPosition:"left"  },
+            {field:"age", controlType:'listbox_styled', fieldType:"integer", label:"Select age", labelPosition:"inside"  }
 
         ],
         state:{
@@ -753,9 +755,9 @@ function drawGraph() {
     filterhorizontal2 = new recline.View.GenericFilter({
         sourceDataset:dataset,
         sourceFields:[
-            {field:"age", controlType:'range_slider_styled', fieldType:"integer", label: "Select age", labelPosition: "left" },
-            {field:"age", controlType:'radiobuttons', fieldType:"integer",  label: "Select age", labelPosition: "yop"   }
-     ],
+            {field:"age", controlType:'range_slider_styled', fieldType:"integer", label:"Select age", labelPosition:"left" },
+            {field:"age", controlType:'radiobuttons', fieldType:"integer", label:"Select age", labelPosition:"top"  }
+        ],
         state:{
             useHorizontalLayout:true,
             title:"Title2",
@@ -775,7 +777,7 @@ function drawGraph() {
 
     filterhorizontal3 = new recline.View.GenericFilter({
         sourceFields:[
-            {field:"daydate",   controlType:'dropdown_date_range', fieldType: 'date', label: "Select period", labelPosition: "left" }
+            {field:"daydate", controlType:'dropdown_date_range', fieldType:'date', label:"Select period", labelPosition:"left" }
         ],
         state:{
             useHorizontalLayout:true,
@@ -808,16 +810,17 @@ function redrawBackground() {
     var showBackground = true;
     var backgroundColor;
 
-    if(type == "nobackground") {
+    if (type == "nobackground") {
         showBackground = false;
-    }else if(type =="red") {
+    } else if (type == "red") {
         backgroundColor = "#FF0000"
-    };
+    }
+    ;
 
 
     _.each(filter, function (d) {
         d.showBackground = showBackground;
-        if(backgroundColor)
+        if (backgroundColor)
             d.backgroundColor = backgroundColor;
         d.render();
     });
