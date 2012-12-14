@@ -79,20 +79,20 @@ my.Filters = {};
     
     my.Filters._isNullFilter = {
     	term: function(filter){
-    		return !filter["term"];
+    		return filter["term"] == null;
     	},
     	
     	range: function(filter){
-    		return !(filter["start"] && filter["stop"]);
+    		return (filter["start"]==null || filter["stop"] == null);
     		
     	},
     	
     	list: function(filter){
-    		return !filter["list"];
+    		return filter["list"] == null;
     		
     	},
         termAdvanced: function(filter){
-            return !filter["term"];
+            return filter["term"] == null;
         }
     },
 
@@ -175,7 +175,7 @@ my.Filters = {};
         termAdvanced: function(record, filter, fields) {
             var parse =  recline.Data.Filters._getDataParser(filter, fields);
             var value = parse(record[filter.field]);
-            var value = parse(record[filter.field]);
+            var term  = parse(filter.term);
 
             var operator = filter.operator;
 
@@ -189,7 +189,7 @@ my.Filters = {};
                 bw: function(value, term) { return _.contains(term, value) }
             };
 
-            return operation[operator](valuem, term);
+            return operation[operator](value, term);
         }
     },
 
