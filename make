@@ -5,11 +5,15 @@ import os
 
 def cat():
     print("** Combining js files")
-    cmd = 'ls src/*.js src/d3/*.js src/model/*.js | grep -v couchdb | xargs cat  > dist/recline.js'
+    cmd = 'ls src/*.js | grep -v couchdb | xargs cat  > dist/recline.js'
     os.system(cmd)
 
     cmd = 'cat src/model.js src/backend.memory.js > dist/recline.dataset.js'
     os.system(cmd)
+
+    cmd = 'cat src/extensions/model/*.js src/extensions/data/*.js src/extensions/views/*.js src/extensions/views/d3/*.js > dist/recline.extensions.js'
+    os.system(cmd)
+
 
     print("** Combining css files")
     cmd = 'cat css/*.css > dist/recline.css'
