@@ -336,6 +336,10 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
                     }
             */
             var self=this;
+
+            if(!self.attributes.totals)
+                return;
+
             var aggregatedFields = self.attributes.totals.measures;
             var aggregationFunctions =  self.attributes.totals.aggregationFunctions;
 
