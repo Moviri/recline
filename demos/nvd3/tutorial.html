@@ -1,5 +1,5 @@
 ---
-layout: moviri-release
+layout: moviri
 title: Demos - NVD3 Integration
 recline-deps: true
 root: ../../
@@ -213,8 +213,8 @@ var grid1 = new recline.View.SlickGrid({
     el:$el,
     state:{  fitColumns:true },
     actions:[
-        {action:action1, mapping:[
-            {srcField:"x", filter:"filter_x_list"}
+                {action:action1, mapping:[
+                {srcField:"x", filter:"filter_x_list"}
         ], event:["selection"]  }
     ]
 });

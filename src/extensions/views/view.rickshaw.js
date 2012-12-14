@@ -6,7 +6,7 @@ this.recline.View = this.recline.View || {};
     "use strict";
 
     view.Rickshaw = Backbone.View.extend({
-        template:'<div id="{{uid}}" style="width: {{width}}px; height: {{height}}px;"> <div> ',
+        template:'<div id="{{uid}}"> <div> ',
 
         initialize:function (options) {
 
@@ -78,9 +78,12 @@ this.recline.View = this.recline.View || {};
                 graph:self.graph
             });
 
-            var xAxis = new Rickshaw.Graph.Axis.Time({
-                graph:self.graph
-            });
+            var xAxisOpt = { graph: self.graph };
+            xAxisOpt = _.extend(xAxisOpt, self.options.state.xAxisOptions);
+
+
+
+            var xAxis = new Rickshaw.Graph.Axis.Time(xAxisOpt);
 
             xAxis.render();
 

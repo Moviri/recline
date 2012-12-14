@@ -1,3 +1,401 @@
+// # Recline Backbone Models
+this.recline = this.recline || {};
+this.recline.Model = this.recline.Model || {};
+this.recline.Model.FilteredDataset = this.recline.Model.FilteredDataset || {};
+
+
+(function ($, my) {
+
+// ## <a id="dataset">VirtualDataset</a>
+    my.FilteredDataset = Backbone.Model.extend({
+        constructor:function FilteredDataset() {
+            Backbone.Model.prototype.constructor.apply(this, arguments);
+        },
+
+
+        initialize:function () {
+            var self = this;
+
+            this.fields = this.attributes.dataset.fields;
+            this.records = new my.RecordList();
+            //todo
+            //this.facets = new my.FacetList();
+            this.recordCount = null;
+
+            this.queryState = new my.Query();
+
+            if (this.get('initialState')) {
+                this.get('initialState').setState(this);
+            }
+
+            this.attributes.dataset.bind('query:done', function () {
+                self.query();
+            })
+
+            this.queryState.bind('change', function () {
+                self.query();
+            });
+
+        },
+
+        query:function (queryObj) {
+            var self=this;
+            this.trigger('query:start');
+
+            if (queryObj) {
+                this.queryState.set(queryObj, {silent:true});
+            }
+
+            var queryObj = this.queryState.toJSON();
+
+            console.log("Query on model query [" + JSON.stringify(queryObj) + "]");
+
+            var dataset = self.attributes.dataset;
+            var numRows = queryObj.size || dataset.recordCount;
+            var start = queryObj.from || 0;
+
+            //todo use records fitlering in order to inherit all record properties
+            //todo perhaps need a new applyfiltersondata
+            var results = recline.Data.Filters.applyFiltersOnData(queryObj.filters, dataset.records.toJSON(), dataset.fields.toJSON());
+
+            _.each(queryObj.sort, function (sortObj) {
+                var fieldName = sortObj.field;
+                results = _.sortBy(results, function (doc) {
+                    var _out = doc[fieldName];
+                    return _out;
+                });
+                if (sortObj.order == 'desc') {
+                    results.reverse();
+                }
+            });
+
+            results = results.slice(start, start + numRows);
+            self.recordCount = results.length;
+
+            var docs = _.map(results, function (hit) {
+                var _doc = new my.Record(hit);
+                _doc.fields = dataset.fields;
+                _doc.bind('change', function (doc) {
+                    self._changes.updates.push(doc.toJSON());
+                });
+                _doc.bind('destroy', function (doc) {
+                    self._changes.deletes.push(doc.toJSON());
+                });
+                return _doc;
+            });
+
+            self.records.reset(docs);
+
+            self.trigger('query:done');
+        },
+
+        getRecords:function () {
+            return this.records.models;
+        },
+
+        getFields:function (type) {
+            return this.attributes.dataset.fields;
+        },
+
+        toTemplateJSON:function () {
+            var data = this.records.toJSON();
+            data.recordCount = this.recordCount;
+            data.fields = this.fields.toJSON();
+            return data;
+        },
+
+        getFieldsSummary:function () {
+            return this.attributes.dataset.getFieldsSummary();
+        }
+
+
+
+
+    })
+
+
+}(jQuery, this.recline.Model));
+
+// # Recline Backbone Models
+this.recline = this.recline || {};
+this.recline.Model = this.recline.Model || {};
+this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
+
+
+(function ($, my) {
+
+// ## <a id="dataset">VirtualDataset</a>
+    my.JoinedDataset = Backbone.Model.extend({
+        constructor:function JoinedDataset() {
+            Backbone.Model.prototype.constructor.apply(this, arguments);
+        },
+
+
+        initialize:function () {
+            var self = this;
+            _.bindAll(this, 'generatefields');
+
+            self.ds_fetched = [];
+
+            this.fields = new my.FieldList();
+
+
+            this.records = new my.RecordList();
+
+            this.facets = new my.FacetList();
+            this.recordCount = null;
+
+            this.queryState = new my.Query();
+
+            if (this.get('initialState')) {
+                this.get('initialState').setState(this);
+            }
+
+            this.attributes.model.fields.bind('reset', this.generatefields);
+            this.attributes.model.fields.bind('add', this.generatefields);
+
+            _.each(this.attributes.join, function(p) {
+                p.model.fields.bind('reset', self.generatefields);
+                p.model.fields.bind('add', self.generatefields);
+
+            });
+
+            this.generatefields();
+
+            this.attributes.model.bind('query:done', function () {
+                self.ds_fetched.push("model");
+
+                if (self.allDsFetched())
+                    self.query();
+            })
+
+            _.each(this.attributes.join, function(p) {
+
+                p.model.bind('query:done', function () {
+                    self.ds_fetched.push(p.id);
+
+                    if (self.allDsFetched())
+                        self.query();
+                });
+
+                p.model.queryState.bind('change', function () {
+                    if (self.allDsFetched())
+                        self.query();
+                });
+
+            });
+
+        },
+
+        allDsFetched: function() {
+            var self=this;
+            var ret= true;
+
+            if(!_.contains(self.ds_fetched, "model"))
+                return false;
+
+             _.each(self.attributes.join, function(p) {
+                 if(!_.contains(self.ds_fetched, p.id)) {
+                     ret = false;
+                 }
+             });
+
+             return ret;
+        },
+
+        generatefields:function () {
+            var tmpFields = [];
+            _.each(this.attributes.model.fields.models, function (f) {
+                var c = f.toJSON();
+                c.id = "model." + c.id;
+                tmpFields.push(c);
+            });
+
+            _.each(this.attributes.join, function(p) {
+                _.each(p.model.fields.models, function (f) {
+                    var c = f.toJSON();
+                    c.id = p.id + "." + c.id;
+                    tmpFields.push(c);
+                });
+            });
+
+
+
+            var options = {renderer:recline.Data.Formatters.Renderers};
+
+            this.fields.reset(tmpFields, options);
+            this.setColorSchema();
+            this.setShapeSchema();
+
+
+        },
+
+        query:function (queryObj) {
+            var self = this;
+            this.trigger('query:start');
+
+            if (queryObj) {
+                this.queryState.set(queryObj, {silent:true});
+            }
+
+            var queryObj = this.queryState.toJSON();
+
+            console.log("Query on model query [" + JSON.stringify(queryObj) + "]");
+
+            var results = self.join();
+
+            var numRows = queryObj.size || results.length;
+            var start = queryObj.from || 0;
+
+            _.each(queryObj.sort, function (sortObj) {
+                var fieldName = sortObj.field;
+                results = _.sortBy(results, function (doc) {
+                    var _out = doc[fieldName];
+                    return _out;
+                });
+                if (sortObj.order == 'desc') {
+                    results.reverse();
+                }
+            });
+
+            results = results.slice(start, start + numRows);
+            facets = recline.Data.Faceting.computeFacets(results, queryObj);
+
+            self.recordCount = results.length;
+
+            var docs = _.map(results, function (hit) {
+                var _doc = new my.Record(hit);
+                _doc.fields = self.fields;
+                _doc.bind('change', function (doc) {
+                    self._changes.updates.push(doc.toJSON());
+                });
+                _doc.bind('destroy', function (doc) {
+                    self._changes.deletes.push(doc.toJSON());
+                });
+                return _doc;
+            });
+
+
+            self.records.reset(docs);
+
+            if (facets) {
+                var facets = _.map(facets, function (facetResult, facetId) {
+                    facetResult.id = facetId;
+                    var result = new my.Facet(facetResult);
+                    recline.Data.ColorSchema.addColorsToTerms(facetId, result.attributes.terms, self.attributes.colorSchema);
+                    recline.Data.ShapeSchema.addShapesToTerms(facetId, result.attributes.terms, self.attributes.shapeSchema);
+
+                    return result;
+                });
+                self.facets.reset(facets);
+            }
+
+            self.trigger('query:done');
+        },
+
+        join:function () {
+            var joinon = this.attributes.joinon;
+            var joinType = this.attributes.joinType;
+            var model = this.attributes.model;
+            var joinModel = this.attributes.join;
+
+
+            var results = [];
+
+            _.each(model.getRecords(), function (r) {
+                var filters = [];
+                // creation of a filter on dataset2 based on dataset1 field value of joinon field
+
+
+                var recordMustBeAdded = true;
+
+                // define the record with all data from model
+                var record = {};
+                _.each(r.toJSON(), function (f, index) {
+                    record["model." + index] = f;
+                });
+
+                _.each(joinModel, function(p) {
+                    // retrieve records from secondary model
+                    _.each(p.joinon, function (f) {
+                        var field = p.model.fields.get(f);
+                        filters.push({field:field.id, type:"term", term:r.getFieldValueUnrendered(field), fieldType:field.attributes.type });
+                    })
+
+                    var resultsFromDataset2 = recline.Data.Filters.applyFiltersOnData(filters, p.model.records.toJSON(), p.model.fields.toJSON());
+
+                    if(resultsFromDataset2.length == 0)
+                        recordMustBeAdded = false;
+
+                    _.each(resultsFromDataset2, function (res) {
+                        _.each(res, function (field_value, index) {
+                            record[p.id + "." + index] = field_value;
+                        })
+                    })
+
+                });
+
+               if(joinType=="left" || recordMustBeAdded)
+                    results.push(record);
+
+            })
+
+
+            return results;
+        },
+
+        getRecords:function () {
+            return this.records.models;
+        },
+
+        getFields:function (type) {
+            return this.fields;
+        },
+
+        toTemplateJSON:function () {
+            var data = this.records.toJSON();
+            data.recordCount = this.recordCount;
+            data.fields = this.fields.toJSON();
+            return data;
+        },
+
+
+        getFacetByFieldId:function (fieldId) {
+            return _.find(this.facets.models, function (facet) {
+                return facet.id == fieldId;
+            });
+        },
+
+        setColorSchema:function () {
+            var self = this;
+            _.each(self.attributes.colorSchema, function (d) {
+                var field = _.find(self.fields.models, function (f) {
+                    return d.field === f.id
+                });
+                if (field != null)
+                    field.attributes.colorSchema = d.schema;
+            })
+        },
+
+        setShapeSchema:function () {
+            var self = this;
+            _.each(self.attributes.shapeSchema, function (d) {
+                var field = _.find(self.fields.models, function (f) {
+                    return d.field === f.id
+                });
+                if (field != null)
+                    field.attributes.shapeSchema = d.schema;
+            })
+        },
+        isFieldPartitioned:function (field) {
+            return false
+        }
+
+    })
+
+
+}(jQuery, this.recline.Model));
+
 (function ($) {
 
     recline.Model.Dataset = recline.Model.Dataset.extend({
@@ -30,20 +428,920 @@
     });
 
     recline.Model.Field = recline.Model.Field.extend({
-    getColorForPartition:function () {
 
-        if (!this.attributes.colorSchema)
-            return null;
+        getColorForPartition:function () {
 
-        if (this.attributes.is_partitioned)
-            return this.attributes.colorSchema.getColorFor(this.attributes.partitionValue);
+            if (!this.attributes.colorSchema)
+                return null;
 
-        return this.attributes.colorSchema.getColorFor(this.attributes.id);
-    }
+            if (this.attributes.is_partitioned)
+                return this.attributes.colorSchema.getColorFor(this.attributes.partitionValue);
+
+            return this.attributes.colorSchema.getColorFor(this.attributes.id);
+        }
+    });
+
+
+}(jQuery));(function ($) {
+
+    recline.Model.Dataset = recline.Model.Dataset.extend({
+            addCustomFilterLogic: function(f) {
+            if(this.attributes.customFilterLogic)
+                this.attributes.customFilterLogic.push(f);
+            else
+                this.attributes.customFilterLogic = [f];
+        }
+    });
+
+
+}(jQuery));(function ($) {
+
+    recline.Model.Dataset = recline.Model.Dataset.extend({
+        setShapeSchema:function () {
+            var self = this;
+            _.each(self.attributes.shapeSchema, function (d) {
+                var field = _.find(self.fields.models, function (f) {
+                    return d.field === f.id
+                });
+                if (field != null)
+                    field.attributes.shapeSchema = d.schema;
+            })
+        }
+    });
+
+
+    recline.Model.Record = recline.Model.Record.extend({
+        getFieldShapeName:function (field) {
+            if (!field.attributes.shapeSchema)
+                return null;
+
+            if (field.attributes.is_partitioned) {
+                return field.attributes.shapeSchema.getShapeNameFor(field.attributes.partitionValue);
+            }
+            else
+                return field.attributes.shapeSchema.getShapeNameFor(this.getFieldValueUnrendered(field));
+
+        },
+
+        getFieldShape:function (field, isSVG, isNode) {
+            if (!field.attributes.shapeSchema)
+                return recline.Template.Shapes["empty"](null, isNode, isSVG);
+
+            var fieldValue;
+            var fieldColor = this.getFieldColor(field);
+
+            if (field.attributes.is_partitioned) {
+                fieldValue = field.attributes.partitionValue;
+            }
+            else
+                fieldValue = this.getFieldValueUnrendered(field);
+
+
+            return field.attributes.shapeSchema.getShapeFor(fieldValue, fieldColor, isSVG, isNode);
+        }
+    });
+
+    recline.Model.Field = recline.Model.Field.extend({
+
+
     });
 
 
 }(jQuery));// # Recline Backbone Models
+this.recline = this.recline || {};
+this.recline.Model = this.recline.Model || {};
+this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
+
+
+(function ($, my) {
+
+// ## <a id="dataset">VirtualDataset</a>
+    my.VirtualDataset = Backbone.Model.extend({
+        constructor:function VirtualDataset() {
+            Backbone.Model.prototype.constructor.apply(this, arguments);
+        },
+
+
+        initialize:function () {
+            _.bindAll(this, 'query');
+
+
+            var self = this;
+            this.backend = recline.Backend.Memory;
+            this.fields = new my.FieldList();
+            this.records = new my.RecordList();
+            this.facets = new my.FacetList();
+            this.recordCount = null;
+            this.queryState = new my.Query();
+
+            if (this.get('initialState')) {
+                this.get('initialState').setState(this);
+            }
+
+            this.attributes.dataset.bind('query:done', function () {
+                self.initializeCrossfilter();
+            })
+
+            //this.attributes.dataset.records.bind('add',     function() { self.initializeCrossfilter(); });
+            //this.attributes.dataset.records.bind('reset',   function() { self.initializeCrossfilter(); });
+
+            this.queryState.bind('change', function () {
+                self.query();
+            });
+            this.queryState.bind('selection:change', function () {
+                self.selection();
+            });
+
+            // dataset is already been fetched
+            if (this.attributes.dataset.records.models.length > 0)
+                self.initializeCrossfilter();
+
+            // TODO verify if is better to use a new backend (crossfilter) to manage grouping and filtering instead of using it inside the model
+            // TODO OPTIMIZATION use a structure for the reduce function that doesn't need any translation to records/arrays
+            // TODO USE crossfilter as backend memory
+        },
+
+        getRecords:function (type) {
+            var self = this;
+
+            if (type === 'filtered' || type == null) {
+                if(self.needsTableCalculation && self.totals == null)
+                    self.rebuildTotals();
+
+                return self.records.models;
+            } else if (type === 'totals') {
+                if(self.totals == null)
+                    self.rebuildTotals();
+
+                return self.totals.records.models;
+            } else if (type === 'totals_unfiltered') {
+                if(self.totals_unfiltered == null)
+                    self.rebuildUnfilteredTotals();
+
+                return self.totals_unfiltered.records.models;
+            } else {
+                if (self._store.data == null) {
+                    throw "VirtualModel: unable to retrieve not filtered data, store can't provide data. Use a backend that use memory store";
+                }
+
+                var docs = _.map(self._store.data, function (hit) {
+                    var _doc = new my.Record(hit);
+                    _doc.fields = self.fields;
+                    return _doc;
+                });
+
+                return docs;
+            }
+        },
+
+        getField_byAggregationFunction: function(resultType, fieldName, aggr) {
+            var fields = this.getFields(resultType);
+            return fields.get(fieldName + "_" + aggr);
+        },
+
+
+        getFields:function (type) {
+            var self = this;
+
+            if (type === 'filtered' || type == null) {
+                return self.fields;
+            } else if (type === 'totals') {
+                if(self.totals == null)
+                    self.rebuildTotals();
+
+                return self.totals.fields;
+            } else if (type === 'totals_unfiltered') {
+                if(self.totals == null)
+                    self.rebuildUnfilteredTotals();
+
+                return self.totals_unfiltered.fields;
+            } else {
+                return self.fields;
+            }
+        },
+
+        initializeCrossfilter:function () {
+            var aggregatedFields = this.attributes.aggregation.measures;
+            var aggregationFunctions = this.attributes.aggregation.aggregationFunctions;
+            var originalFields = this.attributes.dataset.fields;
+            var dimensions =  this.attributes.aggregation.dimensions;
+            var partitions =this.attributes.aggregation.partitions;
+
+            var crossfilterData = crossfilter(this.attributes.dataset.toFullJSON());
+            var group = this.createDimensions(crossfilterData, dimensions);
+            var results = this.reduce(group,dimensions,aggregatedFields,aggregationFunctions,partitions);
+
+
+
+            this.updateStore(results, originalFields,dimensions,aggregationFunctions,aggregatedFields,partitions);
+        },
+
+        setDimensions:function (dimensions) {
+            this.attributes.aggregation.dimensions = dimensions;
+            this.trigger('dimensions:change');
+            this.initializeCrossfilter();
+        },
+
+        getDimensions:function () {
+            return this.attributes.aggregation.dimensions;
+        },
+
+        createDimensions:function (crossfilterData, dimensions) {
+            var group;
+
+            if (dimensions == null) {
+                // need to evaluate aggregation function on all records
+                group = crossfilterData.groupAll();
+            }
+            else {
+                var by_dimension = crossfilterData.dimension(function (d) {
+                    var tmp = "";
+                    for (i = 0; i < dimensions.length; i++) {
+                        if (i > 0) {
+                            tmp = tmp + "#";
+                        }
+
+                        tmp = tmp + d[dimensions[i]].valueOf();
+                    }
+                    return tmp;
+                });
+                group = by_dimension.group();
+            }
+
+            return group;
+        },
+
+        reduce:function (group, dimensions, aggregatedFields, aggregationFunctions, partitions) {
+
+            if (aggregationFunctions == null || aggregationFunctions.length == 0)
+                throw("Error aggregationFunctions parameters is not set for virtual dataset ");
+
+
+            var partitioning = false;
+            var partitionFields = {};
+            if (partitions != null) {
+                var partitioning = true;
+            }
+
+            function addFunction(p, v) {
+                p.count = p.count + 1;
+                for (i = 0; i < aggregatedFields.length; i++) {
+
+                    // for each aggregation function evaluate results
+                    for (j = 0; j < aggregationFunctions.length; j++) {
+                        var currentAggregationFunction = this.recline.Data.Aggregations.aggregationFunctions[aggregationFunctions[j]];
+
+                        p[aggregationFunctions[j]][aggregatedFields[i]] =
+                            currentAggregationFunction(
+                                p[aggregationFunctions[j]][aggregatedFields[i]],
+                                v[aggregatedFields[i]]);
+                    }
+
+
+                    if (partitioning) {
+                        // for each partition need to verify if exist a value of aggregatefield_by_partition_partitionvalue
+                        for (x = 0; x < partitions.length; x++) {
+                            var partitionName = partitions[x];
+                            var partitionValue = v[partitions[x]];
+                            var aggregatedField = aggregatedFields[i];
+                            var fieldName = aggregatedField + "_by_" + partitionName + "_" + partitionValue;
+
+
+                            // for each aggregation function evaluate results
+                            for (j = 0; j < aggregationFunctions.length; j++) {
+
+                                if (partitionFields[aggregationFunctions[j]] == null)
+                                    partitionFields[aggregationFunctions[j]] = {};
+
+                                var currentAggregationFunction = this.recline.Data.Aggregations.aggregationFunctions[aggregationFunctions[j]];
+
+                                if (p.partitions[aggregationFunctions[j]][fieldName] == null) {
+                                    p.partitions[aggregationFunctions[j]][fieldName] = {
+                                        value:null,
+                                        partition:partitionValue,
+                                        originalField:aggregatedField,
+                                        aggregationFunction:currentAggregationFunction};
+
+                                    // populate partitions description
+
+                                    partitionFields[aggregationFunctions[j]][fieldName] = {
+                                        field:partitionName,
+                                        value:partitionValue,
+                                        originalField:aggregatedField,
+                                        aggregationFunction:currentAggregationFunction,
+                                        aggregationFunctionName:aggregationFunctions[j],
+                                        id:fieldName + "_" + aggregationFunctions[j]
+                                    }; // i need partition name but also original field value
+                                }
+                                p.partitions[aggregationFunctions[j]][fieldName]["value"] =
+                                    currentAggregationFunction(
+                                        p.partitions[aggregationFunctions[j]][fieldName]["value"],
+                                        v[aggregatedFields[i]]);
+                            }
+
+                            if (p.partitions.count[fieldName] == null) {
+                                p.partitions.count[fieldName] = {
+                                    value:1,
+                                    partition:partitionValue,
+                                    originalField:aggregatedField,
+                                    aggregationFunction:"count"
+                                };
+                            }
+                            else
+                                p.partitions.count[fieldName]["value"] += 1;
+                        }
+                    }
+
+
+                }
+                return p;
+            }
+
+            function removeFunction(p, v) {
+                throw "crossfilter reduce remove function not implemented";
+            }
+
+            function initializeFunction() {
+
+                var tmp = {count:0};
+
+                for (j = 0; j < aggregationFunctions.length; j++) {
+                    tmp[aggregationFunctions[j]] = {};
+                    this.recline.Data.Aggregations.initFunctions[aggregationFunctions[j]](tmp, aggregatedFields, partitions);
+                }
+
+                if (partitioning) {
+                    tmp["partitions"] = {};
+                    tmp["partitions"]["count"] = {};
+
+                    for (j = 0; j < aggregationFunctions.length; j++) {
+                        tmp["partitions"][aggregationFunctions[j]] = {};
+                    }
+
+                    /*_.each(partitions, function(p){
+                     tmp.partitions.list[p] = 0;
+                     });*/
+                }
+
+                return tmp;
+            }
+
+            var reducedGroup = group.reduce(addFunction, removeFunction, initializeFunction);
+
+            var tmpResult;
+
+            if (dimensions == null) {
+                tmpResult = [reducedGroup.value()];
+            }
+            else {
+                tmpResult = reducedGroup.all();
+            }
+
+            return {reducedResult:tmpResult,
+                partitionFields:partitionFields};
+
+        },
+
+        updateStore:function (results, originalFields, dimensions, aggregationFunctions, aggregatedFields, partitions) {
+            var self = this;
+
+            var reducedResult = results.reducedResult;
+            var partitionFields = results.partitionFields;
+            this.partitionFields = partitionFields;
+
+            var fields = self.buildFields(reducedResult, originalFields, partitionFields, dimensions, aggregationFunctions);
+            var result = self.buildResult(reducedResult, originalFields, partitionFields, dimensions, aggregationFunctions, aggregatedFields, partitions);
+
+            this._store = new recline.Backend.Memory.Store(result, fields);
+
+            recline.Data.FieldsUtility.setFieldsAttributes(fields, self);
+            this.fields.reset(fields, {renderer:recline.Data.Formatters.Renderers});
+            this.clearUnfilteredTotals();
+
+            this.query();
+
+        },
+
+        rebuildTotals: function() {
+            this._rebuildTotals(this.records, this.fields, true);
+
+        },
+        rebuildUnfilteredTotals: function() {
+            this._rebuildTotals(this._store.data, this.fields, false);
+        },
+        clearUnfilteredTotals: function() {
+            this.totals_unfiltered = null;
+           this.clearFilteredTotals();
+        },
+        clearFilteredTotals: function() {
+            this.totals = null;
+       },
+
+        _rebuildTotals: function(records, originalFields, filtered) {
+            /*
+                totals: {
+                    aggregationFunctions:["sum"],
+                    aggregatedFields: ["fielda"]
+                    }
+            */
+            var self=this;
+
+            if(!self.attributes.totals)
+                return;
+
+            var aggregatedFields = self.attributes.totals.measures;
+            var aggregationFunctions =  self.attributes.totals.aggregationFunctions;
+
+            var rectmp;
+
+            if(records.constructor == Array)
+                rectmp = records;
+            else
+                rectmp = _.map(records.models, function(d) { return d.attributes;}) ;
+
+            var crossfilterData =  crossfilter(rectmp);
+
+            var group = this.createDimensions(crossfilterData, null);
+            var results = this.reduce(group, null,aggregatedFields, aggregationFunctions, null);
+
+            var fields = self.buildFields(results.reducedResult, originalFields, {}, null, aggregationFunctions);
+            var result = self.buildResult(results.reducedResult, originalFields, {}, null, aggregationFunctions, aggregatedFields, null);
+
+            // I need to apply table calculations
+            var tableCalc = recline.Data.Aggregations.checkTableCalculation(self.attributes.aggregation.aggregationFunctions, self.attributes.totals);
+
+                _.each(tableCalc, function(f) {
+                    var p;
+                    _.each(rectmp, function(r) {
+                        p = recline.Data.Aggregations.tableCalculations[f](self.attributes.aggregation.measures, p, r, result[0]);
+                    });
+                });
+
+            recline.Data.FieldsUtility.setFieldsAttributes(fields, self);
+
+            if(filtered) {
+                if(this.totals == null) { this.totals = {records: new my.RecordList(), fields: new my.FieldList() }}
+
+                    this.totals.fields.reset(fields, {renderer:recline.Data.Formatters.Renderers}) ;
+                    this.totals.records.reset(result);
+            }   else   {
+                if(this.totals_unfiltered == null) { this.totals_unfiltered = {records: new my.RecordList(), fields: new my.FieldList() }}
+
+                    this.totals_unfiltered.fields.reset(fields, {renderer:recline.Data.Formatters.Renderers}) ;
+                    this.totals_unfiltered.records.reset(result);
+            }
+
+
+        },
+
+        needsTableCalculation: function() {
+            if(recline.Data.Aggregations.checkTableCalculation(self.attributes.aggregation.aggregationFunctions, self.attributes.totals).length > 0)
+                return true;
+            else
+                return false;
+        },
+
+        buildResult:function (reducedResult, originalFields, partitionFields, dimensions, aggregationFunctions, aggregatedFields, partitions) {
+
+            var partitioning = false;
+
+            if (partitions != null) {
+                var partitioning = true;
+            }
+
+            var tmpField;
+            if (dimensions == null) {
+                tmpField = reducedResult;
+            }
+            else {
+                if (reducedResult.length > 0) {
+                    tmpField = reducedResult[0].value;
+                }
+                else
+                    tmpField = {count:0};
+            }
+
+            var result = [];
+
+            // set  results of dataset
+            for (var i = 0; i < reducedResult.length; i++) {
+
+                var currentField;
+                var currentResult = reducedResult[i];
+                var tmp;
+
+                // if dimensions specified add dimension' fields
+                if (dimensions != null) {
+                    var keyField = reducedResult[i].key.split("#");
+
+                    tmp = {dimension:currentResult.key, count:currentResult.value.count};
+
+                    for (var j = 0; j < keyField.length; j++) {
+                        var field = dimensions[j];
+                        var originalFieldAttributes = originalFields.get(field).attributes;
+                        var type = originalFieldAttributes.type;
+
+                        var parse = recline.Data.FormattersMODA[type];
+                        var value = parse(keyField[j]);
+
+                        tmp[dimensions[j]] = value;
+                    }
+                    currentField = currentResult.value;
+
+                }
+                else {
+                    currentField = currentResult;
+                    tmp = {count:currentResult.count};
+                }
+
+                // add records foreach aggregation function
+                for (var j = 0; j < aggregationFunctions.length; j++) {
+
+                    // apply finalization function, was not applied since now
+                    // todo verify if can be moved above
+                    // note that finalization can't be applyed at init cause we don't know in advance wich partitions data are present
+
+
+                    var tmpPartitionFields = [];
+                    if (partitionFields[aggregationFunctions[j]] != null)
+                        tmpPartitionFields = partitionFields[aggregationFunctions[j]];
+                    recline.Data.Aggregations.finalizeFunctions[aggregationFunctions[j]](
+                        currentField,
+                        aggregatedFields,
+                        _.keys(tmpPartitionFields));
+
+                    var tempValue;
+
+
+                    if (typeof currentField[aggregationFunctions[j]] == 'function')
+                        tempValue = currentField[aggregationFunctions[j]]();
+                    else
+                        tempValue = currentField[aggregationFunctions[j]];
+
+
+                    for (var x in tempValue) {
+
+                        var tempValue2;
+                        if (typeof tempValue[x] == 'function')
+                            tempValue2 = tempValue[x]();
+                        else
+                            tempValue2 = tempValue[x];
+
+                        tmp[x + "_" + aggregationFunctions[j]] = tempValue2;
+                    }
+
+
+                    // adding partition records
+                    if (partitioning) {
+                        var tempValue;
+                        if (typeof currentField.partitions[aggregationFunctions[j]] == 'function')
+                            tempValue = currentField.partitions[aggregationFunctions[j]]();
+                        else
+                            tempValue = currentField.partitions[aggregationFunctions[j]];
+
+                        for (var x in tempValue) {
+                            var tempValue2;
+                            if (typeof currentField.partitions[aggregationFunctions[j]] == 'function')
+                                tempValue2 = currentField.partitions[aggregationFunctions[j]]();
+                            else
+                                tempValue2 = currentField.partitions[aggregationFunctions[j]];
+
+                            var fieldName = x + "_" + aggregationFunctions[j];
+
+                            tmp[fieldName] = tempValue2[x].value;
+
+
+                        }
+
+                    }
+
+                }
+
+                // count is always calculated for each partition
+                if (partitioning) {
+                    for (var x in tmpField.partitions["count"]) {
+                        if (currentResult.value.partitions["count"][x] == null)
+                            tmp[x + "_count"] = 0;
+                        else
+                            tmp[x + "_count"] = currentResult.value.partitions["count"][x].value;
+                    }
+                }
+
+
+                result.push(tmp);
+            }
+
+            return result;
+        },
+
+        buildFields:function (reducedResult, originalFields, partitionFields, dimensions, aggregationFunctions) {
+            var self = this;
+
+            var fields = [];
+
+            var tmpField;
+            if (dimensions == null ) {
+                if(reducedResult.constructor != Array)
+                    tmpField = reducedResult;
+                else
+                if (reducedResult.length > 0) {
+                    tmpField = reducedResult[0];
+                }
+                else
+                    tmpField = {count:0};
+            }
+            else {
+                if (reducedResult.length > 0) {
+                    tmpField = reducedResult[0].value;
+                }
+                else
+                    tmpField = {count:0};
+            }
+
+
+            // creation of fields
+
+            fields.push({id:"count", type:"integer"});
+
+            // defining fields based on aggreagtion functions
+            for (var j = 0; j < aggregationFunctions.length; j++) {
+
+                var tempValue;
+                if (typeof tmpField[aggregationFunctions[j]] == 'function')
+                    tempValue = tmpField[aggregationFunctions[j]]();
+                else
+                    tempValue = tmpField[aggregationFunctions[j]];
+
+                for (var x in tempValue) {
+                    var originalFieldAttributes = originalFields.get(x).attributes;
+                    var newType = recline.Data.Aggregations.resultingDataType[aggregationFunctions[j]](originalFieldAttributes.type);
+
+                    fields.push({
+                        id:x + "_" + aggregationFunctions[j],
+                        type:newType,
+                        is_partitioned:false,
+                        colorSchema:originalFieldAttributes.colorSchema,
+                        shapeSchema:originalFieldAttributes.shapeSchema,
+                        originalField:x,
+                        aggregationFunction:aggregationFunctions[j]
+                    });
+                }
+
+                // add partition fields
+                _.each(partitionFields, function (aggrFunction) {
+                    _.each(aggrFunction, function (d) {
+                        var originalFieldAttributes = originalFields.get(d.field).attributes;
+                        var newType = recline.Data.Aggregations.resultingDataType[aggregationFunctions[j]](originalFieldAttributes.type);
+
+                        var fieldId = d.id;
+                        var fieldLabel = fieldId;
+
+                        if (self.attributes.fieldLabelForPartitions) {
+                            fieldLabel = self.attributes.fieldLabelForPartitions
+                                .replace("{originalField}", d.originalField)
+                                .replace("{partitionFieldName}", d.field)
+                                .replace("{partitionFieldValue}", d.value)
+                                .replace("{aggregatedFunction}", aggregationFunctions[j]);
+                        }
+
+                        fields.push({
+                                id:fieldId,
+                                type:newType,
+                                is_partitioned:true,
+                                partitionField:d.field,
+                                partitionValue:d.value,
+                                colorSchema:originalFieldAttributes.colorSchema, // the schema is the one used to specify partition
+                                shapeSchema:originalFieldAttributes.shapeSchema,
+                                originalField:d.originalField,
+                                aggregationFunction:aggregationFunctions[j],
+                                label:fieldLabel
+                            }
+                        );
+                    })
+                });
+
+            }
+
+            // adding all dimensions to field list
+            if (dimensions != null) {
+                fields.push({id:"dimension"});
+                for (var i = 0; i < dimensions.length; i++) {
+                    var originalFieldAttributes = originalFields.get(dimensions[i]).attributes;
+                    fields.push({
+                        id:dimensions[i],
+                        type:originalFieldAttributes.type,
+                        label:originalFieldAttributes.label,
+                        format:originalFieldAttributes.format,
+                        colorSchema:originalFieldAttributes.colorSchema,
+                        shapeSchema:originalFieldAttributes.shapeSchema
+                    });
+
+                }
+            }
+
+
+            return fields;
+        },
+
+        query:function (queryObj) {
+
+            var self = this;
+            var dfd = $.Deferred();
+            this.trigger('query:start');
+
+            if (queryObj) {
+                this.queryState.set(queryObj, {silent:true});
+            }
+            var actualQuery = this.queryState.toJSON();
+            console.log("VModel [" + self.attributes.name + "] query [" + JSON.stringify(actualQuery) + "]");
+
+            if (this._store == null) {
+                console.log("Warning query called before data has been calculated for virtual model, call fetch on source dataset");
+                return;
+            }
+
+            self.clearFilteredTotals();
+
+            this._store.query(actualQuery, this.toJSON())
+                .done(function (queryResult) {
+                    self._handleQueryResult(queryResult);
+                    self.trigger('query:done');
+                    dfd.resolve(self.records);
+                })
+                .fail(function (arguments) {
+                    self.trigger('query:fail', arguments);
+                    dfd.reject(arguments);
+                });
+            return dfd.promise();
+        },
+
+        selection:function (queryObj) {
+            var self = this;
+
+            this.trigger('selection:start');
+
+            if (queryObj) {
+                self.queryState.set(queryObj, {silent:true});
+            }
+            var actualQuery = self.queryState
+
+
+            // apply on current records
+            // needed cause memory store is not mandatory
+            recline.Data.Filters.applySelectionsOnData(self.queryState.get('selections'), self.records.models, self.fields);
+
+            self.queryState.trigger('selection:done');
+
+        },
+
+        _handleQueryResult:function (queryResult) {
+            var self = this;
+            self.recordCount = queryResult.total;
+            var docs = _.map(queryResult.hits, function (hit) {
+                var _doc = new my.Record(hit);
+                _doc.fields = self.fields;
+                return _doc;
+            });
+
+                self.clearFilteredTotals();
+                self.records.reset(docs);
+
+
+            if (queryResult.facets) {
+                var facets = _.map(queryResult.facets, function (facetResult, facetId) {
+                    facetResult.id = facetId;
+                    var result = new my.Facet(facetResult);
+
+                    self.addColorsToTerms(facetId, result.attributes.terms);
+
+                    return result;
+                });
+                self.facets.reset(facets);
+            }
+
+
+        },
+
+
+        setColorSchema:function (type) {
+            var self = this;
+            _.each(self.attributes.colorSchema, function (d) {
+                var field = _.find(self.getFields(type).models, function (f) {
+                    return d.field === f.id
+                });
+                if (field != null)
+                    field.attributes.colorSchema = d.schema;
+            })
+        },
+
+        setShapeSchema:function (type) {
+            var self = this;
+            _.each(self.attributes.shapeSchema, function (d) {
+                var field = _.find(self.getFields(type).models, function (f) {
+                    return d.field === f.id
+                });
+                if (field != null)
+                    field.attributes.shapeSchema = d.schema;
+            })
+        },
+
+        addColorsToTerms:function (field, terms) {
+            var self = this;
+            _.each(terms, function (t) {
+
+                // assignment of color schema to fields
+                if (self.attributes.colorSchema) {
+                    _.each(self.attributes.colorSchema, function (d) {
+                        if (d.field === field)
+                            t.color = d.schema.getColorFor(t.term);
+                    })
+                }
+            });
+        },
+
+        getFacetByFieldId:function (fieldId) {
+            return _.find(this.facets.models, function (facet) {
+                return facet.id == fieldId;
+            });
+        },
+
+        toTemplateJSON:function () {
+            var data = this.records.toJSON();
+            data.recordCount = this.recordCount;
+            data.fields = this.fields.toJSON();
+            return data;
+        },
+
+        // ### getFieldsSummary
+        //
+        // Get a summary for each field in the form of a `Facet`.
+        //
+        // @return null as this is async function. Provides deferred/promise interface.
+        getFieldsSummary:function () {
+            // TODO update function in order to manage facets/filter and selection
+
+            var self = this;
+            var query = new my.Query();
+            query.set({size:0});
+
+            var dfd = $.Deferred();
+            this._store.query(query.toJSON(), this.toJSON()).done(function (queryResult) {
+                if (queryResult.facets) {
+                    _.each(queryResult.facets, function (facetResult, facetId) {
+                        facetResult.id = facetId;
+                        var facet = new my.Facet(facetResult);
+                        // TODO: probably want replace rather than reset (i.e. just replace the facet with this id)
+                        self.fields.get(facetId).facets.reset(facet);
+                    });
+                }
+                dfd.resolve(queryResult);
+            });
+            return dfd.promise();
+        },
+
+        // Retrieve the list of partitioned field for the specified aggregated field
+        getPartitionedFields:function (partitionedField, measureField) {
+            //var field = this.fields.get(fieldName);
+
+            var fields = _.filter(this.fields.models, function (d) {
+                return (
+                    d.attributes.partitionField == partitionedField
+                        && d.attributes.originalField == measureField
+                    );
+            });
+
+            if (fields == null)
+                field = [];
+
+            //fields.push(field);
+
+            return fields;
+
+        },
+
+        isFieldPartitioned:function (fieldName, type) {
+            return  this.getFields(type).get(fieldName).attributes.aggregationFunction
+                && this.attributes.aggregation.partitions;
+        },
+
+        getPartitionedFieldsForAggregationFunction:function (aggregationFunction, aggregatedFieldName) {
+            var self = this;
+            var fields = [];
+
+            _.each(self.partitionFields[aggregationFunction], function (p) {
+                if (p.originalField == aggregatedFieldName)
+                    fields.push(self.fields.get(p.id));
+            });
+
+            return fields;
+        }
+
+    });
+
+
+}(jQuery, this.recline.Model));
+
+// # Recline Backbone Models
 this.recline = this.recline || {};
 this.recline.Data = this.recline.Data || {};
 this.recline.Data.ColorSchema = this.recline.Data.ColorSchema || {};
@@ -297,6 +1595,183 @@ this.recline.Data.ColorSchema = this.recline.Data.ColorSchema || {};
             }
         });
     };
+}(jQuery, this.recline.Data));
+// # Recline Backbone Models
+this.recline = this.recline || {};
+this.recline.Data = this.recline.Data || {};
+this.recline.Data.ShapeSchema = this.recline.Data.ShapeSchema || {};
+
+(function($, my) {
+
+
+
+    my.ShapeSchema = Backbone.Model.extend({
+        constructor: function ShapeSchema() {
+            Backbone.Model.prototype.constructor.apply(this, arguments);
+        },
+
+        // ### initialize
+        initialize: function() {
+            var self=this;
+
+
+            if(this.attributes.data) {
+                var data = this.attributes.data;
+                self._generateLimits(data);
+            } else if(this.attributes.dataset)
+                { this.bindToDataset();}
+
+        },
+
+        bindToDataset: function() {
+           var self=this;
+            self.attributes.dataset.dataset.records.bind('reset',   function() { self._generateFromDataset(); });
+            self.attributes.dataset.dataset.fields.bind('reset', function () {
+                self.attributes.dataset.dataset.setShapeSchema(self.attributes.dataset.type);
+            });
+
+            if(self.attributes.dataset.dataset.records.models.length > 0) {
+                self._generateFromDataset();
+            }
+        },
+
+
+        setDataset: function(ds, field, type) {
+            var self=this;
+            self.attributes.dataset = {dataset: ds, field: field, type: type};
+            if(!ds.attributes["shapeSchema"])
+                ds.attributes["shapeSchema"] = [];
+
+            ds.attributes["shapeSchema"].push({schema:self, field: field});
+
+            ds.setShapeSchema(type);
+
+            self.bindToDataset();
+        },
+
+
+        _generateFromDataset: function() {
+            var self=this;
+            var data =  this.getRecordsArray(self.attributes.dataset);
+            self._generateLimits(data);
+
+        },
+
+        _generateLimits: function(data) {
+            var self=this;
+            var res = this.limits["distinct"](data);
+            this.schema = {};
+            for(var i=0;i<res.length;i++){
+                this.schema[res[i]] = self.attributes.shapes[i];
+            }
+        },
+
+
+        getShapeNameFor: function(fieldValue) {
+            var self=this;
+            if(this.schema == null)
+                throw "data.shape.js: shape schema not yet initialized, datasource not fetched?"
+
+
+            return  self._shapeName(fieldValue);
+        },
+
+
+        getShapeFor: function(fieldValue, fieldColor, isSVG, isNode) {
+            var self=this;
+            if(this.schema == null)
+                throw "data.shape.js: shape schema not yet initialized, datasource not fetched?"
+
+            if(!self.attributes.shapeType || self.attributes.shapeType == "svg") {
+                var shape = recline.Template.Shapes[this._shapeName(fieldValue)];
+                if(shape == null)
+                    throw "data.shape.js: shape [" +  this._shapeName(fieldValue) + "] not defined in template.shapes";
+                return  shape(fieldColor, isNode, isSVG);
+            } else if( self.attributes.shapeType == "text") {
+                return this._shapeName(this._shapeName(fieldValue));
+            } else if( self.attributes.shapeType == "image") {
+                return '<img src="' + this._shapeName(fieldValue) + '" class="shape_image">';
+            } else {
+                throw "data.shape.js: unsupported shapeType ["+ self.attributes.shapeType  +"]";
+            }
+
+        },
+
+        _shapeName: function(fieldValue) {
+            var self=this;
+
+            // find the correct shape, limits must be ordered
+            if(self.attributes.limitType && this.attributes.limitType == "fixedLimits") {
+                var shape = self.attributes.shapes[0];
+
+
+                for(var i=1;i<this.attributes.limits.length;i++) {
+                    if(fieldValue >= this.attributes.limits[i-1]
+                        && fieldValue < this.attributes.limits[i]) {
+                        shape = self.attributes.shapes[i];
+                        break;
+                    }
+                }
+
+                return shape;
+            } else
+                return self.schema[recline.Data.Transform.getFieldHash(fieldValue)];
+        },
+
+
+        getRecordsArray: function(dataset) {
+            var self=this;
+            var ret = [];
+
+            if(dataset.dataset.isFieldPartitioned(dataset.field, dataset.type))   {
+                var fields = dataset.dataset.getPartitionedFields(dataset.field);
+            _.each(dataset.dataset.getRecords(dataset.type), function(d) {
+                _.each(fields, function (field) {
+                    ret.push(d.attributes[field.id]);
+                });
+            });
+            }
+            else{
+                var  fields = [dataset.field];;
+                _.each(dataset.dataset.getRecords(dataset.type), function(d) {
+                    _.each(fields, function (field) {
+                        ret.push(d.attributes[field]);
+                    });
+                });
+            }
+
+
+
+            return ret;
+        },
+
+
+
+        limits: {
+            distinct: function(data) {
+                _.each(_.uniq(data), function(d, index) {
+                    data[index]=recline.Data.Transform.getFieldHash(d);
+                });
+                return data;
+            }
+
+        }
+
+    })
+
+    my.ShapeSchema.addShapesToTerms = function (field, terms, shapeSchema) {
+        _.each(terms, function (t) {
+
+            // assignment of color schema to fields
+            if (shapeSchema) {
+                _.each(shapeSchema, function (d) {
+                    if (d.field === field)
+                        t.shape = d.schema.getShapeFor(t.term, t.color, false, false);
+                })
+            }
+        });
+    };
+
 }(jQuery, this.recline.Data));
 this.recline = this.recline || {};
 this.recline.View = this.recline.View || {};
@@ -1103,3 +2578,2323 @@ this.recline.View = this.recline.View || {};
 
 })(jQuery, recline.View);
 
+/*jshint multistr:true */
+
+this.recline = this.recline || {};
+this.recline.View = this.recline.View || {};
+
+(function ($, my) {
+
+// ## Linegraph view for a Dataset using nvd3 graphing library.
+//
+// Initialization arguments (in a hash in first parameter):
+//
+// * model: recline.Model.Dataset
+// * state: (optional) configuration hash of form:
+//
+//        { 
+//          group: {column name for x-axis},
+//          series: [{column name for series A}, {column name series B}, ... ],
+//          colors: ["#edc240", "#afd8f8", ...]
+//        }
+//
+// NB: should *not* provide an el argument to the view but must let the view
+// generate the element itself (you can then append view.el to the DOM.
+    my.NVD3Graph = Backbone.View.extend({
+
+        template:'<div class="recline-graph"> \
+      <div class="panel nvd3graph_{{viewId}}"style="display: block;"> \
+        <div id="nvd3chart_{{viewId}}"><svg class="bstrap"></svg></div>\
+      </div> \
+    </div> ',
+
+        initialize:function (options) {
+            var self = this;
+
+            this.uid = options.id || ("" + new Date().getTime() + Math.floor(Math.random() * 10000)); // generating an unique id for the chart
+            this.el = $(this.el);
+            _.bindAll(this, 'render', 'redraw', 'graphResize', 'changeDimensions');
+
+
+            this.model.bind('change', this.render);
+            this.model.fields.bind('reset', this.render);
+            this.model.fields.bind('add', this.render);
+
+            this.model.bind('query:done', this.redraw);
+            this.model.queryState.bind('selection:done', this.redraw);
+            this.model.bind('dimensions:change', this.changeDimensions);
+
+
+            var stateData = _.extend({
+                    group:null,
+                    seriesNameField:[],
+                    seriesValues:[],
+                    colors:["#edc240", "#afd8f8", "#cb4b4b", "#4da74d", "#9440ed"],
+                    graphType:"lineChart",
+                    xLabel:"",
+                    id:0
+
+
+
+                },
+                options.state
+            );
+            this.state = new recline.Model.ObjectState(stateData);
+
+
+        },
+
+        changeDimensions: function() {
+            var self=this;
+            self.state.attributes.group = self.model.getDimensions();
+        },
+
+        render:function () {
+            var self = this;
+
+            var tmplData = this.model.toTemplateJSON();
+            tmplData["viewId"] = this.uid;
+
+            delete this.chart;
+
+
+            var htmls = Mustache.render(this.template, tmplData);
+            $(this.el).html(htmls);
+            this.$graph = this.el.find('.panel.nvd3graph_' + tmplData["viewId"]);
+            return this;
+        },
+
+        getActionsForEvent:function (eventType) {
+            var actions = [];
+
+            _.each(this.options.actions, function (d) {
+                if (_.contains(d.event, eventType))
+                    actions.push(d);
+            });
+
+            return actions;
+        },
+
+        redraw:function () {
+
+            var self = this;
+
+            var state = this.state;
+            var seriesNVD3 = this.createSeriesNVD3();
+
+            var graphType = this.state.get("graphType");
+
+            var viewId = this.uid;
+
+            var model = this.model;
+            var state = this.state;
+            var xLabel = this.state.get("xLabel");
+            var yLabel = this.state.get("yLabel");
+
+
+            nv.addGraph(function () {
+                self.chart = self.getGraph[graphType](self);
+
+                if (self.state.attributes.options) {
+                    _.each(_.keys(self.state.attributes.options), function (d) {
+                        try {
+                            self.addOption[d](self.chart, self.state.attributes.options[d]);
+                        }
+                        catch (err) {
+                            console.log("view.nvd3.graph.js: cannot add options " + d + " for graph type " + graphType)
+                        }
+                    });
+                }
+                ;
+
+                d3.select('#nvd3chart_' + self.uid + '  svg')
+                    .datum(seriesNVD3)
+                    .transition()
+                    .duration(500)
+                    .call(self.chart);
+
+                nv.utils.windowResize(self.graphResize);
+                nv.utils.windowResize(self.graphResize);
+                //self.graphResize()
+                return  self.chart;
+            });
+        },
+
+        graphResize:function () {
+            var self = this;
+            var viewId = this.uid;
+
+            // this only works by previously setting the body height to a numeric pixel size (percentage size don't work)
+            // so we assign the window height to the body height with the command below
+            var container = self.el;
+            while (!container.hasClass('container-fluid') && !container.hasClass('container'))
+            	container = container.parent();
+            
+            if (typeof container != "undefined" && container != null 
+            		&& (container.hasClass('container') || container.hasClass('container-fluid'))
+            		&& container[0].style && container[0].style.height
+            		&& container[0].style.height.indexOf("%") > 0) 
+            {
+	            $("body").height($(window).innerHeight() - 10);
+	
+	            var currAncestor = self.el;
+	            while (!currAncestor.hasClass('row-fluid') && !currAncestor.hasClass('row'))
+	                currAncestor = currAncestor.parent();
+	
+	            if (typeof currAncestor != "undefined" && currAncestor != null && (currAncestor.hasClass('row-fluid') || currAncestor.hasClass('row'))) {
+	                var newH = currAncestor.height();
+	                $('#nvd3chart_' + viewId).height(newH);
+	                $('#nvd3chart_' + viewId + '  svg').height(newH);
+	            }
+            }
+            self.chart.update(); // calls original 'update' function
+        },
+
+
+        setAxis:function (axis, chart) {
+            var self = this;
+
+            var xLabel = self.state.get("xLabel");
+
+            if (axis == "all" || axis == "x") {
+                var xfield = self.model.fields.get(self.state.attributes.group);
+
+                // set label
+                if (xLabel == null || xLabel == "" || typeof xLabel == 'undefined')
+                    xLabel = xfield.get('label');
+
+                // set data format
+                chart.xAxis
+                    .axisLabel(xLabel)
+                    .tickFormat(self.getFormatter[xfield.get('type')]);
+
+            } else if (axis == "all" || axis == "y") {
+                var yLabel = self.state.get("yLabel");
+
+                if (yLabel == null || yLabel == "" || typeof yLabel == 'undefined')
+                    yLabel = self.state.attributes.seriesValues.join("/");
+
+                // todo yaxis format must be passed as prop
+                chart.yAxis
+                    .axisLabel(yLabel)
+                    .tickFormat(d3.format('s'));
+
+            }
+        },
+
+        getFormatter:{
+            "string":d3.format(',s'),
+            "float":d3.format(',r'),
+            "integer":d3.format(',r'),
+            "date":function (d) {
+                return d3.time.format('%x')(new Date(d));
+            }
+
+        },
+
+        addOption:{
+            "staggerLabels":function (chart, value) {
+                chart.staggerLabels(value);
+            },
+            "tooltips":function (chart, value) {
+                chart.tooltips(value);
+            },
+            "showValues":function (chart, value) {
+                chart.showValues(value);
+            },
+            "tooltip": function(chart, value) {
+                var t = function(key, x, y, e, graph) {
+                    return value.replace("{x}", x)
+                        .replace("{y}", y)
+                        .replace("{key}", key);
+                };
+                chart.tooltip(t);
+            },
+            "minmax":function () {
+            },
+            "trendlines":function () {
+            }
+
+        },
+
+
+        getGraph:{
+            "multiBarChart":function (view) {
+                var chart;
+                if (view.chart != null)
+                    chart = view.chart;
+                else
+                    chart = nv.models.multiBarChart();
+
+                view.setAxis("all", chart);
+                return chart;
+            },
+            "lineChart":function (view) {
+                var chart;
+                if (view.chart != null)
+                    chart = view.chart;
+                else
+                    chart = nv.models.lineChart();
+                view.setAxis("all", chart);
+                return chart;
+            },
+            "lineWithFocusChart":function (view) {
+                var chart;
+                if (view.chart != null)
+                    chart = view.chart;
+                else
+                    chart = nv.models.lineWithFocusChart();
+
+                view.setAxis("all", chart);
+                return chart;
+            },
+            "indentedTree":function (view) {
+                var chart;
+                if (view.chart != null)
+                    chart = view.chart;
+                else
+                    chart = nv.models.indentedTree();
+            },
+            "stackedAreaChart":function (view) {
+                var chart;
+                if (view.chart != null)
+                    chart = view.chart;
+                else
+                    chart = nv.models.stackedAreaChart();
+                view.setAxis("all", chart);
+                return chart;
+            },
+
+            "historicalBar":function (view) {
+                var chart;
+                if (view.chart != null)
+                    chart = view.chart;
+                else
+                    chart = nv.models.historicalBar();
+                return chart;
+            },
+            "multiBarHorizontalChart":function (view) {
+                var chart;
+                if (view.chart != null)
+                    chart = view.chart;
+                else
+                    chart = nv.models.multiBarHorizontalChart();
+                view.setAxis("all", chart);
+                return chart;
+            },
+            "legend":function (view) {
+                var chart;
+                if (view.chart != null)
+                    chart = view.chart;
+                else
+                    chart = nv.models.legend();
+                return chart;
+            },
+            "line":function (view) {
+                var chart;
+                if (view.chart != null)
+                    chart = view.chart;
+                else
+                    chart = nv.models.line();
+                return chart;
+            },
+            "sparkline":function (view) {
+                var chart;
+                if (view.chart != null)
+                    chart = view.chart;
+                else
+                    chart = nv.models.sparkline();
+                return chart;
+            },
+            "sparklinePlus":function (view) {
+                var chart;
+                if (view.chart != null)
+                    chart = view.chart;
+                else
+                    chart = nv.models.sparklinePlus();
+                return chart;
+            },
+
+            "multiChart":function (view) {
+                var chart;
+                if (view.chart != null)
+                    chart = view.chart;
+                else
+                    chart = nv.models.multiChart();
+                return chart;
+            },
+
+
+            "bulletChart":function (view) {
+                var chart;
+                if (view.chart != null)
+                    chart = view.chart;
+                else
+                    chart = nv.models.bulletChart();
+                return chart;
+            },
+            "linePlusBarChart":function (view) {
+                var chart;
+                if (view.chart != null)
+                    chart = view.chart;
+                else
+                    chart = nv.models.linePlusBarChart();
+                view.setAxis("all", chart);
+                return chart;
+            },
+            "cumulativeLineChart":function (view) {
+                var chart;
+                if (view.chart != null)
+                    chart = view.chart;
+                else
+                    chart = nv.models.cumulativeLineChart();
+                view.setAxis("all", chart);
+                return chart;
+            },
+            "scatterChart":function (view) {
+                var chart;
+                if (view.chart != null)
+                    chart = view.chart;
+                else
+                    chart = nv.models.scatterChart();
+                chart.showDistX(true)
+                    .showDistY(true);
+                view.setAxis("all", chart);
+                return chart;
+            },
+            "discreteBarChart":function (view) {
+                var actions = view.getActionsForEvent("selection");
+                var chart;
+                if (view.chart != null)
+                    chart = view.chart;
+                else
+                    chart = nv.models.discreteBarChart();
+                view.setAxis("all", chart);
+
+                if (actions.length > 0)
+                    chart.discretebar.dispatch.on('elementClick', function (e) {
+                        view.doActions(actions, [e.point.record]);
+                    });
+                return chart;
+                var actions = view.getActionsForEvent("selection");
+                var options = {};
+
+                if (view.state.attributes.options) {
+                    if (view.state.attributes.options("trendlines"))
+                        options["trendlines"] = view.state.attributes.options("trendlines");
+                    if (view.state.attributes.options("minmax"))
+                        options["minmax"] = view.state.attributes.options("minmax");
+
+                }
+
+
+                if (actions.length > 0) {
+                    options["callback"] = function (x) {
+
+                        // selection is done on x axis so I need to take the record with range [min_x, max_x]
+                        // is the group attribute
+                        var record_min = _.min(x, function (d) {
+                            return d.min.x
+                        });
+                        var record_max = _.max(x, function (d) {
+                            return d.max.x
+                        });
+
+                        view.doActions(actions, [record_min.min.record, record_max.max.record]);
+
+                    };
+                } else
+                    options["callback"] = function () {
+                    };
+            },
+            "lineWithBrushChart":function (view) {
+
+
+                var chart;
+                if (view.chart != null)
+                    chart = view.chart;
+                else
+                    chart = nv.models.lineWithBrushChart(options);
+                view.setAxis("all", chart);
+                return  chart
+            },
+            "multiBarWithBrushChart":function (view) {
+                var actions = view.getActionsForEvent("selection");
+                var options = {};
+
+                if (view.state.attributes.options) {
+                    if (view.state.attributes.options("trendlines"))
+                        options["trendlines"] = view.state.attributes.options("trendlines");
+                    if (view.state.attributes.options("minmax"))
+                        options["minmax"] = view.state.attributes.options("minmax");
+
+                }
+
+                if (actions.length > 0) {
+                    options["callback"] = function (x) {
+
+                        // selection is done on x axis so I need to take the record with range [min_x, max_x]
+                        // is the group attribute
+                        var record_min = _.min(x, function (d) {
+                            return d.min.x
+                        });
+                        var record_max = _.max(x, function (d) {
+                            return d.max.x
+                        });
+
+                        view.doActions(actions, [record_min.min.record, record_max.max.record]);
+
+                    };
+                } else
+                    options["callback"] = function () {
+                    };
+
+                var chart;
+                if (view.chart != null)
+                    chart = view.chart;
+                else
+                    chart = nv.models.multiBarWithBrushChart(options);
+
+                return chart;
+            },
+
+            "pieChart":function (view) {
+                var chart;
+                if (view.chart != null)
+                    chart = view.chart;
+                else
+                    chart = nv.models.pieChart();
+
+                chart.values(function(d) {
+                    var ret=[];
+                    _.each(d.values, function(dd) {
+                        ret.push({x: dd.x, y:dd.y});
+                    });
+                    return ret;
+                });
+
+                return chart;
+            }
+
+        },
+
+
+        doActions:function (actions, records) {
+
+            _.each(actions, function (d) {
+                d.action.doAction(records, d.mapping);
+            });
+
+        },
+
+        getFieldLabel: function(field){
+            var self=this;
+            var fieldLabel = field.attributes.label;
+            if (field.attributes.is_partitioned)
+                fieldLabel = field.attributes.partitionValue;
+
+            if (typeof self.state.attributes.fieldLabels != "undefined" && self.state.attributes.fieldLabels != null) {
+                var fieldLabel_alternateObj = _.find(self.state.attributes.fieldLabels, function (fl) {
+                    return fl.id == fieldLabel
+                });
+                if (typeof fieldLabel_alternateObj != "undefined" && fieldLabel_alternateObj != null)
+                    fieldLabel = fieldLabel_alternateObj.label;
+            }
+
+            return fieldLabel;
+        },
+
+
+        createSeriesNVD3:function () {
+
+            var self = this;
+            var series = [];
+
+            //  {type: "byFieldName", fieldvaluesField: ["y", "z"]}
+            var seriesAttr = this.state.attributes.series;
+
+            var fillEmptyValuesWith = seriesAttr.fillEmptyValuesWith;
+
+            //var seriesNameField = self.model.fields.get(this.state.attributes.seriesNameField) ;
+            //var seriesValues = self.model.fields.get(this.state.attributes.seriesValues);
+            //if(seriesValues == null)
+            //var seriesValues = this.state.get("seriesValues") ;
+
+            var xAxisIsDate = false;
+            var unselectedColor = "#C0C0C0";
+            if (self.state.attributes.unselectedColor)
+                unselectedColor = self.state.attributes.unselectedColor;
+            var selectionActive = false;
+            if (self.model.queryState.isSelected())
+                selectionActive = true;
+
+            var resultType = "filtered";
+            if(self.options.resultType !== null)
+                resultType = self.options.resultType;
+
+            var records = self.model.getRecords(resultType);  //self.model.records.models;
+
+            var xfield = self.model.fields.get(self.state.attributes.group);
+            if(!xfield)
+                throw "View.nvd3: unable to find field [" + self.state.attributes.group + "] on model"
+
+            if (xfield.get('type') === 'date') {
+                xAxisIsDate = true;
+            }
+
+            var uniqueX = [];
+            var sizeField;
+            if (seriesAttr.sizeField) {
+                sizeField = self.model.fields.get(seriesAttr.sizeField);
+
+                if(!sizeField)
+                    throw "View.nvd3: unable to find field [" + seriesAttr.sizeField + "] on model"
+            }
+
+
+            // series are calculated on data, data should be analyzed in order to create series
+            if (seriesAttr.type == "byFieldValue") {
+                var seriesTmp = {};
+                var seriesNameField = self.model.fields.get(seriesAttr.seriesField);
+                if(!seriesNameField)
+                    throw "View.nvd3: unable to find field [" + seriesAttr.seriesField + "] on model"
+
+                var fieldValue = self.model.fields.get(seriesAttr.valuesField);
+                if(!fieldValue)
+                    throw "View.nvd3: unable to find field [" + seriesAttr.valuesField + "] on model"
+
+
+                _.each(records, function (doc, index) {
+
+                    // key is the field that identiy the value that "build" series
+                    var key = doc.getFieldValueUnrendered(seriesNameField);
+                    var tmpS;
+
+                    // verify if the serie is already been initialized
+                    if (seriesTmp[key] != null) {
+                        tmpS = seriesTmp[key]
+                    }
+                    else {
+                        tmpS = {key:key, values:[]};
+
+                        var color = doc.getFieldColor(seriesNameField);
+
+                        if (color != null)
+                            tmpS["color"] = color;
+
+
+                    }
+                    var shape = doc.getFieldShapeName(seriesNameField);
+
+                    var x = doc.getFieldValueUnrendered(xfield);
+                    var y = doc.getFieldValueUnrendered(fieldValue);
+
+
+                    var point = {x:x, y:y, record:doc};
+                    if (sizeField)
+                        point["size"] = doc.getFieldValueUnrendered(sizeField);
+                    if(shape != null)
+                        point["shape"] = shape;
+
+                    tmpS.values.push(point);
+
+                    if (fillEmptyValuesWith != null) {
+                        uniqueX.push(x);
+
+                    }
+
+                    seriesTmp[key] = tmpS;
+
+                });
+
+                for (var j in seriesTmp) {
+                    series.push(seriesTmp[j]);
+                }
+
+            }
+            else if (seriesAttr.type == "byFieldName" || seriesAttr.type == "byPartitionedField") {
+                var serieNames;
+
+                // if partitions are active we need to retrieve the list of partitions
+                if (seriesAttr.type == "byFieldName")
+                    serieNames = seriesAttr.valuesField;
+                else {
+                    serieNames = [];
+                    _.each(seriesAttr.aggregationFunctions, function (a) {
+                        _.each(self.model.getPartitionedFieldsForAggregationFunction(a, seriesAttr.aggregatedField), function (f) {
+                            serieNames.push(f.get("id"));
+                        })
+
+                    });
+
+                }
+
+                _.each(serieNames, function (field) {
+                    var yfield = self.model.fields.get(field);
+
+                    if(!yfield)
+                        throw "View.nvd3: unable to find field [" + field + "] on model"
+
+                    var points = [];
+
+                    _.each(records, function (doc, index) {
+
+                        var x = doc.getFieldValueUnrendered(xfield);
+
+                        try {
+
+                            var y = doc.getFieldValueUnrendered(yfield);
+                            if (y != null) {
+                                var color;
+
+                                if (selectionActive) {
+                                    if (doc.isRecordSelected())
+                                        color = doc.getFieldColor(yfield);
+                                    else
+                                        color = unselectedColor;
+                                } else
+                                    color = doc.getFieldColor(yfield);
+
+                                var shape = doc.getFieldShapeName(yfield);
+
+                                var point = {x:x, y:y, record:doc};
+
+                                if(color != null)
+                                    point["color"] = color;
+                                if(shape != null)
+                                    point["shape"] = shape;
+
+                                if (sizeField)
+                                    point["size"] = doc.getFieldValueUnrendered(sizeField);
+
+                                points.push(point);
+
+                                if (fillEmptyValuesWith != null) {
+                                    uniqueX.push(x);
+                                }
+                            }
+
+                        }
+                        catch (err) {
+                            //console.log("Can't add field [" + field + "] to graph, filtered?")
+                        }
+                    });
+
+                    if (points.length > 0)
+                        series.push({values:points, key:self.getFieldLabel(yfield), color:yfield.getColorForPartition()});
+                });
+
+            } else throw "views.nvd3.graph.js: unsupported or not defined type " + seriesAttr.type;
+
+            // foreach series fill empty values
+            if (fillEmptyValuesWith != null) {
+                uniqueX = _.unique(uniqueX);
+                _.each(series, function (s) {
+                    // foreach series obtain the unique list of x
+                    var tmpValues = _.map(s.values, function (d) {
+                        return d.x
+                    });
+                    // foreach non present field set the value
+                    _.each(_.difference(uniqueX, tmpValues), function (diff) {
+                        s.values.push({x:diff, y:fillEmptyValuesWith});
+                    });
+
+                });
+            }
+
+            return series;
+        }
+
+
+    });
+
+
+})(jQuery, recline.View);
+
+this.recline = this.recline || {};
+this.recline.View = this.recline.View || {};
+
+(function ($, view) {
+
+    "use strict";
+
+    view.Rickshaw = Backbone.View.extend({
+        template:'<div id="{{uid}}"> <div> ',
+
+        initialize:function (options) {
+
+            this.el = $(this.el);
+            _.bindAll(this, 'render', 'redraw');
+
+
+            this.model.bind('change', this.render);
+            this.model.fields.bind('reset', this.render);
+            this.model.fields.bind('add', this.render);
+
+            this.model.bind('query:done', this.redraw);
+            this.model.queryState.bind('selection:done', this.redraw);
+
+            this.uid = options.id || ("d3_" + new Date().getTime() + Math.floor(Math.random() * 10000)); // generating an unique id for the chart
+
+            this.options =options;
+
+
+        },
+
+        render:function () {
+            console.log("View.Rickshaw: render");
+            var self = this;
+
+            var out = Mustache.render(this.template, this);
+            this.el.html(out);
+
+
+        },
+
+        redraw:function () {
+            var self = this;
+
+            console.log("View.Rickshaw: redraw");
+
+            if(self.graph)
+                self.updateGraph();
+            else
+                self.renderGraph();
+
+        },
+
+        updateGraph: function() {
+            var self=this;
+            //self.graphOptions.series = this.createSeries();
+            self.createSeries();
+
+            self.graph.update();
+            //self.graph.render();
+        },
+
+        renderGraph: function() {
+            var self=this;
+            this.graphOptions = {
+                element: document.querySelector('#' + this.uid)
+            };
+
+            self.graphOptions = _.extend(self.graphOptions, self.options.state.options);
+            self.createSeries();
+
+            self.graphOptions.series = self.series;
+
+            self.graph = new Rickshaw.Graph(self.graphOptions);
+
+            self.graph.render();
+
+            var hoverDetail = new Rickshaw.Graph.HoverDetail({
+                graph:self.graph
+            });
+
+            var xAxisOpt = { graph: self.graph };
+            xAxisOpt = _.extend(xAxisOpt, self.options.state.xAxisOptions);
+
+
+
+            var xAxis = new Rickshaw.Graph.Axis.Time(xAxisOpt);
+
+            xAxis.render();
+
+            var yAxis = new Rickshaw.Graph.Axis.Y({
+                graph:self.graph
+            });
+
+
+            yAxis.render();
+
+            if (self.options.state.events) {
+
+                self.annotator = new Rickshaw.Graph.Annotate({
+                    graph:self.graph,
+                    element:document.getElementById('timeline')
+                });
+
+                var timeField = self.options.state.events.timeField;
+                var valueField = self.options.state.events.valueField;
+                var endField = self.options.state.events.endField;
+
+
+                _.each(self.options.state.events.dataset.getRecords(self.options.state.events.resultType), function (d) {
+                    if(endField)
+                        self.annotator.add(d.attributes[timeField], d.attributes[valueField], d.attributes[endField]);
+                    else
+                        self.annotator.add(d.attributes[timeField], d.attributes[valueField]);
+
+                })
+
+                self.annotator.update()
+
+            }
+
+            if (self.options.legend) {
+                var legend = new Rickshaw.Graph.Legend({
+                    graph:self.graph,
+                    element:document.querySelector('#' + self.options.legend)
+                });
+
+                var shelving = new Rickshaw.Graph.Behavior.Series.Toggle({
+                    graph:self.graph,
+                    legend:legend
+                });
+
+                var order = new Rickshaw.Graph.Behavior.Series.Order({
+                    graph:self.graph,
+                    legend:legend
+                });
+
+                var highlighter = new Rickshaw.Graph.Behavior.Series.Highlight({
+                    graph:self.graph,
+                    legend:legend
+                });
+            }
+
+        },
+
+        createSeries:function () {
+
+            var self = this;
+            if(!self.series)
+                self.series = [];
+            else
+                self.series.length = 0; // keep reference to old serie
+
+            var series = self.series;
+
+            //  {type: "byFieldName", fieldvaluesField: ["y", "z"]}
+            var seriesAttr = this.options.state.series;
+
+            var fillEmptyValuesWith = seriesAttr.fillEmptyValuesWith;
+
+            //var seriesNameField = self.model.fields.get(this.state.attributes.seriesNameField) ;
+            //var seriesValues = self.model.fields.get(this.state.attributes.seriesValues);
+            //if(seriesValues == null)
+            //var seriesValues = this.state.get("seriesValues") ;
+
+
+            var unselectedColor = "#C0C0C0";
+            if (self.options.state.unselectedColor)
+                unselectedColor = self.options.state.unselectedColor;
+            var selectionActive = false;
+            if (self.model.queryState.isSelected())
+                selectionActive = true;
+
+            var resultType = "filtered";
+            if (self.options.resultType !== null)
+                resultType = self.options.resultType;
+
+            var records = self.model.getRecords(resultType);  //self.model.records.models;
+
+            var xfield = self.model.fields.get(self.options.state.group);
+
+
+            var uniqueX = [];
+            var sizeField;
+            if (seriesAttr.sizeField) {
+                sizeField = self.model.fields.get(seriesAttr.sizeField);
+            }
+
+
+            // series are calculated on data, data should be analyzed in order to create series
+            if (seriesAttr.type == "byFieldValue") {
+                var seriesTmp = {};
+                var seriesNameField = self.model.fields.get(seriesAttr.seriesField);
+                var fieldValue = self.model.fields.get(seriesAttr.valuesField);
+
+                _.each(records, function (doc, index) {
+
+                    // key is the field that identiy the value that "build" series
+                    var key = doc.getFieldValueUnrendered(seriesNameField);
+                    var tmpS;
+
+                    // verify if the serie is already been initialized
+                    if (seriesTmp[key] != null) {
+                        tmpS = seriesTmp[key]
+                    }
+                    else {
+                        tmpS = {name:key, data:[]};
+
+                        var color = doc.getFieldColor(seriesNameField);
+
+                        if (color != null)
+                            tmpS["color"] = color;
+
+
+                    }
+                    var shape = doc.getFieldShapeName(seriesNameField);
+
+                    var x = doc.getFieldValueUnrendered(xfield);
+                    var y = doc.getFieldValueUnrendered(fieldValue);
+
+
+                    var point = {x:x, y:y, record:doc};
+                    if (sizeField)
+                        point["size"] = doc.getFieldValueUnrendered(sizeField);
+                    if (shape != null)
+                        point["shape"] = shape;
+
+                    tmpS.data.push(point);
+
+                    if (fillEmptyValuesWith != null) {
+                        uniqueX.push(x);
+
+                    }
+
+                    seriesTmp[key] = tmpS;
+
+                });
+
+                for (var j in seriesTmp) {
+                    series.push(seriesTmp[j]);
+                }
+
+            }
+            else if (seriesAttr.type == "byFieldName" || seriesAttr.type == "byPartitionedField") {
+                var serieNames;
+
+                // if partitions are active we need to retrieve the list of partitions
+                if (seriesAttr.type == "byFieldName")
+                    serieNames = seriesAttr.valuesField;
+                else {
+                    serieNames = [];
+                    _.each(seriesAttr.aggregationFunctions, function (a) {
+                        _.each(self.model.getPartitionedFieldsForAggregationFunction(a, seriesAttr.aggregatedField), function (f) {
+                            serieNames.push(f.get("id"));
+                        })
+
+                    });
+
+                }
+
+                _.each(serieNames, function (field) {
+                    var yfield = self.model.fields.get(field);
+
+                    var points = [];
+
+                    _.each(records, function (doc, index) {
+
+                        var x = doc.getFieldValueUnrendered(xfield);
+
+                        try {
+
+                            var y = doc.getFieldValueUnrendered(yfield);
+                            if (y != null) {
+                                var color;
+
+                                if (selectionActive) {
+                                    if (doc.isRecordSelected())
+                                        color = doc.getFieldColor(yfield);
+                                    else
+                                        color = unselectedColor;
+                                } else
+                                    color = doc.getFieldColor(yfield);
+
+                                var shape = doc.getFieldShapeName(yfield);
+
+                                var point = {x:x, y:y, record:doc};
+
+                                if (color != null)
+                                    point["color"] = color;
+                                if (shape != null)
+                                    point["shape"] = shape;
+
+                                if (sizeField)
+                                    point["size"] = doc.getFieldValueUnrendered(sizeField);
+
+                                points.push(point);
+
+                                if (fillEmptyValuesWith != null) {
+                                    uniqueX.push(x);
+                                }
+                            }
+
+                        }
+                        catch (err) {
+                            //console.log("Can't add field [" + field + "] to graph, filtered?")
+                        }
+                    });
+
+                    if (points.length > 0)  {
+                        var color = yfield.getColorForPartition();
+                        var ret = {data:points, name:self.getFieldLabel(yfield)};
+                        if(color)
+                            ret["color"] = color;
+                        series.push(ret);
+                    }
+
+                });
+
+            } else throw "views.rickshaw.graph.js: unsupported or not defined type " + seriesAttr.type;
+
+            // foreach series fill empty values
+            if (fillEmptyValuesWith != null) {
+                uniqueX = _.unique(uniqueX);
+                _.each(series, function (s) {
+                    // foreach series obtain the unique list of x
+                    var tmpValues = _.map(s.data, function (d) {
+                        return d.x
+                    });
+                    // foreach non present field set the value
+                    _.each(_.difference(uniqueX, tmpValues), function (diff) {
+                        s.data.push({x:diff, y:fillEmptyValuesWith});
+                    });
+
+                });
+            }
+
+
+        },
+        getFieldLabel:function (field) {
+            var self = this;
+            var fieldLabel = field.attributes.label;
+            if (field.attributes.is_partitioned)
+                fieldLabel = field.attributes.partitionValue;
+
+            if (typeof self.options.state.fieldLabels != "undefined" && self.options.state.fieldLabels != null) {
+                var fieldLabel_alternateObj = _.find(self.state.attributes.fieldLabels, function (fl) {
+                    return fl.id == fieldLabel
+                });
+                if (typeof fieldLabel_alternateObj != "undefined" && fieldLabel_alternateObj != null)
+                    fieldLabel = fieldLabel_alternateObj.label;
+            }
+
+            return fieldLabel;
+        }
+
+
+    });
+})(jQuery, recline.View);this.recline = this.recline || {};
+this.recline.View = this.recline.View || {};
+
+(function ($, view) {
+
+    "use strict";
+
+    view.D3Bullet = Backbone.View.extend({
+        template: '<div id="{{uid}}" style="width: {{width}}px; height: {{height}}px;"> <div> ',
+        firstResizeDone: false,
+        initialize:function (options) {
+
+            this.el = $(this.el);
+            _.bindAll(this, 'render', 'redraw', 'resize');
+
+            this.model.bind('change', this.render);
+            this.model.fields.bind('reset', this.render);
+            this.model.fields.bind('add', this.render);
+
+            this.model.bind('query:done', this.redraw);
+            this.model.queryState.bind('selection:done', this.redraw);
+
+        	$(window).resize(this.resize);
+            this.uid = options.id || ("d3_" + new Date().getTime() + Math.floor(Math.random() * 10000)); // generating an unique id for the chart
+            if (options.width)
+            	this.width = options.width;
+            else this.width = "100"
+            if (options.height)
+            	this.height = options.height;
+            else this.height = "100"
+            	
+            if (!this.options.animation) {
+                this.options.animation = {
+                    duration:2000,
+                    delay:200
+                }
+            }
+
+            //render header & svg container
+            var out = Mustache.render(this.template, this);
+            this.el.html(out);
+        },
+
+        resize:function () {
+        	this.firstResizeDone = true;
+//        	console.log($("#"+this.uid))
+        	var currH = $("#"+this.uid).height()
+        	var currW = $("#"+this.uid).width()
+        	var $parent = this.el
+        	var newH = $parent.height()
+        	var newW = $parent.width()
+//        	console.log("Resize from W"+currW+" H"+currH+" to W"+newW+" H"+newH)
+        	if (typeof this.options.width == "undefined")
+    		{
+            	$("#"+this.uid).width(newW)
+            	this.width = newW
+    		}
+        	if (typeof this.options.height == "undefined")
+    		{
+	        	$("#"+this.uid).height(newH)
+	        	this.height = newH
+    		}
+        	this.redraw();
+        },
+
+        render:function () {
+            var self = this;
+            var graphid = "#" + this.uid;
+
+            if (self.graph)
+                jQuery(graphid).empty();
+
+            self.graph = d3.select(graphid);
+            
+            if (!self.firstResizeDone)
+        	{
+            	// bruttissimo! ogni resize avvicina alla dimensione desiderata
+            	self.resize();
+            	self.resize();
+	        	self.resize();
+	        	self.resize();
+	        	self.resize();
+        	}
+        },
+
+        redraw:function () {
+                var self = this;
+            var field = this.model.fields.get(this.options.fieldRanges);
+            var fieldMeasure = this.model.fields.get(this.options.fieldMeasures);
+
+            var records = _.map(this.options.model.getRecords(this.options.resultType.type), function (record) {
+                var ranges = [];
+                _.each(self.options.fieldRanges, function (f) {
+                    var field = self.model.fields.get(f);
+                    ranges.push(record.getFieldValueUnrendered(field));
+                });
+                var measures = [];
+                _.each(self.options.fieldMeasures, function (f) {
+                    var field = self.model.fields.get(f);
+                    measures.push(record.getFieldValueUnrendered(field));
+                });
+                var markers = [];
+                _.each(self.options.fieldMarkers, function (f) {
+                    var field = self.model.fields.get(f);
+                    markers.push(record.getFieldValueUnrendered(field));
+                });
+                return {ranges:ranges, measures:measures, markers: markers};
+            });
+
+            var margin = {top: 5, right: 40, bottom: 40, left: 40};
+            var width = self.width - margin.left - margin.right;
+            var height = self.height - margin.top - margin.bottom;
+
+            self.plugin();
+
+            this.chart = d3.bullet()
+                .width(width)
+                .height(height);
+
+            this.drawD3(records, width, height, margin);
+        },
+
+        drawD3:function (data, width, height, margin) {
+            var self = this;
+
+            self.graph
+                .selectAll(".bullet")
+                .remove();
+
+            self.graph.selectAll(".bullet")
+                .data(data)
+                .enter().append("svg")
+                .attr("class", "bullet")
+                .attr("width", width + margin.left + margin.right)
+                .attr("height", height + margin.top + margin.bottom)
+                .append("g")
+                .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
+                .call(self.chart);
+
+            self.alreadyDrawed = true
+
+            /*var title = svg.append("g")
+             .style("text-anchor", "end")
+             .attr("transform", "translate(-6," + height / 2 + ")");
+
+             title.append("text")
+             .attr("class", "title")
+             .text(function(d) { return d.title; });
+
+             title.append("text")
+             .attr("class", "subtitle")
+             .attr("dy", "1em")
+             .text(function(d) { return d.subtitle; });
+              */
+        },
+        plugin:function () {
+            d3.bullet = function () {
+                var orient = "left", // TODO top & bottom
+                    reverse = false,
+                    duration = 0,
+                    ranges = bulletRanges,
+                    markers = bulletMarkers,
+                    measures = bulletMeasures,
+                    width = 380,
+                    height = 30,
+                    tickFormat = null;
+
+                // For each small multiple…
+                function bullet(g) {
+                    g.each(function (d, i) {
+                        var rangez = ranges.call(this, d, i).slice().sort(d3.descending),
+                            markerz = markers.call(this, d, i).slice().sort(d3.descending),
+                            measurez = measures.call(this, d, i).slice().sort(d3.descending),
+                            g = d3.select(this);
+
+                        // Compute the new x-scale.
+                        var x1 = d3.scale.linear()
+                            .domain([0, Math.max(rangez[0], markerz[0], measurez[0])])
+                            .range(reverse ? [width, 0] : [0, width]);
+
+                        // Retrieve the old x-scale, if this is an update.
+                        var x0 = this.__chart__ || d3.scale.linear()
+                            .domain([0, Infinity])
+                            .range(x1.range());
+
+                        // Stash the new scale.
+                        this.__chart__ = x1;
+
+                        // Derive width-scales from the x-scales.
+                        var w0 = bulletWidth(x0),
+                            w1 = bulletWidth(x1);
+
+                        // Update the range rects.
+                        var range = g.selectAll("rect.range")
+                            .data(rangez);
+
+                        range.enter().append("rect")
+                            .attr("class", function (d, i) {
+                                return "range s" + i;
+                            })
+                            .attr("width", w0)
+                            .attr("height", height)
+                            .attr("x", reverse ? x0 : 0)
+                            .transition()
+                            .duration(duration)
+                            .attr("width", w1)
+                            .attr("x", reverse ? x1 : 0);
+
+                        range.transition()
+                            .duration(duration)
+                            .attr("x", reverse ? x1 : 0)
+                            .attr("width", w1)
+                            .attr("height", height);
+
+                        // Update the measure rects.
+                        var measure = g.selectAll("rect.measure")
+                            .data(measurez);
+
+                        measure.enter().append("rect")
+                            .attr("class", function (d, i) {
+                                return "measure s" + i;
+                            })
+                            .attr("width", w0)
+                            .attr("height", height / 3)
+                            .attr("x", reverse ? x0 : 0)
+                            .attr("y", height / 3)
+                            .transition()
+                            .duration(duration)
+                            .attr("width", w1)
+                            .attr("x", reverse ? x1 : 0);
+
+                        measure.transition()
+                            .duration(duration)
+                            .attr("width", w1)
+                            .attr("height", height / 3)
+                            .attr("x", reverse ? x1 : 0)
+                            .attr("y", height / 3);
+
+                        // Update the marker lines.
+                        var marker = g.selectAll("line.marker")
+                            .data(markerz);
+
+                        marker.enter().append("line")
+                            .attr("class", "marker")
+                            .attr("x1", x0)
+                            .attr("x2", x0)
+                            .attr("y1", height / 6)
+                            .attr("y2", height * 5 / 6)
+                            .transition()
+                            .duration(duration)
+                            .attr("x1", x1)
+                            .attr("x2", x1);
+
+                        marker.transition()
+                            .duration(duration)
+                            .attr("x1", x1)
+                            .attr("x2", x1)
+                            .attr("y1", height / 6)
+                            .attr("y2", height * 5 / 6);
+
+                        // Compute the tick format.
+                        var format = tickFormat || x1.tickFormat(8);
+
+                        // Update the tick groups.
+                        var tick = g.selectAll("g.tick")
+                            .data(x1.ticks(8), function (d) {
+                                return this.textContent || format(d);
+                            });
+
+                        // Initialize the ticks with the old scale, x0.
+                        var tickEnter = tick.enter().append("g")
+                            .attr("class", "tick")
+                            .attr("transform", bulletTranslate(x0))
+                            .style("opacity", 1e-6);
+
+                        tickEnter.append("line")
+                            .attr("y1", height)
+                            .attr("y2", height * 7 / 6);
+
+                        tickEnter.append("text")
+                            .attr("text-anchor", "middle")
+                            .attr("dy", "1em")
+                            .attr("y", height * 7 / 6)
+                            .text(format);
+
+                        // Transition the entering ticks to the new scale, x1.
+                        tickEnter.transition()
+                            .duration(duration)
+                            .attr("transform", bulletTranslate(x1))
+                            .style("opacity", 1);
+
+                        // Transition the updating ticks to the new scale, x1.
+                        var tickUpdate = tick.transition()
+                            .duration(duration)
+                            .attr("transform", bulletTranslate(x1))
+                            .style("opacity", 1);
+
+                        tickUpdate.select("line")
+                            .attr("y1", height)
+                            .attr("y2", height * 7 / 6);
+
+                        tickUpdate.select("text")
+                            .attr("y", height * 7 / 6);
+
+                        // Transition the exiting ticks to the new scale, x1.
+                        tick.exit().transition()
+                            .duration(duration)
+                            .attr("transform", bulletTranslate(x1))
+                            .style("opacity", 1e-6)
+                            .remove();
+                    });
+                    d3.timer.flush();
+                }
+
+                // left, right, top, bottom
+                bullet.orient = function (x) {
+                    if (!arguments.length) return orient;
+                    orient = x;
+                    reverse = orient == "right" || orient == "bottom";
+                    return bullet;
+                };
+
+                // ranges (bad, satisfactory, good)
+                bullet.ranges = function (x) {
+                    if (!arguments.length) return ranges;
+                    ranges = x;
+                    return bullet;
+                };
+
+                // markers (previous, goal)
+                bullet.markers = function (x) {
+                    if (!arguments.length) return markers;
+                    markers = x;
+                    return bullet;
+                };
+
+                // measures (actual, forecast)
+                bullet.measures = function (x) {
+                    if (!arguments.length) return measures;
+                    measures = x;
+                    return bullet;
+                };
+
+                bullet.width = function (x) {
+                    if (!arguments.length) return width;
+                    width = x;
+                    return bullet;
+                };
+
+                bullet.height = function (x) {
+                    if (!arguments.length) return height;
+                    height = x;
+                    return bullet;
+                };
+
+                bullet.tickFormat = function (x) {
+                    if (!arguments.length) return tickFormat;
+                    tickFormat = x;
+                    return bullet;
+                };
+
+                bullet.duration = function (x) {
+                    if (!arguments.length) return duration;
+                    duration = x;
+                    return bullet;
+                };
+
+                return bullet;
+            };
+
+            function bulletRanges(d) {
+                return d.ranges;
+            }
+
+            function bulletMarkers(d) {
+                return d.markers;
+            }
+
+            function bulletMeasures(d) {
+                return d.measures;
+            }
+
+            function bulletTranslate(x) {
+                return function (d) {
+                    return "translate(" + x(d) + ",0)";
+                };
+            }
+
+            function bulletWidth(x) {
+                var x0 = x(0);
+                return function (d) {
+                    return Math.abs(x(d) - x0);
+                };
+            }
+        }
+
+
+
+
+    });
+
+
+})(jQuery, recline.View);this.recline = this.recline || {};
+this.recline.View = this.recline.View || {};
+
+(function ($, view) {
+	
+	"use strict";
+
+    view.D3Sparkline = Backbone.View.extend({
+        template: '<div id="{{uid}}" style="width: {{width}}px; height: {{height}}px;"> <div> ',
+
+        initialize: function (options) {
+
+            this.el = $(this.el);
+    		_.bindAll(this, 'render', 'redraw');
+                     
+
+            this.model.bind('change', this.render);
+            this.model.fields.bind('reset', this.render);
+            this.model.fields.bind('add', this.render);
+
+            this.model.bind('query:done', this.redraw);
+            this.model.queryState.bind('selection:done', this.redraw);
+
+
+			$(window).resize(this.resize);
+            this.uid = options.id || ("d3_" + new Date().getTime() + Math.floor(Math.random() * 10000)); // generating an unique id for the chart
+            this.width = options.width;
+            this.height = options.height;
+
+            if(!this.options.animation) {
+                this.options.animation = {
+                    duration: 2000,
+                    delay: 200
+                }
+            }
+
+            //render header & svg container
+            var out = Mustache.render(this.template, this);
+            this.el.html(out);
+
+        },
+        
+        resize: function(){
+
+        },
+
+        render: function () {
+            var self=this;
+            var graphid="#" + this.uid;
+
+            if(self.graph)
+                jQuery(graphid).empty();
+
+            self.graph = d3.select(graphid)
+                .append("svg:svg")
+                .attr("width", "100%")
+                .attr("height", "100%")
+                .style("stroke", function() { return self.options.color || "steelblue"; })
+                .style("stroke-width", 1)
+                .style("fill", "none");
+        },
+
+        redraw: function () {     
+            console.log("redraw");
+            var field = this.model.fields.get(this.options.field);
+            var records = _.map(this.options.model.getRecords(this.options.resultType.type), function(record) {
+                return record.getFieldValueUnrendered(field);
+            });
+
+
+
+            this.drawD3(records, "#" + this.uid);
+        },
+        drawD3: function(data, graphid) {
+            var self=this;
+
+
+                // X scale will fit values from 0-10 within pixels 0-100
+            var x = d3.scale.linear().domain([0, data.length]).range([0, this.width]);
+            // Y scale will fit values from 0-10 within pixels 0-100
+            var y = d3.scale.linear().domain([_.min(data), _.max(data)]).range([0, this.height]);
+
+            // create a line object that represents the SVN line we're creating
+            var line = d3.svg.line()
+                // assign the X function to plot our line as we wish
+                .x(function(d,i) {
+                    // verbose logging to show what's actually being done
+                    //console.log('Plotting X value for data point: ' + d + ' using index: ' + i + ' to be at: ' + x(i) + ' using our xScale.');
+                    // return the X coordinate where we want to plot this datapoint
+                    return x(i);
+                })
+                .y(function(d) {
+                    // verbose logging to show what's actually being done
+                    //console.log('Plotting Y value for data point: ' + d + ' to be at: ' + y(d) + " using our yScale.");
+                    // return the Y coordinate where we want to plot this datapoint
+                    return y(d);
+                })
+
+
+            // display the line by appending an svg:path element with the data line we created above
+            if(self.alreadyDrawed)
+                self.graph.select("path").transition().duration(self.options.animation.duration).delay(self.options.animation.delay).attr("d", line(data));
+            else
+                self.graph.append("svg:path").attr("d", line(data));
+
+            self.alreadyDrawed = true;
+        }
+
+    });
+})(jQuery, recline.View);this.recline = this.recline || {};
+this.recline.View = this.recline.View || {};
+
+(function ($, view) {
+	
+	"use strict";	
+
+	var fetchRecordValue = function(record, dimension){
+		var val = null;		
+		dimension.fields.forEach(function(field, i){
+			if(i==0) val = record.getFieldValue(field);
+			else val+= record.getFieldValue(field);
+		});
+		return val;
+	};
+
+	var frv = fetchRecordValue;
+	
+	var rowClick = function(actions, activeRecords){
+				
+		return function(row){
+			if(actions.length && row){
+				//console.log("rowClick");	
+						
+				var ctrlKey = d3.event.ctrlKey;
+				var adding = !d3.select(d3.event.target.parentNode).classed("info");
+
+				if(adding){
+					if(ctrlKey){
+						activeRecords.push(row);
+					}else{
+						activeRecords = [row];
+					}
+				}else{
+					if(ctrlKey){
+						activeRecords = _.difference(activeRecords, [row]);
+					}else{
+						activeRecords = [];
+					}
+				}
+				
+				actions.forEach(function(actioncontainer){				
+					actioncontainer.action.doAction(activeRecords, actioncontainer.mapping);
+				});
+								
+				
+			}		
+		};
+	};
+	
+	var rowOver = function(actions,activeRecords){
+		return function(row){
+			if(actions.length && row){
+                activeRecords = [];
+                activeRecords.push(row);
+
+                actions.forEach(function(actioncontainer){
+                    actioncontainer.action.doAction(activeRecords, actioncontainer.mapping);
+                });
+			}
+		};		
+	};
+	
+	var scrollBarWidth = function(){
+		  document.body.style.overflow = 'hidden'; 
+		  var width = document.body.clientWidth;
+		  document.body.style.overflow = 'scroll'; 
+		  width -= document.body.clientWidth; 
+		  if(!width) width = document.body.offsetWidth - document.body.clientWidth;
+		  document.body.style.overflow = ''; 
+		  return width; 
+	};
+
+	var sort=function(rowHeight, tableId) {
+	    return function (dimension) {
+	        var dimensionName = dimension.fields[0].id,
+	            descending = d3.select(this)
+	                .classed("g-ascending");
+
+	        d3.selectAll(".g-descending")
+	            .classed("g-descending", false);
+	        d3.selectAll(".g-ascending")
+	            .classed("g-ascending", false);
+
+	        if (!descending) {
+	            d3.select(this)
+	                .classed("g-ascending", true);
+	            var orderQuantitative = function (a, b) {
+	                return (isNaN(frv(a, dimension)) - isNaN(frv(b, dimension))) || (frv(a, dimension) - frv(b, dimension)) || (a.index - b.index);
+	            };
+
+	            var orderName = function (a, b) {
+	                return b.name.localeCompare(a.name);
+	            };
+	        } else {
+	            d3.select(this)
+	                .classed("g-descending", true);
+
+	            var orderQuantitative = function (a, b) {
+	                return (isNaN(frv(b, dimension)) - isNaN(frv(a, dimension))) || (frv(b, dimension) - frv(a, dimension)) || (b.index - a.index);
+	            };
+
+	            var orderName = function (a, b) {
+	                return a.name.localeCompare(b.name);
+	            };
+	        }
+
+	        d3.selectAll("#"+tableId+" .g-tbody .g-tr")
+	            .sort(dimensionName === "name" ? orderName : orderQuantitative)
+	            .each(function (record, i) {
+	            record.index = i;
+	        })
+	            .transition()
+	            .delay(function (record, i) {
+	            return (i - 1) * 10;
+	        })
+	            .duration(750)
+	            .attr("transform", function (record, i) {
+	            return "translate(0," + i * rowHeight + ")";
+	        });
+	    }
+	};
+	
+	var computeWidth=function(view){		
+		var tbodycontainer =  d3.select('#'+view.graphId+' .g-tbody-container');
+		var thead = view.el.find('.g-thead');
+		var tbody = d3.select('#'+view.graphId +' .g-tbody');
+		var tfoot = d3.select('#'+view.graphId +' .g-tfoot');
+		
+		var translationAcc = 0;
+		var translationRectAcc = 0;
+		
+		return d3.sum(view.columns, function(column, i){
+            	var th = thead.find('.g-th:nth-child('+(i+1)+')');
+            	column.padding_left = parseInt(th.css("padding-left").replace("px", ""));
+                column.padding_right = parseInt(th.css("padding-right").replace("px", ""));
+                column.computed_width = th.outerWidth(true);               
+
+				column.fields.forEach(function (field, fieldI) {
+					field.width = column.width;
+					field.computed_width = column.computed_width;					
+				});
+	           
+				var transl = translationAcc;
+				translationAcc += column.computed_width;
+				column.translation = transl;
+				
+				if (column.scale) {
+                	var scale = column.scale(view.model.records.models, column.computed_width, (column.range || 1.0));
+                    //dimension.scale = scale.scale; //mantain the orginal function
+                    column.d3scale = scale.scale;
+                    column.axisScale = scale.axisScale;
+                    column.fields.forEach(function (field, i) {
+                        field.scale = column.d3scale;
+                        field.axisScale = column.axisScale[field.id];
+                    });
+                }
+						
+            	return column.computed_width;
+            });
+	};
+
+
+    view.D3table = Backbone.View.extend({
+        className: 'recline-table-editor',
+        template: ' \
+  				<div id="{{graphId}}" class="g-table g-table-hover g-table-striped g-table-bordered"> \
+  					<h2 class="g-title">{{title}}</h2> \
+  					<p class="lead">{{instructions}}</p> \
+  					<small>{{summary}}</small> \
+  				\
+  				<div> \
+  				\
+  			',
+        templateHeader: ' \
+        			<div class="g-thead"> \
+  						<div class="g-tr"> \
+  							{{#columns}} \
+  							<div class="g-th {{#sortable}}g-sortable{{/sortable}}" style="width: {{hwidth}}"><div>{{label}}</div></div> \
+  							{{/columns}} \
+  						</div> \
+  					</div> \
+  					\
+  					',
+        templateBody: ' \
+  					<div class="g-tbody-container" style="width:{{scrollWidth}}px; height:{{height}}px;"> \
+  						<div style="width:{{width}}px;"> \
+  							<svg class="g-tbody"> \
+							</svg> \
+						</div> \
+					</div> \
+					\
+  					',
+        templateFooter: '\
+  					<div class="g-tfoot-container"> \
+						<svg class="g-tfoot"> \
+						</svg> \
+					</div> \
+					\
+					',
+        events: {
+            'click .g-thead': 'onEvent'
+        },
+        initialize: function (options) {
+            
+            _.defaults(options.conf,{"row_height": 20, "height":200});
+            options.actions = options.actions || [];
+            this.el = $(this.el);
+    		_.bindAll(this, 'render', 'redraw', 'refresh', 'resize');
+                     
+            this.rowHeight = options.conf.row_height;
+            
+            var clickActions=[], hoverActions=[];
+            //processing actions
+            {
+            	options.actions.forEach(function(action){
+            		action.event.forEach(function(event){
+            			if(event==='selection') clickActions.push(action);
+            			else if(event==='hover')  hoverActions.push(action);
+            		});
+            	});
+            }           
+            
+            this.clickActions = clickActions;
+            this.hoverActions = hoverActions; 
+
+            this.model.bind('change', this.render);
+            this.model.fields.bind('reset', this.render);
+            this.model.fields.bind('add', this.render);
+
+            this.model.bind('query:done', this.redraw);
+            this.model.queryState.bind('selection:done', this.redraw);
+
+
+			$(window).resize(this.resize);
+
+			//create a nuew columns array with default values 
+            this.columns = _.map(options.columns, function (column) {
+                return _.defaults(column, {
+                    label: "",
+                    type: "text",
+                    sortable: false,
+                    fields: {}
+                });
+            });
+            
+            //render table  				
+            this.columns.forEach(function (column, i) {
+            	column.width = column.width || 160;
+                column.hwidth = column.width;
+            }, this);
+            
+            this.height = options.conf.height;
+            this.title = options.title;
+            this.summary = options.summary;
+            this.instructions = options.instructions;
+            this.graphId = options.id || 'd3table_'+Math.floor(Math.random()*1000);
+
+            //render header & svg container
+            var out = Mustache.render(this.template, this);
+            this.el.html(out);
+            this.el.find('#'+this.graphId).append(Mustache.render(this.templateHeader, this));
+            
+            this.width = options.conf.width;
+            //this.render(); 								
+        },
+        
+        resize: function(){
+        	console.log('resize');
+        	var tbodycontainer =  d3.select('#'+this.graphId+' .g-tbody-container');
+        	var tbody = d3.select('#'+this.graphId +' .g-tbody');
+        	var tfoot = d3.select('#'+this.graphId +' .g-tfoot');
+        	        	
+        	this.width = computeWidth(this);            
+            this.scrollWidth = scrollBarWidth()+this.width;            
+            
+            this.el.find('.g-tbody-container').css('width',this.scrollWidth);
+            this.el.find('.g-tbody-container > div').css('width',this.width);
+            
+            var row = tbodycontainer.select('.g-tbody')
+                .selectAll(".g-tr");
+                
+            row.each(function (record) {
+            	 var cell = d3.select(this)
+                    .selectAll(".g-td").attr("transform", function (dimension, i) {
+                    	return "translate(" + (dimension.translation+dimension.padding_left) + ")";
+                	});
+                	
+                
+            	//move and resize barchart
+            					//barchart               
+                var barChartCell = cell.filter(function (dimension) {           	
+                    return dimension.scale && dimension.type === 'barchart';
+                });
+                barChartCell.selectAll(".g-bar").attr("width", function (field, index) {
+                    	return field.scale(record.getFieldValue(field));
+               		})
+                    .attr("transform", function (field, i) {
+                    	                    	
+	                    var translation = Math.ceil((i === 0) ? ((field.computed_width) / 2) - field.scale(record.getFieldValue(field)) : i * (field.computed_width) / 2);
+	
+	                    if (i == 0) {
+	                        return "translate(" + translation + ")";
+	                    } else {
+	                        return "translate(" + translation + ")";
+	                    }
+                	});            	
+            });   
+                 
+            //move vertical lines
+            {
+            	tbodycontainer.select('.g-tbody').selectAll(".g-column-border").attr("class", "g-column-border").attr("transform", function(dimension) {
+					return "translate(" + (dimension.translation) + ",0)";
+				}).attr("y2", "100%");
+            }     
+            
+            //move compare lines
+            tbodycontainer.select('.g-tbody').selectAll(".g-compare").data(this.columns.filter(function(column) {
+				return column.scale;
+			})).attr("transform", function(column) {
+				return "translate(" + (column.translation+column.padding_left+column.computed_width/2) + ",0)";
+			}).attr("y2", "100%");        
+            
+            //move axis
+            {
+            	var axisRow = d3.select('#'+this.graphId+' .g-tfoot');
+	            
+	            var cell = axisRow.selectAll('.g-td')
+	                    .attr("width", function (dimension, i) {
+	                    	return (dimension.computed_width);
+	                	})
+	                	.attr("transform", function (dimension, i) {
+	                    	return "translate(" + (dimension.translation+dimension.padding_left)+ ")";
+                		});
+	            
+	            var barChartCell = cell.filter(function (dimension) {
+                    return dimension.scale && dimension.type === 'barchart';
+                });
+                
+				barChartCell.selectAll(".g-axis").remove();
+                
+				var fieldNum;
+                var range;	
+				barChartCell.selectAll(".g-axis").data(function (dimension) {
+                		fieldNum = dimension.fields.length;
+                		range = dimension.range;
+                    	return dimension.fields;
+               	  })
+               	  .enter()
+               	  .append('g')
+               	  .attr('class', function(field,i){
+               	  	return 'g-axis';
+               	  })
+               	  .attr("transform", function (field, i) {
+               	  			var trans = 0;
+               	  			var w = field.computed_width/fieldNum;
+               	  			            	  			
+               	  			if(i==0) trans = w - w*range;
+               	  			else trans = i * w;
+               	  			
+               	  			return "translate(" + trans + ")";
+                		})
+               	  .each(function(field, i){
+               	  		var axis = d3.svg.axis().scale(field.axisScale).ticks(Math.abs(field.axisScale.range()[1] - field.axisScale.range()[0]) / 80).orient("bottom");
+               	  		d3.select(this).call(axis);
+               	  	});
+                             	  	
+           }          		    
+           
+            
+        },
+        refresh: function() {
+			console.log('d3Table.refresh');
+
+        },
+        reset: function () {
+            console.log('d3Table.reset');
+        },
+        render: function () {
+            console.log('d3Table.render');
+            
+            //render table divs            
+            //manage width and scrolling
+			this.width = computeWidth(this);
+            this.scrollWidth = scrollBarWidth()+this.width;
+            
+            //compile mustache templates
+            this.el.find('#'+this.graphId).append(Mustache.render(this.templateBody, this)).append(Mustache.render(this.templateFooter, this));
+            
+			//merge columns with dimensions
+            this.columns.forEach(function (column, i) {
+                column.fields = recline.Data.Aggregations.intersectionObjects('id', column.fields, this.model.fields.models);
+                column.index = i;
+            }, this);
+        },
+        redraw: function () {     
+            console.log('d3Table.redraw');   
+            
+            var rowHeight = this.rowHeight;
+            var columns = this.columns;
+            var records = this.model.records.models;
+            var activeRecords = []; 
+            
+			records.forEach(function (record, i) {
+                record.index = i;
+                if(record.isRecordSelected()) activeRecords.push(record);
+            });
+            
+            //manage width and scrolling
+			this.width = computeWidth(this); //this function compute width for each cells and adjust scales
+            this.scrollWidth = scrollBarWidth()+this.width;
+            
+            var tbodycontainer = d3.select('#'+this.graphId+' .g-tbody-container');
+            
+            tbodycontainer.select('div').style('height',(rowHeight)*records.length+'px');            
+            tbodycontainer.classed('g-tbody-container-overflow',(rowHeight)*records.length>this.height);
+            
+            tbodycontainer.selectAll('.g-tbody .g-tr').remove();            			
+            var row = tbodycontainer.select('.g-tbody')
+              .selectAll(".g-tr")
+              .data(records)
+              .enter()
+              .append("g")
+                .attr("class", "g-tr")
+                .attr("transform", function (record, i) {
+                	return "translate(0," + i * (rowHeight) + ")";
+            	}).classed('info',function(record, i){
+            		return record.isRecordSelected();
+            	});
+
+            row.append("rect")
+                .attr("class", "g-background")
+                .attr("width", "100%")
+                .attr("height", rowHeight)
+                .on('click', rowClick(this.clickActions, activeRecords))
+                .on('mouseover', rowOver(this.hoverActions, activeRecords));
+
+            row.each(function (record) {
+								
+                var cell = d3.select(this)
+                  .selectAll(".g-td")
+                  .data(columns)
+                  .enter()
+                  .append("g")
+                    .attr("class", "g-td")
+                    .classed("g-quantitative", function (dimension) {
+                    	return dimension.scale;
+                	}).classed("g-categorical", function (dimension) {
+                    	return dimension.categorical;
+                	}).attr("transform", function (dimension, i) {
+                    	return "translate(" + (dimension.translation+dimension.padding_left) + ")";
+                	});
+                	
+                //horizontal lines
+               	d3.select(this).append('line').attr('class', 'g-row-border').attr('y1',rowHeight).attr('y2',rowHeight).attr('x2','100%');
+               
+				//barchart               
+                var barChartCell = cell.filter(function (dimension) {           	
+                    return dimension.scale && dimension.type === 'barchart';
+                });
+                barChartCell.selectAll(".g-bar")
+                  .data(function (dimension) {
+                    	return dimension.fields;
+               	  })
+                  .enter()
+                  .append("rect")
+                    .attr("class", "g-bar")
+                    .attr("width", function (field, index) {
+                    	return field.scale(record.getFieldValue(field));
+               		})
+                    .attr("height", rowHeight-1)
+                    .attr("transform", function (field, i) {
+                    	                    	
+	                    var translation = Math.ceil((i === 0) ? ((field.computed_width) / 2) - field.scale(record.getFieldValue(field)) : i * (field.computed_width) / 2);
+												
+	                    if (i == 0) {
+	                        return "translate(" + translation + ")";
+	                    } else {
+	                        return "translate(" + translation + ")";
+	                    }
+                	})
+                    .style("fill", function (field, index) {
+                    	return field.color;
+                	});
+
+
+                cell.filter(function (dimension) {           	
+                    return !dimension.scale;
+                }).append("text")
+                    .attr("class", "g-value")
+                    .attr("x", function (dimension) {
+                    return dimension.scale ? 3 : 0;
+                })
+                    .attr("y", function (dimension) {
+                    return dimension.categorical ? 9 : 10;
+                })
+                    .attr("dy", ".35em")
+                    .classed("g-na", function (dimension) { //null values
+                    return frv(record, dimension) === undefined;
+                })
+                    .text(function (dimension) {
+                    return frv(record, dimension);
+                })
+                    .attr("clip-path", function (dimension) {
+                    return (dimension.clipped = this.getComputedTextLength() > ((dimension.computed_width))-20) ? "url(#g-clip-cell)" : null;
+                });
+
+                cell.filter(function (dimension) {
+                    return dimension.clipped;
+                }).append("rect")
+                    .style("fill", "url(#g-clip-gradient)")
+                    .attr("x", function (dimension) {
+                    	return dimension.hwidth;
+                	})
+                    .attr("width", 20)
+                    .attr("height", rowHeight);
+            });
+            
+            //axis management
+            {
+				var tfoot = d3.select('#'+this.graphId+' .g-tfoot');
+				tfoot.selectAll('.axisRow').remove();						
+				var axisRow = tfoot.append("g")
+	                .attr("class", "axisRow");
+	                	            
+	            var cell = axisRow.selectAll('.g-td').data(columns).enter().append('g')
+	                    .attr("class", "g-td")
+	                    .attr("width", function (dimension, i) {
+	                    	return (dimension.computed_width);
+	                	})
+	                	.attr("transform", function (dimension, i) {
+	                    	return "translate(" + (dimension.translation+dimension.padding_left)+ ")";
+                		});
+	            
+	            var barChartCell = cell.filter(function (dimension) {
+                    return dimension.scale && dimension.type === 'barchart';
+                });
+                
+                var fieldNum;
+                var range;
+                barChartCell.selectAll(".g-axis").data(function (dimension) {
+                		fieldNum = dimension.fields.length;
+                		range = dimension.range;
+                    	return dimension.fields;
+               	  })
+               	  .enter()
+               	  .append('g')
+               	  .attr('class', function(field,i){
+               	  	return 'g-axis';
+               	  })
+               	  .attr("transform", function (field, i) {
+               	  			var trans = 0;
+               	  			var w = field.computed_width/fieldNum;
+               	  			            	  			
+               	  			if(i==0) trans = w - w*range;
+               	  			else trans = i * w;
+               	  			
+               	  			return "translate(" + trans + ")";
+                		})
+               	  .each(function(field, i){
+               	  		var axis = d3.svg.axis().scale(field.axisScale).ticks(Math.abs(field.axisScale.range()[1] - field.axisScale.range()[0]) / 80).orient("bottom");
+               	  		d3.select(this).call(axis);
+               	  	});        
+               	  	
+            }
+
+			//add sorting
+            d3.selectAll('#'+this.graphId+' .g-thead .g-th.g-sortable')
+                .data(columns)
+                .on("click", sort(rowHeight, this.graphId));    
+                
+            //vertical lines
+            {
+            	tbodycontainer.select('.g-tbody').selectAll(".g-column-border").remove();
+            	tbodycontainer.select('.g-tbody').selectAll(".g-column-border").data(columns)
+            	.enter().append("line").attr("class", "g-column-border").attr("transform", function(dimension) {
+					return "translate(" + (dimension.translation) + ",0)";
+				}).attr("y2", "100%");
+            }            
+
+			//axis lines
+			{
+				tbodycontainer.select('.g-tbody').selectAll(".g-compare").remove();
+				tbodycontainer.select('.g-tbody').selectAll(".g-compare").data(columns.filter(function(dimension) {
+					return dimension.scale;
+				})).enter().append("line").attr("class", "g-compare").attr("transform", function(dimension) {
+					return "translate(" + (dimension.translation+dimension.padding_left + dimension.computed_width/2) + ",0)";
+				}).attr("y2", "100%"); 
+			}
+			
+        },
+        onEvent: function (e) {}
+    });
+})(jQuery, recline.View);this.recline = this.recline || {};
+this.recline.View = this.recline.View || {};
+
+(function ($, view) {
+	
+	"use strict";
+
+    view.D3Treemap = Backbone.View.extend({
+        template: '<div id="{{uid}}" style="width: {{width}}px; height: {{height}}px;"> <div> ',
+
+        initialize: function (options) {
+
+            this.el = $(this.el);
+    		_.bindAll(this, 'render', 'redraw');
+                     
+
+            this.model.bind('change', this.render);
+            this.model.fields.bind('reset', this.render);
+            this.model.fields.bind('add', this.render);
+
+            this.model.bind('query:done', this.redraw);
+            this.model.queryState.bind('selection:done', this.redraw);
+
+
+			$(window).resize(this.resize);
+            this.uid = options.id || ("d3_" + new Date().getTime() + Math.floor(Math.random() * 10000)); // generating an unique id for the chart
+            this.width = options.width;
+            this.height = options.height;
+
+            if(!this.options.animation) {
+                this.options.animation = {
+                    duration: 2000,
+                    delay: 200
+                }
+            }
+
+            //render header & svg container
+            var out = Mustache.render(this.template, this);
+            this.el.html(out);
+
+        },
+        
+        resize: function(){
+
+        },
+
+        render: function () {
+            var self=this;
+            var graphid="#" + this.uid;
+
+            if(self.graph)
+                jQuery(graphid).empty();
+
+
+            self.treemap = d3.layout.treemap()
+                 .size([this.width, this.height])
+                 .sticky(false)
+                 .value(function(d) {
+                    console.log(d);
+                    return d.size; });
+
+            self.color = d3.scale.category20c();
+
+
+
+            self.div = d3.select(graphid).append("div")
+                .style("position", "relative")
+                .style("width", this.width + "px")
+                .style("height", this.height + "px");
+        },
+
+        redraw: function () {     
+            console.log("redraw");
+            var fieldValue = this.model.fields.get(this.options.fieldValue);
+            var fieldName = this.model.fields.get(this.options.fieldName);
+
+            var records = _.map(this.options.model.getRecords(this.options.resultType.type), function(record) {
+                return {name: record.getFieldValue(fieldName), size: record.getFieldValueUnrendered(fieldValue) };
+            });
+
+
+
+            this.drawD3(records, "#" + this.uid);
+        },
+        drawD3: function(data, graphid) {
+            var self=this;
+
+            function cell() {
+                this
+                    .style("left", function(d) { return d.x + "px"; })
+                    .style("top", function(d) { return d.y + "px"; })
+                    .style("width", function(d) { return Math.max(0, d.dx - 1) + "px"; })
+                    .style("height", function(d) { return Math.max(0, d.dy - 1) + "px"; });
+            }
+
+            var leaves = self.treemap(data);
+
+
+            _.each(data, function(x) {
+                self.div.data([x]).selectAll("div")
+                    .data(self.treemap.nodes)
+                    .enter().append("div")
+                    .attr("class", "cell")
+                    .style("background", function(d) { self.color(d.name); })
+                    .call(cell)
+                    .text(function(d) {
+                        console.log(d);
+                        return d.name; });
+
+            });
+
+
+
+
+
+
+            // display the line by appending an svg:path element with the data line we created above
+            /*if(self.alreadyDrawed)
+                self.graph.select("path").transition().duration(self.options.animation.duration).delay(self.options.animation.delay).attr("d", line(data));
+            else
+                self.graph.append("svg:path").attr("d", line(data));
+            */
+            self.alreadyDrawed = true;
+        }
+
+    });
+})(jQuery, recline.View);

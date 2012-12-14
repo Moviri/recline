@@ -101,16 +101,6 @@ this.recline.Model = this.recline.Model || {};
 
 
 
-        setShapeSchema:function () {
-            var self = this;
-            _.each(self.attributes.shapeSchema, function (d) {
-                var field = _.find(self.fields.models, function (f) {
-                    return d.field === f.id
-                });
-                if (field != null)
-                    field.attributes.shapeSchema = d.schema;
-            })
-        },
 
         // ### _normalizeRecordsAndFields
         //
@@ -240,6 +230,13 @@ this.recline.Model = this.recline.Model || {};
             }
             var actualQuery = this.queryState.toJSON();
 
+            // add possibility to modify filter externally before execution
+
+            _.each(self.attributes.customFilterLogic, function (f) {
+                f(actualQuery);
+            });
+
+
             console.log("Query on model [" + self.attributes.id + "] query [" + JSON.stringify(actualQuery) + "]");
 
             this._store.query(actualQuery, this.toJSON())
@@ -258,7 +255,7 @@ this.recline.Model = this.recline.Model || {};
         _handleQueryResult:function (queryResult) {
             var self = this;
             self.recordCount = queryResult.total;
-            if(queryResult.fields && self.fields.length == 0){
+            if (queryResult.fields && self.fields.length == 0) {
 
                 var options = {renderer:recline.Data.Formatters.Renderers};
                 self.fields.reset(queryResult.fields, options);
@@ -293,10 +290,6 @@ this.recline.Model = this.recline.Model || {};
                 self.facets.reset(facets);
             }
         },
-
-
-
-
 
 
         selection:function (queryObj) {
@@ -388,12 +381,12 @@ this.recline.Model = this.recline.Model || {};
             });
         },
 
-        toFullJSON: function(resultType) {
-            var self=this;
-            return _.map(self.getRecords(resultType), function(r) {
-                var res={};
+        toFullJSON:function (resultType) {
+            var self = this;
+            return _.map(self.getRecords(resultType), function (r) {
+                var res = {};
 
-                _.each(self.getFields(resultType).models, function(f) {
+                _.each(self.getFields(resultType).models, function (f) {
                     res[f.id] = r.getFieldValueUnrendered(f);
                 });
 
@@ -451,7 +444,7 @@ this.recline.Model = this.recline.Model || {};
             try {
                 val = this.get(field.id);
             }
-            catch(err) {
+            catch (err) {
                 throw "Model: unable to read field [" + field.id + "] from dataset";
             }
 
@@ -465,35 +458,6 @@ this.recline.Model = this.recline.Model || {};
 
 
 
-
-        getFieldShapeName:function (field) {
-            if (!field.attributes.shapeSchema)
-                return null;
-
-            if (field.attributes.is_partitioned) {
-                return field.attributes.shapeSchema.getShapeNameFor(field.attributes.partitionValue);
-            }
-            else
-                return field.attributes.shapeSchema.getShapeNameFor(this.getFieldValueUnrendered(field));
-
-        },
-
-        getFieldShape:function (field, isSVG, isNode) {
-            if (!field.attributes.shapeSchema)
-                return recline.Template.Shapes["empty"](null, isNode, isSVG);
-
-            var fieldValue;
-            var fieldColor = this.getFieldColor(field);
-
-            if (field.attributes.is_partitioned) {
-                fieldValue = field.attributes.partitionValue;
-            }
-            else
-                fieldValue = this.getFieldValueUnrendered(field);
-
-
-            return field.attributes.shapeSchema.getShapeFor(fieldValue, fieldColor, isSVG, isNode);
-        },
 
         isRecordSelected:function () {
             var self = this;
@@ -554,8 +518,6 @@ this.recline.Model = this.recline.Model || {};
             format:null,
             is_derived:false,
             is_partitioned:false,
-            partitionValue:null,
-            partitionField:null,
             colorSchema:null,
             shapeSchema:null
         },
@@ -811,12 +773,14 @@ this.recline.Model = this.recline.Model || {};
             }
         },
 
-        addSortCondition: function(field, order){
-          var currentSort = this.get("sort");
-            if(!currentSort)
-                currentSort = [{field: field, order: order}];
+        addSortCondition:function (field, order) {
+            var currentSort = this.get("sort");
+            if (!currentSort)
+                currentSort = [
+                    {field:field, order:order}
+                ];
             else
-                currentSort.push({field: field, order: order});
+                currentSort.push({field:field, order:order});
 
             this.attributes["sort"] = currentSort;
 
@@ -824,9 +788,9 @@ this.recline.Model = this.recline.Model || {};
 
         },
 
-        setSortCondition: function(sortCondition){
+        setSortCondition:function (sortCondition) {
             var currentSort = this.get("sort");
-            if(!currentSort)
+            if (!currentSort)
                 currentSort = [sortCondition];
             else
                 currentSort.push(sortCondition);
@@ -835,10 +799,9 @@ this.recline.Model = this.recline.Model || {};
 
         },
 
-        clearSortCondition: function() {
+        clearSortCondition:function () {
             this.attributes["sort"] = null;
         },
-
 
 
         // ### addSelection
