@@ -1,6 +1,6 @@
 (function ($) {
 
-    recline.Model.Dataset = recline.Model.Dataset.extend({
+    recline.Model.Dataset.prototype = $.extend(recline.Model.Dataset.prototype, {
         setColorSchema:function () {
             var self = this;
             _.each(self.attributes.colorSchema, function (d) {
@@ -15,7 +15,7 @@
     });
 
 
-    recline.Model.Record = recline.Model.Record.extend({
+    recline.Model.Record.prototype = $.extend(recline.Model.Record.prototype, {
         getFieldColor:function (field) {
             if (!field.attributes.colorSchema)
                 return null;
@@ -30,11 +30,7 @@
     });
 
 
-    recline.Model.RecordList = recline.Model.RecordList.extend({
-        model: recline.Model.Record
-    });
-
-    recline.Model.Field = recline.Model.Field.extend({
+    recline.Model.Field.prototype = $.extend(recline.Model.Field.prototype, {
 
         getColorForPartition:function () {
 
@@ -46,10 +42,6 @@
 
             return this.attributes.colorSchema.getColorFor(this.attributes.id);
         }
-    });
-
-    recline.Model.FieldList = recline.Model.FieldList.extend({
-        model: recline.Model.Field
     });
 
 
