@@ -54,15 +54,13 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
 
         getRecords:function (type) {
             var self = this;
+            if(self.needsTableCalculation && self.totals == null)
+                self.rebuildTotals();
 
             if (type === 'filtered' || type == null) {
-                if(self.needsTableCalculation && self.totals == null)
-                    self.rebuildTotals();
 
                 return self.records.models;
             } else if (type === 'totals') {
-                if(self.totals == null)
-                    self.rebuildTotals();
 
                 return self.totals.records.models;
             } else if (type === 'totals_unfiltered') {
