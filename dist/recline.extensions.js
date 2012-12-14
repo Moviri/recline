@@ -398,7 +398,7 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
 
 (function ($) {
 
-    recline.Model.Dataset = recline.Model.Dataset.extend({
+    recline.Model.Dataset.prototype = $.extend(recline.Model.Dataset.prototype, {
         setColorSchema:function () {
             var self = this;
             _.each(self.attributes.colorSchema, function (d) {
@@ -413,7 +413,7 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
     });
 
 
-    recline.Model.Record = recline.Model.Record.extend({
+    recline.Model.Record.prototype = $.extend(recline.Model.Record.prototype, {
         getFieldColor:function (field) {
             if (!field.attributes.colorSchema)
                 return null;
@@ -428,11 +428,7 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
     });
 
 
-    recline.Model.RecordList = recline.Model.RecordList.extend({
-        model: recline.Model.Record
-    });
-
-    recline.Model.Field = recline.Model.Field.extend({
+    recline.Model.Field.prototype = $.extend(recline.Model.Field.prototype, {
 
         getColorForPartition:function () {
 
@@ -446,14 +442,10 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
         }
     });
 
-    recline.Model.FieldList = recline.Model.FieldList.extend({
-        model: recline.Model.Field
-    });
-
 
 }(jQuery));(function ($) {
 
-    recline.Model.Dataset = recline.Model.Dataset.extend({
+    recline.Model.Dataset.prototype = $.extend(recline.Model.Dataset.prototype, {
             addCustomFilterLogic: function(f) {
             if(this.attributes.customFilterLogic)
                 this.attributes.customFilterLogic.push(f);
@@ -465,7 +457,7 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
 
 }(jQuery));(function ($) {
 
-    recline.Model.Dataset = recline.Model.Dataset.extend({
+    recline.Model.Dataset.prototype = $.extend(recline.Model.Dataset.prototype, {
         setShapeSchema:function () {
             var self = this;
             _.each(self.attributes.shapeSchema, function (d) {
@@ -479,7 +471,7 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
     });
 
 
-    recline.Model.Record = recline.Model.Record.extend({
+    recline.Model.Record.prototype = $.extend(recline.Model.Record.prototype, {
         getFieldShapeName:function (field) {
             if (!field.attributes.shapeSchema)
                 return null;
@@ -508,10 +500,6 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
 
             return field.attributes.shapeSchema.getShapeFor(fieldValue, fieldColor, isSVG, isNode);
         }
-    });
-
-    recline.Model.RecordList = recline.Model.RecordList.extend({
-        model: recline.Model.Record
     });
 
 

@@ -90,7 +90,10 @@ my.Filters = {};
     	list: function(filter){
     		return !filter["list"];
     		
-    	}
+    	},
+        termAdvanced: function(filter){
+            return !filter["term"];
+        }
     },
 
         // in place filtering
