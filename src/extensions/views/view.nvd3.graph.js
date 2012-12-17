@@ -198,7 +198,6 @@ this.recline.View = this.recline.View || {};
                 chart.yAxis
                     .axisLabel(yLabel)
                     .tickFormat(d3.format('s'));
-
             }
         },
 
@@ -300,6 +299,19 @@ this.recline.View = this.recline.View || {};
                 else
                     chart = nv.models.multiBarHorizontalChart();
                 view.setAxis("all", chart);
+
+                return chart;
+            },
+            "multiBarHorizontalChart2":function (view) {
+                var chart;
+                if (view.chart != null)
+                    chart = view.chart;
+                else
+                    chart = nv.models.multiBarHorizontalChart();
+                
+                // remove ticks on Y axis (NOTE Y axis ticks are on xAxis for this chart type)
+                chart.xAxis.tickFormat(function (d) { return ''; });
+
                 return chart;
             },
             "legend":function (view) {
