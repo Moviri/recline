@@ -191,6 +191,10 @@ this.recline.View = this.recline.View || {};
                 var seriesTmp = {};
                 var seriesNameField = self.model.fields.get(seriesAttr.seriesField);
                 var fieldValue = self.model.fields.get(seriesAttr.valuesField);
+                if(!fieldValue) {
+                    throw "view.rickshaw: unable to find field ["+seriesAttr.valuesField+"] in model"
+                }
+
 
                 _.each(records, function (doc, index) {
 

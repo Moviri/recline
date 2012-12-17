@@ -105,7 +105,7 @@ this.recline.View = this.recline.View || {};
                 var field = this.model.fields.get(self.options.groupBy);
 
                 if (!facets) {
-                    throw "ComposedView: no facet present for groupby field [" + this.attributes.dimension + "]. Define a facet on the model before view render";
+                    throw "ComposedView: no facet present for groupby field [" + self.options.groupBy + "]. Define a facet on the model before view render";
                 }
 
                 _.each(facets.attributes.terms, function (t) {

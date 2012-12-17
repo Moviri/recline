@@ -16,8 +16,12 @@ this.recline.Model.FilteredDataset = this.recline.Model.FilteredDataset || {};
         initialize:function () {
             var self = this;
 
-            this.fields = this.attributes.dataset.fields;
+
             this.records = new my.RecordList();
+
+            this.fields =  this.attributes.dataset.fields;
+
+
             //todo
             //this.facets = new my.FacetList();
             this.recordCount = null;
@@ -28,6 +32,10 @@ this.recline.Model.FilteredDataset = this.recline.Model.FilteredDataset || {};
                 this.get('initialState').setState(this);
             }
 
+            this.attributes.dataset.fields.bind('reset', function () {
+                self.fieldsReset();
+            })
+
             this.attributes.dataset.bind('query:done', function () {
                 self.query();
             })
@@ -35,6 +43,11 @@ this.recline.Model.FilteredDataset = this.recline.Model.FilteredDataset || {};
             this.queryState.bind('change', function () {
                 self.query();
             });
+
+        },
+
+        fieldsReset: function() {
+            this.fields = this.attributes.dataset.fields;
 
         },
 
@@ -47,6 +60,11 @@ this.recline.Model.FilteredDataset = this.recline.Model.FilteredDataset || {};
             }
 
             var queryObj = this.queryState.toJSON();
+
+            _.each(self.attributes.customFilterLogic, function (f) {
+                f(queryObj);
+            });
+
 
             console.log("Query on model query [" + JSON.stringify(queryObj) + "]");
 
@@ -106,6 +124,24 @@ this.recline.Model.FilteredDataset = this.recline.Model.FilteredDataset || {};
 
         getFieldsSummary:function () {
             return this.attributes.dataset.getFieldsSummary();
+        },
+
+        addCustomFilterLogic: function(f) {
+            if(this.attributes.customFilterLogic)
+                this.attributes.customFilterLogic.push(f);
+            else
+                this.attributes.customFilterLogic = [f];
+        },
+        setColorSchema:function () {
+            var self = this;
+            _.each(self.attributes.colorSchema, function (d) {
+                var field = _.find(self.fields.models, function (f) {
+                    return d.field === f.id
+                });
+                if (field != null)
+                    field.attributes.colorSchema = d.schema;
+            })
+
         }
 
 
@@ -207,14 +243,14 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
             var tmpFields = [];
             _.each(this.attributes.model.fields.models, function (f) {
                 var c = f.toJSON();
-                c.id = "model." + c.id;
+                c.id = c.id;
                 tmpFields.push(c);
             });
 
             _.each(this.attributes.join, function(p) {
                 _.each(p.model.fields.models, function (f) {
                     var c = f.toJSON();
-                    c.id = p.id + "." + c.id;
+                    c.id = p.id + "_" + c.id;
                     tmpFields.push(c);
                 });
             });
@@ -312,7 +348,7 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
                 // define the record with all data from model
                 var record = {};
                 _.each(r.toJSON(), function (f, index) {
-                    record["model." + index] = f;
+                    record[index] = f;
                 });
 
                 _.each(joinModel, function(p) {
@@ -329,7 +365,7 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
 
                     _.each(resultsFromDataset2, function (res) {
                         _.each(res, function (field_value, index) {
-                            record[p.id + "." + index] = field_value;
+                            record[p.id + "_" + index] = field_value;
                         })
                     })
 
@@ -1548,7 +1584,7 @@ this.recline.Data.ColorSchema = this.recline.Data.ColorSchema || {};
             var self = this;
             var ret = [];
 
-            if (dataset.dataset.isFieldPartitioned(dataset.field)) {
+            if (dataset.dataset.isFieldPartitioned && dataset.dataset.isFieldPartitioned(dataset.field)) {
                 var fields = dataset.dataset.getPartitionedFields(dataset.field);
                 _.each(dataset.dataset.getRecords(dataset.type), function (d) {
                     _.each(fields, function (field) {
@@ -1948,7 +1984,7 @@ this.recline.Data.ShapeSchema = this.recline.Data.ShapeSchema || {};
             var self=this;
             var ret = [];
 
-            if(dataset.dataset.isFieldPartitioned(dataset.field, dataset.type))   {
+            if(dataset.dataset.isFieldPartitioned && dataset.dataset.isFieldPartitioned(dataset.field, dataset.type))   {
                 var fields = dataset.dataset.getPartitionedFields(dataset.field);
             _.each(dataset.dataset.getRecords(dataset.type), function(d) {
                 _.each(fields, function (field) {
@@ -2105,7 +2141,7 @@ this.recline.View = this.recline.View || {};
                 var field = this.model.fields.get(self.options.groupBy);
 
                 if (!facets) {
-                    throw "ComposedView: no facet present for groupby field [" + this.attributes.dimension + "]. Define a facet on the model before view render";
+                    throw "ComposedView: no facet present for groupby field [" + self.options.groupBy + "]. Define a facet on the model before view render";
                 }
 
                 _.each(facets.attributes.terms, function (t) {
@@ -2349,7 +2385,7 @@ this.recline.View = this.recline.View || {};
                 	template = templates.templateBaseCondensed;
             	
                 return {data:null, template:template, unrenderedValue:null};
-            },
+            }
 
 
         },
@@ -2470,44 +2506,48 @@ this.recline.View = this.recline.View || {};
 
             if (self.options.state.compareWith) {
                 var compareWithRecord = self.model.getRecords(self.options.state.compareWith.type);
-                var compareWithField;
 
-                if (self.options.state.kpi.aggr)
-                    compareWithField = self.model.getField_byAggregationFunction(self.options.state.compareWith.type, self.options.state.compareWith.field, self.options.state.compareWith.aggr);
-                else
-                    compareWithField = self.options.model.getFields(self.options.state.compareWith.type).get(self.options.state.compareWith.field);
+                if(compareWithRecord.length > 0) {
+                    var compareWithField;
 
-                if (!compareWithField)
-                    throw "View.Indicator: unable to find field [" + self.options.state.compareWith.field + "] on model"
+                    if (self.options.state.kpi.aggr)
+                        compareWithField = self.model.getField_byAggregationFunction(self.options.state.compareWith.type, self.options.state.compareWith.field, self.options.state.compareWith.aggr);
+                    else
+                        compareWithField = self.options.model.getFields(self.options.state.compareWith.type).get(self.options.state.compareWith.field);
 
-                tmplData["compareWithValue"] = compareWithRecord[0].getFieldValue(compareWithField);
-                var compareWithValue = compareWithRecord[0].getFieldValueUnrendered(compareWithField);
+                    if (!compareWithField)
+                        throw "View.Indicator: unable to find field [" + self.options.state.compareWith.field + "] on model"
 
-                var compareValue;
 
-                var compareValue = self.compareType[self.options.state.compareWith.compareType](kpiValue, compareWithValue, self.templates, self.options.state.condensed);
-                if(!compareValue)
-                    throw "View.Indicator: unable to find compareType [" + self.options.state.compareWith.compareType + "]";
+                    tmplData["compareWithValue"] = compareWithRecord[0].getFieldValue(compareWithField);
+                    var compareWithValue = compareWithRecord[0].getFieldValueUnrendered(compareWithField);
 
-                tmplData["compareValue"] = compareValue.data;
+                    var compareValue;
 
-                if(self.options.state.compareWith.shapes) {
-                    if(compareValue.unrenderedValue == 0)
-                        tmplData["compareShape"] = self.options.state.compareWith.shapes.constant;
-                    else if(compareValue.unrenderedValue > 0)
-                        tmplData["compareShape"] = self.options.state.compareWith.shapes.increase;
-                    else if(compareValue.unrenderedValue < 0)
-                        tmplData["compareShape"] = self.options.state.compareWith.shapes.decrease;
+                    var compareValue = self.compareType[self.options.state.compareWith.compareType](kpiValue, compareWithValue, self.templates, self.options.state.condensed);
+                    if(!compareValue)
+                        throw "View.Indicator: unable to find compareType [" + self.options.state.compareWith.compareType + "]";
+
+                    tmplData["compareValue"] = compareValue.data;
+
+                    if(self.options.state.compareWith.shapes) {
+                        if(compareValue.unrenderedValue == 0)
+                            tmplData["compareShape"] = self.options.state.compareWith.shapes.constant;
+                        else if(compareValue.unrenderedValue > 0)
+                            tmplData["compareShape"] = self.options.state.compareWith.shapes.increase;
+                        else if(compareValue.unrenderedValue < 0)
+                            tmplData["compareShape"] = self.options.state.compareWith.shapes.decrease;
+                    }
+
+                    if(compareValue.template)
+                        template = compareValue.template;
                 }
-
-                if(compareValue.template)
-                    template = compareValue.template;
             }
 
             if (this.options.state.description)
                 tmplData["description"] = this.options.state.description;
             
-            if (compareValue.percentageMsg)
+            if (compareValue && compareValue.percentageMsg)
             	tmplData["percentageMsg"] = compareValue.percentageMsg; 
 
             var htmls = Mustache.render(template, tmplData);
@@ -2998,8 +3038,9 @@ this.recline.View = this.recline.View || {};
                     yLabel = self.state.attributes.seriesValues.join("/");
 
                 // todo yaxis format must be passed as prop
-                view.setAxis("all", chart);
-
+                chart.yAxis
+                    .axisLabel(yLabel)
+                    .tickFormat(d3.format('s'));
             }
         },
 
@@ -3738,6 +3779,10 @@ this.recline.View = this.recline.View || {};
                 var seriesTmp = {};
                 var seriesNameField = self.model.fields.get(seriesAttr.seriesField);
                 var fieldValue = self.model.fields.get(seriesAttr.valuesField);
+                if(!fieldValue) {
+                    throw "view.rickshaw: unable to find field ["+seriesAttr.valuesField+"] in model"
+                }
+
 
                 _.each(records, function (doc, index) {
 
@@ -3991,7 +4036,12 @@ this.recline.View = this.recline.View || {};
             var field = this.model.fields.get(this.options.fieldRanges);
             var fieldMeasure = this.model.fields.get(this.options.fieldMeasures);
 
-            var records = _.map(this.options.model.getRecords(this.options.resultType.type), function (record) {
+            var type;
+            if(this.options.resultType) {
+                type = this.options.resultType;
+            }
+
+            var records = _.map(this.options.model.getRecords(type), function (record) {
                 var ranges = [];
                 _.each(self.options.fieldRanges, function (f) {
                     var field = self.model.fields.get(f);

@@ -370,10 +370,6 @@ this.recline.Model = this.recline.Model || {};
             }
             return backend;
         },
-        isFieldPartitioned:function (field) {
-            return false
-        },
-
 
         getFacetByFieldId:function (fieldId) {
             return _.find(this.facets.models, function (facet) {
