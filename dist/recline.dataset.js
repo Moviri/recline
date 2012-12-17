@@ -742,8 +742,6 @@ this.recline.Model = this.recline.Model || {};
         },
 
 
-        updateFilter:function (index, value) {
-        },
         // ### removeFilter
         //
         // Remove a filter from filters at index filterIndex
@@ -761,6 +759,8 @@ this.recline.Model = this.recline.Model || {};
                 }
             }
         },
+
+
         clearFilter:function (field) {
             var filters = this.get('filters');
             for (var j in filters) {
