@@ -1547,12 +1547,21 @@ this.recline.View = this.recline.View || {};
                     	currActiveFilter.term = prefix + currSelectedValue;
                     	if (currLevel == 1)
                 		{
-                    		$fieldSet.find('div.level2')[0].style.display="none"
-                    		$fieldSet.find('div.level3')[0].style.display="none"
+                    		var divLev2 = $fieldSet.find('div.level2') 
+                    		if (divLev2.length > 0)
+                			{
+                    			divLev2[0].style.display="none"
+                        		var divLev3 = $fieldSet.find('div.level3') 
+                        		if (divLev3.length)
+                        			divLev3[0].style.display="none"
+                			}
                 		}
                     	else if (currLevel == 2)
-                    		$fieldSet.find('div.level3')[0].style.display="none"
-                    	
+                		{
+                    		var divLev3 = $fieldSet.find('div.level3') 
+                    		if (divLev3.length > 0)
+                    			divLev3[0].style.display="none"
+                		}
                         this.doAction("onButtonsetClicked", fieldId, listaValori, "add", currActiveFilter);
             		}
                 	else
