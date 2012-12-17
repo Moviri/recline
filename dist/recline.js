@@ -8428,9 +8428,10 @@ this.recline.View = this.recline.View || {};
                     }
 
                     var v = record.getFieldValue(field);
+                    var shape = record.getFieldShape(field, false, false);
                     fullLevelValues.push(v);
                     if (v.indexOf(currActiveFilter.separator) < 0)
-                    	lev1Values.push({value: v, record: record});
+                    	lev1Values.push({value: v, record: record, shape: shape});
                     else
                 	{
                     	var valueSet = v.split(currActiveFilter.separator);
@@ -8439,7 +8440,7 @@ this.recline.View = this.recline.View || {};
                         	{ /* skip already present */ }
                         else 
                     	{
-                        	lev1Values.push({value: lev1Val, record: null});
+                        	lev1Values.push({value: lev1Val, record: null, shape: shape});
                         	if (valueSet.length > totLevels)
                         		totLevels = valueSet.length
                     	}
@@ -8469,7 +8470,7 @@ this.recline.View = this.recline.View || {};
                         	
                     if (currActiveFilter.useShapeOnly == true)
                 	{
-                    	var shape = record.getFieldShape(field, false, false);
+                        var shape = lev1Val.shape;
                     	if (shape && shape.indexOf("undefined") < 0)
                     	{
                         	tooltip = "rel=tooltip title="+v
