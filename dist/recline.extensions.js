@@ -2343,15 +2343,14 @@ this.recline.View = this.recline.View || {};
     templateBaseCondensed:
    '<div class="indicator" style="width:100%;"> \
 	    <div class="panel indicator_{{viewId}}" style="width:100%;"> \
-	      <div id="indicator_{{viewId}}" class="indicator-container well" style="width:85%;"> \
-			<fieldset style="width:100%;"> \
-				<legend style="width:100%;"> \
-                <div class="value-cell" style="float:left">{{value}}</div> \
-				<div class="compareshape" style="float:right">{{{compareShape}}}</div> \
-                <div class="shape" style="float:right">{{{shape}}}</div> \
-				</legend> \
+    		<div id="indicator_{{viewId}}" class="indicator-container well" style="width:85%;"> \
+    			<div style="width:100%;"> \
+	                <div class="value-cell" style="float:left">{{value}}</div> \
+					<div class="compareshape" style="float:right">{{{compareShape}}}</div> \
+	                <div class="shape" style="float:right">{{{shape}}}</div> \
+				</div> \
+    			<div style="width:100%;padding-top:10px"><hr></div> \
                 <div style="text-align:justify;width:100%;" class="title">{{{label}}}</div>\
-			</fieldset> \
 			</div> \
 	    </div> \
     </div>'
@@ -2370,17 +2369,16 @@ this.recline.View = this.recline.View || {};
       </div> \
     </div> ',
     templatePercentageCondensed:
-    	   '<div class="indicator" style="width:100%;"> \
-	    <div class="panel indicator_{{viewId}}" style="width:100%;"> \
-	      <div id="indicator_{{viewId}}" class="indicator-container well" style="width:85%;"> \
-			<fieldset style="width:100%;"> \
-				<legend style="width:100%;"> \
-                <div class="value-cell" style="float:left">{{value}}</div> \
-    			<div class="compareshape" style="float:right">{{{compareShape}}}</div> \
-                <div class="shape" style="float:right">{{{shape}}}</div> \
-				</legend> \
+   '<div class="indicator" style="width:100%;"> \
+    	<div class="panel indicator_{{viewId}}" style="width:100%;"> \
+    		<div id="indicator_{{viewId}}" class="indicator-container well" style="width:85%;"> \
+				<div style="width:100%;"> \
+			        <div class="value-cell" style="float:left">{{value}}</div> \
+					<div class="compareshape" style="float:right">{{{compareShape}}}</div> \
+			        <div class="shape" style="float:right">{{{shape}}}</div> \
+				</div> \
+    			<div style="width:100%;padding-top:10px"><hr></div> \
                 <div style="text-align:justify;width:100%;" class="title">{{{label}}}</div>\
-    			</fieldset> \
     		</div> \
 	    </div> \
     </div>'
