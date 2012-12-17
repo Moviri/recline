@@ -2998,8 +2998,9 @@ this.recline.View = this.recline.View || {};
                     yLabel = self.state.attributes.seriesValues.join("/");
 
                 // todo yaxis format must be passed as prop
-                view.setAxis("all", chart);
-
+                chart.yAxis
+                    .axisLabel(yLabel)
+                    .tickFormat(d3.format('s'));
             }
         },
 
