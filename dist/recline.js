@@ -3478,8 +3478,6 @@ this.recline.Model = this.recline.Model || {};
         },
 
 
-        updateFilter:function (index, value) {
-        },
         // ### removeFilter
         //
         // Remove a filter from filters at index filterIndex
@@ -3497,6 +3495,8 @@ this.recline.Model = this.recline.Model || {};
                 }
             }
         },
+
+
         clearFilter:function (field) {
             var filters = this.get('filters');
             for (var j in filters) {
@@ -3731,9 +3731,10 @@ this.recline.View = this.recline.View || {};
 //        { 
 //          group: {column name for x-axis},
 //          series: [{column name for series A}, {column name series B}, ... ],
-//          graphType: 'line'
+//          graphType: 'line',
+//          graphOptions: {custom [Flotr2 options](http://www.humblesoftware.com/flotr2/documentation#configuration)}
 //        }
-//
+// 
 // NB: should *not* provide an el argument to the view but must let the view
 // generate the element itself (you can then append view.el to the DOM.
 my.Graph = Backbone.View.extend({
@@ -3963,7 +3964,14 @@ my.Graph = Backbone.View.extend({
       },
       grid: { hoverable: true, clickable: true }
     };
-    return optionsPerGraphType[typeId];
+    
+    if (self.state.get('graphOptions')){
+      return _.extend(optionsPerGraphType[typeId],
+        self.state.get('graphOptions')  
+      )
+    }else{
+      return optionsPerGraphType[typeId];
+    }
   },
 
   createSeries: function() {

@@ -109,6 +109,10 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
             }
         },
 
+        fetch: function() {
+            this.initializeCrossfilter();
+        },
+
         initializeCrossfilter:function () {
             var aggregatedFields = this.attributes.aggregation.measures;
             var aggregationFunctions = this.attributes.aggregation.aggregationFunctions;
@@ -128,7 +132,16 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
         setDimensions:function (dimensions) {
             this.attributes.aggregation.dimensions = dimensions;
             this.trigger('dimensions:change');
-            this.initializeCrossfilter();
+        },
+
+        setMeasures:function (measures) {
+            this.attributes.aggregation.measures = measures;
+            this.trigger('measures:change');
+        },
+
+        setTotalsMeasures: function(measures) {
+            this.attributes.totals.measures = measures;
+            this.trigger('totals:change');
         },
 
         getDimensions:function () {
@@ -562,7 +575,10 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
                     tempValue = tmpField[aggregationFunctions[j]];
 
                 for (var x in tempValue) {
+
                     var originalFieldAttributes = originalFields.get(x).attributes;
+
+
                     var newType = recline.Data.Aggregations.resultingDataType[aggregationFunctions[j]](originalFieldAttributes.type);
 
                     fields.push({
