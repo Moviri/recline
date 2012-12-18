@@ -218,7 +218,7 @@ this.recline.View = this.recline.View || {};
                     }
                     var shape = doc.getFieldShapeName(seriesNameField);
 
-                    var x = doc.getFieldValueUnrendered(xfield);
+                    var x =  Math.floor(doc.getFieldValueUnrendered(xfield) / 1000); // rickshaw don't use millis
                     var y = doc.getFieldValueUnrendered(fieldValue);
 
 
@@ -267,8 +267,7 @@ this.recline.View = this.recline.View || {};
                     var points = [];
 
                     _.each(records, function (doc, index) {
-
-                        var x = doc.getFieldValueUnrendered(xfield);
+                        var x =  Math.floor(doc.getFieldValueUnrendered(xfield) / 1000); // rickshaw don't use millis
 
                         try {
 
