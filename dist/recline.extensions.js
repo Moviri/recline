@@ -2329,7 +2329,7 @@ this.recline.View = this.recline.View || {};
                 var data = recline.Data.Formatters.Renderers(unrenderedValue, tmpField);
                 var template = templates.templatePercentage;
                 if (condensed == true)
-                	template = templates.templatePercentageCondensed;
+                	template = templates.templateCondensed2;
                 
                 return {data:data, template:template, unrenderedValue: unrenderedValue, percentageMsg: "% of total: "};
             },
@@ -2339,14 +2339,14 @@ this.recline.View = this.recline.View || {};
                 var data = recline.Data.Formatters.Renderers( unrenderedValue, tmpField);
                 var template = templates.templatePercentage;
                 if (condensed == true)
-                	template = templates.templatePercentageCondensed;
+                	template = templates.templateCondensed2;
 
                 return {data:data, template:template, unrenderedValue: unrenderedValue, percentageMsg: "% variation: "};
             },
             nocompare: function (kpi, compare, templates, condensed){
                 var template = templates.templateBase;
                 if (condensed == true)
-                	template = templates.templateBaseCondensed;
+                	template = templates.templateCondensed2;
             	
                 return {data:null, template:template, unrenderedValue:null};
             },
@@ -2368,7 +2368,7 @@ this.recline.View = this.recline.View || {};
       </div> \
     </div> ',
     templateBaseCondensed:
-   '<div class="indicator" style="width:100%;"> \
+	'<div class="indicator " style="width:100%;"> \
 	    <div class="panel indicator_{{viewId}}" style="width:100%;"> \
     		<div id="indicator_{{viewId}}" class="indicator-container well" style="width:85%;"> \
     			<div style="width:100%;"> \
@@ -2380,7 +2380,34 @@ this.recline.View = this.recline.View || {};
                 <div style="text-align:justify;width:100%;" class="title">{{{label}}}</div>\
 			</div> \
 	    </div> \
-    </div>'
+    </div>',
+    templateCondensed2:
+        '<style> \
+        .round-border { \
+    	    border: 1px solid #DDDDDD; \
+    	    border-radius: 4px 4px 4px 4px; \
+    		background-color: lightcyan; \
+        } \
+        .round-border-dark { \
+    	    border: 1px solid #808080; \
+    	    border-radius: 4px 4px 4px 4px; \
+    		margin:3px; \
+    		height: 30px; \
+        } \
+    	</style> \
+        	<div class="indicator round-border-dark" > \
+    	    <div class="panel indicator_{{viewId}}" > \
+        		<div id="indicator_{{viewId}}" class="indicator-container" > \
+        			<div class="round-border" style="float:left"> \
+    					<div class="compareshape" style="float:left">{{{compareShape}}}</div> \
+    	                <div class="shape" style="float:left">{{{shape}}}</div> \
+        				<div class="value-cell" style="float:left">{{value}}</div> \
+    				</div> \
+                    <div style="text-align:justify;float:left" class="title">&nbsp;&nbsp;{{{label}}}</div>\
+    			</div> \
+    	    </div> \
+        </div>'
+
 ,
    templatePercentage:
    '<div class="indicator"> \
@@ -2394,21 +2421,7 @@ this.recline.View = this.recline.View || {};
              </table>  \
 		</div>\
       </div> \
-    </div> ',
-    templatePercentageCondensed:
-   '<div class="indicator" style="width:100%;"> \
-    	<div class="panel indicator_{{viewId}}" style="width:100%;"> \
-    		<div id="indicator_{{viewId}}" class="indicator-container well" style="width:85%;"> \
-				<div style="width:100%;"> \
-			        <div class="value-cell" style="float:left">{{value}}</div> \
-					<div class="compareshape" style="float:right">{{{compareShape}}}</div> \
-			        <div class="shape" style="float:right">{{{shape}}}</div> \
-				</div> \
-    			<div style="width:100%;padding-top:10px"><hr></div> \
-                <div style="text-align:justify;width:100%;" class="title">{{{label}}}</div>\
-    		</div> \
-	    </div> \
-    </div>'
+    </div> '
         },
         initialize:function (options) {
             var self = this;
@@ -2466,7 +2479,7 @@ this.recline.View = this.recline.View || {};
 
             var template = this.templates.templateBase;
             if (self.options.state.condensed == true)
-            	template = self.templates.templateBaseCondensed;            
+            	template = self.templates.templateCondensed2;            
 
             if (self.options.state.compareWith) {
                 var compareWithRecord = self.model.getRecords(self.options.state.compareWith.type);
