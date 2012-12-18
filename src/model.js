@@ -184,31 +184,6 @@ this.recline.Model = this.recline.Model || {};
             });
         },
 
-        getRecords:function (type) {
-            var self = this;
-
-            if (type === 'filtered' || type == null) {
-                return self.records.models;
-            } else {
-                if (self._store.data == null) {
-                    throw "Model: unable to retrieve not filtered data, store can't provide data. Use a backend that use a memory store";
-                }
-
-                var docs = _.map(self._store.data, function (hit) {
-                    var _doc = new my.Record(hit);
-                    _doc.fields = self.fields;
-                    return _doc;
-                });
-
-                return docs;
-            }
-        },
-
-        getFields:function (type) {
-            var self = this;
-            return self.fields;
-
-        },
 
 
         // ### query
@@ -237,7 +212,7 @@ this.recline.Model = this.recline.Model || {};
             });
 
 
-            console.log("Query on model [" + self.attributes.id + "] query [" + JSON.stringify(actualQuery) + "]");
+            console.log("Query on model [" + (self.attributes.id?self.attributes.id:"") + "] query [" + JSON.stringify(actualQuery) + "]");
 
             this._store.query(actualQuery, this.toJSON())
                 .done(function (queryResult) {
@@ -377,21 +352,7 @@ this.recline.Model = this.recline.Model || {};
             });
         },
 
-        toFullJSON:function (resultType) {
-            var self = this;
-            return _.map(self.getRecords(resultType), function (r) {
-                var res = {};
 
-                _.each(self.getFields(resultType).models, function (f) {
-                    res[f.id] = r.getFieldValueUnrendered(f);
-                });
-
-                return res;
-
-            });
-
-
-        }
 
 
     });

@@ -1,13 +1,13 @@
 // # Recline Backbone Models
 this.recline = this.recline || {};
 this.recline.Model = this.recline.Model || {};
-this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
+this.recline.Model.JoinedDataset_old = this.recline.Model.JoinedDataset_old || {};
 
 
 (function ($, my) {
 
 // ## <a id="dataset">VirtualDataset</a>
-    my.JoinedDataset = Backbone.Model.extend({
+    my.JoinedDataset_old = Backbone.Model.extend({
         constructor:function JoinedDataset() {
             Backbone.Model.prototype.constructor.apply(this, arguments);
         },
@@ -19,13 +19,15 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
 
             self.ds_fetched = [];
 
-            self.joinedModel = new my.Dataset({backend: "Memory", records:[], fields: []});
+            this.fields = new my.FieldList();
 
-            self.fields = self.joinedModel.fields;
-            self.records = self.joinedModel.records;
-            self.facets = self.joinedModel.facets;
-            self.recordCount = self.joinedModel.recordCount;
-            self.queryState = self.joinedModel.queryState;
+
+            this.records = new my.RecordList();
+
+            this.facets = new my.FacetList();
+            this.recordCount = null;
+
+            this.queryState = new my.Query();
 
             if (this.get('initialState')) {
                 this.get('initialState').setState(this);
@@ -37,7 +39,10 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
             _.each(this.attributes.join, function(p) {
                 p.model.fields.bind('reset', self.generatefields);
                 p.model.fields.bind('add', self.generatefields);
+
             });
+
+            this.generatefields();
 
             this.attributes.model.bind('query:done', function () {
                 self.ds_fetched.push("model");
@@ -95,28 +100,96 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
                     tmpFields.push(c);
                 });
             });
-            this.joinedModel.resetFields(tmpFields);
+
+
+
+            var options = {renderer:recline.Data.Formatters.Renderers};
+
+            this.fields.reset(tmpFields, options);
+            this.setColorSchema();
+            this.setShapeSchema();
+
+
         },
 
-
+        addCustomFilterLogic: function(f) {
+            if(this.attributes.customFilterLogic)
+                this.attributes.customFilterLogic.push(f);
+            else
+                this.attributes.customFilterLogic = [f];
+        },
 
         query:function (queryObj) {
-            var self=this;
-            self.trigger('query:start');
+            var self = this;
+            this.trigger('query:start');
+
             if (queryObj) {
                 this.queryState.set(queryObj, {silent:true});
             }
+
+            var queryObj = this.queryState.toJSON();
+
+
+            _.each(self.attributes.customFilterLogic, function (f) {
+                f(queryObj);
+            });
+
+
+            console.log("Query on model query [" + JSON.stringify(queryObj) + "]");
+
             var results = self.join();
 
-            self.joinedModel.resetRecords(results);
-            self.joinedModel.fetch();
-            self.recordCount = self.joinedModel.recordCount;
+            var numRows = queryObj.size || results.length;
+            var start = queryObj.from || 0;
+
+            _.each(queryObj.sort, function (sortObj) {
+                var fieldName = sortObj.field;
+                results = _.sortBy(results, function (doc) {
+                    var _out = doc[fieldName];
+                    return _out;
+                });
+                if (sortObj.order == 'desc') {
+                    results.reverse();
+                }
+            });
+
+            results = results.slice(start, start + numRows);
+            facets = recline.Data.Faceting.computeFacets(results, queryObj);
+
+            self.recordCount = results.length;
+
+            var docs = _.map(results, function (hit) {
+                var _doc = new my.Record(hit);
+                _doc.fields = self.fields;
+                _doc.bind('change', function (doc) {
+                    self._changes.updates.push(doc.toJSON());
+                });
+                _doc.bind('destroy', function (doc) {
+                    self._changes.deletes.push(doc.toJSON());
+                });
+                return _doc;
+            });
+
+
+            self.records.reset(docs);
+
+            if (facets) {
+                var facets = _.map(facets, function (facetResult, facetId) {
+                    facetResult.id = facetId;
+                    var result = new my.Facet(facetResult);
+                    recline.Data.ColorSchema.addColorsToTerms(facetId, result.attributes.terms, self.attributes.colorSchema);
+                    recline.Data.ShapeSchema.addShapesToTerms(facetId, result.attributes.terms, self.attributes.shapeSchema);
+
+                    return result;
+                });
+                self.facets.reset(facets);
+            }
 
             self.trigger('query:done');
         },
 
         join:function () {
-
+            var joinon = this.attributes.joinon;
             var joinType = this.attributes.joinType;
             var model = this.attributes.model;
             var joinModel = this.attributes.join;
@@ -166,32 +239,71 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
             return results;
         },
 
-        addCustomFilterLogic: function(f) {
-            return this.joinedModel.addCustomFilterLogic(f);
-        },
-
         getRecords:function (type) {
-            return this.joinedModel.getRecords(type);
+
+            if(type=="unfiltered") {
+
+            }
+            else
+                return this.records.models;
         },
 
         getFields:function (type) {
-            return this.joinedModel.getFields(type);
+            return this.fields;
         },
 
         toTemplateJSON:function () {
-            return this.joinedModel.toTemplateJSON();
+            var data = this.records.toJSON();
+            data.recordCount = this.recordCount;
+            data.fields = this.fields.toJSON();
+            return data;
         },
 
 
         getFacetByFieldId:function (fieldId) {
-            return this.joinedModel.getFacetByFieldId(fieldId);
+            return _.find(this.facets.models, function (facet) {
+                return facet.id == fieldId;
+            });
         },
 
+        setColorSchema:function () {
+            var self = this;
+            _.each(self.attributes.colorSchema, function (d) {
+                var field = _.find(self.fields.models, function (f) {
+                    return d.field === f.id
+                });
+                if (field != null)
+                    field.attributes.colorSchema = d.schema;
+            })
+        },
+
+        setShapeSchema:function () {
+            var self = this;
+            _.each(self.attributes.shapeSchema, function (d) {
+                var field = _.find(self.fields.models, function (f) {
+                    return d.field === f.id
+                });
+                if (field != null)
+                    field.attributes.shapeSchema = d.schema;
+            })
+        },
         isFieldPartitioned:function (field) {
             return false
         },
         toFullJSON:function (resultType) {
-            return this.joinedModel.toFullJSON(resultType);
+            var self = this;
+            return _.map(self.getRecords(resultType), function (r) {
+                var res = {};
+
+                _.each(self.getFields(resultType).models, function (f) {
+                    res[f.id] = r.getFieldValueUnrendered(f);
+                });
+
+                return res;
+
+            });
+
+
         }
 
     })
