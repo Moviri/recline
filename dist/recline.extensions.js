@@ -4385,11 +4385,19 @@ this.recline.View = this.recline.View || {};
 
             self.graph = new Rickshaw.Graph(self.graphOptions);
 
+            if(self.options.state.unstack) {
+                self.graph .renderer.unstack = true;
+            }
+
+
             self.graph.render();
 
-            var hoverDetail = new Rickshaw.Graph.HoverDetail({
-                graph:self.graph
-            });
+            var hoverDetailOpt = { graph: self.graph };
+            hoverDetailOpt = _.extend(hoverDetailOpt, self.options.state.hoverDetailOpt);
+
+
+
+            var hoverDetail = new Rickshaw.Graph.HoverDetail(hoverDetailOpt);
 
             var xAxisOpt = { graph: self.graph };
             xAxisOpt = _.extend(xAxisOpt, self.options.state.xAxisOptions);
@@ -4397,6 +4405,7 @@ this.recline.View = this.recline.View || {};
 
 
             var xAxis = new Rickshaw.Graph.Axis.Time(xAxisOpt);
+
 
             xAxis.render();
 
@@ -4431,10 +4440,10 @@ this.recline.View = this.recline.View || {};
 
             }
 
-            if (self.options.legend) {
+            if (self.options.state.legend) {
                 var legend = new Rickshaw.Graph.Legend({
                     graph:self.graph,
-                    element:document.querySelector('#' + self.options.legend)
+                    element:document.querySelector('#' + self.options.state.legend)
                 });
 
                 var shelving = new Rickshaw.Graph.Behavior.Series.Toggle({
@@ -4470,12 +4479,6 @@ this.recline.View = this.recline.View || {};
 
             var fillEmptyValuesWith = seriesAttr.fillEmptyValuesWith;
 
-            //var seriesNameField = self.model.fields.get(this.state.attributes.seriesNameField) ;
-            //var seriesValues = self.model.fields.get(this.state.attributes.seriesValues);
-            //if(seriesValues == null)
-            //var seriesValues = this.state.get("seriesValues") ;
-
-
             var unselectedColor = "#C0C0C0";
             if (self.options.state.unselectedColor)
                 unselectedColor = self.options.state.unselectedColor;
@@ -4504,6 +4507,8 @@ this.recline.View = this.recline.View || {};
                 var seriesTmp = {};
                 var seriesNameField = self.model.fields.get(seriesAttr.seriesField);
                 var fieldValue = self.model.fields.get(seriesAttr.valuesField);
+
+
                 if(!fieldValue) {
                     throw "view.rickshaw: unable to find field ["+seriesAttr.valuesField+"] in model"
                 }
@@ -4520,9 +4525,10 @@ this.recline.View = this.recline.View || {};
                         tmpS = seriesTmp[key]
                     }
                     else {
-                        tmpS = {name:key, data:[]};
+                        tmpS = {name:key, data:[], field: fieldValue};
 
                         var color = doc.getFieldColor(seriesNameField);
+
 
                         if (color != null)
                             tmpS["color"] = color;
@@ -4532,10 +4538,12 @@ this.recline.View = this.recline.View || {};
                     var shape = doc.getFieldShapeName(seriesNameField);
 
                     var x =  Math.floor(doc.getFieldValueUnrendered(xfield) / 1000); // rickshaw don't use millis
+                    var x_formatted = doc.getFieldValue(xfield);
                     var y = doc.getFieldValueUnrendered(fieldValue);
+                    var y_formatted = doc.getFieldValue(fieldValue);
 
 
-                    var point = {x:x, y:y, record:doc};
+                    var point = {x:x, y:y, record:doc, y_formatted: y_formatted, x_formatted: x_formatted};
                     if (sizeField)
                         point["size"] = doc.getFieldValueUnrendered(sizeField);
                     if (shape != null)
@@ -4561,8 +4569,9 @@ this.recline.View = this.recline.View || {};
                 var serieNames;
 
                 // if partitions are active we need to retrieve the list of partitions
-                if (seriesAttr.type == "byFieldName")
+                if (seriesAttr.type == "byFieldName") {
                     serieNames = seriesAttr.valuesField;
+                }
                 else {
                     serieNames = [];
                     _.each(seriesAttr.aggregationFunctions, function (a) {
@@ -4575,30 +4584,45 @@ this.recline.View = this.recline.View || {};
                 }
 
                 _.each(serieNames, function (field) {
-                    var yfield = self.model.fields.get(field);
+
+                    var yfield;
+                    if(seriesAttr.type == "byFieldName")
+                        yfield = self.model.fields.get(field.fieldName);
+                    else
+                        yfield = self.model.fields.get(field);
+
+                    var fixedColor;
+                    if(field.fieldColor)
+                        fixedColor =field.fieldColor;
 
                     var points = [];
 
                     _.each(records, function (doc, index) {
-                        var x =  Math.floor(doc.getFieldValueUnrendered(xfield) / 1000); // rickshaw don't use millis
+                        var x           =  Math.floor(doc.getFieldValueUnrendered(xfield) / 1000); // rickshaw don't use millis
+                        var x_formatted =  doc.getFieldValue(xfield); // rickshaw don't use millis
+
 
                         try {
 
                             var y = doc.getFieldValueUnrendered(yfield);
+                            var y_formatted = doc.getFieldValue(yfield);
+
                             if (y != null) {
                                 var color;
 
+                                var calculatedColor = doc.getFieldColor(yfield);
+
                                 if (selectionActive) {
                                     if (doc.isRecordSelected())
-                                        color = doc.getFieldColor(yfield);
+                                        color =calculatedColor;
                                     else
                                         color = unselectedColor;
                                 } else
-                                    color = doc.getFieldColor(yfield);
+                                    color = calculatedColor;
 
                                 var shape = doc.getFieldShapeName(yfield);
 
-                                var point = {x:x, y:y, record:doc};
+                                var point = {x:x, y:y, record:doc, y_formatted: y_formatted, x_formatted: x_formatted};
 
                                 if (color != null)
                                     point["color"] = color;
@@ -4622,7 +4646,11 @@ this.recline.View = this.recline.View || {};
                     });
 
                     if (points.length > 0)  {
-                        var color = yfield.getColorForPartition();
+                        var color;
+                            if(fixedColor)
+                                color = fixedColor;
+                        else
+                                color = yfield.getColorForPartition();
                         var ret = {data:points, name:self.getFieldLabel(yfield)};
                         if(color)
                             ret["color"] = color;
