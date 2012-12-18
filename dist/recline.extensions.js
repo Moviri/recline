@@ -7493,9 +7493,9 @@ this.recline.View = this.recline.View || {};
                                 return "measure s" + i;
                             })
                             .attr("width", w0)
-                            .attr("height", height / 3)
+                            .attr("height", function (d, i) { return height / (i*3+3); })
                             .attr("x", reverse ? x0 : 0)
-                            .attr("y", height / 3)
+                            .attr("y", function (d, i) { return (height / 3.0 - height / (i*3+3.0)) /2.0 + height / 3.0; })
                             .transition()
                             .duration(duration)
                             .attr("width", w1)
@@ -7504,9 +7504,9 @@ this.recline.View = this.recline.View || {};
                         measure.transition()
                             .duration(duration)
                             .attr("width", w1)
-                            .attr("height", height / 3)
+                            .attr("height", function (d, i) { return height / (i*3+3); })
                             .attr("x", reverse ? x1 : 0)
-                            .attr("y", height / 3);
+                            .attr("y", function (d, i) { return (height / 3.0 - height / (i*3+3.0)) /2.0 + height / 3.0; });
 
                         // Update the marker lines.
                         var marker = g.selectAll("line.marker")
