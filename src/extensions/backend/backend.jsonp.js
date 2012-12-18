@@ -156,7 +156,8 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
                     hits:_normalizeRecords(data.data, fields),
                     fields: fields,
                     facets: facets,
-                    useMemoryStore:false
+                    useMemoryStore:false,
+                    total: data.data.length
                 }
             }
         /*
