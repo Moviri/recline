@@ -11,7 +11,7 @@ def cat():
     cmd = 'cat src/model.js src/backend.memory.js > dist/recline.dataset.js'
     os.system(cmd)
 
-    cmd = 'cat src/extensions/model/*.js src/extensions/data/*.js src/extensions/views/*.js src/extensions/views/d3/*.js > dist/recline.extensions.js'
+    cmd = 'cat src/extensions/model/*.js src/extensions/data/*.js src/extensions/backend/*.js src/extensions/views/*.js src/extensions/views/d3/*.js > dist/recline.extensions.js'
     os.system(cmd)
 
 

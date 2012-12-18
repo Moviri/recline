@@ -16,8 +16,12 @@ this.recline.Model.FilteredDataset = this.recline.Model.FilteredDataset || {};
         initialize:function () {
             var self = this;
 
-            this.fields = this.attributes.dataset.fields;
+
             this.records = new my.RecordList();
+
+            this.fields =  this.attributes.dataset.fields;
+
+
             //todo
             //this.facets = new my.FacetList();
             this.recordCount = null;
@@ -28,6 +32,10 @@ this.recline.Model.FilteredDataset = this.recline.Model.FilteredDataset || {};
                 this.get('initialState').setState(this);
             }
 
+            this.attributes.dataset.fields.bind('reset', function () {
+                self.fieldsReset();
+            })
+
             this.attributes.dataset.bind('query:done', function () {
                 self.query();
             })
@@ -35,6 +43,11 @@ this.recline.Model.FilteredDataset = this.recline.Model.FilteredDataset || {};
             this.queryState.bind('change', function () {
                 self.query();
             });
+
+        },
+
+        fieldsReset: function() {
+            this.fields = this.attributes.dataset.fields;
 
         },
 
@@ -47,6 +60,11 @@ this.recline.Model.FilteredDataset = this.recline.Model.FilteredDataset || {};
             }
 
             var queryObj = this.queryState.toJSON();
+
+            _.each(self.attributes.customFilterLogic, function (f) {
+                f(queryObj);
+            });
+
 
             console.log("Query on model query [" + JSON.stringify(queryObj) + "]");
 
@@ -106,6 +124,24 @@ this.recline.Model.FilteredDataset = this.recline.Model.FilteredDataset || {};
 
         getFieldsSummary:function () {
             return this.attributes.dataset.getFieldsSummary();
+        },
+
+        addCustomFilterLogic: function(f) {
+            if(this.attributes.customFilterLogic)
+                this.attributes.customFilterLogic.push(f);
+            else
+                this.attributes.customFilterLogic = [f];
+        },
+        setColorSchema:function () {
+            var self = this;
+            _.each(self.attributes.colorSchema, function (d) {
+                var field = _.find(self.fields.models, function (f) {
+                    return d.field === f.id
+                });
+                if (field != null)
+                    field.attributes.colorSchema = d.schema;
+            })
+
         }
 
 
@@ -207,14 +243,14 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
             var tmpFields = [];
             _.each(this.attributes.model.fields.models, function (f) {
                 var c = f.toJSON();
-                c.id = "model." + c.id;
+                c.id = c.id;
                 tmpFields.push(c);
             });
 
             _.each(this.attributes.join, function(p) {
                 _.each(p.model.fields.models, function (f) {
                     var c = f.toJSON();
-                    c.id = p.id + "." + c.id;
+                    c.id = p.id + "_" + c.id;
                     tmpFields.push(c);
                 });
             });
@@ -312,7 +348,7 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
                 // define the record with all data from model
                 var record = {};
                 _.each(r.toJSON(), function (f, index) {
-                    record["model." + index] = f;
+                    record[index] = f;
                 });
 
                 _.each(joinModel, function(p) {
@@ -329,7 +365,7 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
 
                     _.each(resultsFromDataset2, function (res) {
                         _.each(res, function (field_value, index) {
-                            record[p.id + "." + index] = field_value;
+                            record[p.id + "_" + index] = field_value;
                         })
                     })
 
@@ -1362,6 +1398,310 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
 
 }(jQuery, this.recline.Model));
 
+this.recline = this.recline || {};
+
+(function ($, my) {
+
+    my.ActionUtility = {};
+
+
+    my.ActionUtility.doAction = function (actions, eventType, eventData) {
+
+        // find all actions configured for eventType
+        var targetActions = _.filter(actions, function (d) {
+            var tmpFound = _.find(d["event"], function (x) {
+                return x == eventType
+            });
+            if (tmpFound != -1)
+                return true;
+            else
+                return false;
+        });
+
+        // foreach action prepare field
+        _.each(targetActions, function (currentAction) {
+            var mapping = currentAction.mapping;
+            var actionParameters = [];
+            //foreach mapping set destination field
+            _.each(mapping, function (map) {
+                if (eventData[map["srcField"]] == null) {
+                    console.log("warn: sourceField: [" + map["srcField"] + "] not present in event data");
+                } else {
+
+
+                    var param = {
+                        filter:map["filter"],
+                        value:eventData[map["srcField"]]
+                    };
+                    actionParameters.push(param);
+                }
+            });
+
+            if (actionParameters.length > 0) {
+                currentAction.action._internalDoAction(actionParameters);
+            }
+        });
+    },
+
+        my.ActionUtility.getActiveFilters = function (actions) {
+
+            var activeFilters = [];
+            _.each(actions, function (currentAction) {
+                _.each(currentAction.mapping, function (map) {
+                    var currentFilter = currentAction.action.getActiveFilters(map.filter, map.srcField);
+                    if (currentFilter != null && currentFilter.length > 0)
+                        activeFilters = _.union(activeFilters, currentFilter);
+                })
+            });
+
+            return activeFilters;
+        },
+
+// ## <a id="dataset">Action</a>
+        my.Action = Backbone.Model.extend({
+            constructor:function Action() {
+                Backbone.Model.prototype.constructor.apply(this, arguments);
+            },
+
+            initialize:function () {
+
+            },
+
+            doAction:function (records, mapping) {
+                var params = [];
+                mapping.forEach(function (mapp) {
+                    var values = [];
+                    //{srcField: "daydate", filter: "filter_daydate"}
+                    records.forEach(function (row) {
+                        values.push(row.getFieldValueUnrendered({id:mapp.srcField}));
+                    });
+                    params.push({
+                        filter:mapp.filter,
+                        value:values
+                    });
+                });
+                this._internalDoAction(params);
+            },
+
+            doActionWithValues:function (valuesarray, mapping) {
+                var params = [];
+                mapping.forEach(function (mapp) {
+                    var values = [];
+                    //{srcField: "daydate", filter: "filter_daydate"}
+                    _.each(valuesarray, function (row) {
+                        if (row.field === mapp.srcField)
+                            params.push({
+                                filter:mapp.filter,
+                                value:row.value
+                            });
+                    });
+
+                });
+                    this._internalDoAction(params);
+            },
+
+
+            // action could be add/remove
+            _internalDoAction:function (data) {
+                var self = this;
+
+                var filters = this.attributes.filters;
+                var models = this.attributes.models;
+                var type = this.attributes.type;
+
+                var targetFilters = [];
+
+                //populate all filters with data received from event
+                //foreach filter defined in data
+                _.each(data, function (f) {
+                    // filter creation
+                    var currentFilter = filters[f.filter];
+                    if (currentFilter == null) {
+                        throw "Filter " + f.filter + " defined in actions data not configured for action ";
+                    }
+                    currentFilter["name"] = f.filter;
+                    if (self.filters[currentFilter.type] == null)
+                        throw "Filter not implemented for type " + currentFilter.type;
+
+                    targetFilters.push(self.filters[currentFilter.type](currentFilter, f.value));
+
+                });
+
+                // foreach type and dataset add all filters and trigger events
+                _.each(type, function (type) {
+                    _.each(models, function (m) {
+
+                        var modified = false;
+
+                        _.each(targetFilters, function (f) {
+
+                            // verify if filter is associated with current model
+                            if (_.find(m.filters, function (x) {
+                                return x == f.name;
+                            }) != null) {
+                                // if associated add the filter
+
+                                self.modelsAddFilterActions[type](m.model, f);
+                                modified = true;
+
+                            }
+                        });
+
+                        if (modified) {
+                            self.modelsTriggerActions[type](m.model);
+                        }
+                    });
+                });
+
+
+            },
+
+            getActiveFilters:function (filterName, srcField) {
+                var self = this;
+                var models = this.attributes.models;
+                var type = this.attributes.type;
+                var filtersProp = this.attributes.filters;
+
+                // for each type
+                // foreach dataset
+                // get filter
+                // push to result, if already present error
+                var foundFilters = [];
+
+                _.each(type, function (type) {
+                    _.each(models, function (m) {
+                        var usedFilters = _.filter(m.filters, function (f) {
+                            return f == filterName;
+                        });
+                        _.each(usedFilters, function (f) {
+                            // search filter
+                            var filter = filtersProp[f];
+                            if (filter != null) {
+                                var filterOnModel = self.modelsGetFilter[type](m.model, filter.field);
+                                // substitution of fieldname with the one provided by source
+                                if (filterOnModel != null) {
+                                    filterOnModel.field = srcField;
+                                    foundFilters.push(filterOnModel);
+                                }
+                            }
+                        });
+                    });
+                });
+
+
+                return foundFilters;
+            },
+
+
+            modelsGetFilter:{
+                filter:function (model, fieldName) {
+                    return model.queryState.getFilterByFieldName(fieldName);
+                },
+                selection:function (model, fieldName) {
+                    throw "Action.js selection not implemented selection for modelsGetFilterActions"
+                },
+                sort:function (model, fieldName) {
+                    throw "Action.js sort not implemented selection for modelsGetFilterActions"
+                }
+            },
+
+            modelsAddFilterActions:{
+                filter:function (model, filter) {
+                    model.queryState.setFilter(filter)
+                },
+                selection:function (model, filter) {
+                    model.queryState.setSelection(filter)
+                },
+                sort:function (model, filter) {
+                    model.queryState.clearSortCondition();
+                    model.queryState.setSortCondition(filter)
+                }
+            },
+
+
+            modelsTriggerActions:{
+                filter:function (model) {
+                    model.queryState.trigger("change")
+                },
+                selection:function (model) {
+                    model.queryState.trigger("selection:change")
+                },
+                sort:function (model) {
+                    model.queryState.trigger("change")
+                }
+            },
+
+            filters:{
+                term:function (filter, data) {
+
+                    if (data.length === 0) {
+                        //empty list
+                        filter["term"] = null;
+                    } else if (data === null) {
+                        //null list
+                        filter["remove"] = true;
+                    } else if (data.length === 1) {
+                        filter["term"] = data[0];
+                    } else {
+                        throw "Data passed for filtertype term not valid. Data lenght should be 1 or empty but is " + data.length;
+                    }
+
+                    return filter;
+                },
+                range:function (filter, data) {
+
+                    if (data.length === 0) {
+                        //empty list
+                        filter["start"] = null;
+                        filter["stop"] = null;
+                    } else if (data[0] === null || data[1] === null) {
+                        //null list
+                        filter["remove"] = true;
+                    } else if (data.length === 2) {
+                        filter["start"] = data[0];
+                        filter["stop"] = data[1];
+                    } else {
+                        throw "Data passed for filtertype range not valid. Data lenght should be 2 but is " + data.length;
+                    }
+
+                    return filter;
+                },
+                list:function (filter, data) {
+
+                    if (data.length === 0) {
+                        //empty list
+                        filter["list"] = null;
+                    } else if (data === null) {
+                        //null list
+                        filter["remove"] = true;
+                    } else {
+                        filter["list"] = data;
+                    }
+
+                    return filter;
+                },
+                sort:function (sort, data) {
+
+                    if (data.length === 0) {
+                        sort = null;
+                    } else if (data.length == 2) {
+                        sort["field"] = data[0];
+                        sort["order"] = data[1];
+                    } else {
+                        throw "Actions.js: invalid data length [" + data + "]";
+                    }
+
+                    return sort;
+                }
+            }
+
+
+
+
+        })
+
+
+}(jQuery, this.recline));
 // # Recline Backbone Models
 this.recline = this.recline || {};
 this.recline.Data = this.recline.Data || {};
@@ -1548,7 +1888,7 @@ this.recline.Data.ColorSchema = this.recline.Data.ColorSchema || {};
             var self = this;
             var ret = [];
 
-            if (dataset.dataset.isFieldPartitioned(dataset.field)) {
+            if (dataset.dataset.isFieldPartitioned && dataset.dataset.isFieldPartitioned(dataset.field)) {
                 var fields = dataset.dataset.getPartitionedFields(dataset.field);
                 _.each(dataset.dataset.getRecords(dataset.type), function (d) {
                     _.each(fields, function (field) {
@@ -1948,7 +2288,7 @@ this.recline.Data.ShapeSchema = this.recline.Data.ShapeSchema || {};
             var self=this;
             var ret = [];
 
-            if(dataset.dataset.isFieldPartitioned(dataset.field, dataset.type))   {
+            if(dataset.dataset.isFieldPartitioned && dataset.dataset.isFieldPartitioned(dataset.field, dataset.type))   {
                 var fields = dataset.dataset.getPartitionedFields(dataset.field);
             _.each(dataset.dataset.getRecords(dataset.type), function(d) {
                 _.each(fields, function (field) {
@@ -1998,6 +2338,427 @@ this.recline.Data.ShapeSchema = this.recline.Data.ShapeSchema || {};
     };
 
 }(jQuery, this.recline.Data));
+this.recline = this.recline || {};
+this.recline.Backend = this.recline.Backend || {};
+this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
+
+(function ($, my) {
+    my.__type__ = 'Jsonp';
+    // Timeout for request (after this time if no response we error)
+    // Needed because use JSONP so do not receive e.g. 500 errors
+    my.timeout = 30000;
+
+    // ## load
+    //
+    // Load data from a URL
+    //
+    // Returns array of field names and array of arrays for records
+
+    //my.queryStateInMemory = new recline.Model.Query();
+    //my.queryStateOnBackend = new recline.Model.Query();
+
+    // todo has to be merged with query (part is in common)
+    my.fetch = function (dataset) {
+
+        console.log("Fetching data structure " + dataset.url);
+
+        var data = {onlydesc:"true"};
+        return requestJson(dataset, data);
+
+    };
+
+    my.query = function (queryObj, dataset) {
+
+        //var tmpQueryStateInMemory = new recline.Model.Query();
+        //var tmpQueryStateOnBackend = new recline.Model.Query();
+
+
+        //if (dataset.inMemoryQueryFields == null && !queryObj.facets && !dataset.useMemoryStore) {
+        //    dataset.useMemoryStore = [];
+        //} else
+        //    self.useMemoryStore = true;
+
+        /*var filters = queryObj.filters;
+         for (var i = 0; i < filters.length; i++) {
+         // verify if filter is specified in inmemoryfields
+
+         if (_.indexOf(dataset.inMemoryQueryFields, filters[i].field) == -1) {
+         //console.log("filtering " + filters[i].field + " on backend");
+         tmpQueryStateOnBackend.addFilter(filters[i]);
+         }
+         else {
+         //console.log("filtering " + filters[i].field + " on memory");
+         tmpQueryStateInMemory.addFilter(filters[i]);
+         }
+         }
+         tmpQueryStateOnBackend.set({sort: queryObj.sort});
+         tmpQueryStateInMemory.set({sort: queryObj.sort});
+
+         var changedOnBackend = false;
+         var changedOnMemory = false;
+         var changedFacets = false;
+
+         // verify if filters on backend are changed since last query
+         if (self.firstFetchExecuted == null ||
+         !_.isEqual(self.queryStateOnBackend.attributes.filters, tmpQueryStateOnBackend.attributes.filters) ||
+         !_.isEqual(self.queryStateOnBackend.attributes.sort, tmpQueryStateOnBackend.attributes.sort)
+         ) {
+         self.queryStateOnBackend = tmpQueryStateOnBackend;
+         changedOnBackend = true;
+         self.firstFetchExecuted = true;
+         }
+
+         // verify if filters on memory are changed since last query
+         if (dataset.inMemoryQueryFields && dataset.inMemoryQueryFields.length > 0
+         && !_.isEqual(self.queryStateInMemory.attributes.filters, tmpQueryStateInMemory.attributes.filters)
+         && !_.isEqual(self.queryStateInMemory.attributes.sort, tmpQueryStateInMemory.attributes.sort)
+         ) {
+         self.queryStateInMemory = tmpQueryStateInMemory;
+         changedOnMemory = true;
+         }
+
+         // verify if facets are changed
+         if (queryObj.facets && !_.isEqual(self.queryStateInMemory.attributes.facets, queryObj.facets)) {
+         self.queryStateInMemory.attributes.facets = queryObj.facets;
+         changedFacets = true;
+         }
+         */
+
+        //if (changedOnBackend) {
+        var data = buildRequestFromQuery(queryObj);
+        console.log("Querying backend for ");
+        console.log(data);
+        return requestJson(dataset, data, queryObj);
+        //}
+
+        /*if (self.inMemoryStore == null) {
+         throw "No memory store available for in memory query, execute initial load"
+         }*/
+
+        /*var dfd = $.Deferred();
+         dfd.resolve(applyInMemoryFilters());
+         return dfd.promise();
+         */
+
+    };
+
+    function isArrayEquals(a, b) {
+        return !(a < b || b < a);
+    }
+
+    ;
+
+
+    function requestJson(dataset, data, queryObj) {
+        var dfd = $.Deferred();
+
+        var jqxhr = $.ajax({
+            url:dataset.url,
+            dataType:'jsonp',
+            jsonpCallback:dataset.id,
+            data:data,
+            cache:true
+        });
+
+        _wrapInTimeout(jqxhr).done(function (results) {
+
+            // verify if returned data is not an error
+            if (results.results.length != 1 || results.results[0].status.code != 0) {
+                console.log("Error in fetching data: " + results.results[0].status.message + " Statuscode:[" + results.results[0].status.code + "] AdditionalInfo:["+results.results[0].status.additionalInfo+"]");
+
+                dfd.reject(results.results[0].status);
+            } else
+                dfd.resolve(_handleJsonResult(results.results[0].result, queryObj));
+
+        })
+            .fail(function (arguments) {
+                dfd.reject(arguments);
+            });
+
+        return dfd.promise();
+
+    }
+
+    ;
+
+    function _handleJsonResult(data, queryObj) {
+            if (data.data == null) {
+                return {
+                    fields:_handleFieldDescription(data.description),
+                    useMemoryStore:false
+                }
+            }
+            else {
+                var fields = _handleFieldDescription(data.description);
+                var facets = recline.Data.Faceting.computeFacets(data.data, queryObj);
+
+                return {
+                    hits:_normalizeRecords(data.data, fields),
+                    fields: fields,
+                    facets: facets,
+                    useMemoryStore:false,
+                    total: data.data.length
+                }
+            }
+        /*
+         var self = this;
+         var fields;
+         if (data.description) {
+         fields = _handleFieldDescription(data.description);
+         //my.memoryFields = _handleFieldDescription(data.description);
+         }
+
+         // Im fetching only record description
+         if (data.data == null) {
+         return prepareReturnedData(data);
+         }
+
+         var result = data;
+         */
+
+        /*if (my.useMemoryStore) {
+         // check if is the first time I use the memory store
+         my.inMemoryStore = new recline.Backend.Memory.Store(result.data, _handleFieldDescription(result.description));
+         my.data = my.inMemoryStore.data;
+         return applyInMemoryFilters();
+
+         }
+         else {
+         // no need to query on memory, return json data
+         return prepareReturnedData(result);
+         } */
+        //return prepareReturnedData(result);
+    }
+
+    ;
+
+    /*
+     function applyInMemoryFilters() {
+     var self=this;
+     var tmpValue;
+
+     my.inMemoryStore.query(my.queryStateInMemory.toJSON())
+     .done(function (value) {
+     tmpValue = value;
+     tmpValue["fields"] = my.memoryFields;
+     });
+
+
+     return tmpValue;
+     };
+     */
+
+    /*function prepareReturnedData(data) {
+
+        if (data.hits == null)
+
+
+            if (data.data == null) {
+
+                return {
+                    fields:my.memoryFields,
+                    useMemoryStore:false
+                }
+            }
+            else {
+
+                return {
+                    hits:_normalizeRecords(data.data, my.memoryFields),
+                    fields:my.memoryFields,
+                    useMemoryStore:false
+                }
+            }
+
+        return data;
+    }
+
+    ;*/
+
+    // convert each record in native format
+    // todo verify if could cause performance problems
+    function _normalizeRecords(records, fields) {
+
+        _.each(fields, function (f) {
+            if (f != "string")
+                _.each(records, function (r) {
+                    r[f.id] = recline.Data.FormattersMODA[f.type](r[f.id]);
+                })
+        });
+
+        return records;
+
+    }
+
+    ;
+
+
+    // todo should be in backend
+    function getDate(temp) {
+        var tmp = new Date();
+
+        var dateStr = padStr(temp.getFullYear()) + "-" +
+            padStr(1 + temp.getMonth()) + "-" +
+            padStr(temp.getDate()) + " " +
+            padStr(temp.getHours()) + ":" +
+            padStr(temp.getMinutes()) + ":" +
+            padStr(temp.getSeconds());
+        return dateStr;
+    }
+
+    function padStr(i) {
+        return (i < 10) ? "0" + i : "" + i;
+    }
+
+
+    function buildRequestFromQuery(queryObj) {
+
+        var filters = queryObj.filters;
+        var data = [];
+        var multivsep = "~";
+
+
+        // register filters
+        var filterFunctions = {
+            term:function term(filter) {
+                var parse = dataParsers[filter.fieldType];
+                var value = filter.field;
+                var term = parse(filter.term);
+
+                return (value + " eq " + term);
+            }, // field = value
+            termAdvanced:function termAdvanced(filter) {
+                var parse = dataParsers[filter.fieldType];
+                var value = filter.field;
+                var term = parse(filter.term);
+                var operator = filter.operator;
+
+                return (value + " " + operator + " " + term);
+            }, // field (operator) value
+            range:function range(filter) {
+                var parse = dataParsers[filter.fieldType];
+                var value = filter.field;
+                var start = parse(filter.start);
+                var stop = parse(filter.stop);
+                return (value + " lte " + stop + "," + value + " gte " + start);
+
+            }, // field > start and field < end
+            list:function list(filter) {
+                var parse = dataParsers[filter.fieldType];
+                var value = filter.field;
+                var list = filter.list;
+
+                var ret = value + " bw ";
+                for (var i = 0; i < filter.list.length; i++) {
+                    if (i > 0)
+                        ret = ret + multivsep;
+
+                    ret = ret + list[i];
+                }
+
+                return ret;
+
+            }
+        };
+
+        var dataParsers = {
+            number:function (e) {
+                return parseFloat(e, 10);
+            },
+            string:function (e) {
+                return e.toString()
+            },
+            date:function (e) {
+                var tmp = new Date(e);
+                //console.log("---> " + e  + " ---> "+ getDate(tmp)) ;
+                return getDate(tmp);
+
+                // return new Date(e).valueOf()
+            },
+            integer:function (e) {
+                return parseInt(e);
+            }
+        };
+
+        for (var i = 0; i < filters.length; i++) {
+            data.push(filterFunctions[filters[i].type](filters[i]));
+        }
+
+        // build sort options
+        var res = "";
+
+        _.each(queryObj.sort, function (sortObj) {
+            if (res.length > 0)
+                res += ";"
+
+            var fieldName = sortObj.field;
+            res += fieldName;
+            if (sortObj.order) {
+                res += ":" + sortObj.order;
+            }
+
+        });
+
+
+        // filters definitions
+
+
+        var outdata = {};
+        if (data.length > 0)
+            outdata["filters"] = data.toString();
+
+        if (res.length > 0)
+            outdata["orderby"] = res;
+
+        return outdata;
+
+    }
+
+
+    // ## _wrapInTimeout
+    //
+    // Convenience method providing a crude way to catch backend errors on JSONP calls.
+    // Many of backends use JSONP and so will not get error messages and this is
+    // a crude way to catch those errors.
+    var _wrapInTimeout = function (ourFunction) {
+        var dfd = $.Deferred();
+        var timer = setTimeout(function () {
+            dfd.reject({
+                message:'Request Error: Backend did not respond after ' + (my.timeout / 1000) + ' seconds'
+            });
+        }, my.timeout);
+        ourFunction.done(function (arguments) {
+            clearTimeout(timer);
+            dfd.resolve(arguments);
+        })
+            .fail(function (arguments) {
+                clearTimeout(timer);
+                dfd.reject(arguments);
+            })
+        ;
+        return dfd.promise();
+    }
+
+    function _handleFieldDescription(description) {
+
+        var dataMapping = {
+            STRING:"string",
+            DATE:"date",
+            INTEGER:"integer",
+            DOUBLE:"number"
+        };
+
+
+        var res = [];
+        for (var k in description) {
+
+            res.push({id:k, type:dataMapping[description[k]]});
+        }
+
+        return res;
+    }
+
+
+}(jQuery, this.recline.Backend.Jsonp));
 this.recline = this.recline || {};
 this.recline.View = this.recline.View || {};
 
@@ -2105,7 +2866,7 @@ this.recline.View = this.recline.View || {};
                 var field = this.model.fields.get(self.options.groupBy);
 
                 if (!facets) {
-                    throw "ComposedView: no facet present for groupby field [" + this.attributes.dimension + "]. Define a facet on the model before view render";
+                    throw "ComposedView: no facet present for groupby field [" + self.options.groupBy + "]. Define a facet on the model before view render";
                 }
 
                 _.each(facets.attributes.terms, function (t) {
@@ -2349,7 +3110,7 @@ this.recline.View = this.recline.View || {};
                 	template = templates.templateCondensed2;
             	
                 return {data:null, template:template, unrenderedValue:null};
-            },
+            }
 
 
         },
@@ -2483,44 +3244,48 @@ this.recline.View = this.recline.View || {};
 
             if (self.options.state.compareWith) {
                 var compareWithRecord = self.model.getRecords(self.options.state.compareWith.type);
-                var compareWithField;
 
-                if (self.options.state.kpi.aggr)
-                    compareWithField = self.model.getField_byAggregationFunction(self.options.state.compareWith.type, self.options.state.compareWith.field, self.options.state.compareWith.aggr);
-                else
-                    compareWithField = self.options.model.getFields(self.options.state.compareWith.type).get(self.options.state.compareWith.field);
+                if(compareWithRecord.length > 0) {
+                    var compareWithField;
 
-                if (!compareWithField)
-                    throw "View.Indicator: unable to find field [" + self.options.state.compareWith.field + "] on model"
+                    if (self.options.state.kpi.aggr)
+                        compareWithField = self.model.getField_byAggregationFunction(self.options.state.compareWith.type, self.options.state.compareWith.field, self.options.state.compareWith.aggr);
+                    else
+                        compareWithField = self.options.model.getFields(self.options.state.compareWith.type).get(self.options.state.compareWith.field);
 
-                tmplData["compareWithValue"] = compareWithRecord[0].getFieldValue(compareWithField);
-                var compareWithValue = compareWithRecord[0].getFieldValueUnrendered(compareWithField);
+                    if (!compareWithField)
+                        throw "View.Indicator: unable to find field [" + self.options.state.compareWith.field + "] on model"
 
-                var compareValue;
 
-                var compareValue = self.compareType[self.options.state.compareWith.compareType](kpiValue, compareWithValue, self.templates, self.options.state.condensed);
-                if(!compareValue)
-                    throw "View.Indicator: unable to find compareType [" + self.options.state.compareWith.compareType + "]";
+                    tmplData["compareWithValue"] = compareWithRecord[0].getFieldValue(compareWithField);
+                    var compareWithValue = compareWithRecord[0].getFieldValueUnrendered(compareWithField);
 
-                tmplData["compareValue"] = compareValue.data;
+                    var compareValue;
 
-                if(self.options.state.compareWith.shapes) {
-                    if(compareValue.unrenderedValue == 0)
-                        tmplData["compareShape"] = self.options.state.compareWith.shapes.constant;
-                    else if(compareValue.unrenderedValue > 0)
-                        tmplData["compareShape"] = self.options.state.compareWith.shapes.increase;
-                    else if(compareValue.unrenderedValue < 0)
-                        tmplData["compareShape"] = self.options.state.compareWith.shapes.decrease;
+                    var compareValue = self.compareType[self.options.state.compareWith.compareType](kpiValue, compareWithValue, self.templates, self.options.state.condensed);
+                    if(!compareValue)
+                        throw "View.Indicator: unable to find compareType [" + self.options.state.compareWith.compareType + "]";
+
+                    tmplData["compareValue"] = compareValue.data;
+
+                    if(self.options.state.compareWith.shapes) {
+                        if(compareValue.unrenderedValue == 0)
+                            tmplData["compareShape"] = self.options.state.compareWith.shapes.constant;
+                        else if(compareValue.unrenderedValue > 0)
+                            tmplData["compareShape"] = self.options.state.compareWith.shapes.increase;
+                        else if(compareValue.unrenderedValue < 0)
+                            tmplData["compareShape"] = self.options.state.compareWith.shapes.decrease;
+                    }
+
+                    if(compareValue.template)
+                        template = compareValue.template;
                 }
-
-                if(compareValue.template)
-                    template = compareValue.template;
             }
 
             if (this.options.state.description)
                 tmplData["description"] = this.options.state.description;
             
-            if (compareValue.percentageMsg)
+            if (compareValue && compareValue.percentageMsg)
             	tmplData["percentageMsg"] = compareValue.percentageMsg; 
 
             var htmls = Mustache.render(template, tmplData);
@@ -3752,6 +4517,10 @@ this.recline.View = this.recline.View || {};
                 var seriesTmp = {};
                 var seriesNameField = self.model.fields.get(seriesAttr.seriesField);
                 var fieldValue = self.model.fields.get(seriesAttr.valuesField);
+                if(!fieldValue) {
+                    throw "view.rickshaw: unable to find field ["+seriesAttr.valuesField+"] in model"
+                }
+
 
                 _.each(records, function (doc, index) {
 
@@ -3775,7 +4544,7 @@ this.recline.View = this.recline.View || {};
                     }
                     var shape = doc.getFieldShapeName(seriesNameField);
 
-                    var x = doc.getFieldValueUnrendered(xfield);
+                    var x =  Math.floor(doc.getFieldValueUnrendered(xfield) / 1000); // rickshaw don't use millis
                     var y = doc.getFieldValueUnrendered(fieldValue);
 
 
@@ -3824,8 +4593,7 @@ this.recline.View = this.recline.View || {};
                     var points = [];
 
                     _.each(records, function (doc, index) {
-
-                        var x = doc.getFieldValueUnrendered(xfield);
+                        var x =  Math.floor(doc.getFieldValueUnrendered(xfield) / 1000); // rickshaw don't use millis
 
                         try {
 
@@ -4005,7 +4773,12 @@ this.recline.View = this.recline.View || {};
             var field = this.model.fields.get(this.options.fieldRanges);
             var fieldMeasure = this.model.fields.get(this.options.fieldMeasures);
 
-            var records = _.map(this.options.model.getRecords(this.options.resultType.type), function (record) {
+            var type;
+            if(this.options.resultType) {
+                type = this.options.resultType;
+            }
+
+            var records = _.map(this.options.model.getRecords(type), function (record) {
                 var ranges = [];
                 _.each(self.options.fieldRanges, function (f) {
                     var field = self.model.fields.get(f);

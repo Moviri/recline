@@ -184,7 +184,7 @@ this.recline.Data.ColorSchema = this.recline.Data.ColorSchema || {};
             var self = this;
             var ret = [];
 
-            if (dataset.dataset.isFieldPartitioned(dataset.field)) {
+            if (dataset.dataset.isFieldPartitioned && dataset.dataset.isFieldPartitioned(dataset.field)) {
                 var fields = dataset.dataset.getPartitionedFields(dataset.field);
                 _.each(dataset.dataset.getRecords(dataset.type), function (d) {
                     _.each(fields, function (field) {

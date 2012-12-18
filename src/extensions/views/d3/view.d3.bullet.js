@@ -88,7 +88,12 @@ this.recline.View = this.recline.View || {};
             var field = this.model.fields.get(this.options.fieldRanges);
             var fieldMeasure = this.model.fields.get(this.options.fieldMeasures);
 
-            var records = _.map(this.options.model.getRecords(this.options.resultType.type), function (record) {
+            var type;
+            if(this.options.resultType) {
+                type = this.options.resultType;
+            }
+
+            var records = _.map(this.options.model.getRecords(type), function (record) {
                 var ranges = [];
                 _.each(self.options.fieldRanges, function (f) {
                     var field = self.model.fields.get(f);

@@ -191,6 +191,10 @@ this.recline.View = this.recline.View || {};
                 var seriesTmp = {};
                 var seriesNameField = self.model.fields.get(seriesAttr.seriesField);
                 var fieldValue = self.model.fields.get(seriesAttr.valuesField);
+                if(!fieldValue) {
+                    throw "view.rickshaw: unable to find field ["+seriesAttr.valuesField+"] in model"
+                }
+
 
                 _.each(records, function (doc, index) {
 
@@ -214,7 +218,7 @@ this.recline.View = this.recline.View || {};
                     }
                     var shape = doc.getFieldShapeName(seriesNameField);
 
-                    var x = doc.getFieldValueUnrendered(xfield);
+                    var x =  Math.floor(doc.getFieldValueUnrendered(xfield) / 1000); // rickshaw don't use millis
                     var y = doc.getFieldValueUnrendered(fieldValue);
 
 
@@ -263,8 +267,7 @@ this.recline.View = this.recline.View || {};
                     var points = [];
 
                     _.each(records, function (doc, index) {
-
-                        var x = doc.getFieldValueUnrendered(xfield);
+                        var x =  Math.floor(doc.getFieldValueUnrendered(xfield) / 1000); // rickshaw don't use millis
 
                         try {
 

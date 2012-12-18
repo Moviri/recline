@@ -52,7 +52,7 @@ this.recline.View = this.recline.View || {};
                 	template = templates.templateCondensed2;
             	
                 return {data:null, template:template, unrenderedValue:null};
-            },
+            }
 
 
         },
@@ -186,44 +186,48 @@ this.recline.View = this.recline.View || {};
 
             if (self.options.state.compareWith) {
                 var compareWithRecord = self.model.getRecords(self.options.state.compareWith.type);
-                var compareWithField;
 
-                if (self.options.state.kpi.aggr)
-                    compareWithField = self.model.getField_byAggregationFunction(self.options.state.compareWith.type, self.options.state.compareWith.field, self.options.state.compareWith.aggr);
-                else
-                    compareWithField = self.options.model.getFields(self.options.state.compareWith.type).get(self.options.state.compareWith.field);
+                if(compareWithRecord.length > 0) {
+                    var compareWithField;
 
-                if (!compareWithField)
-                    throw "View.Indicator: unable to find field [" + self.options.state.compareWith.field + "] on model"
+                    if (self.options.state.kpi.aggr)
+                        compareWithField = self.model.getField_byAggregationFunction(self.options.state.compareWith.type, self.options.state.compareWith.field, self.options.state.compareWith.aggr);
+                    else
+                        compareWithField = self.options.model.getFields(self.options.state.compareWith.type).get(self.options.state.compareWith.field);
 
-                tmplData["compareWithValue"] = compareWithRecord[0].getFieldValue(compareWithField);
-                var compareWithValue = compareWithRecord[0].getFieldValueUnrendered(compareWithField);
+                    if (!compareWithField)
+                        throw "View.Indicator: unable to find field [" + self.options.state.compareWith.field + "] on model"
 
-                var compareValue;
 
-                var compareValue = self.compareType[self.options.state.compareWith.compareType](kpiValue, compareWithValue, self.templates, self.options.state.condensed);
-                if(!compareValue)
-                    throw "View.Indicator: unable to find compareType [" + self.options.state.compareWith.compareType + "]";
+                    tmplData["compareWithValue"] = compareWithRecord[0].getFieldValue(compareWithField);
+                    var compareWithValue = compareWithRecord[0].getFieldValueUnrendered(compareWithField);
 
-                tmplData["compareValue"] = compareValue.data;
+                    var compareValue;
 
-                if(self.options.state.compareWith.shapes) {
-                    if(compareValue.unrenderedValue == 0)
-                        tmplData["compareShape"] = self.options.state.compareWith.shapes.constant;
-                    else if(compareValue.unrenderedValue > 0)
-                        tmplData["compareShape"] = self.options.state.compareWith.shapes.increase;
-                    else if(compareValue.unrenderedValue < 0)
-                        tmplData["compareShape"] = self.options.state.compareWith.shapes.decrease;
+                    var compareValue = self.compareType[self.options.state.compareWith.compareType](kpiValue, compareWithValue, self.templates, self.options.state.condensed);
+                    if(!compareValue)
+                        throw "View.Indicator: unable to find compareType [" + self.options.state.compareWith.compareType + "]";
+
+                    tmplData["compareValue"] = compareValue.data;
+
+                    if(self.options.state.compareWith.shapes) {
+                        if(compareValue.unrenderedValue == 0)
+                            tmplData["compareShape"] = self.options.state.compareWith.shapes.constant;
+                        else if(compareValue.unrenderedValue > 0)
+                            tmplData["compareShape"] = self.options.state.compareWith.shapes.increase;
+                        else if(compareValue.unrenderedValue < 0)
+                            tmplData["compareShape"] = self.options.state.compareWith.shapes.decrease;
+                    }
+
+                    if(compareValue.template)
+                        template = compareValue.template;
                 }
-
-                if(compareValue.template)
-                    template = compareValue.template;
             }
 
             if (this.options.state.description)
                 tmplData["description"] = this.options.state.description;
             
-            if (compareValue.percentageMsg)
+            if (compareValue && compareValue.percentageMsg)
             	tmplData["percentageMsg"] = compareValue.percentageMsg; 
 
             var htmls = Mustache.render(template, tmplData);

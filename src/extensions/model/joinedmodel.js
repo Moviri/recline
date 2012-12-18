@@ -89,14 +89,14 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
             var tmpFields = [];
             _.each(this.attributes.model.fields.models, function (f) {
                 var c = f.toJSON();
-                c.id = "model." + c.id;
+                c.id = c.id;
                 tmpFields.push(c);
             });
 
             _.each(this.attributes.join, function(p) {
                 _.each(p.model.fields.models, function (f) {
                     var c = f.toJSON();
-                    c.id = p.id + "." + c.id;
+                    c.id = p.id + "_" + c.id;
                     tmpFields.push(c);
                 });
             });
@@ -194,7 +194,7 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
                 // define the record with all data from model
                 var record = {};
                 _.each(r.toJSON(), function (f, index) {
-                    record["model." + index] = f;
+                    record[index] = f;
                 });
 
                 _.each(joinModel, function(p) {
@@ -211,7 +211,7 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
 
                     _.each(resultsFromDataset2, function (res) {
                         _.each(res, function (field_value, index) {
-                            record[p.id + "." + index] = field_value;
+                            record[p.id + "_" + index] = field_value;
                         })
                     })
 
