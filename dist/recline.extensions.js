@@ -3292,19 +3292,7 @@ this.recline.View = this.recline.View || {};
 	    </div> \
     </div>',
     templateCondensed:
-        '<style> \
-        .round-border { \
-    	    border: 1px solid #DDDDDD; \
-    	    border-radius: 4px 4px 4px 4px; \
-        } \
-        .round-border-dark { \
-    	    border: 1px solid #808080; \
-    	    border-radius: 4px 4px 4px 4px; \
-    		margin:3px; \
-    		height: 30px; \
-        } \
-    	</style> \
-        	<div class="indicator round-border-dark" > \
+        '<div class="indicator round-border-dark" > \
     	    <div class="panel indicator_{{viewId}}" > \
         		<div id="indicator_{{viewId}}" class="indicator-container" > \
         			<div class="round-border" style="float:left;margin:2px 2px 0px 2px"> \
@@ -3316,7 +3304,7 @@ this.recline.View = this.recline.View || {};
     					{{/shape}} \
         				<div class="value-cell" style="float:left">{{value}}</div> \
     				</div> \
-                    <div style="text-align:justify;float:left;margin-right:8px" class="title">&nbsp;&nbsp;{{{label}}}</div>\
+                    <div class="title">&nbsp;&nbsp;{{{label}}}</div>\
     			</div> \
     	    </div> \
         </div>'
