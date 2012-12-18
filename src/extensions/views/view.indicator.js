@@ -96,7 +96,6 @@ this.recline.View = this.recline.View || {};
         .round-border { \
     	    border: 1px solid #DDDDDD; \
     	    border-radius: 4px 4px 4px 4px; \
-    		background-color: lightcyan; \
         } \
         .round-border-dark { \
     	    border: 1px solid #808080; \

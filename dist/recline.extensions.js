@@ -566,15 +566,15 @@ recline.Model.Query.prototype = $.extend(recline.Model.Query.prototype, {
     },
     removeSelectionByField:function (field) {
         var selections = this.get('selections');
-        for (var j in filters) {
+        for (var j in selections) {
             if (selections[j].field == field) {
-                removeSelection(j);
+                this.removeSelection(j);
             }
         }
     },
     setSelection:function (filter) {
         if (filter["remove"]) {
-            removeSelectionByField(filter.field);
+        	this.removeSelectionByField(filter.field);
         } else {
          var s = this.get('selections');
             var found = false;
@@ -1636,11 +1636,11 @@ this.recline = this.recline || {};
                     if (data.length === 0) {
                         //empty list
                         filter["term"] = null;
-                    } else if (data === null) {
-                        //null list
-                        filter["remove"] = true;
                     } else if (data.length === 1) {
-                        filter["term"] = data[0];
+                    	if(data[0] == null)
+                    		filter["remove"] = true;
+                    	else
+                    		filter["term"] = data[0];
                     } else {
                         throw "Data passed for filtertype term not valid. Data lenght should be 1 or empty but is " + data.length;
                     }
@@ -3296,7 +3296,6 @@ this.recline.View = this.recline.View || {};
         .round-border { \
     	    border: 1px solid #DDDDDD; \
     	    border-radius: 4px 4px 4px 4px; \
-    		background-color: lightcyan; \
         } \
         .round-border-dark { \
     	    border: 1px solid #808080; \
@@ -6885,8 +6884,10 @@ this.recline.View = this.recline.View || {};
 
                 var actions = this.options.actions;
                 var eventData = {};
-                eventData[fieldName] = values;
-
+                if (values.length)
+                	eventData[fieldName] = values;
+                else eventData[fieldName] = [null];
+				
                 recline.ActionUtility.doAction(actions, eventType, eventData, actionType);
             }
         },
