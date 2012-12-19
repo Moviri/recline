@@ -7020,14 +7020,14 @@ this.recline.View = this.recline.View || {};
               	</div> \
         		{{#useLevel2}} \
 	    			<div class="btn-group level2" level="2" style="float:left;display:{{showLevel2}}"> \
-	            		<button class="btn grouped-button {{all2Selected}}">All</button> \
+	            		<button class="btn grouped-button {{all2Selected}}" val="">All</button> \
 			            {{#valuesLev2}} \
 	            			<button class="btn grouped-button {{selected}}" val="{{value}}" {{tooltip}}>{{{val}}}</button> \
 			            {{/valuesLev2}} \
 	            	</div> \
             		{{#useLevel3}} \
 		    			<div class="btn-group level3" level="3" style="float:left;display:{{showLevel3}}"> \
-	            			<button class="btn grouped-button {{all3Selected}}">All</button> \
+	            			<button class="btn grouped-button {{all3Selected}}" val="">All</button> \
 				            {{#valuesLev3}} \
 			        			<button class="btn grouped-button {{selected}}" val="{{value}}" {{tooltip}}>{{{val}}}</button> \
 				            {{/valuesLev3}} \
@@ -8157,7 +8157,11 @@ this.recline.View = this.recline.View || {};
                 	prefix += lev2Selection.attr('val').valueOf() + currActiveFilter.separator;
 				}
                 var listaValori = [];
-                listaValori.push(prefix + $target.attr('val').valueOf());
+                if ($target.attr('val') && $target.attr('val').length)
+                	listaValori.push(prefix + $target.attr('val').valueOf());
+                else if (prefix.length)
+                	listaValori.push(prefix.substring(0, prefix.length-1))
+                	
                 currActiveFilter.userChanged = true;
                 if (listaValori.length == 1 && listaValori[0] == "All" && !currActiveFilter.noAllButton) {
                     listaValori = [];
@@ -8202,23 +8206,22 @@ this.recline.View = this.recline.View || {};
                 	else
             		{
                 		currActiveFilter.term = prefix + currSelectedValue;
-                		
-//                		listaValori = [];
-//                		// should send a list of all values compatible with the choice. Eg: if user selected ANDROID
-//                		// which has sublevels TABLET & SMARTPHONE, both ANDROID.TABLET and ANDROID.SMARTPHONE must be sent
-//                    	_.each(this._sourceDataset.getRecords(), function(record) {
-//                            var field = self._sourceDataset.fields.get(currActiveFilter.field);
-//                            var currV = record.getFieldValue(field);
-//                            if (currV.indexOf(prefix + currSelectedValue+currActiveFilter.separator) == 0)
-//                            	listaValori.push(currV)
-//                    	});
-//                		this.doAction("onButtonsetClicked", fieldId, listaValori, "add", currActiveFilter);
-                		
-                		// now we must redraw the filter!!!
-                		//devi trovare flt giusto se ce n'è più di uno!!!
+                		// redraw the filter!!!
+                		// TODO: devi trovare flt giusto se ce n'è più di uno!!!
 	                    var flt = this.el.find("div.filter"); 
 	            		var currFilterCtrl = $(flt).find(".data-control-id");
-	            		this.updateHierarchicRadiobuttons($(flt), currActiveFilter, $(currFilterCtrl));
+	            		this.updateHierarchicRadiobuttons($(flt), currActiveFilter, $(currFilterCtrl));                		
+                		
+                		listaValori = [];
+                		// THEN send a list of all values compatible with the choice. Eg: if user selected ANDROID
+                		// which has sublevels TABLET & SMARTPHONE, both ANDROID.TABLET and ANDROID.SMARTPHONE must be sent
+                    	_.each(this._sourceDataset.getRecords(), function(record) {
+                            var field = self._sourceDataset.fields.get(currActiveFilter.field);
+                            var currV = record.getFieldValue(field);
+                            if (currV.indexOf(prefix + currSelectedValue+currActiveFilter.separator) == 0)
+                            	listaValori.push(currV)
+                    	});
+                		this.doAction("onButtonsetClicked", fieldId, listaValori, "add", currActiveFilter);
             		}
             	}
         	}
@@ -8365,7 +8368,7 @@ this.recline.View = this.recline.View || {};
             else if (currFilter.valuesLev2)
             	allValues = currFilter.values.concat(currFilter.valuesLev2)
             	
-            // TODO it is not efficient, record must be indicized by term
+            // TODO it is not efficient, record must be indexed by term
             // TODO conversion to string is not correct, original value must be used
             _.each(allValues, function(v) {
               if(v.record) {
@@ -8544,6 +8547,7 @@ this.recline.View = this.recline.View || {};
                 case "listbox_styled":
                 case "legend" :
                 case "multibutton" :
+                case "hierarchic_radiobuttons" :
                     return "list";
             }
             return controlType;
