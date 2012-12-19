@@ -353,319 +353,6 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
 
 }(jQuery, this.recline.Model));
 
-// # Recline Backbone Models
-this.recline = this.recline || {};
-this.recline.Model = this.recline.Model || {};
-this.recline.Model.JoinedDataset_old = this.recline.Model.JoinedDataset_old || {};
-
-
-(function ($, my) {
-
-// ## <a id="dataset">VirtualDataset</a>
-    my.JoinedDataset_old = Backbone.Model.extend({
-        constructor:function JoinedDataset() {
-            Backbone.Model.prototype.constructor.apply(this, arguments);
-        },
-
-
-        initialize:function () {
-            var self = this;
-            _.bindAll(this, 'generatefields');
-
-            self.ds_fetched = [];
-
-            this.fields = new my.FieldList();
-
-
-            this.records = new my.RecordList();
-
-            this.facets = new my.FacetList();
-            this.recordCount = null;
-
-            this.queryState = new my.Query();
-
-            if (this.get('initialState')) {
-                this.get('initialState').setState(this);
-            }
-
-            this.attributes.model.fields.bind('reset', this.generatefields);
-            this.attributes.model.fields.bind('add', this.generatefields);
-
-            _.each(this.attributes.join, function(p) {
-                p.model.fields.bind('reset', self.generatefields);
-                p.model.fields.bind('add', self.generatefields);
-
-            });
-
-            this.generatefields();
-
-            this.attributes.model.bind('query:done', function () {
-                self.ds_fetched.push("model");
-
-                if (self.allDsFetched())
-                    self.query();
-            })
-
-            _.each(this.attributes.join, function(p) {
-
-                p.model.bind('query:done', function () {
-                    self.ds_fetched.push(p.id);
-
-                    if (self.allDsFetched())
-                        self.query();
-                });
-
-                p.model.queryState.bind('change', function () {
-                    if (self.allDsFetched())
-                        self.query();
-                });
-
-            });
-
-        },
-
-        allDsFetched: function() {
-            var self=this;
-            var ret= true;
-
-            if(!_.contains(self.ds_fetched, "model"))
-                return false;
-
-             _.each(self.attributes.join, function(p) {
-                 if(!_.contains(self.ds_fetched, p.id)) {
-                     ret = false;
-                 }
-             });
-
-             return ret;
-        },
-
-        generatefields:function () {
-            var tmpFields = [];
-            _.each(this.attributes.model.fields.models, function (f) {
-                var c = f.toJSON();
-                c.id = c.id;
-                tmpFields.push(c);
-            });
-
-            _.each(this.attributes.join, function(p) {
-                _.each(p.model.fields.models, function (f) {
-                    var c = f.toJSON();
-                    c.id = p.id + "_" + c.id;
-                    tmpFields.push(c);
-                });
-            });
-
-
-
-            var options = {renderer:recline.Data.Formatters.Renderers};
-
-            this.fields.reset(tmpFields, options);
-            this.setColorSchema();
-            this.setShapeSchema();
-
-
-        },
-
-        addCustomFilterLogic: function(f) {
-            if(this.attributes.customFilterLogic)
-                this.attributes.customFilterLogic.push(f);
-            else
-                this.attributes.customFilterLogic = [f];
-        },
-
-        query:function (queryObj) {
-            var self = this;
-            this.trigger('query:start');
-
-            if (queryObj) {
-                this.queryState.set(queryObj, {silent:true});
-            }
-
-            var queryObj = this.queryState.toJSON();
-
-
-            _.each(self.attributes.customFilterLogic, function (f) {
-                f(queryObj);
-            });
-
-
-            console.log("Query on model query [" + JSON.stringify(queryObj) + "]");
-
-            var results = self.join();
-
-            var numRows = queryObj.size || results.length;
-            var start = queryObj.from || 0;
-
-            _.each(queryObj.sort, function (sortObj) {
-                var fieldName = sortObj.field;
-                results = _.sortBy(results, function (doc) {
-                    var _out = doc[fieldName];
-                    return _out;
-                });
-                if (sortObj.order == 'desc') {
-                    results.reverse();
-                }
-            });
-
-            results = results.slice(start, start + numRows);
-            facets = recline.Data.Faceting.computeFacets(results, queryObj);
-
-            self.recordCount = results.length;
-
-            var docs = _.map(results, function (hit) {
-                var _doc = new my.Record(hit);
-                _doc.fields = self.fields;
-                _doc.bind('change', function (doc) {
-                    self._changes.updates.push(doc.toJSON());
-                });
-                _doc.bind('destroy', function (doc) {
-                    self._changes.deletes.push(doc.toJSON());
-                });
-                return _doc;
-            });
-
-
-            self.records.reset(docs);
-
-            if (facets) {
-                var facets = _.map(facets, function (facetResult, facetId) {
-                    facetResult.id = facetId;
-                    var result = new my.Facet(facetResult);
-                    recline.Data.ColorSchema.addColorsToTerms(facetId, result.attributes.terms, self.attributes.colorSchema);
-                    recline.Data.ShapeSchema.addShapesToTerms(facetId, result.attributes.terms, self.attributes.shapeSchema);
-
-                    return result;
-                });
-                self.facets.reset(facets);
-            }
-
-            self.trigger('query:done');
-        },
-
-        join:function () {
-            var joinon = this.attributes.joinon;
-            var joinType = this.attributes.joinType;
-            var model = this.attributes.model;
-            var joinModel = this.attributes.join;
-
-
-            var results = [];
-
-            _.each(model.getRecords(), function (r) {
-                var filters = [];
-                // creation of a filter on dataset2 based on dataset1 field value of joinon field
-
-
-                var recordMustBeAdded = true;
-
-                // define the record with all data from model
-                var record = {};
-                _.each(r.toJSON(), function (f, index) {
-                    record[index] = f;
-                });
-
-                _.each(joinModel, function(p) {
-                    // retrieve records from secondary model
-                    _.each(p.joinon, function (f) {
-                        var field = p.model.fields.get(f);
-                        filters.push({field:field.id, type:"term", term:r.getFieldValueUnrendered(field), fieldType:field.attributes.type });
-                    })
-
-                    var resultsFromDataset2 = recline.Data.Filters.applyFiltersOnData(filters, p.model.records.toJSON(), p.model.fields.toJSON());
-
-                    if(resultsFromDataset2.length == 0)
-                        recordMustBeAdded = false;
-
-                    _.each(resultsFromDataset2, function (res) {
-                        _.each(res, function (field_value, index) {
-                            record[p.id + "_" + index] = field_value;
-                        })
-                    })
-
-                });
-
-               if(joinType=="left" || recordMustBeAdded)
-                    results.push(record);
-
-            })
-
-
-            return results;
-        },
-
-        getRecords:function (type) {
-
-            if(type=="unfiltered") {
-
-            }
-            else
-                return this.records.models;
-        },
-
-        getFields:function (type) {
-            return this.fields;
-        },
-
-        toTemplateJSON:function () {
-            var data = this.records.toJSON();
-            data.recordCount = this.recordCount;
-            data.fields = this.fields.toJSON();
-            return data;
-        },
-
-
-        getFacetByFieldId:function (fieldId) {
-            return _.find(this.facets.models, function (facet) {
-                return facet.id == fieldId;
-            });
-        },
-
-        setColorSchema:function () {
-            var self = this;
-            _.each(self.attributes.colorSchema, function (d) {
-                var field = _.find(self.fields.models, function (f) {
-                    return d.field === f.id
-                });
-                if (field != null)
-                    field.attributes.colorSchema = d.schema;
-            })
-        },
-
-        setShapeSchema:function () {
-            var self = this;
-            _.each(self.attributes.shapeSchema, function (d) {
-                var field = _.find(self.fields.models, function (f) {
-                    return d.field === f.id
-                });
-                if (field != null)
-                    field.attributes.shapeSchema = d.schema;
-            })
-        },
-        isFieldPartitioned:function (field) {
-            return false
-        },
-        toFullJSON:function (resultType) {
-            var self = this;
-            return _.map(self.getRecords(resultType), function (r) {
-                var res = {};
-
-                _.each(self.getFields(resultType).models, function (f) {
-                    res[f.id] = r.getFieldValueUnrendered(f);
-                });
-
-                return res;
-
-            });
-
-
-        }
-
-    })
-
-
-}(jQuery, this.recline.Model));
-
 (function ($) {
 
     recline.Model.Dataset.prototype = $.extend(recline.Model.Dataset.prototype, {
@@ -756,11 +443,15 @@ this.recline.Model.JoinedDataset_old = this.recline.Model.JoinedDataset_old || {
                 throw "Model: unable to retrieve not filtered data, store can't provide data. Use a backend that use a memory store";
             }
 
+
             var docs = _.map(self._store.data, function (hit) {
-                var _doc = new my.Record(hit);
+                var _doc = new recline.Model.Record(hit);
                 _doc.fields = self.fields;
                 return _doc;
             });
+
+            if(self.queryState.get('selections').length > 0)
+                recline.Data.Filters.applySelectionsOnData(self.queryState.get('selections'), docs, self.fields);
 
             return docs;
         }
@@ -783,7 +474,111 @@ this.recline.Model.JoinedDataset_old = this.recline.Model.JoinedDataset_old || {
         }
     }
 
-});(function ($) {
+});recline.Model.Dataset.prototype = $.extend(recline.Model.Dataset.prototype, {
+    selection:function (queryObj) {
+        var self = this;
+
+        this.trigger('selection:start');
+
+        if (queryObj) {
+            self.queryState.set(queryObj, {silent:true});
+        }
+        var actualQuery = self.queryState
+
+        recline.Data.Filters.applySelectionsOnData(self.queryState.get('selections'), self.records.models, self.fields);
+
+        self.queryState.trigger('selection:done');
+
+    },
+    initialize: function () {
+        var super_init = recline.Model.Dataset.prototype.initialize;
+        return function(){
+            super_init.call(this);
+            _.bindAll(this, 'selection');
+
+            this.queryState.bind('selection:change', this.selection);
+        };
+    }()
+
+});
+
+
+
+
+
+
+recline.Model.Record.prototype = $.extend(recline.Model.Record.prototype, {
+    isRecordSelected:function () {
+        var self = this;
+        return self["is_selected"];
+    },
+    setRecordSelection:function (sel) {
+        var self = this;
+        self["is_selected"] = sel;
+    }
+});
+
+
+recline.Model.Query.prototype = $.extend(recline.Model.Query.prototype, {
+
+
+// ### addSelection
+//
+// Add a new selection (appended to the list of selections)
+//
+// @param selection an object specifying the filter - see _filterTemplates for examples. If only type is provided will generate a filter by cloning _filterTemplates
+    addSelection:function (selection) {
+        // crude deep copy
+        var myselection = JSON.parse(JSON.stringify(selection));
+        // not full specified so use template and over-write
+        // 3 as for 'type', 'field' and 'fieldType'
+        if (_.keys(selection).length <= 3) {
+            myselection = _.extend(this._selectionTemplates[selection.type], myselection);
+        }
+        var selections = this.get('selections');
+        selections.push(myselection);
+        this.trigger('change:selections');
+    },
+// ### removeSelection
+//
+// Remove a selection at index selectionIndex
+    removeSelection:function (selectionIndex) {
+        var selections = this.get('selections');
+        selections.splice(selectionIndex, 1);
+        this.set({selections:selections});
+        this.trigger('change:selections');
+    },
+    removeSelectionByField:function (field) {
+        var selections = this.get('selections');
+        for (var j in filters) {
+            if (selections[j].field == field) {
+                removeSelection(j);
+            }
+        }
+    },
+    setSelection:function (filter) {
+        if (filter["remove"]) {
+            removeSelectionByField(filter.field);
+        } else {
+         var s = this.get('selections');
+            var found = false;
+            for (var j = 0; j < s.length; j++) {
+                if (s[j].field == filter.field) {
+                    s[j] = filter;
+                    found = true;
+                }
+            }
+            if (!found)
+                s.push(filter);
+        }
+    },
+
+    isSelected:function () {
+        return this.get('selections').length > 0;
+    }
+
+});
+(function ($) {
 
     recline.Model.Dataset.prototype = $.extend(recline.Model.Dataset.prototype, {
         setShapeSchema:function () {
@@ -851,12 +646,14 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
 
 
             var self = this;
-            this.backend = recline.Backend.Memory;
-            this.fields = new my.FieldList();
-            this.records = new my.RecordList();
-            this.facets = new my.FacetList();
-            this.recordCount = null;
-            this.queryState = new my.Query();
+
+            self.vModel = new my.Dataset({backend: "Memory", records:[], fields: []});
+
+            self.fields = self.vModel.fields;
+            self.records = self.vModel.records;
+            self.facets = self.vModel.facets;
+            self.recordCount = self.vModel.recordCount;
+            self.queryState = self.vModel.queryState;
 
             if (this.get('initialState')) {
                 this.get('initialState').setState(this);
@@ -865,9 +662,6 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
             this.attributes.dataset.bind('query:done', function () {
                 self.initializeCrossfilter();
             })
-
-            //this.attributes.dataset.records.bind('add',     function() { self.initializeCrossfilter(); });
-            //this.attributes.dataset.records.bind('reset',   function() { self.initializeCrossfilter(); });
 
             this.queryState.bind('change', function () {
                 self.query();
@@ -885,33 +679,21 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
             // TODO USE crossfilter as backend memory
         },
 
-        getRecords:function (type) {
+            getRecords:function (type) {
             var self = this;
-            if(self.needsTableCalculation && self.totals == null)
-                self.rebuildTotals();
 
-            if (type === 'filtered' || type == null) {
-                    return self.records.models;
-            } else if (type === 'totals') {
-
+            if (type === 'totals') {
+                if(self.needsTableCalculation && self.totals == null)
+                    self.rebuildTotals();
                 return self.totals.records.models;
             } else if (type === 'totals_unfiltered') {
+
                 if(self.totals_unfiltered == null)
                     self.rebuildUnfilteredTotals();
 
                 return self.totals_unfiltered.records.models;
             } else {
-                if (self._store.data == null) {
-                    throw "VirtualModel: unable to retrieve not filtered data, store can't provide data. Use a backend that use memory store";
-                }
-
-                var docs = _.map(self._store.data, function (hit) {
-                    var _doc = new my.Record(hit);
-                    _doc.fields = self.fields;
-                    return _doc;
-                });
-
-                return docs;
+                return self.vModel.getRecords(type);
             }
         },
 
@@ -924,9 +706,7 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
         getFields:function (type) {
             var self = this;
 
-            if (type === 'filtered' || type == null) {
-                return self.fields;
-            } else if (type === 'totals') {
+            if (type === 'totals') {
                 if(self.totals == null)
                     self.rebuildTotals();
 
@@ -937,7 +717,7 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
 
                 return self.totals_unfiltered.fields;
             } else {
-                return self.fields;
+                return self.vModel.getFields(type);
             }
         },
 
@@ -1146,13 +926,14 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
             var fields = self.buildFields(reducedResult, originalFields, partitionFields, dimensions, aggregationFunctions);
             var result = self.buildResult(reducedResult, originalFields, partitionFields, dimensions, aggregationFunctions, aggregatedFields, partitions);
 
-            this._store = new recline.Backend.Memory.Store(result, fields);
+            self.vModel.resetFields(fields);
+            self.vModel.resetRecords(result);
 
             recline.Data.FieldsUtility.setFieldsAttributes(fields, self);
-            this.fields.reset(fields, {renderer:recline.Data.Formatters.Renderers});
+
             this.clearUnfilteredTotals();
 
-            this.query();
+            self.vModel.fetch();
 
         },
 
@@ -1484,108 +1265,37 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
         },
 
         query:function (queryObj) {
-
-            var self = this;
-            var dfd = $.Deferred();
-            this.trigger('query:start');
-
+            var self=this;
+            self.trigger('query:start');
             if (queryObj) {
                 this.queryState.set(queryObj, {silent:true});
-            }
-            var actualQuery = this.queryState.toJSON();
-            console.log("VModel [" + self.attributes.name + "] query [" + JSON.stringify(actualQuery) + "]");
-
-            if (this._store == null) {
-                console.log("Warning query called before data has been calculated for virtual model, call fetch on source dataset");
-                return;
             }
 
             self.clearFilteredTotals();
 
-            this._store.query(actualQuery, this.toJSON())
-                .done(function (queryResult) {
-                    self._handleQueryResult(queryResult);
-                    self.trigger('query:done');
-                    dfd.resolve(self.records);
-                })
-                .fail(function (arguments) {
-                    self.trigger('query:fail', arguments);
-                    dfd.reject(arguments);
-                });
-            return dfd.promise();
+            self.vModel.query(queryObj);
+
+            self.recordCount = self.vModel.recordCount;
+
+
+            self.trigger('query:done');
         },
 
         selection:function (queryObj) {
-            var self = this;
-
-            this.trigger('selection:start');
-
-            if (queryObj) {
-                self.queryState.set(queryObj, {silent:true});
-            }
-            var actualQuery = self.queryState
-
-
-            // apply on current records
-            // needed cause memory store is not mandatory
-            recline.Data.Filters.applySelectionsOnData(self.queryState.get('selections'), self.records.models, self.fields);
-
-            self.queryState.trigger('selection:done');
+           return this.vModel.selection(queryObj);
 
         },
-
-        _handleQueryResult:function (queryResult) {
-            var self = this;
-            self.recordCount = queryResult.total;
-            var docs = _.map(queryResult.hits, function (hit) {
-                var _doc = new my.Record(hit);
-                _doc.fields = self.fields;
-                return _doc;
-            });
-
-                self.clearFilteredTotals();
-                self.records.reset(docs);
-
-
-            if (queryResult.facets) {
-                var facets = _.map(queryResult.facets, function (facetResult, facetId) {
-                    facetResult.id = facetId;
-                    var result = new my.Facet(facetResult);
-
-                    self.addColorsToTerms(facetId, result.attributes.terms);
-
-                    return result;
-                });
-                self.facets.reset(facets);
-            }
-
-
-        },
-
 
         setColorSchema:function (type) {
-            var self = this;
-            _.each(self.attributes.colorSchema, function (d) {
-                var field = _.find(self.getFields(type).models, function (f) {
-                    return d.field === f.id
-                });
-                if (field != null)
-                    field.attributes.colorSchema = d.schema;
-            })
+            return this.vModel.setColorSchema(type);
+
         },
 
         setShapeSchema:function (type) {
-            var self = this;
-            _.each(self.attributes.shapeSchema, function (d) {
-                var field = _.find(self.getFields(type).models, function (f) {
-                    return d.field === f.id
-                });
-                if (field != null)
-                    field.attributes.shapeSchema = d.schema;
-            })
+            return this.vModel.setShapeSchema(type);
         },
 
-        addColorsToTerms:function (field, terms) {
+        /*addColorsToTerms:function (field, terms) {
             var self = this;
             _.each(terms, function (t) {
 
@@ -1597,46 +1307,18 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
                     })
                 }
             });
-        },
+        },*/
 
         getFacetByFieldId:function (fieldId) {
-            return _.find(this.facets.models, function (facet) {
-                return facet.id == fieldId;
-            });
+            return this.vModel.getFacetByFieldId(fieldId);
         },
 
         toTemplateJSON:function () {
-            var data = this.records.toJSON();
-            data.recordCount = this.recordCount;
-            data.fields = this.fields.toJSON();
-            return data;
+            return this.vModel.toTemplateJSON();
         },
 
-        // ### getFieldsSummary
-        //
-        // Get a summary for each field in the form of a `Facet`.
-        //
-        // @return null as this is async function. Provides deferred/promise interface.
         getFieldsSummary:function () {
-            // TODO update function in order to manage facets/filter and selection
-
-            var self = this;
-            var query = new my.Query();
-            query.set({size:0});
-
-            var dfd = $.Deferred();
-            this._store.query(query.toJSON(), this.toJSON()).done(function (queryResult) {
-                if (queryResult.facets) {
-                    _.each(queryResult.facets, function (facetResult, facetId) {
-                        facetResult.id = facetId;
-                        var facet = new my.Facet(facetResult);
-                        // TODO: probably want replace rather than reset (i.e. just replace the facet with this id)
-                        self.fields.get(facetId).facets.reset(facet);
-                    });
-                }
-                dfd.resolve(queryResult);
-            });
-            return dfd.promise();
+            return this.vModel.getFieldsSummary();
         },
 
         // Retrieve the list of partitioned field for the specified aggregated field
@@ -1674,7 +1356,12 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
             });
 
             return fields;
+        },
+
+        addCustomFilterLogic: function(f) {
+            return this.vModel.addCustomFilterLogic(f);
         }
+
 
     });
 
@@ -1881,10 +1568,10 @@ this.recline = this.recline || {};
                     return model.queryState.getFilterByFieldName(fieldName);
                 },
                 selection:function (model, fieldName) {
-                    throw "Action.js selection not implemented selection for modelsGetFilterActions"
+                    throw "Action.js selection not implemented selection for selection"
                 },
                 sort:function (model, fieldName) {
-                    throw "Action.js sort not implemented selection for modelsGetFilterActions"
+                    throw "Action.js sort not implemented selection for sort"
                 }
             },
 

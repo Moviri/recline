@@ -198,10 +198,10 @@ this.recline = this.recline || {};
                     return model.queryState.getFilterByFieldName(fieldName);
                 },
                 selection:function (model, fieldName) {
-                    throw "Action.js selection not implemented selection for modelsGetFilterActions"
+                    throw "Action.js selection not implemented selection for selection"
                 },
                 sort:function (model, fieldName) {
-                    throw "Action.js sort not implemented selection for modelsGetFilterActions"
+                    throw "Action.js sort not implemented selection for sort"
                 }
             },
 
