@@ -7065,6 +7065,8 @@ this.recline.View = this.recline.View || {};
                         break;
                     case "slider_styled":
                         term = termObj.attr("value");
+                        if (term = "")
+                        	term = null;
                         break;
                     case "dropdown":
                     case "dropdown_styled":
@@ -7075,8 +7077,11 @@ this.recline.View = this.recline.View || {};
                         break;
                 }
                 activeFilter.term = term;
-                activeFilter.list = [term];
-                this.doAction("onFilterValueChanged", fieldId, [term], "add", activeFilter);
+                if (term)
+                	activeFilter.list = [term];
+                else activeFilter.list = [];
+                
+                this.doAction("onFilterValueChanged", fieldId, activeFilter.list, "add", activeFilter);
             }
             else if (fieldType == "list") {
                 var list = new Array();
