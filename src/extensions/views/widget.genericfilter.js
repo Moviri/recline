@@ -1571,6 +1571,9 @@ this.recline.View = this.recline.View || {};
                 	else
             		{
                 		currActiveFilter.term = prefix + currSelectedValue;
+                		if (currActiveFilter.term.length && currActiveFilter.term[currActiveFilter.term.length-1] == currActiveFilter.separator)
+                			currActiveFilter.term = currActiveFilter.term.substring(0, currActiveFilter.term.length-1)
+                			
                 		// redraw the filter!!!
                 		// TODO: devi trovare flt giusto se ce n'è più di uno!!!
 	                    var flt = this.el.find("div.filter"); 
@@ -1583,7 +1586,11 @@ this.recline.View = this.recline.View || {};
                     	_.each(this._sourceDataset.getRecords(), function(record) {
                             var field = self._sourceDataset.fields.get(currActiveFilter.field);
                             var currV = record.getFieldValue(field);
-                            if (currV.indexOf(prefix + currSelectedValue+currActiveFilter.separator) == 0)
+                            var searchString = prefix + currSelectedValue+currActiveFilter.separator;
+                            if (currSelectedValue == "")
+                            	searchString = prefix;
+                            
+                            if (currV.indexOf(searchString) == 0)
                             	listaValori.push(currV)
                     	});
                 		this.doAction("onButtonsetClicked", fieldId, listaValori, "add", currActiveFilter);

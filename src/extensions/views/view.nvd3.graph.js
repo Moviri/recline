@@ -202,7 +202,8 @@ this.recline.View = this.recline.View || {};
 	                $('#nvd3chart_' + viewId + '  svg').height(newH);
 	            }
             }
-            self.chart.update(); // calls original 'update' function
+            if (self.chart)
+            	self.chart.update(); // calls original 'update' function
         },
 
 
