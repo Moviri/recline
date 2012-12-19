@@ -5315,14 +5315,14 @@ this.recline.View = this.recline.View || {};
               	</div> \
         		{{#useLevel2}} \
 	    			<div class="btn-group level2" level="2" style="float:left;display:{{showLevel2}}"> \
-	            		<button class="btn grouped-button {{all2Selected}}">All</button> \
+	            		<button class="btn grouped-button {{all2Selected}}" val="">All</button> \
 			            {{#valuesLev2}} \
 	            			<button class="btn grouped-button {{selected}}" val="{{value}}" {{tooltip}}>{{{val}}}</button> \
 			            {{/valuesLev2}} \
 	            	</div> \
             		{{#useLevel3}} \
 		    			<div class="btn-group level3" level="3" style="float:left;display:{{showLevel3}}"> \
-	            			<button class="btn grouped-button {{all3Selected}}">All</button> \
+	            			<button class="btn grouped-button {{all3Selected}}" val="">All</button> \
 				            {{#valuesLev3}} \
 			        			<button class="btn grouped-button {{selected}}" val="{{value}}" {{tooltip}}>{{{val}}}</button> \
 				            {{/valuesLev3}} \
@@ -6452,7 +6452,11 @@ this.recline.View = this.recline.View || {};
                 	prefix += lev2Selection.attr('val').valueOf() + currActiveFilter.separator;
 				}
                 var listaValori = [];
-                listaValori.push(prefix + $target.attr('val').valueOf());
+                if ($target.attr('val') && $target.attr('val').length)
+                	listaValori.push(prefix + $target.attr('val').valueOf());
+                else if (prefix.length)
+                	listaValori.push(prefix.substring(0, prefix.length-1))
+                	
                 currActiveFilter.userChanged = true;
                 if (listaValori.length == 1 && listaValori[0] == "All" && !currActiveFilter.noAllButton) {
                     listaValori = [];
@@ -6497,23 +6501,22 @@ this.recline.View = this.recline.View || {};
                 	else
             		{
                 		currActiveFilter.term = prefix + currSelectedValue;
-                		
-//                		listaValori = [];
-//                		// should send a list of all values compatible with the choice. Eg: if user selected ANDROID
-//                		// which has sublevels TABLET & SMARTPHONE, both ANDROID.TABLET and ANDROID.SMARTPHONE must be sent
-//                    	_.each(this._sourceDataset.getRecords(), function(record) {
-//                            var field = self._sourceDataset.fields.get(currActiveFilter.field);
-//                            var currV = record.getFieldValue(field);
-//                            if (currV.indexOf(prefix + currSelectedValue+currActiveFilter.separator) == 0)
-//                            	listaValori.push(currV)
-//                    	});
-//                		this.doAction("onButtonsetClicked", fieldId, listaValori, "add", currActiveFilter);
-                		
-                		// now we must redraw the filter!!!
-                		//devi trovare flt giusto se ce n'è più di uno!!!
+                		// redraw the filter!!!
+                		// TODO: devi trovare flt giusto se ce n'è più di uno!!!
 	                    var flt = this.el.find("div.filter"); 
 	            		var currFilterCtrl = $(flt).find(".data-control-id");
-	            		this.updateHierarchicRadiobuttons($(flt), currActiveFilter, $(currFilterCtrl));
+	            		this.updateHierarchicRadiobuttons($(flt), currActiveFilter, $(currFilterCtrl));                		
+                		
+                		listaValori = [];
+                		// THEN send a list of all values compatible with the choice. Eg: if user selected ANDROID
+                		// which has sublevels TABLET & SMARTPHONE, both ANDROID.TABLET and ANDROID.SMARTPHONE must be sent
+                    	_.each(this._sourceDataset.getRecords(), function(record) {
+                            var field = self._sourceDataset.fields.get(currActiveFilter.field);
+                            var currV = record.getFieldValue(field);
+                            if (currV.indexOf(prefix + currSelectedValue+currActiveFilter.separator) == 0)
+                            	listaValori.push(currV)
+                    	});
+                		this.doAction("onButtonsetClicked", fieldId, listaValori, "add", currActiveFilter);
             		}
             	}
         	}
@@ -6660,7 +6663,7 @@ this.recline.View = this.recline.View || {};
             else if (currFilter.valuesLev2)
             	allValues = currFilter.values.concat(currFilter.valuesLev2)
             	
-            // TODO it is not efficient, record must be indicized by term
+            // TODO it is not efficient, record must be indexed by term
             // TODO conversion to string is not correct, original value must be used
             _.each(allValues, function(v) {
               if(v.record) {
@@ -6749,6 +6752,8 @@ this.recline.View = this.recline.View || {};
                         break;
                     case "slider_styled":
                         term = termObj.attr("value");
+                        if (term = "")
+                        	term = null;
                         break;
                     case "dropdown":
                     case "dropdown_styled":
@@ -6759,8 +6764,11 @@ this.recline.View = this.recline.View || {};
                         break;
                 }
                 activeFilter.term = term;
-                activeFilter.list = [term];
-                this.doAction("onFilterValueChanged", fieldId, [term], "add", activeFilter);
+                if (term)
+                	activeFilter.list = [term];
+                else activeFilter.list = [];
+                
+                this.doAction("onFilterValueChanged", fieldId, activeFilter.list, "add", activeFilter);
             }
             else if (fieldType == "list") {
                 var list = new Array();
@@ -6839,6 +6847,7 @@ this.recline.View = this.recline.View || {};
                 case "listbox_styled":
                 case "legend" :
                 case "multibutton" :
+                case "hierarchic_radiobuttons" :
                     return "list";
             }
             return controlType;
@@ -7063,7 +7072,7 @@ this.recline.View = this.recline.View || {};
                     var field = self.model.fields.get(f);
                     markers.push(record.getFieldValueUnrendered(field));
                 });
-                return {ranges:ranges, measures:measures, markers: markers};
+                return {ranges:ranges, measures:measures, markers: markers, customTicks: self.options.customTicks};
             });
 
             var margin = {top: 5, right: 40, bottom: 40, left: 40};
@@ -7077,7 +7086,7 @@ this.recline.View = this.recline.View || {};
                 .height(height);
 
             this.drawD3(records, width, height, margin);
-        },
+       },
 
         drawD3:function (data, width, height, margin) {
             var self = this;
@@ -7122,7 +7131,8 @@ this.recline.View = this.recline.View || {};
                     measures = bulletMeasures,
                     width = 380,
                     height = 30,
-                    tickFormat = null;
+                    tickFormat = null,
+                	customTicks = bulletCustomTicks;
 
                 // For each small multipleâ€¦
                 function bullet(g) {
@@ -7130,6 +7140,7 @@ this.recline.View = this.recline.View || {};
                         var rangez = ranges.call(this, d, i).slice().sort(d3.descending),
                             markerz = markers.call(this, d, i).slice().sort(d3.descending),
                             measurez = measures.call(this, d, i).slice().sort(d3.descending),
+                            customTickz = customTicks.call(this, d, i),
                             g = d3.select(this);
 
                         // Compute the new x-scale.
@@ -7180,9 +7191,9 @@ this.recline.View = this.recline.View || {};
                                 return "measure s" + i;
                             })
                             .attr("width", w0)
-                            .attr("height", function (d, i) { return height / (i*3+3); })
+                            .attr("height", function (d, i) { return height / (i*4+3); })
                             .attr("x", reverse ? x0 : 0)
-                            .attr("y", function (d, i) { return (height / 3.0 - height / (i*3+3.0)) /2.0 + height / 3.0; })
+                            .attr("y", function (d, i) { return (height / 3.0 - height / (i*4+3.0)) /2.0 + height / 3.0; })
                             .transition()
                             .duration(duration)
                             .attr("width", w1)
@@ -7191,9 +7202,9 @@ this.recline.View = this.recline.View || {};
                         measure.transition()
                             .duration(duration)
                             .attr("width", w1)
-                            .attr("height", function (d, i) { return height / (i*3+3); })
+                            .attr("height", function (d, i) { return height / (i*4+3); })
                             .attr("x", reverse ? x1 : 0)
-                            .attr("y", function (d, i) { return (height / 3.0 - height / (i*3+3.0)) /2.0 + height / 3.0; });
+                            .attr("y", function (d, i) { return (height / 3.0 - height / (i*4+3.0)) /2.0 + height / 3.0; });
 
                         // Update the marker lines.
                         var marker = g.selectAll("line.marker")
@@ -7225,12 +7236,20 @@ this.recline.View = this.recline.View || {};
                             .data(x1.ticks(8), function (d) {
                                 return this.textContent || format(d);
                             });
-
+                        
                         // Initialize the ticks with the old scale, x0.
                         var tickEnter = tick.enter().append("g")
                             .attr("class", "tick")
                             .attr("transform", bulletTranslate(x0))
                             .style("opacity", 1e-6);
+
+                        var idx = -1;
+                        var customFormat = function() {
+//                        	var customTicks = [null, null, "MIN", null, "Current", null, "Previous", null, "MAX"]
+                        	if (customTickz && customTickz[++idx])
+                        		return customTickz[idx];
+                        	else return ""
+                        }
 
                         tickEnter.append("line")
                             .attr("y1", height)
@@ -7240,7 +7259,7 @@ this.recline.View = this.recline.View || {};
                             .attr("text-anchor", "middle")
                             .attr("dy", "1em")
                             .attr("y", height * 7 / 6)
-                            .text(format);
+                            .text((customTickz ? customFormat: format));
 
                         // Transition the entering ticks to the new scale, x1.
                         tickEnter.transition()
@@ -7318,14 +7337,25 @@ this.recline.View = this.recline.View || {};
                     return bullet;
                 };
 
+                bullet.customTicks = function (x) {
+                    if (!arguments.length) return customTicks;
+                    customTicks = x;
+                    return bullet;
+                };
+
                 bullet.duration = function (x) {
                     if (!arguments.length) return duration;
                     duration = x;
                     return bullet;
                 };
 
+                
                 return bullet;
             };
+
+            function bulletCustomTicks(d) {
+                return d.customTicks;
+            }
 
             function bulletRanges(d) {
                 return d.ranges;
