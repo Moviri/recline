@@ -16,10 +16,10 @@ this.recline.View = this.recline.View || {};
             this.el = $(this.el);
             _.bindAll(this, 'render', 'redraw', 'redrawCompare');
 
-            if (this.model) {
+
                 this.model.bind('query:done', this.redraw);
                 this.model.queryState.bind('selection:done', this.redraw);
-            }
+
             if(this.options.compareModel) {
                 this.options.compareModel.bind('query:done', this.redrawCompare);
                 this.options.compareModel.queryState.bind('selection:done', this.redrawCompare);
@@ -123,6 +123,7 @@ this.recline.View = this.recline.View || {};
         },
 
         redraw:function () {
+            console.log("Widget.datepicker: redraw");
             // todo must use dateranges methods
 
            if(!this.model) return;
@@ -175,6 +176,7 @@ this.recline.View = this.recline.View || {};
         },
 
         redrawCompare:function () {
+            console.log("Widget.datepicker: redrawcompare");
             var self=this;
 
             var period = $('.date-ranges-picker').DatePickerGetDate()[0];

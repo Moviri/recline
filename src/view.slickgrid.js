@@ -139,7 +139,7 @@ my.SlickGrid = Backbone.View.extend({
   	          field: options.showPartitionedData.partition,
   	          sortable: false,
   	          minWidth: 80,
-  	          formatter: formatter,
+  	          formatter: formatter
   	        };
         var widthInfo = _.find(self.state.get('columnsWidth'),function(c){return c.column == field.id});
         if (widthInfo){

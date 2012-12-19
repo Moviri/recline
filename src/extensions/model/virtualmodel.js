@@ -58,8 +58,7 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
                 self.rebuildTotals();
 
             if (type === 'filtered' || type == null) {
-
-                return self.records.models;
+                    return self.records.models;
             } else if (type === 'totals') {
 
                 return self.totals.records.models;
@@ -575,8 +574,11 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
                     tempValue = tmpField[aggregationFunctions[j]];
 
                 for (var x in tempValue) {
+                    var originalField = originalFields.get(x);
+                    if(!originalField)
+                    throw "Virtualmodel: unable to find field ["+x+"] in model";
 
-                    var originalFieldAttributes = originalFields.get(x).attributes;
+                    var originalFieldAttributes = originalField.attributes;
 
 
                     var newType = recline.Data.Aggregations.resultingDataType[aggregationFunctions[j]](originalFieldAttributes.type);
