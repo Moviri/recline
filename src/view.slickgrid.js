@@ -523,7 +523,7 @@ my.SlickGrid = Backbone.View.extend({
   handleRequestOfRowSelection: function() {
 	  this.discardSelectionEvents = true;
 	  var rowsToSelect = [];
-	  var myRecords = this.model.getRecords(self.resultType); 
+	  var myRecords = this.model.getRecords(this.resultType); 
 	  var selRow;
 	  for (row in myRecords) 
 	      if (myRecords[row].is_selected)
