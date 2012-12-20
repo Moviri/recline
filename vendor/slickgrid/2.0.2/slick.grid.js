@@ -701,7 +701,9 @@ if (typeof Slick === "undefined") {
 			{
 				var max = options.innerChartMax;
 				var numFormatter = d3.format("s");
-				lastTopColumnHtml = "<table style='width:100%'><tr style='width:100%'><td style='text-align:left'>"+numFormatter(max)+"</td><td style='text-align:left'>"+numFormatter(max/2)+"</td><td style='text-align:center'>0</td><td style='text-align:right'>"+numFormatter(max/2)+"</td><td style='text-align:right'>"+numFormatter(max)+"</td></tr></table>";
+				if (options.innerChartSerie2Name)
+					lastTopColumnHtml = "<table style='width:100%'><tr style='width:100%'><td style='text-align:left'>"+numFormatter(max)+"</td><td style='text-align:left'>"+numFormatter(max/2)+"</td><td style='text-align:center'>0</td><td style='text-align:right'>"+numFormatter(max/2)+"</td><td style='text-align:right'>"+numFormatter(max)+"</td></tr></table>";
+				else lastTopColumnHtml = "<table style='width:100%'><tr style='width:100%'><td style='text-align:left'>0</td><td style='text-align:center'>"+numFormatter(max/2)+"</td><td style='text-align:right'>"+numFormatter(max)+"</td></tr></table>";
 			}	
 			headerTop = $("<div class='ui-state-default slick-subheader-column' id='" + uid + m.id + "' />")
 				.html("<span class='slick-column-name'>" + lastTopColumnHtml + "</span>")
