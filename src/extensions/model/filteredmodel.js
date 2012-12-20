@@ -16,8 +16,12 @@ this.recline.Model.FilteredDataset = this.recline.Model.FilteredDataset || {};
         initialize:function () {
             var self = this;
 
-            this.fields = this.attributes.dataset.fields;
+
             this.records = new my.RecordList();
+
+            this.fields =  this.attributes.dataset.fields;
+
+
             //todo
             //this.facets = new my.FacetList();
             this.recordCount = null;
@@ -28,6 +32,10 @@ this.recline.Model.FilteredDataset = this.recline.Model.FilteredDataset || {};
                 this.get('initialState').setState(this);
             }
 
+            this.attributes.dataset.fields.bind('reset', function () {
+                self.fieldsReset();
+            })
+
             this.attributes.dataset.bind('query:done', function () {
                 self.query();
             })
@@ -35,6 +43,11 @@ this.recline.Model.FilteredDataset = this.recline.Model.FilteredDataset || {};
             this.queryState.bind('change', function () {
                 self.query();
             });
+
+        },
+
+        fieldsReset: function() {
+            this.fields = this.attributes.dataset.fields;
 
         },
 
@@ -47,6 +60,11 @@ this.recline.Model.FilteredDataset = this.recline.Model.FilteredDataset || {};
             }
 
             var queryObj = this.queryState.toJSON();
+
+            _.each(self.attributes.customFilterLogic, function (f) {
+                f(queryObj);
+            });
+
 
             console.log("Query on model query [" + JSON.stringify(queryObj) + "]");
 
@@ -106,6 +124,24 @@ this.recline.Model.FilteredDataset = this.recline.Model.FilteredDataset || {};
 
         getFieldsSummary:function () {
             return this.attributes.dataset.getFieldsSummary();
+        },
+
+        addCustomFilterLogic: function(f) {
+            if(this.attributes.customFilterLogic)
+                this.attributes.customFilterLogic.push(f);
+            else
+                this.attributes.customFilterLogic = [f];
+        },
+        setColorSchema:function () {
+            var self = this;
+            _.each(self.attributes.colorSchema, function (d) {
+                var field = _.find(self.fields.models, function (f) {
+                    return d.field === f.id
+                });
+                if (field != null)
+                    field.attributes.colorSchema = d.schema;
+            })
+
         }
 
 

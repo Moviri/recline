@@ -32,7 +32,7 @@ this.recline.View = this.recline.View || {};
                 var data = recline.Data.Formatters.Renderers(unrenderedValue, tmpField);
                 var template = templates.templatePercentage;
                 if (condensed == true)
-                	template = templates.templatePercentageCondensed;
+                	template = templates.templateCondensed;
                 
                 return {data:data, template:template, unrenderedValue: unrenderedValue, percentageMsg: "% of total: "};
             },
@@ -42,17 +42,17 @@ this.recline.View = this.recline.View || {};
                 var data = recline.Data.Formatters.Renderers( unrenderedValue, tmpField);
                 var template = templates.templatePercentage;
                 if (condensed == true)
-                	template = templates.templatePercentageCondensed;
+                	template = templates.templateCondensed;
 
                 return {data:data, template:template, unrenderedValue: unrenderedValue, percentageMsg: "% variation: "};
             },
             nocompare: function (kpi, compare, templates, condensed){
                 var template = templates.templateBase;
                 if (condensed == true)
-                	template = templates.templateBaseCondensed;
+                	template = templates.templateCondensed;
             	
                 return {data:null, template:template, unrenderedValue:null};
-            },
+            }
 
 
         },
@@ -65,26 +65,63 @@ this.recline.View = this.recline.View || {};
 			<table class="indicator-table"> \
                 <tr class="titlerow"><td></td><td style="text-align: center;" class="title">{{{label}}}</td></tr>    \
                 <tr class="descriptionrow"><td></td><td style="text-align: center;" class="description"><small>{{description}}</small></td></tr>    \
-                <tr class="shaperow"><td><div class="shape">{{{shape}}}</div><div class="compareshape">{{{compareShape}}}</div></td><td class="value-cell">{{value}}</td></tr>  \
+                <tr class="shaperow"> \
+	   				<td><div class="shape">{{{shape}}}</div> \
+	   				<div class="compareshape">{{{compareShape}}}</div> \
+	   				</td><td class="value-cell">{{value}}</td></tr>  \
              </table>  \
 		</div>\
       </div> \
     </div> ',
-    templateBaseCondensed:
-   '<div class="indicator" style="width:100%;"> \
+    templateBaseCondensed_old:
+	'<div class="indicator " style="width:100%;"> \
 	    <div class="panel indicator_{{viewId}}" style="width:100%;"> \
-	      <div id="indicator_{{viewId}}" class="indicator-container well" style="width:85%;"> \
-			<fieldset style="width:100%;"> \
-				<legend style="width:100%;"> \
-                <div class="value-cell" style="float:left">{{value}}</div> \
-				<div class="compareshape" style="float:right">{{{compareShape}}}</div> \
-                <div class="shape" style="float:right">{{{shape}}}</div> \
-				</legend> \
-                <div style="text-align:justify;width:100%;" class="title">{{{label}}}</div>\
-			</fieldset> \
+    		<div id="indicator_{{viewId}}" class="indicator-container well" style="width:85%;"> \
+    			<div style="width:100%;margin-left:5px"> \
+	                <div class="value-cell" style="float:left">{{value}}</div> \
+    				{{#compareShape}} \
+					<div class="compareshape" style="float:right">{{{compareShape}}}</div> \
+    				{{/compareShape}} \
+	   				{{#shape}} \
+	                <div class="shape" style="float:right">{{{shape}}}</div> \
+	   				{{/shape}} \
+				</div> \
+    			<div style="width:100%;padding-top:10px"><hr></div> \
+                <div style="text-align:justify;width:100%;margin-right:8px" class="title">{{{label}}}</div>\
 			</div> \
 	    </div> \
-    </div>'
+    </div>',
+    templateCondensed:
+        '<style> \
+        .round-border { \
+    	    border: 1px solid #DDDDDD; \
+    	    border-radius: 4px 4px 4px 4px; \
+    		background-color: lightcyan; \
+        } \
+        .round-border-dark { \
+    	    border: 1px solid #808080; \
+    	    border-radius: 4px 4px 4px 4px; \
+    		margin:3px; \
+    		height: 30px; \
+        } \
+    	</style> \
+        	<div class="indicator round-border-dark" > \
+    	    <div class="panel indicator_{{viewId}}" > \
+        		<div id="indicator_{{viewId}}" class="indicator-container" > \
+        			<div class="round-border" style="float:left;margin:2px 2px 0px 2px"> \
+    					{{#compareShape}} \
+    					<div class="compareshape" style="float:left">{{{compareShape}}}</div> \
+    					{{/compareShape}} \
+						{{#shape}} \
+    	                <div class="shape" style="float:left">{{{shape}}}</div> \
+    					{{/shape}} \
+        				<div class="value-cell" style="float:left">{{value}}</div> \
+    				</div> \
+                    <div style="text-align:justify;float:left;margin-right:8px" class="title">&nbsp;&nbsp;{{{label}}}</div>\
+    			</div> \
+    	    </div> \
+        </div>'
+
 ,
    templatePercentage:
    '<div class="indicator"> \
@@ -98,22 +135,7 @@ this.recline.View = this.recline.View || {};
              </table>  \
 		</div>\
       </div> \
-    </div> ',
-    templatePercentageCondensed:
-    	   '<div class="indicator" style="width:100%;"> \
-	    <div class="panel indicator_{{viewId}}" style="width:100%;"> \
-	      <div id="indicator_{{viewId}}" class="indicator-container well" style="width:85%;"> \
-			<fieldset style="width:100%;"> \
-				<legend style="width:100%;"> \
-                <div class="value-cell" style="float:left">{{value}}</div> \
-    			<div class="compareshape" style="float:right">{{{compareShape}}}</div> \
-                <div class="shape" style="float:right">{{{shape}}}</div> \
-				</legend> \
-                <div style="text-align:justify;width:100%;" class="title">{{{label}}}</div>\
-    			</fieldset> \
-    		</div> \
-	    </div> \
-    </div>'
+    </div> '
         },
         initialize:function (options) {
             var self = this;
@@ -171,48 +193,55 @@ this.recline.View = this.recline.View || {};
 
             var template = this.templates.templateBase;
             if (self.options.state.condensed == true)
-            	template = self.templates.templateBaseCondensed;            
+            	template = self.templates.templateCondensed;            
 
             if (self.options.state.compareWith) {
                 var compareWithRecord = self.model.getRecords(self.options.state.compareWith.type);
-                var compareWithField;
 
-                if (self.options.state.kpi.aggr)
-                    compareWithField = self.model.getField_byAggregationFunction(self.options.state.compareWith.type, self.options.state.compareWith.field, self.options.state.compareWith.aggr);
-                else
-                    compareWithField = self.options.model.getFields(self.options.state.compareWith.type).get(self.options.state.compareWith.field);
+                if(compareWithRecord.length > 0) {
+                    var compareWithField;
 
-                if (!compareWithField)
-                    throw "View.Indicator: unable to find field [" + self.options.state.compareWith.field + "] on model"
+                    if (self.options.state.kpi.aggr)
+                        compareWithField = self.model.getField_byAggregationFunction(self.options.state.compareWith.type, self.options.state.compareWith.field, self.options.state.compareWith.aggr);
+                    else
+                        compareWithField = self.options.model.getFields(self.options.state.compareWith.type).get(self.options.state.compareWith.field);
 
-                tmplData["compareWithValue"] = compareWithRecord[0].getFieldValue(compareWithField);
-                var compareWithValue = compareWithRecord[0].getFieldValueUnrendered(compareWithField);
+                    if (!compareWithField)
+                        throw "View.Indicator: unable to find field [" + self.options.state.compareWith.field + "] on model"
 
-                var compareValue;
 
-                var compareValue = self.compareType[self.options.state.compareWith.compareType](kpiValue, compareWithValue, self.templates, self.options.state.condensed);
-                if(!compareValue)
-                    throw "View.Indicator: unable to find compareType [" + self.options.state.compareWith.compareType + "]";
+                    tmplData["compareWithValue"] = compareWithRecord[0].getFieldValue(compareWithField);
+                    var compareWithValue = compareWithRecord[0].getFieldValueUnrendered(compareWithField);
 
-                tmplData["compareValue"] = compareValue.data;
+                    var compareValue;
 
-                if(self.options.state.compareWith.shapes) {
-                    if(compareValue.unrenderedValue == 0)
-                        tmplData["compareShape"] = self.options.state.compareWith.shapes.constant;
-                    else if(compareValue.unrenderedValue > 0)
-                        tmplData["compareShape"] = self.options.state.compareWith.shapes.increase;
-                    else if(compareValue.unrenderedValue < 0)
-                        tmplData["compareShape"] = self.options.state.compareWith.shapes.decrease;
+                    var compareValue = self.compareType[self.options.state.compareWith.compareType](kpiValue, compareWithValue, self.templates, self.options.state.condensed);
+                    if(!compareValue)
+                        throw "View.Indicator: unable to find compareType [" + self.options.state.compareWith.compareType + "]";
+
+                    tmplData["compareValue"] = compareValue.data;
+
+                    if(self.options.state.compareWith.shapes) {
+                        if(compareValue.unrenderedValue == 0)
+                            tmplData["compareShape"] = self.options.state.compareWith.shapes.constant;
+                        else if(compareValue.unrenderedValue > 0)
+                            tmplData["compareShape"] = self.options.state.compareWith.shapes.increase;
+                        else if(compareValue.unrenderedValue < 0)
+                            tmplData["compareShape"] = self.options.state.compareWith.shapes.decrease;
+                    }
+
+                    if(compareValue.template)
+                        template = compareValue.template;
                 }
-
-                if(compareValue.template)
-                    template = compareValue.template;
             }
+            if ((tmplData["shape"] == null || typeof tmplData["shape"] == "undefined") 
+            	&& (tmplData["compareShape"] == null || typeof tmplData["compareShape"] == "undefined"))
+            	tmplData["compareShape"] = " " // ensure the space is filled
 
             if (this.options.state.description)
                 tmplData["description"] = this.options.state.description;
             
-            if (compareValue.percentageMsg)
+            if (compareValue && compareValue.percentageMsg)
             	tmplData["percentageMsg"] = compareValue.percentageMsg; 
 
             var htmls = Mustache.render(template, tmplData);

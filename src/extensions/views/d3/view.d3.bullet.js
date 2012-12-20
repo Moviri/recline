@@ -88,7 +88,12 @@ this.recline.View = this.recline.View || {};
             var field = this.model.fields.get(this.options.fieldRanges);
             var fieldMeasure = this.model.fields.get(this.options.fieldMeasures);
 
-            var records = _.map(this.options.model.getRecords(this.options.resultType.type), function (record) {
+            var type;
+            if(this.options.resultType) {
+                type = this.options.resultType;
+            }
+
+            var records = _.map(this.options.model.getRecords(type), function (record) {
                 var ranges = [];
                 _.each(self.options.fieldRanges, function (f) {
                     var field = self.model.fields.get(f);
@@ -104,7 +109,7 @@ this.recline.View = this.recline.View || {};
                     var field = self.model.fields.get(f);
                     markers.push(record.getFieldValueUnrendered(field));
                 });
-                return {ranges:ranges, measures:measures, markers: markers};
+                return {ranges:ranges, measures:measures, markers: markers, customTicks: self.options.customTicks};
             });
 
             var margin = {top: 5, right: 40, bottom: 40, left: 40};
@@ -118,7 +123,7 @@ this.recline.View = this.recline.View || {};
                 .height(height);
 
             this.drawD3(records, width, height, margin);
-        },
+       },
 
         drawD3:function (data, width, height, margin) {
             var self = this;
@@ -163,7 +168,8 @@ this.recline.View = this.recline.View || {};
                     measures = bulletMeasures,
                     width = 380,
                     height = 30,
-                    tickFormat = null;
+                    tickFormat = null,
+                	customTicks = bulletCustomTicks;
 
                 // For each small multiple…
                 function bullet(g) {
@@ -171,6 +177,7 @@ this.recline.View = this.recline.View || {};
                         var rangez = ranges.call(this, d, i).slice().sort(d3.descending),
                             markerz = markers.call(this, d, i).slice().sort(d3.descending),
                             measurez = measures.call(this, d, i).slice().sort(d3.descending),
+                            customTickz = customTicks.call(this, d, i),
                             g = d3.select(this);
 
                         // Compute the new x-scale.
@@ -221,9 +228,9 @@ this.recline.View = this.recline.View || {};
                                 return "measure s" + i;
                             })
                             .attr("width", w0)
-                            .attr("height", height / 3)
+                            .attr("height", function (d, i) { return height / (i*4+3); })
                             .attr("x", reverse ? x0 : 0)
-                            .attr("y", height / 3)
+                            .attr("y", function (d, i) { return (height / 3.0 - height / (i*4+3.0)) /2.0 + height / 3.0; })
                             .transition()
                             .duration(duration)
                             .attr("width", w1)
@@ -232,9 +239,9 @@ this.recline.View = this.recline.View || {};
                         measure.transition()
                             .duration(duration)
                             .attr("width", w1)
-                            .attr("height", height / 3)
+                            .attr("height", function (d, i) { return height / (i*4+3); })
                             .attr("x", reverse ? x1 : 0)
-                            .attr("y", height / 3);
+                            .attr("y", function (d, i) { return (height / 3.0 - height / (i*4+3.0)) /2.0 + height / 3.0; });
 
                         // Update the marker lines.
                         var marker = g.selectAll("line.marker")
@@ -266,12 +273,20 @@ this.recline.View = this.recline.View || {};
                             .data(x1.ticks(8), function (d) {
                                 return this.textContent || format(d);
                             });
-
+                        
                         // Initialize the ticks with the old scale, x0.
                         var tickEnter = tick.enter().append("g")
                             .attr("class", "tick")
                             .attr("transform", bulletTranslate(x0))
                             .style("opacity", 1e-6);
+
+                        var idx = -1;
+                        var customFormat = function() {
+//                        	var customTicks = [null, null, "MIN", null, "Current", null, "Previous", null, "MAX"]
+                        	if (customTickz && customTickz[++idx])
+                        		return customTickz[idx];
+                        	else return ""
+                        }
 
                         tickEnter.append("line")
                             .attr("y1", height)
@@ -281,7 +296,7 @@ this.recline.View = this.recline.View || {};
                             .attr("text-anchor", "middle")
                             .attr("dy", "1em")
                             .attr("y", height * 7 / 6)
-                            .text(format);
+                            .text((customTickz ? customFormat: format));
 
                         // Transition the entering ticks to the new scale, x1.
                         tickEnter.transition()
@@ -359,14 +374,25 @@ this.recline.View = this.recline.View || {};
                     return bullet;
                 };
 
+                bullet.customTicks = function (x) {
+                    if (!arguments.length) return customTicks;
+                    customTicks = x;
+                    return bullet;
+                };
+
                 bullet.duration = function (x) {
                     if (!arguments.length) return duration;
                     duration = x;
                     return bullet;
                 };
 
+                
                 return bullet;
             };
+
+            function bulletCustomTicks(d) {
+                return d.customTicks;
+            }
 
             function bulletRanges(d) {
                 return d.ranges;

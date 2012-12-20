@@ -16,8 +16,12 @@ this.recline.Model.FilteredDataset = this.recline.Model.FilteredDataset || {};
         initialize:function () {
             var self = this;
 
-            this.fields = this.attributes.dataset.fields;
+
             this.records = new my.RecordList();
+
+            this.fields =  this.attributes.dataset.fields;
+
+
             //todo
             //this.facets = new my.FacetList();
             this.recordCount = null;
@@ -28,6 +32,10 @@ this.recline.Model.FilteredDataset = this.recline.Model.FilteredDataset || {};
                 this.get('initialState').setState(this);
             }
 
+            this.attributes.dataset.fields.bind('reset', function () {
+                self.fieldsReset();
+            })
+
             this.attributes.dataset.bind('query:done', function () {
                 self.query();
             })
@@ -35,6 +43,11 @@ this.recline.Model.FilteredDataset = this.recline.Model.FilteredDataset || {};
             this.queryState.bind('change', function () {
                 self.query();
             });
+
+        },
+
+        fieldsReset: function() {
+            this.fields = this.attributes.dataset.fields;
 
         },
 
@@ -47,6 +60,11 @@ this.recline.Model.FilteredDataset = this.recline.Model.FilteredDataset || {};
             }
 
             var queryObj = this.queryState.toJSON();
+
+            _.each(self.attributes.customFilterLogic, function (f) {
+                f(queryObj);
+            });
+
 
             console.log("Query on model query [" + JSON.stringify(queryObj) + "]");
 
@@ -106,6 +124,24 @@ this.recline.Model.FilteredDataset = this.recline.Model.FilteredDataset || {};
 
         getFieldsSummary:function () {
             return this.attributes.dataset.getFieldsSummary();
+        },
+
+        addCustomFilterLogic: function(f) {
+            if(this.attributes.customFilterLogic)
+                this.attributes.customFilterLogic.push(f);
+            else
+                this.attributes.customFilterLogic = [f];
+        },
+        setColorSchema:function () {
+            var self = this;
+            _.each(self.attributes.colorSchema, function (d) {
+                var field = _.find(self.fields.models, function (f) {
+                    return d.field === f.id
+                });
+                if (field != null)
+                    field.attributes.colorSchema = d.schema;
+            })
+
         }
 
 
@@ -137,15 +173,13 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
 
             self.ds_fetched = [];
 
-            this.fields = new my.FieldList();
+            self.joinedModel = new my.Dataset({backend: "Memory", records:[], fields: []});
 
-
-            this.records = new my.RecordList();
-
-            this.facets = new my.FacetList();
-            this.recordCount = null;
-
-            this.queryState = new my.Query();
+            self.fields = self.joinedModel.fields;
+            self.records = self.joinedModel.records;
+            self.facets = self.joinedModel.facets;
+            self.recordCount = self.joinedModel.recordCount;
+            self.queryState = self.joinedModel.queryState;
 
             if (this.get('initialState')) {
                 this.get('initialState').setState(this);
@@ -157,10 +191,7 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
             _.each(this.attributes.join, function(p) {
                 p.model.fields.bind('reset', self.generatefields);
                 p.model.fields.bind('add', self.generatefields);
-
             });
-
-            this.generatefields();
 
             this.attributes.model.bind('query:done', function () {
                 self.ds_fetched.push("model");
@@ -207,94 +238,39 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
             var tmpFields = [];
             _.each(this.attributes.model.fields.models, function (f) {
                 var c = f.toJSON();
-                c.id = "model." + c.id;
+                c.id = c.id;
                 tmpFields.push(c);
             });
 
             _.each(this.attributes.join, function(p) {
                 _.each(p.model.fields.models, function (f) {
                     var c = f.toJSON();
-                    c.id = p.id + "." + c.id;
+                    c.id = p.id + "_" + c.id;
                     tmpFields.push(c);
                 });
             });
-
-
-
-            var options = {renderer:recline.Data.Formatters.Renderers};
-
-            this.fields.reset(tmpFields, options);
-            this.setColorSchema();
-            this.setShapeSchema();
-
-
+            this.joinedModel.resetFields(tmpFields);
         },
 
-        query:function (queryObj) {
-            var self = this;
-            this.trigger('query:start');
 
+
+        query:function (queryObj) {
+            var self=this;
+            self.trigger('query:start');
             if (queryObj) {
                 this.queryState.set(queryObj, {silent:true});
             }
-
-            var queryObj = this.queryState.toJSON();
-
-            console.log("Query on model query [" + JSON.stringify(queryObj) + "]");
-
             var results = self.join();
 
-            var numRows = queryObj.size || results.length;
-            var start = queryObj.from || 0;
-
-            _.each(queryObj.sort, function (sortObj) {
-                var fieldName = sortObj.field;
-                results = _.sortBy(results, function (doc) {
-                    var _out = doc[fieldName];
-                    return _out;
-                });
-                if (sortObj.order == 'desc') {
-                    results.reverse();
-                }
-            });
-
-            results = results.slice(start, start + numRows);
-            facets = recline.Data.Faceting.computeFacets(results, queryObj);
-
-            self.recordCount = results.length;
-
-            var docs = _.map(results, function (hit) {
-                var _doc = new my.Record(hit);
-                _doc.fields = self.fields;
-                _doc.bind('change', function (doc) {
-                    self._changes.updates.push(doc.toJSON());
-                });
-                _doc.bind('destroy', function (doc) {
-                    self._changes.deletes.push(doc.toJSON());
-                });
-                return _doc;
-            });
-
-
-            self.records.reset(docs);
-
-            if (facets) {
-                var facets = _.map(facets, function (facetResult, facetId) {
-                    facetResult.id = facetId;
-                    var result = new my.Facet(facetResult);
-                    recline.Data.ColorSchema.addColorsToTerms(facetId, result.attributes.terms, self.attributes.colorSchema);
-                    recline.Data.ShapeSchema.addShapesToTerms(facetId, result.attributes.terms, self.attributes.shapeSchema);
-
-                    return result;
-                });
-                self.facets.reset(facets);
-            }
+            self.joinedModel.resetRecords(results);
+            self.joinedModel.fetch();
+            self.recordCount = self.joinedModel.recordCount;
 
             self.trigger('query:done');
         },
 
         join:function () {
-            var joinon = this.attributes.joinon;
+
             var joinType = this.attributes.joinType;
             var model = this.attributes.model;
             var joinModel = this.attributes.join;
@@ -312,7 +288,7 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
                 // define the record with all data from model
                 var record = {};
                 _.each(r.toJSON(), function (f, index) {
-                    record["model." + index] = f;
+                    record[index] = f;
                 });
 
                 _.each(joinModel, function(p) {
@@ -329,7 +305,7 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
 
                     _.each(resultsFromDataset2, function (res) {
                         _.each(res, function (field_value, index) {
-                            record[p.id + "." + index] = field_value;
+                            record[p.id + "_" + index] = field_value;
                         })
                     })
 
@@ -344,51 +320,32 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
             return results;
         },
 
-        getRecords:function () {
-            return this.records.models;
+        addCustomFilterLogic: function(f) {
+            return this.joinedModel.addCustomFilterLogic(f);
+        },
+
+        getRecords:function (type) {
+            return this.joinedModel.getRecords(type);
         },
 
         getFields:function (type) {
-            return this.fields;
+            return this.joinedModel.getFields(type);
         },
 
         toTemplateJSON:function () {
-            var data = this.records.toJSON();
-            data.recordCount = this.recordCount;
-            data.fields = this.fields.toJSON();
-            return data;
+            return this.joinedModel.toTemplateJSON();
         },
 
 
         getFacetByFieldId:function (fieldId) {
-            return _.find(this.facets.models, function (facet) {
-                return facet.id == fieldId;
-            });
+            return this.joinedModel.getFacetByFieldId(fieldId);
         },
 
-        setColorSchema:function () {
-            var self = this;
-            _.each(self.attributes.colorSchema, function (d) {
-                var field = _.find(self.fields.models, function (f) {
-                    return d.field === f.id
-                });
-                if (field != null)
-                    field.attributes.colorSchema = d.schema;
-            })
-        },
-
-        setShapeSchema:function () {
-            var self = this;
-            _.each(self.attributes.shapeSchema, function (d) {
-                var field = _.find(self.fields.models, function (f) {
-                    return d.field === f.id
-                });
-                if (field != null)
-                    field.attributes.shapeSchema = d.schema;
-            })
-        },
         isFieldPartitioned:function (field) {
             return false
+        },
+        toFullJSON:function (resultType) {
+            return this.joinedModel.toFullJSON(resultType);
         }
 
     })
@@ -398,7 +355,7 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
 
 (function ($) {
 
-    recline.Model.Dataset = recline.Model.Dataset.extend({
+    recline.Model.Dataset.prototype = $.extend(recline.Model.Dataset.prototype, {
         setColorSchema:function () {
             var self = this;
             _.each(self.attributes.colorSchema, function (d) {
@@ -413,7 +370,7 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
     });
 
 
-    recline.Model.Record = recline.Model.Record.extend({
+    recline.Model.Record.prototype = $.extend(recline.Model.Record.prototype, {
         getFieldColor:function (field) {
             if (!field.attributes.colorSchema)
                 return null;
@@ -428,11 +385,7 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
     });
 
 
-    recline.Model.RecordList = recline.Model.RecordList.extend({
-        model: recline.Model.Record
-    });
-
-    recline.Model.Field = recline.Model.Field.extend({
+    recline.Model.Field.prototype = $.extend(recline.Model.Field.prototype, {
 
         getColorForPartition:function () {
 
@@ -446,14 +399,10 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
         }
     });
 
-    recline.Model.FieldList = recline.Model.FieldList.extend({
-        model: recline.Model.Field
-    });
-
 
 }(jQuery));(function ($) {
 
-    recline.Model.Dataset = recline.Model.Dataset.extend({
+    recline.Model.Dataset.prototype = $.extend(recline.Model.Dataset.prototype, {
             addCustomFilterLogic: function(f) {
             if(this.attributes.customFilterLogic)
                 this.attributes.customFilterLogic.push(f);
@@ -463,9 +412,175 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
     });
 
 
-}(jQuery));(function ($) {
+}(jQuery));recline.Model.Dataset.prototype = $.extend(recline.Model.Dataset.prototype, {
+    toFullJSON:function (resultType) {
+        var self = this;
+        return _.map(self.getRecords(resultType), function (r) {
+            var res = {};
 
-    recline.Model.Dataset = recline.Model.Dataset.extend({
+            _.each(self.getFields(resultType).models, function (f) {
+                res[f.id] = r.getFieldValueUnrendered(f);
+            });
+
+            return res;
+
+        });
+    },
+    resetRecords: function(records) {
+        this.set({records: records});
+    },
+    resetFields: function(fields) {
+        this.set({fields: fields});
+    },
+
+    getRecords:function (type) {
+        var self = this;
+
+        if (type === 'filtered' || type == null) {
+            return self.records.models;
+        } else {
+            if (self._store.data == null) {
+                throw "Model: unable to retrieve not filtered data, store can't provide data. Use a backend that use a memory store";
+            }
+
+
+            var docs = _.map(self._store.data, function (hit) {
+                var _doc = new recline.Model.Record(hit);
+                _doc.fields = self.fields;
+                return _doc;
+            });
+
+            if(self.queryState.get('selections').length > 0)
+                recline.Data.Filters.applySelectionsOnData(self.queryState.get('selections'), docs, self.fields);
+
+            return docs;
+        }
+    },
+
+    getFields:function (type) {
+        var self = this;
+        return self.fields;
+
+    }
+
+});recline.Model.Query.prototype = $.extend(recline.Model.Query.prototype, {
+    removeFilterByFieldNoEvent:function (field) {
+        var filters = this.get('filters');
+        for (var j in filters) {
+            if (filters[j].field === field) {
+                filters.splice(j, 1);
+                this.set({filters:filters});
+            }
+        }
+    }
+
+});recline.Model.Dataset.prototype = $.extend(recline.Model.Dataset.prototype, {
+    selection:function (queryObj) {
+        var self = this;
+
+        this.trigger('selection:start');
+
+        if (queryObj) {
+            self.queryState.set(queryObj, {silent:true});
+        }
+        var actualQuery = self.queryState
+
+        recline.Data.Filters.applySelectionsOnData(self.queryState.get('selections'), self.records.models, self.fields);
+
+        self.queryState.trigger('selection:done');
+
+    },
+    initialize: function () {
+        var super_init = recline.Model.Dataset.prototype.initialize;
+        return function(){
+            super_init.call(this);
+            _.bindAll(this, 'selection');
+
+            this.queryState.bind('selection:change', this.selection);
+        };
+    }()
+
+});
+
+
+
+
+
+
+recline.Model.Record.prototype = $.extend(recline.Model.Record.prototype, {
+    isRecordSelected:function () {
+        var self = this;
+        return self["is_selected"];
+    },
+    setRecordSelection:function (sel) {
+        var self = this;
+        self["is_selected"] = sel;
+    }
+});
+
+
+recline.Model.Query.prototype = $.extend(recline.Model.Query.prototype, {
+
+
+// ### addSelection
+//
+// Add a new selection (appended to the list of selections)
+//
+// @param selection an object specifying the filter - see _filterTemplates for examples. If only type is provided will generate a filter by cloning _filterTemplates
+    addSelection:function (selection) {
+        // crude deep copy
+        var myselection = JSON.parse(JSON.stringify(selection));
+        // not full specified so use template and over-write
+        // 3 as for 'type', 'field' and 'fieldType'
+        if (_.keys(selection).length <= 3) {
+            myselection = _.extend(this._selectionTemplates[selection.type], myselection);
+        }
+        var selections = this.get('selections');
+        selections.push(myselection);
+        this.trigger('change:selections');
+    },
+// ### removeSelection
+//
+// Remove a selection at index selectionIndex
+    removeSelection:function (selectionIndex) {
+        var selections = this.get('selections');
+        selections.splice(selectionIndex, 1);
+        this.set({selections:selections});
+        this.trigger('change:selections');
+    },
+    removeSelectionByField:function (field) {
+        var selections = this.get('selections');
+        for (var j in filters) {
+            if (selections[j].field == field) {
+                removeSelection(j);
+            }
+        }
+    },
+    setSelection:function (filter) {
+        if (filter["remove"]) {
+            removeSelectionByField(filter.field);
+        } else {
+         var s = this.get('selections');
+            var found = false;
+            for (var j = 0; j < s.length; j++) {
+                if (s[j].field == filter.field) {
+                    s[j] = filter;
+                    found = true;
+                }
+            }
+            if (!found)
+                s.push(filter);
+        }
+    },
+
+    isSelected:function () {
+        return this.get('selections').length > 0;
+    }
+
+});
+(function ($) {
+
+    recline.Model.Dataset.prototype = $.extend(recline.Model.Dataset.prototype, {
         setShapeSchema:function () {
             var self = this;
             _.each(self.attributes.shapeSchema, function (d) {
@@ -479,7 +594,7 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
     });
 
 
-    recline.Model.Record = recline.Model.Record.extend({
+    recline.Model.Record.prototype = $.extend(recline.Model.Record.prototype, {
         getFieldShapeName:function (field) {
             if (!field.attributes.shapeSchema)
                 return null;
@@ -510,10 +625,6 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
         }
     });
 
-    recline.Model.RecordList = recline.Model.RecordList.extend({
-        model: recline.Model.Record
-    });
-
 
 }(jQuery));// # Recline Backbone Models
 this.recline = this.recline || {};
@@ -535,12 +646,14 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
 
 
             var self = this;
-            this.backend = recline.Backend.Memory;
-            this.fields = new my.FieldList();
-            this.records = new my.RecordList();
-            this.facets = new my.FacetList();
-            this.recordCount = null;
-            this.queryState = new my.Query();
+
+            self.vModel = new my.Dataset({backend: "Memory", records:[], fields: []});
+
+            self.fields = self.vModel.fields;
+            self.records = self.vModel.records;
+            self.facets = self.vModel.facets;
+            self.recordCount = self.vModel.recordCount;
+            self.queryState = self.vModel.queryState;
 
             if (this.get('initialState')) {
                 this.get('initialState').setState(this);
@@ -549,9 +662,6 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
             this.attributes.dataset.bind('query:done', function () {
                 self.initializeCrossfilter();
             })
-
-            //this.attributes.dataset.records.bind('add',     function() { self.initializeCrossfilter(); });
-            //this.attributes.dataset.records.bind('reset',   function() { self.initializeCrossfilter(); });
 
             this.queryState.bind('change', function () {
                 self.query();
@@ -569,36 +679,21 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
             // TODO USE crossfilter as backend memory
         },
 
-        getRecords:function (type) {
+            getRecords:function (type) {
             var self = this;
 
-            if (type === 'filtered' || type == null) {
+            if (type === 'totals') {
                 if(self.needsTableCalculation && self.totals == null)
                     self.rebuildTotals();
-
-                return self.records.models;
-            } else if (type === 'totals') {
-                if(self.totals == null)
-                    self.rebuildTotals();
-
                 return self.totals.records.models;
             } else if (type === 'totals_unfiltered') {
+
                 if(self.totals_unfiltered == null)
                     self.rebuildUnfilteredTotals();
 
                 return self.totals_unfiltered.records.models;
             } else {
-                if (self._store.data == null) {
-                    throw "VirtualModel: unable to retrieve not filtered data, store can't provide data. Use a backend that use memory store";
-                }
-
-                var docs = _.map(self._store.data, function (hit) {
-                    var _doc = new my.Record(hit);
-                    _doc.fields = self.fields;
-                    return _doc;
-                });
-
-                return docs;
+                return self.vModel.getRecords(type);
             }
         },
 
@@ -611,9 +706,7 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
         getFields:function (type) {
             var self = this;
 
-            if (type === 'filtered' || type == null) {
-                return self.fields;
-            } else if (type === 'totals') {
+            if (type === 'totals') {
                 if(self.totals == null)
                     self.rebuildTotals();
 
@@ -624,8 +717,12 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
 
                 return self.totals_unfiltered.fields;
             } else {
-                return self.fields;
+                return self.vModel.getFields(type);
             }
+        },
+
+        fetch: function() {
+            this.initializeCrossfilter();
         },
 
         initializeCrossfilter:function () {
@@ -647,7 +744,16 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
         setDimensions:function (dimensions) {
             this.attributes.aggregation.dimensions = dimensions;
             this.trigger('dimensions:change');
-            this.initializeCrossfilter();
+        },
+
+        setMeasures:function (measures) {
+            this.attributes.aggregation.measures = measures;
+            this.trigger('measures:change');
+        },
+
+        setTotalsMeasures: function(measures) {
+            this.attributes.totals.measures = measures;
+            this.trigger('totals:change');
         },
 
         getDimensions:function () {
@@ -820,13 +926,14 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
             var fields = self.buildFields(reducedResult, originalFields, partitionFields, dimensions, aggregationFunctions);
             var result = self.buildResult(reducedResult, originalFields, partitionFields, dimensions, aggregationFunctions, aggregatedFields, partitions);
 
-            this._store = new recline.Backend.Memory.Store(result, fields);
+            self.vModel.resetFields(fields);
+            self.vModel.resetRecords(result);
 
             recline.Data.FieldsUtility.setFieldsAttributes(fields, self);
-            this.fields.reset(fields, {renderer:recline.Data.Formatters.Renderers});
+
             this.clearUnfilteredTotals();
 
-            this.query();
+            self.vModel.fetch();
 
         },
 
@@ -1081,7 +1188,13 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
                     tempValue = tmpField[aggregationFunctions[j]];
 
                 for (var x in tempValue) {
-                    var originalFieldAttributes = originalFields.get(x).attributes;
+                    var originalField = originalFields.get(x);
+                    if(!originalField)
+                    throw "Virtualmodel: unable to find field ["+x+"] in model";
+
+                    var originalFieldAttributes = originalField.attributes;
+
+
                     var newType = recline.Data.Aggregations.resultingDataType[aggregationFunctions[j]](originalFieldAttributes.type);
 
                     fields.push({
@@ -1152,108 +1265,37 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
         },
 
         query:function (queryObj) {
-
-            var self = this;
-            var dfd = $.Deferred();
-            this.trigger('query:start');
-
+            var self=this;
+            self.trigger('query:start');
             if (queryObj) {
                 this.queryState.set(queryObj, {silent:true});
-            }
-            var actualQuery = this.queryState.toJSON();
-            console.log("VModel [" + self.attributes.name + "] query [" + JSON.stringify(actualQuery) + "]");
-
-            if (this._store == null) {
-                console.log("Warning query called before data has been calculated for virtual model, call fetch on source dataset");
-                return;
             }
 
             self.clearFilteredTotals();
 
-            this._store.query(actualQuery, this.toJSON())
-                .done(function (queryResult) {
-                    self._handleQueryResult(queryResult);
-                    self.trigger('query:done');
-                    dfd.resolve(self.records);
-                })
-                .fail(function (arguments) {
-                    self.trigger('query:fail', arguments);
-                    dfd.reject(arguments);
-                });
-            return dfd.promise();
+            self.vModel.query(queryObj);
+
+            self.recordCount = self.vModel.recordCount;
+
+
+            self.trigger('query:done');
         },
 
         selection:function (queryObj) {
-            var self = this;
-
-            this.trigger('selection:start');
-
-            if (queryObj) {
-                self.queryState.set(queryObj, {silent:true});
-            }
-            var actualQuery = self.queryState
-
-
-            // apply on current records
-            // needed cause memory store is not mandatory
-            recline.Data.Filters.applySelectionsOnData(self.queryState.get('selections'), self.records.models, self.fields);
-
-            self.queryState.trigger('selection:done');
+           return this.vModel.selection(queryObj);
 
         },
-
-        _handleQueryResult:function (queryResult) {
-            var self = this;
-            self.recordCount = queryResult.total;
-            var docs = _.map(queryResult.hits, function (hit) {
-                var _doc = new my.Record(hit);
-                _doc.fields = self.fields;
-                return _doc;
-            });
-
-                self.clearFilteredTotals();
-                self.records.reset(docs);
-
-
-            if (queryResult.facets) {
-                var facets = _.map(queryResult.facets, function (facetResult, facetId) {
-                    facetResult.id = facetId;
-                    var result = new my.Facet(facetResult);
-
-                    self.addColorsToTerms(facetId, result.attributes.terms);
-
-                    return result;
-                });
-                self.facets.reset(facets);
-            }
-
-
-        },
-
 
         setColorSchema:function (type) {
-            var self = this;
-            _.each(self.attributes.colorSchema, function (d) {
-                var field = _.find(self.getFields(type).models, function (f) {
-                    return d.field === f.id
-                });
-                if (field != null)
-                    field.attributes.colorSchema = d.schema;
-            })
+            return this.vModel.setColorSchema(type);
+
         },
 
         setShapeSchema:function (type) {
-            var self = this;
-            _.each(self.attributes.shapeSchema, function (d) {
-                var field = _.find(self.getFields(type).models, function (f) {
-                    return d.field === f.id
-                });
-                if (field != null)
-                    field.attributes.shapeSchema = d.schema;
-            })
+            return this.vModel.setShapeSchema(type);
         },
 
-        addColorsToTerms:function (field, terms) {
+        /*addColorsToTerms:function (field, terms) {
             var self = this;
             _.each(terms, function (t) {
 
@@ -1265,46 +1307,18 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
                     })
                 }
             });
-        },
+        },*/
 
         getFacetByFieldId:function (fieldId) {
-            return _.find(this.facets.models, function (facet) {
-                return facet.id == fieldId;
-            });
+            return this.vModel.getFacetByFieldId(fieldId);
         },
 
         toTemplateJSON:function () {
-            var data = this.records.toJSON();
-            data.recordCount = this.recordCount;
-            data.fields = this.fields.toJSON();
-            return data;
+            return this.vModel.toTemplateJSON();
         },
 
-        // ### getFieldsSummary
-        //
-        // Get a summary for each field in the form of a `Facet`.
-        //
-        // @return null as this is async function. Provides deferred/promise interface.
         getFieldsSummary:function () {
-            // TODO update function in order to manage facets/filter and selection
-
-            var self = this;
-            var query = new my.Query();
-            query.set({size:0});
-
-            var dfd = $.Deferred();
-            this._store.query(query.toJSON(), this.toJSON()).done(function (queryResult) {
-                if (queryResult.facets) {
-                    _.each(queryResult.facets, function (facetResult, facetId) {
-                        facetResult.id = facetId;
-                        var facet = new my.Facet(facetResult);
-                        // TODO: probably want replace rather than reset (i.e. just replace the facet with this id)
-                        self.fields.get(facetId).facets.reset(facet);
-                    });
-                }
-                dfd.resolve(queryResult);
-            });
-            return dfd.promise();
+            return this.vModel.getFieldsSummary();
         },
 
         // Retrieve the list of partitioned field for the specified aggregated field
@@ -1342,13 +1356,322 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
             });
 
             return fields;
+        },
+
+        addCustomFilterLogic: function(f) {
+            return this.vModel.addCustomFilterLogic(f);
         }
+
 
     });
 
 
 }(jQuery, this.recline.Model));
 
+this.recline = this.recline || {};
+
+(function ($, my) {
+
+    my.ActionUtility = {};
+
+
+    my.ActionUtility.doAction = function (actions, eventType, eventData) {
+
+        // find all actions configured for eventType
+        var targetActions = _.filter(actions, function (d) {
+            var tmpFound = _.find(d["event"], function (x) {
+                return x == eventType
+            });
+            if (tmpFound != -1)
+                return true;
+            else
+                return false;
+        });
+
+        // foreach action prepare field
+        _.each(targetActions, function (currentAction) {
+            var mapping = currentAction.mapping;
+            var actionParameters = [];
+            //foreach mapping set destination field
+            _.each(mapping, function (map) {
+                if (eventData[map["srcField"]] == null) {
+                    console.log("warn: sourceField: [" + map["srcField"] + "] not present in event data");
+                } else {
+
+
+                    var param = {
+                        filter:map["filter"],
+                        value:eventData[map["srcField"]]
+                    };
+                    actionParameters.push(param);
+                }
+            });
+
+            if (actionParameters.length > 0) {
+                currentAction.action._internalDoAction(actionParameters);
+            }
+        });
+    },
+
+        my.ActionUtility.getActiveFilters = function (actions) {
+
+            var activeFilters = [];
+            _.each(actions, function (currentAction) {
+                _.each(currentAction.mapping, function (map) {
+                    var currentFilter = currentAction.action.getActiveFilters(map.filter, map.srcField);
+                    if (currentFilter != null && currentFilter.length > 0)
+                        activeFilters = _.union(activeFilters, currentFilter);
+                })
+            });
+
+            return activeFilters;
+        },
+
+// ## <a id="dataset">Action</a>
+        my.Action = Backbone.Model.extend({
+            constructor:function Action() {
+                Backbone.Model.prototype.constructor.apply(this, arguments);
+            },
+
+            initialize:function () {
+
+            },
+
+            doAction:function (records, mapping) {
+                var params = [];
+                mapping.forEach(function (mapp) {
+                    var values = [];
+                    //{srcField: "daydate", filter: "filter_daydate"}
+                    records.forEach(function (row) {
+                        values.push(row.getFieldValueUnrendered({id:mapp.srcField}));
+                    });
+                    params.push({
+                        filter:mapp.filter,
+                        value:values
+                    });
+                });
+                this._internalDoAction(params);
+            },
+
+            doActionWithValues:function (valuesarray, mapping) {
+                var params = [];
+                mapping.forEach(function (mapp) {
+                    var values = [];
+                    //{srcField: "daydate", filter: "filter_daydate"}
+                    _.each(valuesarray, function (row) {
+                        if (row.field === mapp.srcField)
+                            params.push({
+                                filter:mapp.filter,
+                                value:row.value
+                            });
+                    });
+
+                });
+                    this._internalDoAction(params);
+            },
+
+
+            // action could be add/remove
+            _internalDoAction:function (data) {
+                var self = this;
+
+                var filters = this.attributes.filters;
+                var models = this.attributes.models;
+                var type = this.attributes.type;
+
+                var targetFilters = [];
+
+                //populate all filters with data received from event
+                //foreach filter defined in data
+                _.each(data, function (f) {
+                    // filter creation
+                    var currentFilter = filters[f.filter];
+                    if (currentFilter == null) {
+                        throw "Filter " + f.filter + " defined in actions data not configured for action ";
+                    }
+                    currentFilter["name"] = f.filter;
+                    if (self.filters[currentFilter.type] == null)
+                        throw "Filter not implemented for type " + currentFilter.type;
+
+                    targetFilters.push(self.filters[currentFilter.type](currentFilter, f.value));
+
+                });
+
+                // foreach type and dataset add all filters and trigger events
+                _.each(type, function (type) {
+                    _.each(models, function (m) {
+
+                        var modified = false;
+
+                        _.each(targetFilters, function (f) {
+
+                            // verify if filter is associated with current model
+                            if (_.find(m.filters, function (x) {
+                                return x == f.name;
+                            }) != null) {
+                                // if associated add the filter
+
+                                self.modelsAddFilterActions[type](m.model, f);
+                                modified = true;
+
+                            }
+                        });
+
+                        if (modified) {
+                            self.modelsTriggerActions[type](m.model);
+                        }
+                    });
+                });
+
+
+            },
+
+            getActiveFilters:function (filterName, srcField) {
+                var self = this;
+                var models = this.attributes.models;
+                var type = this.attributes.type;
+                var filtersProp = this.attributes.filters;
+
+                // for each type
+                // foreach dataset
+                // get filter
+                // push to result, if already present error
+                var foundFilters = [];
+
+                _.each(type, function (type) {
+                    _.each(models, function (m) {
+                        var usedFilters = _.filter(m.filters, function (f) {
+                            return f == filterName;
+                        });
+                        _.each(usedFilters, function (f) {
+                            // search filter
+                            var filter = filtersProp[f];
+                            if (filter != null) {
+                                var filterOnModel = self.modelsGetFilter[type](m.model, filter.field);
+                                // substitution of fieldname with the one provided by source
+                                if (filterOnModel != null) {
+                                    filterOnModel.field = srcField;
+                                    foundFilters.push(filterOnModel);
+                                }
+                            }
+                        });
+                    });
+                });
+
+
+                return foundFilters;
+            },
+
+
+            modelsGetFilter:{
+                filter:function (model, fieldName) {
+                    return model.queryState.getFilterByFieldName(fieldName);
+                },
+                selection:function (model, fieldName) {
+                    throw "Action.js selection not implemented selection for selection"
+                },
+                sort:function (model, fieldName) {
+                    throw "Action.js sort not implemented selection for sort"
+                }
+            },
+
+            modelsAddFilterActions:{
+                filter:function (model, filter) {
+                    model.queryState.setFilter(filter)
+                },
+                selection:function (model, filter) {
+                    model.queryState.setSelection(filter)
+                },
+                sort:function (model, filter) {
+                    model.queryState.clearSortCondition();
+                    model.queryState.setSortCondition(filter)
+                }
+            },
+
+
+            modelsTriggerActions:{
+                filter:function (model) {
+                    model.queryState.trigger("change")
+                },
+                selection:function (model) {
+                    model.queryState.trigger("selection:change")
+                },
+                sort:function (model) {
+                    model.queryState.trigger("change")
+                }
+            },
+
+            filters:{
+                term:function (filter, data) {
+
+                    if (data.length === 0) {
+                        //empty list
+                        filter["term"] = null;
+                    } else if (data === null) {
+                        //null list
+                        filter["remove"] = true;
+                    } else if (data.length === 1) {
+                        filter["term"] = data[0];
+                    } else {
+                        throw "Data passed for filtertype term not valid. Data lenght should be 1 or empty but is " + data.length;
+                    }
+
+                    return filter;
+                },
+                range:function (filter, data) {
+
+                    if (data.length === 0) {
+                        //empty list
+                        filter["start"] = null;
+                        filter["stop"] = null;
+                    } else if (data[0] === null || data[1] === null) {
+                        //null list
+                        filter["remove"] = true;
+                    } else if (data.length === 2) {
+                        filter["start"] = data[0];
+                        filter["stop"] = data[1];
+                    } else {
+                        throw "Data passed for filtertype range not valid. Data lenght should be 2 but is " + data.length;
+                    }
+
+                    return filter;
+                },
+                list:function (filter, data) {
+
+                    if (data.length === 0) {
+                        //empty list
+                        filter["list"] = null;
+                    } else if (data === null) {
+                        //null list
+                        filter["remove"] = true;
+                    } else {
+                        filter["list"] = data;
+                    }
+
+                    return filter;
+                },
+                sort:function (sort, data) {
+
+                    if (data.length === 0) {
+                        sort = null;
+                    } else if (data.length == 2) {
+                        sort["field"] = data[0];
+                        sort["order"] = data[1];
+                    } else {
+                        throw "Actions.js: invalid data length [" + data + "]";
+                    }
+
+                    return sort;
+                }
+            }
+
+
+
+
+        })
+
+
+}(jQuery, this.recline));
 // # Recline Backbone Models
 this.recline = this.recline || {};
 this.recline.Data = this.recline.Data || {};
@@ -1535,7 +1858,7 @@ this.recline.Data.ColorSchema = this.recline.Data.ColorSchema || {};
             var self = this;
             var ret = [];
 
-            if (dataset.dataset.isFieldPartitioned(dataset.field)) {
+            if (dataset.dataset.isFieldPartitioned && dataset.dataset.isFieldPartitioned(dataset.field)) {
                 var fields = dataset.dataset.getPartitionedFields(dataset.field);
                 _.each(dataset.dataset.getRecords(dataset.type), function (d) {
                     _.each(fields, function (field) {
@@ -1604,6 +1927,210 @@ this.recline.Data.ColorSchema = this.recline.Data.ColorSchema || {};
         });
     };
 }(jQuery, this.recline.Data));
+this.recline = this.recline || {};
+this.recline.Data = this.recline.Data || {};
+
+(function(my) {
+// adapted from https://github.com/harthur/costco. heather rules
+
+my.Filters = {};
+
+    // in place filtering (records.toJSON must be passed)
+    my.Filters.applyFiltersOnData = function(filters, records, fields) {
+        // filter records
+        return _.filter(records, function (record) {
+            var passes = _.map(filters, function (filter) {
+            	return recline.Data.Filters._isNullFilter[filter.type](filter) || recline.Data.Filters._filterFunctions[filter.type](record, filter, fields);
+            });
+
+            // return only these records that pass all filters
+            return _.all(passes, _.identity);
+        });
+    };
+
+    // in place filtering  (records model must be used)
+    my.Filters.applyFiltersOnRecords = function(filters, records, fields) {
+        // filter records
+        return _.filter(records.models, function (record) {
+            var passes = _.map(filters, function (filter) {
+                return recline.Data.Filters._isNullFilter[filter.type](filter) || recline.Data.Filters._filterFunctions[filter.type](record.toJSON(), filter, fields.toJSON());
+            });
+
+            // return only these records that pass all filters
+            return _.all(passes, _.identity);
+        });
+    };
+
+    // data should be {records:[model], fields:[model]}
+    my.Filters.applySelectionsOnData = function(selections, records, fields) {
+        _.each(records, function(currentRecord) {
+            currentRecord.setRecordSelection(false);
+
+            _.each(selections, function(sel) {
+                if(!recline.Data.Filters._isNullFilter[sel.type](sel) &&
+                	recline.Data.Filters._filterFunctions[sel.type](currentRecord.attributes, sel, fields)) {
+                    currentRecord.setRecordSelection(true);
+                }
+            });
+        });
+
+
+    },
+
+    my.Filters._getDataParser =  function(filter, fields) {
+
+        var keyedFields = {};
+        var tmpFields;
+        if(fields.models)
+            tmpFields = fields.models;
+        else
+            tmpFields = fields;
+
+        _.each(tmpFields, function(field) {
+            keyedFields[field.id] = field;
+        });
+
+
+        var field = keyedFields[filter.field];
+        var fieldType = 'string';
+
+        if(field == null) {
+            throw "data.filters.js: Warning could not find field " + filter.field + " for dataset " ;
+        }
+        else {
+            if(field.attributes)
+                fieldType = field.attributes.type;
+            else
+                fieldType = field.type;
+        }
+        return recline.Data.Filters._dataParsers[fieldType];
+    },
+    
+    my.Filters._isNullFilter = {
+    	term: function(filter){
+    		return filter["term"] == null;
+    	},
+    	
+    	range: function(filter){
+    		return (filter["start"]==null || filter["stop"] == null);
+    		
+    	},
+    	
+    	list: function(filter){
+    		return filter["list"] == null;
+    		
+    	},
+        termAdvanced: function(filter){
+            return filter["term"] == null;
+        }
+    },
+
+        // in place filtering
+        this._applyFilters = function(results, queryObj) {
+            var filters = queryObj.filters;
+            // register filters
+            var filterFunctions = {
+                term         : term,
+                range        : range,
+                geo_distance : geo_distance
+            };
+            var dataParsers = {
+                integer: function (e) { return parseFloat(e, 10); },
+                'float': function (e) { return parseFloat(e, 10); },
+                string : function (e) { return e.toString() },
+                date   : function (e) { return new Date(e).valueOf() },
+                datetime   : function (e) { return new Date(e).valueOf() }
+            };
+            var keyedFields = {};
+            _.each(self.fields, function(field) {
+                keyedFields[field.id] = field;
+            });
+            function getDataParser(filter) {
+                var fieldType = keyedFields[filter.field].type || 'string';
+                return dataParsers[fieldType];
+            }
+
+            // filter records
+            return _.filter(results, function (record) {
+                var passes = _.map(filters, function (filter) {
+                    return filterFunctions[filter.type](record, filter);
+                });
+
+                // return only these records that pass all filters
+                return _.all(passes, _.identity);
+            });
+
+
+        };
+
+    my.Filters._filterFunctions = {
+        term: function(record, filter, fields) {
+			var parse = recline.Data.Filters._getDataParser(filter, fields);
+            var value = parse(record[filter.field]);
+            var term  = parse(filter.term);
+
+            return (value === term);
+        },
+
+        range: function (record, filter, fields) {
+            var startnull = (filter.start == null || filter.start === '');
+            var stopnull = (filter.stop == null || filter.stop === '');
+            var parse = recline.Data.Filters._getDataParser(filter, fields);
+            var value = parse(record[filter.field]);
+            var start = parse(filter.start);
+            var stop  = parse(filter.stop);
+
+            // if at least one end of range is set do not allow '' to get through
+            // note that for strings '' <= {any-character} e.g. '' <= 'a'
+            if ((!startnull || !stopnull) && value === '') {
+                return false;
+            }
+            return ((startnull || value >= start) && (stopnull || value <= stop));
+
+        },
+
+        list: function (record, filter, fields) {
+
+            var parse =  recline.Data.Filters._getDataParser(filter, fields);
+            var value = parse(record[filter.field]);
+            var list  = filter.list;
+            _.each(list, function(data, index) {
+                list[index] = parse(data);
+            });
+
+            return (_.contains(list, value));
+        },
+
+        termAdvanced: function(record, filter, fields) {
+            var parse =  recline.Data.Filters._getDataParser(filter, fields);
+            var value = parse(record[filter.field]);
+            var term  = parse(filter.term);
+
+            var operator = filter.operator;
+
+            var operation = {
+                ne: function(value, term) { return value !== term },
+                eq: function(value, term) { return value === term },
+                lt: function(value, term) { return value < term },
+                lte: function(value, term) { return value <= term },
+                gt: function(value, term) { return value > term },
+                gte: function(value, term) { return value >= term },
+                bw: function(value, term) { return _.contains(term, value) }
+            };
+
+            return operation[operator](value, term);
+        }
+    },
+
+    my.Filters._dataParsers = {
+            integer: function (e) { return parseFloat(e, 10); },
+            float: function (e) { return parseFloat(e, 10); },
+            string : function (e) { if(!e) return null; else return e.toString(); },
+            date   : function (e) { return new Date(e).valueOf() },
+            datetime   : function (e) { return new Date(e).valueOf()},
+            number: function (e) { return parseFloat(e, 10); }
+        };
+}(this.recline.Data))
 // # Recline Backbone Models
 this.recline = this.recline || {};
 this.recline.Data = this.recline.Data || {};
@@ -1731,7 +2258,7 @@ this.recline.Data.ShapeSchema = this.recline.Data.ShapeSchema || {};
             var self=this;
             var ret = [];
 
-            if(dataset.dataset.isFieldPartitioned(dataset.field, dataset.type))   {
+            if(dataset.dataset.isFieldPartitioned && dataset.dataset.isFieldPartitioned(dataset.field, dataset.type))   {
                 var fields = dataset.dataset.getPartitionedFields(dataset.field);
             _.each(dataset.dataset.getRecords(dataset.type), function(d) {
                 _.each(fields, function (field) {
@@ -1781,6 +2308,427 @@ this.recline.Data.ShapeSchema = this.recline.Data.ShapeSchema || {};
     };
 
 }(jQuery, this.recline.Data));
+this.recline = this.recline || {};
+this.recline.Backend = this.recline.Backend || {};
+this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
+
+(function ($, my) {
+    my.__type__ = 'Jsonp';
+    // Timeout for request (after this time if no response we error)
+    // Needed because use JSONP so do not receive e.g. 500 errors
+    my.timeout = 30000;
+
+    // ## load
+    //
+    // Load data from a URL
+    //
+    // Returns array of field names and array of arrays for records
+
+    //my.queryStateInMemory = new recline.Model.Query();
+    //my.queryStateOnBackend = new recline.Model.Query();
+
+    // todo has to be merged with query (part is in common)
+    my.fetch = function (dataset) {
+
+        console.log("Fetching data structure " + dataset.url);
+
+        var data = {onlydesc:"true"};
+        return requestJson(dataset, data);
+
+    };
+
+    my.query = function (queryObj, dataset) {
+
+        //var tmpQueryStateInMemory = new recline.Model.Query();
+        //var tmpQueryStateOnBackend = new recline.Model.Query();
+
+
+        //if (dataset.inMemoryQueryFields == null && !queryObj.facets && !dataset.useMemoryStore) {
+        //    dataset.useMemoryStore = [];
+        //} else
+        //    self.useMemoryStore = true;
+
+        /*var filters = queryObj.filters;
+         for (var i = 0; i < filters.length; i++) {
+         // verify if filter is specified in inmemoryfields
+
+         if (_.indexOf(dataset.inMemoryQueryFields, filters[i].field) == -1) {
+         //console.log("filtering " + filters[i].field + " on backend");
+         tmpQueryStateOnBackend.addFilter(filters[i]);
+         }
+         else {
+         //console.log("filtering " + filters[i].field + " on memory");
+         tmpQueryStateInMemory.addFilter(filters[i]);
+         }
+         }
+         tmpQueryStateOnBackend.set({sort: queryObj.sort});
+         tmpQueryStateInMemory.set({sort: queryObj.sort});
+
+         var changedOnBackend = false;
+         var changedOnMemory = false;
+         var changedFacets = false;
+
+         // verify if filters on backend are changed since last query
+         if (self.firstFetchExecuted == null ||
+         !_.isEqual(self.queryStateOnBackend.attributes.filters, tmpQueryStateOnBackend.attributes.filters) ||
+         !_.isEqual(self.queryStateOnBackend.attributes.sort, tmpQueryStateOnBackend.attributes.sort)
+         ) {
+         self.queryStateOnBackend = tmpQueryStateOnBackend;
+         changedOnBackend = true;
+         self.firstFetchExecuted = true;
+         }
+
+         // verify if filters on memory are changed since last query
+         if (dataset.inMemoryQueryFields && dataset.inMemoryQueryFields.length > 0
+         && !_.isEqual(self.queryStateInMemory.attributes.filters, tmpQueryStateInMemory.attributes.filters)
+         && !_.isEqual(self.queryStateInMemory.attributes.sort, tmpQueryStateInMemory.attributes.sort)
+         ) {
+         self.queryStateInMemory = tmpQueryStateInMemory;
+         changedOnMemory = true;
+         }
+
+         // verify if facets are changed
+         if (queryObj.facets && !_.isEqual(self.queryStateInMemory.attributes.facets, queryObj.facets)) {
+         self.queryStateInMemory.attributes.facets = queryObj.facets;
+         changedFacets = true;
+         }
+         */
+
+        //if (changedOnBackend) {
+        var data = buildRequestFromQuery(queryObj);
+        console.log("Querying backend for ");
+        console.log(data);
+        return requestJson(dataset, data, queryObj);
+        //}
+
+        /*if (self.inMemoryStore == null) {
+         throw "No memory store available for in memory query, execute initial load"
+         }*/
+
+        /*var dfd = $.Deferred();
+         dfd.resolve(applyInMemoryFilters());
+         return dfd.promise();
+         */
+
+    };
+
+    function isArrayEquals(a, b) {
+        return !(a < b || b < a);
+    }
+
+    ;
+
+
+    function requestJson(dataset, data, queryObj) {
+        var dfd = $.Deferred();
+
+        var jqxhr = $.ajax({
+            url:dataset.url,
+            dataType:'jsonp',
+            jsonpCallback:dataset.id,
+            data:data,
+            cache:true
+        });
+
+        _wrapInTimeout(jqxhr).done(function (results) {
+
+            // verify if returned data is not an error
+            if (results.results.length != 1 || results.results[0].status.code != 0) {
+                console.log("Error in fetching data: " + results.results[0].status.message + " Statuscode:[" + results.results[0].status.code + "] AdditionalInfo:["+results.results[0].status.additionalInfo+"]");
+
+                dfd.reject(results.results[0].status);
+            } else
+                dfd.resolve(_handleJsonResult(results.results[0].result, queryObj));
+
+        })
+            .fail(function (arguments) {
+                dfd.reject(arguments);
+            });
+
+        return dfd.promise();
+
+    }
+
+    ;
+
+    function _handleJsonResult(data, queryObj) {
+            if (data.data == null) {
+                return {
+                    fields:_handleFieldDescription(data.description),
+                    useMemoryStore:false
+                }
+            }
+            else {
+                var fields = _handleFieldDescription(data.description);
+                var facets = recline.Data.Faceting.computeFacets(data.data, queryObj);
+
+                return {
+                    hits:_normalizeRecords(data.data, fields),
+                    fields: fields,
+                    facets: facets,
+                    useMemoryStore:false,
+                    total: data.data.length
+                }
+            }
+        /*
+         var self = this;
+         var fields;
+         if (data.description) {
+         fields = _handleFieldDescription(data.description);
+         //my.memoryFields = _handleFieldDescription(data.description);
+         }
+
+         // Im fetching only record description
+         if (data.data == null) {
+         return prepareReturnedData(data);
+         }
+
+         var result = data;
+         */
+
+        /*if (my.useMemoryStore) {
+         // check if is the first time I use the memory store
+         my.inMemoryStore = new recline.Backend.Memory.Store(result.data, _handleFieldDescription(result.description));
+         my.data = my.inMemoryStore.data;
+         return applyInMemoryFilters();
+
+         }
+         else {
+         // no need to query on memory, return json data
+         return prepareReturnedData(result);
+         } */
+        //return prepareReturnedData(result);
+    }
+
+    ;
+
+    /*
+     function applyInMemoryFilters() {
+     var self=this;
+     var tmpValue;
+
+     my.inMemoryStore.query(my.queryStateInMemory.toJSON())
+     .done(function (value) {
+     tmpValue = value;
+     tmpValue["fields"] = my.memoryFields;
+     });
+
+
+     return tmpValue;
+     };
+     */
+
+    /*function prepareReturnedData(data) {
+
+        if (data.hits == null)
+
+
+            if (data.data == null) {
+
+                return {
+                    fields:my.memoryFields,
+                    useMemoryStore:false
+                }
+            }
+            else {
+
+                return {
+                    hits:_normalizeRecords(data.data, my.memoryFields),
+                    fields:my.memoryFields,
+                    useMemoryStore:false
+                }
+            }
+
+        return data;
+    }
+
+    ;*/
+
+    // convert each record in native format
+    // todo verify if could cause performance problems
+    function _normalizeRecords(records, fields) {
+
+        _.each(fields, function (f) {
+            if (f != "string")
+                _.each(records, function (r) {
+                    r[f.id] = recline.Data.FormattersMODA[f.type](r[f.id]);
+                })
+        });
+
+        return records;
+
+    }
+
+    ;
+
+
+    // todo should be in backend
+    function getDate(temp) {
+        var tmp = new Date();
+
+        var dateStr = padStr(temp.getFullYear()) + "-" +
+            padStr(1 + temp.getMonth()) + "-" +
+            padStr(temp.getDate()) + " " +
+            padStr(temp.getHours()) + ":" +
+            padStr(temp.getMinutes()) + ":" +
+            padStr(temp.getSeconds());
+        return dateStr;
+    }
+
+    function padStr(i) {
+        return (i < 10) ? "0" + i : "" + i;
+    }
+
+
+    function buildRequestFromQuery(queryObj) {
+
+        var filters = queryObj.filters;
+        var data = [];
+        var multivsep = "~";
+
+
+        // register filters
+        var filterFunctions = {
+            term:function term(filter) {
+                var parse = dataParsers[filter.fieldType];
+                var value = filter.field;
+                var term = parse(filter.term);
+
+                return (value + " eq " + term);
+            }, // field = value
+            termAdvanced:function termAdvanced(filter) {
+                var parse = dataParsers[filter.fieldType];
+                var value = filter.field;
+                var term = parse(filter.term);
+                var operator = filter.operator;
+
+                return (value + " " + operator + " " + term);
+            }, // field (operator) value
+            range:function range(filter) {
+                var parse = dataParsers[filter.fieldType];
+                var value = filter.field;
+                var start = parse(filter.start);
+                var stop = parse(filter.stop);
+                return (value + " lte " + stop + "," + value + " gte " + start);
+
+            }, // field > start and field < end
+            list:function list(filter) {
+                var parse = dataParsers[filter.fieldType];
+                var value = filter.field;
+                var list = filter.list;
+
+                var ret = value + " bw ";
+                for (var i = 0; i < filter.list.length; i++) {
+                    if (i > 0)
+                        ret = ret + multivsep;
+
+                    ret = ret + list[i];
+                }
+
+                return ret;
+
+            }
+        };
+
+        var dataParsers = {
+            number:function (e) {
+                return parseFloat(e, 10);
+            },
+            string:function (e) {
+                return e.toString()
+            },
+            date:function (e) {
+                var tmp = new Date(e);
+                //console.log("---> " + e  + " ---> "+ getDate(tmp)) ;
+                return getDate(tmp);
+
+                // return new Date(e).valueOf()
+            },
+            integer:function (e) {
+                return parseInt(e);
+            }
+        };
+
+        for (var i = 0; i < filters.length; i++) {
+            data.push(filterFunctions[filters[i].type](filters[i]));
+        }
+
+        // build sort options
+        var res = "";
+
+        _.each(queryObj.sort, function (sortObj) {
+            if (res.length > 0)
+                res += ";"
+
+            var fieldName = sortObj.field;
+            res += fieldName;
+            if (sortObj.order) {
+                res += ":" + sortObj.order;
+            }
+
+        });
+
+
+        // filters definitions
+
+
+        var outdata = {};
+        if (data.length > 0)
+            outdata["filters"] = data.toString();
+
+        if (res.length > 0)
+            outdata["orderby"] = res;
+
+        return outdata;
+
+    }
+
+
+    // ## _wrapInTimeout
+    //
+    // Convenience method providing a crude way to catch backend errors on JSONP calls.
+    // Many of backends use JSONP and so will not get error messages and this is
+    // a crude way to catch those errors.
+    var _wrapInTimeout = function (ourFunction) {
+        var dfd = $.Deferred();
+        var timer = setTimeout(function () {
+            dfd.reject({
+                message:'Request Error: Backend did not respond after ' + (my.timeout / 1000) + ' seconds'
+            });
+        }, my.timeout);
+        ourFunction.done(function (arguments) {
+            clearTimeout(timer);
+            dfd.resolve(arguments);
+        })
+            .fail(function (arguments) {
+                clearTimeout(timer);
+                dfd.reject(arguments);
+            })
+        ;
+        return dfd.promise();
+    }
+
+    function _handleFieldDescription(description) {
+
+        var dataMapping = {
+            STRING:"string",
+            DATE:"date",
+            INTEGER:"integer",
+            DOUBLE:"number"
+        };
+
+
+        var res = [];
+        for (var k in description) {
+
+            res.push({id:k, type:dataMapping[description[k]]});
+        }
+
+        return res;
+    }
+
+
+}(jQuery, this.recline.Backend.Jsonp));
 this.recline = this.recline || {};
 this.recline.View = this.recline.View || {};
 
@@ -1888,7 +2836,7 @@ this.recline.View = this.recline.View || {};
                 var field = this.model.fields.get(self.options.groupBy);
 
                 if (!facets) {
-                    throw "ComposedView: no facet present for groupby field [" + this.attributes.dimension + "]. Define a facet on the model before view render";
+                    throw "ComposedView: no facet present for groupby field [" + self.options.groupBy + "]. Define a facet on the model before view render";
                 }
 
                 _.each(facets.attributes.terms, function (t) {
@@ -2112,7 +3060,7 @@ this.recline.View = this.recline.View || {};
                 var data = recline.Data.Formatters.Renderers(unrenderedValue, tmpField);
                 var template = templates.templatePercentage;
                 if (condensed == true)
-                	template = templates.templatePercentageCondensed;
+                	template = templates.templateCondensed;
                 
                 return {data:data, template:template, unrenderedValue: unrenderedValue, percentageMsg: "% of total: "};
             },
@@ -2122,17 +3070,17 @@ this.recline.View = this.recline.View || {};
                 var data = recline.Data.Formatters.Renderers( unrenderedValue, tmpField);
                 var template = templates.templatePercentage;
                 if (condensed == true)
-                	template = templates.templatePercentageCondensed;
+                	template = templates.templateCondensed;
 
                 return {data:data, template:template, unrenderedValue: unrenderedValue, percentageMsg: "% variation: "};
             },
             nocompare: function (kpi, compare, templates, condensed){
                 var template = templates.templateBase;
                 if (condensed == true)
-                	template = templates.templateBaseCondensed;
+                	template = templates.templateCondensed;
             	
                 return {data:null, template:template, unrenderedValue:null};
-            },
+            }
 
 
         },
@@ -2145,26 +3093,63 @@ this.recline.View = this.recline.View || {};
 			<table class="indicator-table"> \
                 <tr class="titlerow"><td></td><td style="text-align: center;" class="title">{{{label}}}</td></tr>    \
                 <tr class="descriptionrow"><td></td><td style="text-align: center;" class="description"><small>{{description}}</small></td></tr>    \
-                <tr class="shaperow"><td><div class="shape">{{{shape}}}</div><div class="compareshape">{{{compareShape}}}</div></td><td class="value-cell">{{value}}</td></tr>  \
+                <tr class="shaperow"> \
+	   				<td><div class="shape">{{{shape}}}</div> \
+	   				<div class="compareshape">{{{compareShape}}}</div> \
+	   				</td><td class="value-cell">{{value}}</td></tr>  \
              </table>  \
 		</div>\
       </div> \
     </div> ',
-    templateBaseCondensed:
-   '<div class="indicator" style="width:100%;"> \
+    templateBaseCondensed_old:
+	'<div class="indicator " style="width:100%;"> \
 	    <div class="panel indicator_{{viewId}}" style="width:100%;"> \
-	      <div id="indicator_{{viewId}}" class="indicator-container well" style="width:85%;"> \
-			<fieldset style="width:100%;"> \
-				<legend style="width:100%;"> \
-                <div class="value-cell" style="float:left">{{value}}</div> \
-				<div class="compareshape" style="float:right">{{{compareShape}}}</div> \
-                <div class="shape" style="float:right">{{{shape}}}</div> \
-				</legend> \
-                <div style="text-align:justify;width:100%;" class="title">{{{label}}}</div>\
-			</fieldset> \
+    		<div id="indicator_{{viewId}}" class="indicator-container well" style="width:85%;"> \
+    			<div style="width:100%;margin-left:5px"> \
+	                <div class="value-cell" style="float:left">{{value}}</div> \
+    				{{#compareShape}} \
+					<div class="compareshape" style="float:right">{{{compareShape}}}</div> \
+    				{{/compareShape}} \
+	   				{{#shape}} \
+	                <div class="shape" style="float:right">{{{shape}}}</div> \
+	   				{{/shape}} \
+				</div> \
+    			<div style="width:100%;padding-top:10px"><hr></div> \
+                <div style="text-align:justify;width:100%;margin-right:8px" class="title">{{{label}}}</div>\
 			</div> \
 	    </div> \
-    </div>'
+    </div>',
+    templateCondensed:
+        '<style> \
+        .round-border { \
+    	    border: 1px solid #DDDDDD; \
+    	    border-radius: 4px 4px 4px 4px; \
+    		background-color: lightcyan; \
+        } \
+        .round-border-dark { \
+    	    border: 1px solid #808080; \
+    	    border-radius: 4px 4px 4px 4px; \
+    		margin:3px; \
+    		height: 30px; \
+        } \
+    	</style> \
+        	<div class="indicator round-border-dark" > \
+    	    <div class="panel indicator_{{viewId}}" > \
+        		<div id="indicator_{{viewId}}" class="indicator-container" > \
+        			<div class="round-border" style="float:left;margin:2px 2px 0px 2px"> \
+    					{{#compareShape}} \
+    					<div class="compareshape" style="float:left">{{{compareShape}}}</div> \
+    					{{/compareShape}} \
+						{{#shape}} \
+    	                <div class="shape" style="float:left">{{{shape}}}</div> \
+    					{{/shape}} \
+        				<div class="value-cell" style="float:left">{{value}}</div> \
+    				</div> \
+                    <div style="text-align:justify;float:left;margin-right:8px" class="title">&nbsp;&nbsp;{{{label}}}</div>\
+    			</div> \
+    	    </div> \
+        </div>'
+
 ,
    templatePercentage:
    '<div class="indicator"> \
@@ -2178,22 +3163,7 @@ this.recline.View = this.recline.View || {};
              </table>  \
 		</div>\
       </div> \
-    </div> ',
-    templatePercentageCondensed:
-    	   '<div class="indicator" style="width:100%;"> \
-	    <div class="panel indicator_{{viewId}}" style="width:100%;"> \
-	      <div id="indicator_{{viewId}}" class="indicator-container well" style="width:85%;"> \
-			<fieldset style="width:100%;"> \
-				<legend style="width:100%;"> \
-                <div class="value-cell" style="float:left">{{value}}</div> \
-    			<div class="compareshape" style="float:right">{{{compareShape}}}</div> \
-                <div class="shape" style="float:right">{{{shape}}}</div> \
-				</legend> \
-                <div style="text-align:justify;width:100%;" class="title">{{{label}}}</div>\
-    			</fieldset> \
-    		</div> \
-	    </div> \
-    </div>'
+    </div> '
         },
         initialize:function (options) {
             var self = this;
@@ -2251,48 +3221,55 @@ this.recline.View = this.recline.View || {};
 
             var template = this.templates.templateBase;
             if (self.options.state.condensed == true)
-            	template = self.templates.templateBaseCondensed;            
+            	template = self.templates.templateCondensed;            
 
             if (self.options.state.compareWith) {
                 var compareWithRecord = self.model.getRecords(self.options.state.compareWith.type);
-                var compareWithField;
 
-                if (self.options.state.kpi.aggr)
-                    compareWithField = self.model.getField_byAggregationFunction(self.options.state.compareWith.type, self.options.state.compareWith.field, self.options.state.compareWith.aggr);
-                else
-                    compareWithField = self.options.model.getFields(self.options.state.compareWith.type).get(self.options.state.compareWith.field);
+                if(compareWithRecord.length > 0) {
+                    var compareWithField;
 
-                if (!compareWithField)
-                    throw "View.Indicator: unable to find field [" + self.options.state.compareWith.field + "] on model"
+                    if (self.options.state.kpi.aggr)
+                        compareWithField = self.model.getField_byAggregationFunction(self.options.state.compareWith.type, self.options.state.compareWith.field, self.options.state.compareWith.aggr);
+                    else
+                        compareWithField = self.options.model.getFields(self.options.state.compareWith.type).get(self.options.state.compareWith.field);
 
-                tmplData["compareWithValue"] = compareWithRecord[0].getFieldValue(compareWithField);
-                var compareWithValue = compareWithRecord[0].getFieldValueUnrendered(compareWithField);
+                    if (!compareWithField)
+                        throw "View.Indicator: unable to find field [" + self.options.state.compareWith.field + "] on model"
 
-                var compareValue;
 
-                var compareValue = self.compareType[self.options.state.compareWith.compareType](kpiValue, compareWithValue, self.templates, self.options.state.condensed);
-                if(!compareValue)
-                    throw "View.Indicator: unable to find compareType [" + self.options.state.compareWith.compareType + "]";
+                    tmplData["compareWithValue"] = compareWithRecord[0].getFieldValue(compareWithField);
+                    var compareWithValue = compareWithRecord[0].getFieldValueUnrendered(compareWithField);
 
-                tmplData["compareValue"] = compareValue.data;
+                    var compareValue;
 
-                if(self.options.state.compareWith.shapes) {
-                    if(compareValue.unrenderedValue == 0)
-                        tmplData["compareShape"] = self.options.state.compareWith.shapes.constant;
-                    else if(compareValue.unrenderedValue > 0)
-                        tmplData["compareShape"] = self.options.state.compareWith.shapes.increase;
-                    else if(compareValue.unrenderedValue < 0)
-                        tmplData["compareShape"] = self.options.state.compareWith.shapes.decrease;
+                    var compareValue = self.compareType[self.options.state.compareWith.compareType](kpiValue, compareWithValue, self.templates, self.options.state.condensed);
+                    if(!compareValue)
+                        throw "View.Indicator: unable to find compareType [" + self.options.state.compareWith.compareType + "]";
+
+                    tmplData["compareValue"] = compareValue.data;
+
+                    if(self.options.state.compareWith.shapes) {
+                        if(compareValue.unrenderedValue == 0)
+                            tmplData["compareShape"] = self.options.state.compareWith.shapes.constant;
+                        else if(compareValue.unrenderedValue > 0)
+                            tmplData["compareShape"] = self.options.state.compareWith.shapes.increase;
+                        else if(compareValue.unrenderedValue < 0)
+                            tmplData["compareShape"] = self.options.state.compareWith.shapes.decrease;
+                    }
+
+                    if(compareValue.template)
+                        template = compareValue.template;
                 }
-
-                if(compareValue.template)
-                    template = compareValue.template;
             }
+            if ((tmplData["shape"] == null || typeof tmplData["shape"] == "undefined") 
+            	&& (tmplData["compareShape"] == null || typeof tmplData["compareShape"] == "undefined"))
+            	tmplData["compareShape"] = " " // ensure the space is filled
 
             if (this.options.state.description)
                 tmplData["description"] = this.options.state.description;
             
-            if (compareValue.percentageMsg)
+            if (compareValue && compareValue.percentageMsg)
             	tmplData["percentageMsg"] = compareValue.percentageMsg; 
 
             var htmls = Mustache.render(template, tmplData);
@@ -2786,7 +3763,6 @@ this.recline.View = this.recline.View || {};
                 chart.yAxis
                     .axisLabel(yLabel)
                     .tickFormat(d3.format('s'));
-
             }
         },
 
@@ -2888,6 +3864,19 @@ this.recline.View = this.recline.View || {};
                 else
                     chart = nv.models.multiBarHorizontalChart();
                 view.setAxis("all", chart);
+
+                return chart;
+            },
+            "multiBarHorizontalChart2":function (view) {
+                var chart;
+                if (view.chart != null)
+                    chart = view.chart;
+                else
+                    chart = nv.models.multiBarHorizontalChart();
+                
+                // remove ticks on Y axis (NOTE Y axis ticks are on xAxis for this chart type)
+                chart.xAxis.tickFormat(function (d) { return ''; });
+
                 return chart;
             },
             "legend":function (view) {
@@ -3393,11 +4382,19 @@ this.recline.View = this.recline.View || {};
 
             self.graph = new Rickshaw.Graph(self.graphOptions);
 
+            if(self.options.state.unstack) {
+                self.graph .renderer.unstack = true;
+            }
+
+
             self.graph.render();
 
-            var hoverDetail = new Rickshaw.Graph.HoverDetail({
-                graph:self.graph
-            });
+            var hoverDetailOpt = { graph: self.graph };
+            hoverDetailOpt = _.extend(hoverDetailOpt, self.options.state.hoverDetailOpt);
+
+
+
+            var hoverDetail = new Rickshaw.Graph.HoverDetail(hoverDetailOpt);
 
             var xAxisOpt = { graph: self.graph };
             xAxisOpt = _.extend(xAxisOpt, self.options.state.xAxisOptions);
@@ -3405,6 +4402,7 @@ this.recline.View = this.recline.View || {};
 
 
             var xAxis = new Rickshaw.Graph.Axis.Time(xAxisOpt);
+
 
             xAxis.render();
 
@@ -3439,10 +4437,10 @@ this.recline.View = this.recline.View || {};
 
             }
 
-            if (self.options.legend) {
+            if (self.options.state.legend) {
                 var legend = new Rickshaw.Graph.Legend({
                     graph:self.graph,
-                    element:document.querySelector('#' + self.options.legend)
+                    element:document.querySelector('#' + self.options.state.legend)
                 });
 
                 var shelving = new Rickshaw.Graph.Behavior.Series.Toggle({
@@ -3478,12 +4476,6 @@ this.recline.View = this.recline.View || {};
 
             var fillEmptyValuesWith = seriesAttr.fillEmptyValuesWith;
 
-            //var seriesNameField = self.model.fields.get(this.state.attributes.seriesNameField) ;
-            //var seriesValues = self.model.fields.get(this.state.attributes.seriesValues);
-            //if(seriesValues == null)
-            //var seriesValues = this.state.get("seriesValues") ;
-
-
             var unselectedColor = "#C0C0C0";
             if (self.options.state.unselectedColor)
                 unselectedColor = self.options.state.unselectedColor;
@@ -3513,6 +4505,12 @@ this.recline.View = this.recline.View || {};
                 var seriesNameField = self.model.fields.get(seriesAttr.seriesField);
                 var fieldValue = self.model.fields.get(seriesAttr.valuesField);
 
+
+                if(!fieldValue) {
+                    throw "view.rickshaw: unable to find field ["+seriesAttr.valuesField+"] in model"
+                }
+
+
                 _.each(records, function (doc, index) {
 
                     // key is the field that identiy the value that "build" series
@@ -3524,9 +4522,10 @@ this.recline.View = this.recline.View || {};
                         tmpS = seriesTmp[key]
                     }
                     else {
-                        tmpS = {name:key, data:[]};
+                        tmpS = {name:key, data:[], field: fieldValue};
 
                         var color = doc.getFieldColor(seriesNameField);
+
 
                         if (color != null)
                             tmpS["color"] = color;
@@ -3535,11 +4534,13 @@ this.recline.View = this.recline.View || {};
                     }
                     var shape = doc.getFieldShapeName(seriesNameField);
 
-                    var x = doc.getFieldValueUnrendered(xfield);
+                    var x =  Math.floor(doc.getFieldValueUnrendered(xfield) / 1000); // rickshaw don't use millis
+                    var x_formatted = doc.getFieldValue(xfield);
                     var y = doc.getFieldValueUnrendered(fieldValue);
+                    var y_formatted = doc.getFieldValue(fieldValue);
 
 
-                    var point = {x:x, y:y, record:doc};
+                    var point = {x:x, y:y, record:doc, y_formatted: y_formatted, x_formatted: x_formatted};
                     if (sizeField)
                         point["size"] = doc.getFieldValueUnrendered(sizeField);
                     if (shape != null)
@@ -3565,8 +4566,9 @@ this.recline.View = this.recline.View || {};
                 var serieNames;
 
                 // if partitions are active we need to retrieve the list of partitions
-                if (seriesAttr.type == "byFieldName")
+                if (seriesAttr.type == "byFieldName") {
                     serieNames = seriesAttr.valuesField;
+                }
                 else {
                     serieNames = [];
                     _.each(seriesAttr.aggregationFunctions, function (a) {
@@ -3579,31 +4581,45 @@ this.recline.View = this.recline.View || {};
                 }
 
                 _.each(serieNames, function (field) {
-                    var yfield = self.model.fields.get(field);
+
+                    var yfield;
+                    if(seriesAttr.type == "byFieldName")
+                        yfield = self.model.fields.get(field.fieldName);
+                    else
+                        yfield = self.model.fields.get(field);
+
+                    var fixedColor;
+                    if(field.fieldColor)
+                        fixedColor =field.fieldColor;
 
                     var points = [];
 
                     _.each(records, function (doc, index) {
+                        var x           =  Math.floor(doc.getFieldValueUnrendered(xfield) / 1000); // rickshaw don't use millis
+                        var x_formatted =  doc.getFieldValue(xfield); // rickshaw don't use millis
 
-                        var x = doc.getFieldValueUnrendered(xfield);
 
                         try {
 
                             var y = doc.getFieldValueUnrendered(yfield);
+                            var y_formatted = doc.getFieldValue(yfield);
+
                             if (y != null) {
                                 var color;
 
+                                var calculatedColor = doc.getFieldColor(yfield);
+
                                 if (selectionActive) {
                                     if (doc.isRecordSelected())
-                                        color = doc.getFieldColor(yfield);
+                                        color =calculatedColor;
                                     else
                                         color = unselectedColor;
                                 } else
-                                    color = doc.getFieldColor(yfield);
+                                    color = calculatedColor;
 
                                 var shape = doc.getFieldShapeName(yfield);
 
-                                var point = {x:x, y:y, record:doc};
+                                var point = {x:x, y:y, record:doc, y_formatted: y_formatted, x_formatted: x_formatted};
 
                                 if (color != null)
                                     point["color"] = color;
@@ -3627,7 +4643,11 @@ this.recline.View = this.recline.View || {};
                     });
 
                     if (points.length > 0)  {
-                        var color = yfield.getColorForPartition();
+                        var color;
+                            if(fixedColor)
+                                color = fixedColor;
+                        else
+                                color = yfield.getColorForPartition();
                         var ret = {data:points, name:self.getFieldLabel(yfield)};
                         if(color)
                             ret["color"] = color;
@@ -3676,6 +4696,2286 @@ this.recline.View = this.recline.View || {};
 
     });
 })(jQuery, recline.View);this.recline = this.recline || {};
+this.recline.View = this.recline.View || {};
+
+(function ($, view) {
+
+    "use strict";
+
+    view.DatePicker = Backbone.View.extend({
+
+
+        template:'<div style="width: 230px;" id="datepicker-calendar-{{uid}}"></div>',
+
+
+        initialize:function (options) {
+
+            this.el = $(this.el);
+            _.bindAll(this, 'render', 'redraw', 'redrawCompare');
+
+
+                this.model.bind('query:done', this.redraw);
+                this.model.queryState.bind('selection:done', this.redraw);
+
+            if(this.options.compareModel) {
+                this.options.compareModel.bind('query:done', this.redrawCompare);
+                this.options.compareModel.queryState.bind('selection:done', this.redrawCompare);
+            }
+
+            $(window).resize(this.resize);
+            this.uid = options.id || (new Date().getTime() + Math.floor(Math.random() * 10000)); // generating an unique id
+
+            var out = Mustache.render(this.template, this);
+            this.el.html(out);
+
+        },
+
+        daterange: {
+            yesterday: "day",
+            lastweeks: "week",
+            lastdays: "day",
+            lastmonths: "month",
+            lastquarters: "quarter",
+            lastyears: "year",
+            previousyear: "year",
+            custom: "day"
+        },
+
+
+        //previousperiod
+
+        onChange: function(view) {
+            var exec = function (data, widget) {
+
+            var actions = view.getActionsForEvent("selection");
+
+            if (actions.length > 0) {
+                var startDate= new Date(data.dr1from_millis);
+                var endDate= new Date(data.dr1to_millis);
+                var rangetype = view.daterange[data.daterangePreset];
+
+                var value =   [
+                    {field: "date", value: [startDate, endDate]},
+                    {field: "rangetype", value: [rangetype]}
+                ];
+
+                view.doActions(actions, value );
+            }
+
+
+
+            var actions_compare = view.getActionsForEvent("selection_compare");
+
+            if (actions_compare.length > 0) {
+                var rangetype = view.daterange[data.daterangePreset];
+                if(data.comparisonPreset != "previousperiod")
+                    rangetype = view.daterange[data.comparisonPreset];
+
+                var date_compare = [{field: "date", value: [null, null]}];
+
+                if (data.comparisonEnabled) {
+                    var startDate= new Date(data.dr2from_millis);
+                    var endDate= new Date(data.dr2to_millis);
+                    if(startDate != null && endDate != null)
+                        var date_compare =   [
+                            {field: "date", value: [startDate, endDate]},
+                            {field: "rangetype", value: [rangetype]}
+                        ];
+                }
+
+                view.doActions(actions_compare, date_compare);
+            }
+
+        }
+            return exec;
+        },
+
+        doActions:function (actions, values) {
+
+            _.each(actions, function (d) {
+                d.action.doActionWithValues(values, d.mapping);
+            });
+
+        },
+
+        render:function () {
+            var self = this;
+            var uid = this.uid;
+
+            self.datepicker = $('#datepicker-calendar-' + uid).DateRangesWidget(
+                {
+                    aggregations:[],
+                    values:{
+                        comparisonEnabled:false,
+                        daterangePreset:"lastweeks",
+                        comparisonPreset:"previousperiod"
+                    },
+                    onChange: self.onChange(self)
+
+                });
+
+            self.redraw();
+            self.redrawCompare();
+
+        },
+
+        redraw:function () {
+            console.log("Widget.datepicker: redraw");
+            // todo must use dateranges methods
+
+           if(!this.model) return;
+
+            var self=this;
+
+            var period = $('.date-ranges-picker').DatePickerGetDate()[0];
+
+            var f = self.model.queryState.getFilterByFieldName(self.options.fields.date)
+                if(f && f.type == "range") {
+                    period[0] = new Date(f.start);
+                    period[1] = new Date(f.stop);
+                }
+            var f = self.model.queryState.getFilterByFieldName(self.options.fields.type)
+            if(f && f.type == "term") {
+                // check custom weeks/month
+
+            }
+
+
+            var values = self.datepicker.data("DateRangesWidget").options.values;
+
+
+            if(!period[0] || !period[1]) {
+                values.dr1from = "N/A";
+                values.dr1from_millis = "";
+                values.dr1to = "N/A";
+                values.dr1to_millis = "";
+            }
+            else {
+                values.daterangePreset = "custom";
+                values.dr1from = period[0].getDate() + '/' + (period[0].getMonth()+1) + '/' + period[0].getFullYear();
+                values.dr1from_millis = (new Date(period[0])).getTime();
+                values.dr1to = period[1].getDate() + '/' + (period[1].getMonth()+1) + '/' + period[1].getFullYear();
+                values.dr1to_millis = (new Date(period[1])).getTime();
+            }
+
+
+            $('.date-ranges-picker').DatePickerSetDate(period, true);
+
+            if (values.dr1from && values.dr1to) {
+                $('span.main', self.datepicker).text(values.dr1from + ' - ' + values.dr1to);
+            }
+            $('.dr1.from', self.datepicker).val(values.dr1from);
+            $('.dr1.to', self.datepicker).val(values.dr1to);
+            $('.dr1.from_millis', self.datepicker).val(values.dr1from_millis);
+            $('.dr1.to_millis', self.datepicker).val(values.dr1to_millis);
+
+
+        },
+
+        redrawCompare:function () {
+            console.log("Widget.datepicker: redrawcompare");
+            var self=this;
+
+            var period = $('.date-ranges-picker').DatePickerGetDate()[0];
+
+            if(this.options.compareModel) {
+                var f = self.options.compareModel.queryState.getFilterByFieldName(self.options.compareFields.date)
+                if(f && f.type == "range") {
+                    period[2] = new Date(f.start);
+                    period[3] = new Date(f.stop);
+                }
+                var f = self.model.queryState.getFilterByFieldName(self.options.fields.type)
+                if(f && f.type == "term") {
+                    // check custom weeks/month
+
+                }
+                var values = self.datepicker.data("DateRangesWidget").options.values;
+
+                if(period[2] && period[3]) {
+                    values.comparisonEnabled = true;
+                    values.comparisonPreset = "custom"
+                    values.dr2from = period[2].getDate() + '/' + (period[2].getMonth()+1) + '/' + period[2].getFullYear();
+                    values.dr2from_millis = (new Date(period[2])).getTime();
+                    values.dr2to = period[3].getDate() + '/' + (period[3].getMonth()+1) + '/' + period[3].getFullYear();
+                    values.dr2to_millis = (new Date(period[3])).getTime();
+                } else
+                {
+                    values.comparisonEnabled = false;
+                    values.dr2from = "N/A";
+                    values.dr2from_millis = "";
+                    values.dr2to = "N/A";
+                    values.dr2to_millis = "";
+                }
+
+                $('.date-ranges-picker').DatePickerSetDate(period, true);
+
+                if (values.comparisonEnabled && values.dr2from && values.dr2to) {
+                    $('span.comparison', self.datepicker).text(values.dr2from + ' - ' + values.dr2to);
+                    $('span.comparison', self.datepicker).show();
+                    $('span.comparison-divider', self.datepicker).show();
+                } else {
+                    $('span.comparison-divider', self.datepicker).hide();
+                    $('span.comparison', self.datepicker).hide();
+                }
+
+                $('.dr2.from', self.datepicker).val(values.dr2from );
+                $('.dr2.to', self.datepicker).val(values.dr2to);
+
+                $('.dr2.from_millis', self.datepicker).val(values.dr2from_millis);
+                $('.dr2.to_millis', self.datepicker).val(values.dr2to_millis);
+
+            }
+        },
+
+
+
+        getActionsForEvent:function (eventType) {
+            var actions = [];
+
+            _.each(this.options.actions, function (d) {
+                if (_.contains(d.event, eventType))
+                    actions.push(d);
+            });
+
+            return actions;
+        }
+
+
+    });
+})(jQuery, recline.View);/*jshint multistr:true */
+this.recline = this.recline || {};
+this.recline.View = this.recline.View || {};
+
+(function ($, my) {
+
+    my.GenericFilter = Backbone.View.extend({
+        className:'recline-filter-editor well',
+        template:'<div class="filters" style="background-color:{{backgroundColor}}"> \
+      <div class="form-stacked js-edit"> \
+	  	<div class="label label-info" style="display:{{titlePresent}}" > \
+		  	<h4>{{filterDialogTitle}}</h4> \
+		  	{{filterDialogDescription}} \
+	  	</div> \
+        {{#filters}} \
+          {{{filterRender}}} \
+		  <hr style="display:{{hrVisible}}"> \
+        {{/filters}} \
+      </div> \
+    </div>',
+        templateHoriz:'<style> .separated-item { padding-left:20px;padding-right:20px; } </style> <div class="filters" style="background-color:{{backgroundColor}}"> \
+      <table > \
+	  	<tbody> \
+	  		<tr>\
+	  			<td class="separated-item" style="display:{{titlePresent}}">\
+				  	<div class="label label-info"> \
+					  	<h4>{{filterDialogTitle}}</h4> \
+					  	{{filterDialogDescription}} \
+				  	</div> \
+				</td>\
+			  	{{#filters}} \
+			  	<td class="separated-item">\
+          			{{{filterRender}}} \
+          		</td>\
+  				{{/filters}} \
+        	</tr>\
+  		</tbody>\
+  	   </table> \
+    </div> ',
+        filterTemplates:{
+            term:' \
+      <div class="filter-{{type}} filter" id="{{ctrlId}}"> \
+        <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
+            <legend style="display:{{useLegend}}">{{label}}</legend>  \
+    		<div style="float:left;padding-right:10px;padding-top:2px;display:{{useLeftLabel}}">{{label}}</div> \
+          <input type="text" value="{{term}}" name="term" class="data-control-id" /> \
+          <input type="button" class="btn" id="setFilterValueButton" value="Set"></input> \
+        </fieldset> \
+      </div> \
+    ',
+            slider:' \
+	<script> \
+		$(document).ready(function(){ \
+			$( "#slider{{ctrlId}}" ).slider({ \
+				min: {{min}}, \
+				max: {{max}}, \
+				value: {{term}}, \
+				slide: function( event, ui ) { \
+					$( "#amount{{ctrlId}}" ).html( "{{label}}: "+ ui.value ); \
+				} \
+			}); \
+			$( "#amount{{ctrlId}}" ).html( "{{label}}: "+ $( "#slider{{ctrlId}}" ).slider( "value" ) ); \
+		}); \
+	</script> \
+      <div class="filter-{{type}} filter" id="{{ctrlId}}" style="min-width:100px"> \
+        <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
+            <legend style="display:{{useLegend}}">{{label}} \
+			<a class="js-remove-filter" href="#" title="Remove this filter">&times;</a> \
+		</legend>  \
+		  <label id="amount{{ctrlId}}">{{label}}: </label> \
+		  <div id="slider{{ctrlId}}" class="data-control-id"></div> \
+		  <br> \
+          <input type="button" class="btn" id="setFilterValueButton" value="Set"></input> \
+        </fieldset> \
+      </div> \
+    ',
+            slider_styled:' \
+	<style> \
+		 .layout-slider { padding-bottom:15px;width:150px } \
+	</style> \
+	<script> \
+		$(document).ready(function(){ \
+			$( "#slider{{ctrlId}}" ).jslider({ \
+				from: {{min}}, \
+				to: {{max}}, \
+				scale: [{{min}},"|","{{step1}}","|","{{mean}}","|","{{step3}}","|",{{max}}], \
+				step: {{step}}, \
+				limits: false, \
+				skin: "plastic" \
+			}); \
+		}); \
+	</script> \
+      <div class="filter-{{type}} filter" id="{{ctrlId}}"> \
+        <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
+            <legend style="display:{{useLegend}}">{{label}} \
+			<a class="js-remove-filter" href="#" title="Remove this filter">&times;</a> \
+		</legend>  \
+		<div style="float:left;padding-right:15px;display:{{useLeftLabel}}">{{label}} \
+			<a class="js-remove-filter" href="#" title="Remove this filter">&times;</a> \
+		</div> \
+	    <div style="float:left" class="layout-slider" > \
+	    	<input type="slider" id="slider{{ctrlId}}" value="{{term}}" class="slider-styled data-control-id" /> \
+	    </div> \
+        </fieldset> \
+      </div> \
+    ',
+            range:' \
+      <div class="filter-{{type}} filter" id="{{ctrlId}}"> \
+        <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
+            <legend style="display:{{useLegend}}">{{label}}</legend>  \
+          <label class="control-label" for="">From</label> \
+          <input type="text" value="{{start}}" name="start"  class="data-control-id-from" style="width:auto"/> \
+          <label class="control-label" for="">To</label> \
+          <input type="text" value="{{stop}}" name="stop" class="data-control-id-to"  style="width:auto"/> \
+		  <br> \
+          <input type="button" class="btn" id="setFilterValueButton" value="Set"></input> \
+        </fieldset> \
+      </div> \
+    ',
+            range_slider:' \
+	<script> \
+		$(document).ready(function(){ \
+			$( "#slider-range{{ctrlId}}" ).slider({ \
+				range: true, \
+				min: {{min}}, \
+				max: {{max}}, \
+				values: [ {{from}}, {{to}} ], \
+				slide: function( event, ui ) { \
+					$( "#amount{{ctrlId}}" ).html(  "{{label}}: " + ui.values[ 0 ] + " - " + ui.values[ 1 ] ); \
+				} \
+			}); \
+			$( "#amount{{ctrlId}}" ).html(  "{{label}}: " + $( "#slider-range{{ctrlId}}" ).slider( "values", 0 ) + " - " + $( "#slider-range{{ctrlId}}" ).slider( "values", 1 ) ); \
+		}); \
+	</script> \
+      <div class="filter-{{type}} filter" id="{{ctrlId}}" style="min-width:100px"> \
+        <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
+            <legend style="display:{{useLegend}}">{{label}}</legend>  \
+		  <label id="amount{{ctrlId}}">{{label}} range: </label> \
+		  <div id="slider-range{{ctrlId}}" class="data-control-id" ></div> \
+		  <br> \
+          <input type="button" class="btn" id="setFilterValueButton" value="Set"></input> \
+        </fieldset> \
+      </div> \
+    ',
+            range_slider_styled:' \
+	<style> \
+	 .layout-slider { padding-bottom:15px;width:150px } \
+	</style> \
+	<script> \
+		$(document).ready(function(){ \
+			$( "#slider{{ctrlId}}" ).jslider({ \
+				from: {{min}}, \
+				to: {{max}}, \
+				scale: [{{min}},"|","{{step1}}","|","{{mean}}","|","{{step3}}","|",{{max}}], \
+				limits: false, \
+				step: {{step}}, \
+				skin: "round_plastic", \
+			}); \
+		}); \
+	</script> \
+      <div class="filter-{{type}} filter" id="{{ctrlId}}"> \
+        <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
+            <legend style="display:{{useLegend}}">{{label}} \
+		</legend>  \
+		<div style="float:left;padding-right:15px;display:{{useLeftLabel}}">{{label}}</div> \
+	    <div style="float:left" class="layout-slider" > \
+	    	<input type="slider" id="slider{{ctrlId}}" value="{{from}};{{to}}" class="slider-styled data-control-id" /> \
+	    </div> \
+        </fieldset> \
+      </div> \
+    ',
+            month_week_calendar:' \
+	  <style> \
+		.list-filter-item { cursor:pointer; } \
+		.list-filter-item:hover { background: lightblue;cursor:pointer; } \
+	  </style> \
+      <div class="filter-{{type}} filter" id="{{ctrlId}}"> \
+        <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
+            <legend style="display:{{useLegend}}">{{label}}  \
+            <a class="js-remove-filter" href="#" title="Remove this filter">&times;</a> \
+			</legend> \
+			Year<br> \
+			<select class="drop-down2 fields data-control-id" > \
+            {{#yearValues}} \
+            <option value="{{val}}" {{selected}}>{{val}}</option> \
+            {{/yearValues}} \
+          </select> \
+			<br> \
+			Type<br> \
+			<select class="drop-down3 fields" > \
+				{{#periodValues}} \
+				<option value="{{val}}" {{selected}}>{{val}}</option> \
+				{{/periodValues}} \
+			</select> \
+			<br> \
+			<div style="max-height:500px;width:100%;border:1px solid grey;overflow:auto;"> \
+				<table class="table table-striped table-hover table-condensed" style="width:100%" data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
+				<tbody>\
+				{{#values}} \
+				<tr class="{{selected}}"><td class="list-filter-item " myValue="{{val}}" startDate="{{startDate}}" stopDate="{{stopDate}}">{{label}}</td></tr> \
+				{{/values}} \
+				</tbody> \
+			  </table> \
+		  </div> \
+	    </fieldset> \
+      </div> \
+	',
+            range_calendar:' \
+	<script> \
+	$(function() { \
+		$( "#from{{ctrlId}}" ).datepicker({ \
+			defaultDate: "{{startDate}}", \
+			changeMonth: true, \
+			numberOfMonths: 1, \
+			dateFormat: "D M dd yy", \
+			onSelect: function( selectedDate ) { \
+				$( "#to{{ctrlId}}" ).datepicker( "option", "minDate", selectedDate ); \
+			} \
+		}); \
+		$( "#to{{ctrlId}}" ).datepicker({ \
+			defaultDate: "{{endDate}}", \
+			changeMonth: true, \
+			numberOfMonths: 1, \
+			dateFormat: "D M dd yy", \
+			onSelect: function( selectedDate ) { \
+				$( "#from{{ctrlId}}" ).datepicker( "option", "maxDate", selectedDate ); \
+			} \
+		}); \
+	}); \
+	</script> \
+      <div class="filter-{{type}} filter" id="{{ctrlId}}"> \
+        <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
+            <legend style="display:{{useLegend}}">{{label}}</legend>  \
+			<label for="from{{ctrlId}}">From</label> \
+			<input type="text" id="from{{ctrlId}}" name="from{{ctrlId}}" class="data-control-id-from" value="{{startDate}}" style="width:auto"/> \
+			<br> \
+			<label for="to{{ctrlId}}">to</label> \
+			<input type="text" id="to{{ctrlId}}" name="to{{ctrlId}}" class="data-control-id-to" value="{{endDate}}" style="width:auto"/> \
+ 		  <br> \
+          <input type="button" class="btn" id="setFilterValueButton" value="Set"></input> \
+       </fieldset> \
+      </div> \
+	',
+            dropdown:' \
+      <script>  \
+    	function updateColor(elem) { \
+    		if (elem.prop("selectedIndex") == 0) elem.addClass("dimmed"); else elem.removeClass("dimmed"); \
+  		} \
+      </script> \
+      <div class="filter-{{type}} filter" id="{{ctrlId}}"> \
+        <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
+            <legend style="display:{{useLegend}}">{{label}} \
+    		</legend>  \
+    		<div style="float:left;padding-right:10px;padding-top:2px;display:{{useLeftLabel}}">{{label}}</div> \
+    		<select class="drop-down fields data-control-id dimmed" onchange="updateColor($(this))"> \
+			<option class="dimmedDropDownText">{{innerLabel}}</option> \
+            {{#values}} \
+            <option class="normalDropDownText" value="{{val}}" {{selected}}>{{valCount}}</option> \
+            {{/values}} \
+          </select> \
+        </fieldset> \
+      </div> \
+    ',
+            dropdown_styled:' \
+    	<script> \
+    	$(function() { \
+    		$(".chzn-select-deselect").chosen({allow_single_deselect:true}); \
+    	}); \
+    	</script> \
+      <div class="filter-{{type}} filter" id="{{ctrlId}}"> \
+        <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
+            <legend style="display:{{useLegend}}">{{label}}</legend>  \
+			<div style="float:left;padding-right:10px;padding-top:3px;display:{{useLeftLabel}}">{{label}}</div> \
+    		<select class="chzn-select-deselect data-control-id" data-placeholder="{{innerLabel}}"> \
+    		<option></option> \
+            {{#values}} \
+            <option value="{{val}}" {{selected}}>{{valCount}}</option> \
+            {{/values}} \
+          </select> \
+        </fieldset> \
+      </div> \
+    ',
+            dropdown_date_range:' \
+      <div class="filter-{{type}} filter" id="{{ctrlId}}"> \
+        <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
+            <legend style="display:{{useLegend}}">{{label}} \
+    		</legend>  \
+    		<div style="float:left;padding-right:10px;padding-top:3px;display:{{useLeftLabel}}">{{label}}</div> \
+			<select class="drop-down fields data-control-id" > \
+			<option></option> \
+            {{#date_values}} \
+            <option startDate="{{startDate}}" stopDate="{{stopDate}}" {{selected}}>{{val}}</option> \
+            {{/date_values}} \
+          </select> \
+        </fieldset> \
+      </div> \
+    ',
+            list:' \
+	  <style> \
+		.list-filter-item { cursor:pointer; } \
+		.list-filter-item:hover { background: lightblue;cursor:pointer; } \
+	  </style> \
+      <div class="filter-{{type}} filter" id="{{ctrlId}}"> \
+        <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
+            <legend style="display:{{useLegend}}">{{label}}  \
+            <a class="js-remove-filter" href="#" title="Remove this filter">&times;</a> \
+			</legend> \
+    		<div style="float:left;padding-right:10px;display:{{useLeftLabel}}">{{label}} \
+    			<a class="js-remove-filter" href="#" title="Remove this filter">&times;</a> \
+    		</div> \
+			<div style="max-height:500px;width:100%;border:1px solid grey;overflow:auto;"> \
+				<table class="table table-striped table-hover table-condensed" style="width:100%" data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" > \
+				<tbody>\
+				{{#values}} \
+				<tr class="{{selected}}"><td class="list-filter-item" >{{val}}</td><td style="text-align:right">{{count}}</td></tr> \
+				{{/values}} \
+				</tbody>\
+			  </table> \
+		  </div> \
+	    </fieldset> \
+      </div> \
+	',
+            listbox:' \
+      <div class="filter-{{type}} filter" id="{{ctrlId}}"> \
+        <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
+            <legend style="display:{{useLegend}}">{{label}}</legend>  \
+    		<div style="float:left;padding-right:10px;display:{{useLeftLabel}}">{{label}}</div> \
+			<select class="fields data-control-id"  multiple SIZE=10> \
+            {{#values}} \
+            <option value="{{val}}" {{selected}}>{{valCount}}</option> \
+            {{/values}} \
+          </select> \
+		  <br> \
+          <input type="button" class="btn" id="setFilterValueButton" value="Set"></input> \
+        </fieldset> \
+      </div> \
+    ',
+            listbox_styled:' \
+    	<script> \
+    	$(function() { \
+    		$(".chzn-select-deselect").chosen({allow_single_deselect:true}); \
+    	}); \
+    	</script> \
+      <div class="filter-{{type}} filter" id="{{ctrlId}}"> \
+        <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
+            <legend style="display:{{useLegend}}">{{label}} \
+    		</legend>  \
+    		<div style="float:left;padding-right:10px;padding-top:4px;display:{{useLeftLabel}}">{{label}}</div> \
+			<select class="chzn-select-deselect data-control-id" multiple data-placeholder="{{innerLabel}}"> \
+            {{#values}} \
+            <option value="{{val}}" {{selected}}>{{valCount}}</option> \
+            {{/values}} \
+          </select> \
+        </fieldset> \
+      </div> \
+    ',
+            radiobuttons:' \
+        <div class="filter-{{type}} filter" id="{{ctrlId}}"> \
+            <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
+                <legend style="display:{{useLegend}}">{{label}}</legend>  \
+    			<div style="float:left;padding-right:10px;padding-top:4px;display:{{useLeftLabel}}">{{label}}</div> \
+    			<div class="btn-group data-control-id" > \
+            		{{#useAllButton}} \
+            		<button class="btn grouped-button btn-primary">All</button> \
+            		{{/useAllButton}} \
+    	            {{#values}} \
+    	    		<button class="btn grouped-button {{selected}}" val="{{value}}" {{tooltip}}>{{{val}}}</button> \
+    	            {{/values}} \
+              	</div> \
+            </div> \
+        </div> \
+        ',
+         hierarchic_radiobuttons:' \
+        <div class="filter-{{type}} filter" id="{{ctrlId}}"> \
+            <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
+                <legend style="display:{{useLegend}}">{{label}}</legend>  \
+    			<div style="float:left;padding-right:10px;padding-top:4px;display:{{useLeftLabel}}">{{label}}</div> \
+    			<div class="btn-group data-control-id" level="1" style="float:left"> \
+            		{{#useAllButton}} \
+            		<button class="btn grouped-button btn-primary">All</button> \
+            		{{/useAllButton}} \
+    	            {{#values}} \
+    	    		<button class="btn grouped-button {{selected}}" val="{{value}}" {{tooltip}}>{{{val}}}</button> \
+    	            {{/values}} \
+              	</div> \
+        		{{#useLevel2}} \
+	    			<div class="btn-group level2" level="2" style="float:left;display:{{showLevel2}}"> \
+	            		<button class="btn grouped-button {{all2Selected}}" val="">All</button> \
+			            {{#valuesLev2}} \
+	            			<button class="btn grouped-button {{selected}}" val="{{value}}" {{tooltip}}>{{{val}}}</button> \
+			            {{/valuesLev2}} \
+	            	</div> \
+            		{{#useLevel3}} \
+		    			<div class="btn-group level3" level="3" style="float:left;display:{{showLevel3}}"> \
+	            			<button class="btn grouped-button {{all3Selected}}" val="">All</button> \
+				            {{#valuesLev3}} \
+			        			<button class="btn grouped-button {{selected}}" val="{{value}}" {{tooltip}}>{{{val}}}</button> \
+				            {{/valuesLev3}} \
+			        	</div> \
+            		{{/useLevel3}} \
+        		{{/useLevel2}} \
+            </div> \
+        </div> \
+        ',
+        multibutton:' \
+    <div class="filter-{{type}} filter" id="{{ctrlId}}"> \
+        <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
+    		<legend style="display:{{useLegend}}">{{label}} \
+    		</legend>  \
+    		<div style="float:left;padding-right:10px;padding-top:4px;display:{{useLeftLabel}}">{{label}}</div> \
+    		<div class="btn-group data-control-id" > \
+	            {{#values}} \
+	    		<button class="btn grouped-button {{selected}}" val="{{value}}" {{tooltip}}>{{{val}}}</button> \
+	            {{/values}} \
+          </div> \
+        </fieldset> \
+    </div> \
+    ',
+            legend:' \
+	  <style> \
+      .legend-item { \
+					border-top:2px solid black;border-left:2px solid black; \
+					border-bottom:2px solid darkgrey;border-right:2px solid darkgrey; \
+					width:16px;height:16px;padding:1px;margin:5px; \
+					opacity: 0.85 \
+					}  \
+	 .legend-item.not-selected { background-color:transparent !important; } /* the idea is that the color "not-selected" overrides the original color (this way we may use a global style) */ \
+	  </style> \
+      <div class="filter-{{type}} filter" id="{{ctrlId}}"> \
+        <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
+            <legend style="display:{{useLegend}}">{{label}}</legend>  \
+			<div style="float:left;padding-right:10px;display:{{useLeftLabel}}">{{label}}</div> \
+			<table style="width:100%;background-color:transparent">\
+			{{#values}} \
+				<tr> \
+				<td style="width:25px"><div class="legend-item {{notSelected}}" myValue="{{val}}" style="background-color:{{color}}"></td> \
+				<td style="vertical-align:middle"><label style="color:{{color}};text-shadow: black 1px 1px, black -1px -1px, black -1px 1px, black 1px -1px, black 0px 1px, black 0px -1px, black 1px 0px, black -1px 0px">{{val}}</label></td>\
+				<td><label style="text-align:right">[{{count}}]</label></td>\
+				</tr>\
+			{{/values}}\
+			</table> \
+	    </fieldset> \
+      </div> \
+	',
+            color_legend:' \
+	<div class="filter-{{type}} filter" style="width:{{totWidth2}}px;max-height:{{totHeight2}}px"> \
+        <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}"> \
+            <legend style="display:{{useLegend}}">{{label}}</legend>  \
+				<div style="float:left;padding-right:10px;height:{{lineHeight}}px;display:{{useLeftLabel}}"> \
+					<label style="line-height:{{lineHeight}}px">{{label}}</label> \
+				</div> \
+				<div style="width:{{totWidth}}px;height:{{totHeight}}px;display:inline"> \
+					<svg height="{{totHeight}}" xmlns="http://www.w3.org/2000/svg"> \
+					{{#colorValues}} \
+				    	<rect width="{{width}}" height={{lineHeight}} fill="{{color}}" x="{{x}}" y={{y}}/> \
+						<text width="{{width}}" fill="{{textColor}}" x="{{x}}" y="{{yplus30}}">{{val}}</text> \
+					{{/colorValues}}\
+					</svg>		\
+				</div> \
+	    </fieldset> \
+	</div> \
+	'
+        },
+
+        FiltersTemplate:{
+            "range_calendar":{ needFacetedField:false},
+            "month_week_calendar":{ needFacetedField:true},
+            "list":{ needFacetedField:true},
+            "legend":{ needFacetedField:true},
+            "dropdown":{ needFacetedField:true},
+            "dropdown_styled":{ needFacetedField:true},
+            "dropdown_date_range":{ needFacetedField:false},
+            "listbox":{ needFacetedField:true},
+            "listbox_styled":{ needFacetedField:true},
+            "term":{ needFacetedField:false},
+            "range":{ needFacetedField:true},
+            "slider":{ needFacetedField:true},
+            "range_slider":{ needFacetedField:true},
+            "range_slider_styled":{ needFacetedField:true},
+            "color_legend":{ needFacetedField:true},
+            "multibutton":{ needFacetedField:true},
+            "radiobuttons":{ needFacetedField:false},
+            "hierarchic_radiobuttons":{ needFacetedField:false}
+        },
+
+        events:{
+            'click .js-remove-filter':'onRemoveFilter',
+            'click .js-add-filter':'onAddFilterShow',
+            'click #addFilterButton':'onAddFilter',
+            'click .list-filter-item':'onListItemClicked',
+            'click .legend-item':'onLegendItemClicked',
+            'click #setFilterValueButton':'onFilterValueChanged',
+            'change .drop-down':'onFilterValueChanged',
+            'change .chzn-select-deselect':'onFilterValueChanged',
+            'change .drop-down2':'onListItemClicked',
+            'change .drop-down3':'onPeriodChanged',
+            'click .grouped-button':'onButtonsetClicked',
+            'change .slider-styled':'onStyledSliderValueChanged'
+        },
+
+        activeFilters:new Array(),
+        _sourceDataset:null,
+        _selectedClassName:"info", // use bootstrap ready-for-use classes to highlight list item selection (avail classes are success, warning, info & error)
+
+        initialize:function (args) {
+            this.el = $(this.el);
+            _.bindAll(this, 'render');
+            _.bindAll(this, 'update');
+            _.bindAll(this, 'getFieldType');
+            _.bindAll(this, 'onRemoveFilter');
+            _.bindAll(this, 'onPeriodChanged');
+            _.bindAll(this, 'findActiveFilterByField');
+
+            _.bindAll(this, 'updateDropdown');
+            _.bindAll(this, 'updateDropdownStyled');
+            _.bindAll(this, 'updateSlider');
+            _.bindAll(this, 'updateSliderStyled');
+            _.bindAll(this, 'updateRadiobuttons');
+            _.bindAll(this, 'updateRangeSlider');
+            _.bindAll(this, 'updateRangeSliderStyled');
+            _.bindAll(this, 'updateRangeCalendar');
+            _.bindAll(this, 'updateMonthWeekCalendar');
+            _.bindAll(this, 'updateDropdownDateRange');
+            _.bindAll(this, 'updateList');
+            _.bindAll(this, 'updateListbox');
+            _.bindAll(this, 'updateListboxStyled');
+            _.bindAll(this, 'updateLegend');
+            _.bindAll(this, 'updateMultibutton');
+            _.bindAll(this, 'redrawGenericControl');
+
+            this._sourceDataset = args.sourceDataset;
+            this.uid = args.id || Math.floor(Math.random() * 100000); // unique id of the view containing all filters
+            this.numId = 0; // auto-increasing id used for a single filter
+
+            this.sourceFields = args.sourceFields;
+            if (args.state) {
+                this.filterDialogTitle = args.state.title;
+                this.filterDialogDescription = args.state.description;
+                this.useHorizontalLayout = args.state.useHorizontalLayout;
+                this.showBackground = args.state.showBackground;
+                if (this.showBackground == false) {
+                    $(this).removeClass("well");
+                    $(this.el).removeClass("well");
+                }
+
+                this.backgroundColor = args.state.backgroundColor;
+            }
+            this.activeFilters = new Array();
+
+            this._actions = args.actions;
+
+            if (this.sourceFields && this.sourceFields.length)
+                for (var k in this.sourceFields)
+                    this.addNewFilterControl(this.sourceFields[k]);
+
+            // not all filters required a source of data
+            if (this._sourceDataset) {
+                this._sourceDataset.bind('query:done', this.render);
+                this._sourceDataset.queryState.bind('selection:done', this.update);
+            }
+        },
+
+        areValuesEqual:function (a, b) {
+            // this also handles date equalities.
+            // For instance comparing a Date obj with its corresponding timer value now returns true
+            if (typeof a == "undefined" || typeof b == "undefined")
+                return false;
+
+            if (a == b)
+                return true;
+            if (a && a.valueOf() == b)
+                return true;
+            if (b && a == b.valueOf())
+                return true;
+            if (a && b && a.valueOf == b.valueOf())
+                return true;
+
+            return false;
+        },
+
+        update:function () {
+            var self = this;
+            // retrieve filter values (start/from/term/...)
+            _.each(this._sourceDataset.queryState.get('selections'), function (filter) {
+                for (var j in self.activeFilters) {
+                    if (self.activeFilters[j].field == filter.field) {
+                        self.activeFilters[j].list = filter.list
+                        self.activeFilters[j].term = filter.term
+                        self.activeFilters[j].start = filter.start
+                        self.activeFilters[j].stop = filter.stop
+                    }
+                }
+            });
+
+            var currFilters = this.el.find("div.filter");
+            _.each(currFilters, function (flt) {
+                var currFilterCtrl = $(flt).find(".data-control-id");
+                if (typeof currFilterCtrl != "undefined" && currFilterCtrl != null) {
+                    //console.log($(currFilterCtrl));
+                }
+                else {
+                    var currFilterCtrlFrom = $(flt).find(".data-control-id-from");
+                    var currFilterCtrlTo = $(flt).find(".data-control-id-to");
+                }
+                var currActiveFilter = null;
+                for (var j in self.activeFilters) {
+                    if (self.activeFilters[j].ctrlId == flt.id) {
+                        currActiveFilter = self.activeFilters[j]
+                        break;
+                    }
+                }
+                if (currActiveFilter != null) {
+                    if (currActiveFilter.userChanged) {
+                        // skip the filter that triggered the change
+                        currActiveFilter.userChanged = undefined;
+                        return;
+                    }
+                    switch (currActiveFilter.controlType) {
+                        // term
+                        case "dropdown" :
+                            return self.updateDropdown($(flt), currActiveFilter, $(currFilterCtrl));
+                        case "dropdown_styled" :
+                            return self.updateDropdownStyled($(flt), currActiveFilter, $(currFilterCtrl));
+                        case "slider" :
+                            return self.updateSlider($(flt), currActiveFilter, $(currFilterCtrl));
+                        case "slider_styled" :
+                            return self.updateSliderStyled($(flt), currActiveFilter, $(currFilterCtrl));
+                        case "radiobuttons" :
+                            return self.updateRadiobuttons($(flt), currActiveFilter, $(currFilterCtrl));
+                        case "hierarchic_radiobuttons" :
+                            return self.updateHierarchicRadiobuttons($(flt), currActiveFilter, $(currFilterCtrl));
+                        // range
+                        case "range_slider" :
+                            return self.updateRangeSlider($(flt), currActiveFilter, $(currFilterCtrl));
+                        case "range_slider_styled" :
+                            return self.updateRangeSliderStyled($(flt), currActiveFilter, $(currFilterCtrl));
+                        case "range_calendar" :
+                            return self.updateRangeCalendar($(flt), currActiveFilter, $(currFilterCtrlFrom), $(currFilterCtrlTo));
+                        case "month_week_calendar" :
+                            return self.updateMonthWeekCalendar($(flt), currActiveFilter, $(currFilterCtrl));
+                        case "dropdown_date_range" :
+                            return self.updateDropdownDateRange($(flt), currActiveFilter, $(currFilterCtrl));
+                        // list
+                        case "list" :
+                            return self.updateList($(flt), currActiveFilter, $(currFilterCtrl));
+                        case "listbox":
+                            return self.updateListbox($(flt), currActiveFilter, $(currFilterCtrl));
+                        case "listbox_styled":
+                            return self.updateListboxStyled($(flt), currActiveFilter, $(currFilterCtrl));
+                        case "legend" :
+                            return self.updateLegend($(flt), currActiveFilter, $(currFilterCtrl));
+                        case "multibutton" :
+                            return self.updateMultibutton($(flt), currActiveFilter, $(currFilterCtrl));
+                    }
+                }
+            });
+        },
+
+        computeUserChoices:function (currActiveFilter) {
+            var valueList = currActiveFilter.list;
+            if ((typeof valueList == "undefined" || valueList == null) && currActiveFilter.term)
+                valueList = [currActiveFilter.term];
+
+            return valueList;
+        },
+
+        redrawGenericControl:function (filterContainer, currActiveFilter) {
+            var out = this.createSingleFilter(currActiveFilter);
+            filterContainer.parent().html(out);
+        },
+
+        updateDropdown:function (filterContainer, currActiveFilter, filterCtrl) {
+            var valueList = this.computeUserChoices(currActiveFilter);
+
+            if (valueList != null && valueList.length == 1) {
+                filterCtrl[0].style.color = "";
+                filterCtrl.val(currActiveFilter.list[0]);
+            }
+            else
+                filterCtrl.find("option:first").prop("selected", "selected");
+
+            if (filterCtrl.prop("selectedIndex") == 0)
+                filterCtrl.addClass("dimmed");
+            else filterCtrl.removeClass("dimmed");
+        },
+        updateDropdownStyled:function (filterContainer, currActiveFilter, filterCtrl) {
+            this.redrawGenericControl(filterContainer, currActiveFilter);
+        },
+        updateSlider:function (filterContainer, currActiveFilter, filterCtrl) {
+            var valueList = this.computeUserChoices(currActiveFilter);
+            if (valueList != null && valueList.length == 1) {
+                filterCtrl.slider("value", valueList[0]);
+                $("#amount" + currActiveFilter.ctrlId).html(currActiveFilter.label + ": " + valueList[0]); // sistema di riserva
+                filterCtrl.trigger("slide", filterCtrl); // non pare funzionare
+            }
+        },
+        updateSliderStyled:function (filterContainer, currActiveFilter, filterCtrl) {
+            var valueList = this.computeUserChoices(currActiveFilter);
+            if (valueList != null && valueList.length == 1)
+                filterCtrl.jslider("value", valueList[0]);
+        },
+        updateHierarchicRadiobuttons:function (filterContainer, currActiveFilter, filterCtrl) {
+            this.redrawGenericControl(filterContainer, currActiveFilter);
+        },
+        updateRadiobuttons:function (filterContainer, currActiveFilter, filterCtrl) {
+            var valueList = this.computeUserChoices(currActiveFilter);
+
+            var buttons = filterCtrl.find("button.grouped-button");
+            _.each(buttons, function (btn) {
+                $(btn).removeClass("btn-primary")
+            });
+            if (valueList != null) {
+                if (valueList.length == 1) {
+                    // do not use each or other jquery/underscore methods since they don't work well here
+                    for (var i = 0; i < buttons.length; i++) {
+                        var btn = $(buttons[i]);
+                        for (var j = 0; j < valueList.length; j++) {
+                            var v = valueList[j];
+                            if (this.areValuesEqual(v, btn.html())) {
+                                btn.addClass("btn-primary");
+                                break;
+                            }
+                        }
+                    }
+                }
+                else if (valueList.length == 0 && !currActiveFilter.noAllButton)
+                    $(buttons[0]).addClass("btn-primary"); // select button "All" if present
+            }
+            else if (!currActiveFilter.noAllButton)
+            	$(buttons[0]).addClass("btn-primary"); // select button "All" if present
+        },
+        updateRangeSlider:function (filterContainer, currActiveFilter, filterCtrl) {
+            var valueList = this.computeUserChoices(currActiveFilter);
+            if (valueList != null && valueList.length == 2) {
+                filterCtrl.slider("values", 0, valueList[0]);
+                filterCtrl.slider("values", 1, valueList[1]);
+                $("#amount" + currActiveFilter.ctrlId).html(currActiveFilter.label + ": " + valueList[0] + " - " + valueList[1]); // sistema di riserva
+                filterCtrl.trigger("slide", filterCtrl); // non pare funzionare
+            }
+        },
+        updateRangeSliderStyled:function (filterContainer, currActiveFilter, filterCtrl) {
+            var valueList = this.computeUserChoices(currActiveFilter);
+            if (valueList != null && valueList.length == 2)
+                filterCtrl.jslider("value", valueList[0], valueList[1]);
+        },
+        updateRangeCalendar:function (filterContainer, currActiveFilter, filterCtrlFrom, filterCtrlTo) {
+            this.redrawGenericControl(filterContainer, currActiveFilter);
+        },
+        updateMonthWeekCalendar:function (filterContainer, currActiveFilter, filterCtrl) {
+            this.redrawGenericControl(filterContainer, currActiveFilter);
+        },
+        updateDropdownDateRange:function (filterContainer, currActiveFilter, filterCtrl) {
+            this.redrawGenericControl(filterContainer, currActiveFilter);
+        },
+        updateList:function (filterContainer, currActiveFilter, filterCtrl) {
+            this.redrawGenericControl(filterContainer, currActiveFilter);
+        },
+        updateListbox:function (filterContainer, currActiveFilter, filterCtrl) {
+            this.redrawGenericControl(filterContainer, currActiveFilter);
+        },
+        updateListboxStyled:function (filterContainer, currActiveFilter, filterCtrl) {
+            this.redrawGenericControl(filterContainer, currActiveFilter);
+        },
+        updateLegend:function (filterContainer, currActiveFilter, filterCtrl) {
+            this.redrawGenericControl(filterContainer, currActiveFilter);
+        },
+        updateMultibutton:function (filterContainer, currActiveFilter, filterCtrl) {
+            var valueList = this.computeUserChoices(currActiveFilter);
+
+            var buttons = filterCtrl.find("button.grouped-button");
+            _.each(buttons, function (btn) {
+                $(btn).removeClass("btn-info")
+            });
+
+            // from now on, do not use each or other jquery/underscore methods since they don't work well here
+            if (valueList != null)
+                for (var i = 0; i < buttons.length; i++) {
+                    var btn = $(buttons[i]);
+                    for (var j = 0; j < valueList.length; j++) {
+                        var v = valueList[j];
+                        if (this.areValuesEqual(v, btn.html()))
+                            btn.addClass("btn-info");
+                    }
+                }
+        },
+
+        filterRender:function () {
+            return this.self.createSingleFilter(this); // make sure you pass the current active filter
+        },
+        createSingleFilter:function (currActiveFilter) {
+            var self = currActiveFilter.self;
+
+            //check facet
+            var filterTemplate = self.FiltersTemplate[currActiveFilter.controlType];
+            var facetTerms;
+
+            if (!filterTemplate)
+                throw("GenericFilter: Invalid control type " + currActiveFilter.controlType);
+
+            if (filterTemplate.needFacetedField) {
+                currActiveFilter.facet = self._sourceDataset.getFacetByFieldId(currActiveFilter.field);
+
+                if (currActiveFilter.facet == null)
+                    throw "GenericFilter: no facet present for field [" + currActiveFilter.field + "]. Define a facet before filter render"
+                
+                if (currActiveFilter.fieldType == "integer" || currActiveFilter.fieldType == "number") // sort if numeric (Chrome issue)
+                	currActiveFilter.facet.attributes.terms = _.sortBy(currActiveFilter.facet.attributes.terms, function(currObj) {
+                		return currObj.term;
+                	});
+                    
+                facetTerms = currActiveFilter.facet.attributes.terms;
+                if (typeof currActiveFilter.label == "undefined" || currActiveFilter.label == null)
+                    currActiveFilter.label = currActiveFilter.field;
+            } else if(self._sourceDataset) {
+                // if facet are not defined i use all dataset records
+
+
+            }
+
+            currActiveFilter.useLegend = "block";
+            if (currActiveFilter.labelPosition != 'top')
+                currActiveFilter.useLegend = "none";
+
+            currActiveFilter.useLeftLabel = "none";
+            if (currActiveFilter.labelPosition == 'left')
+                currActiveFilter.useLeftLabel = "block";
+
+            if (currActiveFilter.labelPosition == 'inside')
+                currActiveFilter.innerLabel = currActiveFilter.label;
+
+            currActiveFilter.values = new Array();
+
+            // add value list to selected filter or templating of record values will not work
+            if (currActiveFilter.controlType.indexOf('calendar') >= 0) {
+                if (currActiveFilter.start)
+                    currActiveFilter.startDate = self.dateConvert(currActiveFilter.start);
+
+                if (currActiveFilter.stop)
+                    currActiveFilter.endDate = self.dateConvert(currActiveFilter.stop);
+            }
+            if (currActiveFilter.controlType.indexOf('slider') >= 0) {
+                if (facetTerms.length > 0 && typeof facetTerms[0].term != "undefined") {
+                    currActiveFilter.max = facetTerms[0].term;
+                    currActiveFilter.min = facetTerms[0].term;
+                }
+                else {
+                    currActiveFilter.max = 100;
+                    currActiveFilter.min = 0;
+                }
+            }
+
+            if (currActiveFilter.controlType == "month_week_calendar") {
+                currActiveFilter.weekValues = [];
+                currActiveFilter.periodValues = [
+                    {val:"Months", selected:(currActiveFilter.period == "Months" ? "selected" : "")},
+                    {val:"Weeks", selected:(currActiveFilter.period == "Weeks" ? "selected" : "")}
+                ]
+                var currYear = currActiveFilter.year;
+                var januaryFirst = new Date(currYear, 0, 1);
+                var januaryFirst_time = januaryFirst.getTime();
+                var weekOffset = januaryFirst.getDay();
+                var finished = false;
+                for (var w = 0; w <= 53 && !finished; w++) {
+                    var weekStartTime = januaryFirst_time + 7 * 86400000 * (w - 1) + (7 - weekOffset) * 86400000;
+                    var weekEndTime = weekStartTime + 7 * 86400000;
+                    if (w == 0)
+                        weekStartTime = januaryFirst_time;
+
+                    if (new Date(weekEndTime).getFullYear() > currYear) {
+                        weekEndTime = new Date(currYear + 1, 0, 1).getTime();
+                        finished = true;
+                    }
+                    currActiveFilter.weekValues.push({val:w + 1,
+                        label:"" + (w + 1) + " [" + d3.time.format("%x")(new Date(weekStartTime)) + " -> " + d3.time.format("%x")(new Date(weekEndTime - 1000)) + "]",
+                        startDate:new Date(weekStartTime),
+                        stopDate:new Date(weekEndTime),
+                        selected:(currActiveFilter.term == w + 1 ? self._selectedClassName : "")
+                    });
+                }
+
+                currActiveFilter.monthValues = [];
+                for (m = 1; m <= 12; m++) {
+                    var endYear = currYear;
+                    var endMonth = m;
+                    if (m == 12) {
+                        endYear = currYear + 1;
+                        endMonth = 0;
+                    }
+                    currActiveFilter.monthValues.push({ val:d3.format("02d")(m),
+                        label:d3.time.format("%B")(new Date(m + "/01/2012")) + " " + currYear,
+                        startDate:new Date(currYear, m - 1, 1, 0, 0, 0, 0),
+                        stopDate:new Date(endYear, endMonth, 1, 0, 0, 0, 0),
+                        selected:(currActiveFilter.term == m ? self._selectedClassName : "")
+                    });
+                }
+                if (currActiveFilter.period == "Months")
+                    currActiveFilter.values = currActiveFilter.monthValues;
+                else if (currActiveFilter.period == "Weeks")
+                    currActiveFilter.values = currActiveFilter.weekValues;
+
+                currActiveFilter.yearValues = [];
+                var startYear = 2010;
+                var endYear = parseInt(d3.time.format("%Y")(new Date()))
+                for (var y = startYear; y <= endYear; y++)
+                    currActiveFilter.yearValues.push({val:y, selected:(currActiveFilter.year == y ? "selected" : "")});
+
+            }
+            else if (currActiveFilter.controlType == "dropdown_date_range") {
+                currActiveFilter.date_values = [];
+
+                var defaultDateFilters = [
+                    { label:'This week', start:"sunday", stop:"next sunday"},
+                    { label:'This month', start:"1", delta:{months:1}},
+                    { label:'This year', start:"january 1", delta:{years:1}},
+                    { label:'Past week', stop:"sunday", delta:{days:-7}},
+                    { label:'Past month', stop:"1", delta:{months:-1}},
+                    { label:'Past 2 months', stop:"1", delta:{months:-2}},
+                    { label:'Past 3 months', stop:"1", delta:{months:-3}},
+                    { label:'Past 6 months', stop:"1", delta:{months:-6}},
+                    { label:'Past year', stop:"january 1", delta:{years:-1}},
+                    { label:'Last 7 days', start:"-6", stop:"t +1 d"},
+                    { label:'Last 30 days', start:"-29", stop:"t +1 d"},
+                    { label:'Last 90 days', start:"-89", stop:"t +1 d"},
+                    { label:'Last 365 days', start:"-1 y", stop:"t +1 d"},
+                ]
+                var fullDateFilters = defaultDateFilters;
+                if (currActiveFilter.skipDefaultFilters)
+                    fullDateFilters = [];
+
+                if (currActiveFilter.userFilters)
+                    fullDateFilters = fullDateFilters.concat(currActiveFilter.userFilters);
+
+                for (var i in fullDateFilters) {
+                    var flt = fullDateFilters[i];
+                    var startDate = null;
+                    var stopDate = null;
+                    if (flt.start && flt.stop) {
+                        startDate = Date.parse(flt.start);
+                        stopDate = Date.parse(flt.stop);
+                    }
+                    else if (flt.start && flt.delta) {
+                        startDate = Date.parse(flt.start);
+                        if (startDate) {
+                            stopDate = new Date(startDate);
+                            stopDate.add(flt.delta);
+                        }
+                    }
+                    else if (flt.stop && flt.delta) {
+                        stopDate = Date.parse(flt.stop);
+                        if (stopDate) {
+                            startDate = new Date(stopDate);
+                            startDate.add(flt.delta);
+                        }
+                    }
+                    if (startDate && stopDate && flt.label)
+                        currActiveFilter.date_values.push({ val:flt.label,
+                            startDate:startDate,
+                            stopDate:stopDate
+                        });
+                }
+                for (var j in currActiveFilter.date_values)
+                    if (currActiveFilter.date_values[j].val == currActiveFilter.term) {
+                        currActiveFilter.date_values[j].selected = self._selectedClassName;
+                        break;
+                    }
+            }
+            else if (currActiveFilter.controlType == "legend") {
+                // OLD code, somehow working but wrong
+                currActiveFilter.tmpValues = _.pluck(currActiveFilter.facet.attributes.terms, "term");
+
+                if (typeof currActiveFilter.origLegend == "undefined") {
+                    currActiveFilter.origLegend = currActiveFilter.tmpValues;
+                    currActiveFilter.legend = currActiveFilter.origLegend;
+                }
+                currActiveFilter.tmpValues = currActiveFilter.origLegend;
+                var legendSelection = currActiveFilter.legend;
+                for (var i in currActiveFilter.tmpValues) {
+                    var v = currActiveFilter.tmpValues[i];
+                    var notSelected = "";
+                    if ((currActiveFilter.fieldType != "date" && legendSelection.indexOf(v) < 0)
+                        || (currActiveFilter.fieldType == "date" && legendSelection.indexOf(v) < 0 && legendSelection.indexOf(new Date(v).valueOf()) < 0))
+                        notSelected = "not-selected";
+
+                    currActiveFilter.values.push({val:v, notSelected:notSelected, color:currActiveFilter.facet.attributes.terms[i].color, count:currActiveFilter.facet.attributes.terms[i].count});
+                }
+
+// 			NEW code. Will work when facet will be returned correctly even after filtering
+//		  currActiveFilter.tmpValues = _.pluck(currActiveFilter.facet.attributes.terms, "term");
+//		  for (var v in currActiveFilter.tmpValues)
+//		  {
+//				var color;
+//				var currTerm = _.find(currActiveFilter.facet.attributes.terms, function(currT) { return currT.term == v; });
+//				if (typeof currTerm != "undefined" && currTerm != null)
+//				{
+//					color = currTerm.color;
+//					count = currTerm.count;
+//				}
+//				var notSelected = "";
+//				var legendSelection = currActiveFilter.legend;
+//				if (typeof legendSelection == "undefined" || legendSelection == null || legendSelection.indexOf(v) < 0)
+//					notSelected = "not-selected";
+//				
+//				currActiveFilter.values.push({val: v, notSelected: notSelected, color: color, count: count});
+//		  }		  
+            }
+            else if (currActiveFilter.controlType == "color_legend") {
+                var ruler = document.getElementById("my_string_width_calculation_ruler");
+                if (typeof ruler == "undefined" || ruler == null) {
+                    ruler = document.createElement("span");
+                    ruler.setAttribute('id', "my_string_width_calculation_ruler");
+                    ruler.style.visibility = "hidden";
+                    ruler.style.width = "auto";
+                    document.body.appendChild(ruler);
+                }
+                var maxWidth = 250;
+                currActiveFilter.colorValues = [];
+                
+                
+
+                currActiveFilter.tmpValues = _.pluck(currActiveFilter.facet.attributes.terms, "term");
+
+                var pixelW = 0;
+                // calculate needed pixel width for every string
+                for (var i in currActiveFilter.tmpValues) {
+                    var v = currActiveFilter.tmpValues[i];
+                    ruler.innerHTML = v;
+                    var w = ruler.offsetWidth
+                    if (w > pixelW)
+                        pixelW = w;
+                }
+                pixelW += 2;
+                currActiveFilter.lineHeight = 40;
+
+                // calculate needed row number and columns per row
+                var maxColsPerRow = Math.floor(maxWidth / pixelW);
+                var totRighe = Math.ceil(currActiveFilter.tmpValues.length / maxColsPerRow);
+                var colsPerRow = Math.ceil(currActiveFilter.tmpValues.length / totRighe);
+                currActiveFilter.totWidth = colsPerRow * pixelW;
+                currActiveFilter.totWidth2 = currActiveFilter.totWidth + (currActiveFilter.labelPosition == 'left' ? currActiveFilter.label.length * 10 : 10)
+                currActiveFilter.totHeight = totRighe * currActiveFilter.lineHeight;
+                currActiveFilter.totHeight2 = currActiveFilter.totHeight + 40;
+
+                var riga = 0;
+                var colonna = 0;
+
+                for (var i in currActiveFilter.tmpValues) {
+                    var v = currActiveFilter.tmpValues[i];
+                    var color = currActiveFilter.facet.attributes.terms[i].color;
+                    if (colonna == colsPerRow) {
+                        riga++;
+                        colonna = 0;
+                    }
+                    currActiveFilter.colorValues.push({width:pixelW, color:color, textColor:self.complementColor(color),
+                        val:v, x:pixelW * colonna, y:riga * currActiveFilter.lineHeight, yplus30:riga * currActiveFilter.lineHeight + 25 });
+
+                    colonna++;
+                }
+            }
+            else if (currActiveFilter.controlType == "hierarchic_radiobuttons") {
+                var lev1Values = []
+                var fullLevelValues = []
+                var totLevels = 1;
+                var userSelection = null;
+                if (currActiveFilter.term)
+                	userSelection = currActiveFilter.term
+                else if (typeof currActiveFilter.list != "undefined" && currActiveFilter.list && currActiveFilter.list.length == 1) 
+                	userSelection = currActiveFilter.list[0];
+                	
+            	_.each(self._sourceDataset.getRecords(), function(record) {
+                    var field = self._sourceDataset.fields.get(currActiveFilter.field);
+                    if(!field) {
+                        throw "widget.genericfilter: unable to find field ["+currActiveFilter.field+"] in dataset";
+                    }
+
+                    var v = record.getFieldValue(field);
+                    var shape = record.getFieldShape(field, false, false);
+                    fullLevelValues.push(v);
+                    if (v.indexOf(currActiveFilter.separator) < 0)
+                    	lev1Values.push({value: v, record: record, shape: shape});
+                    else
+                	{
+                    	var valueSet = v.split(currActiveFilter.separator);
+                        var lev1Val = valueSet[0]
+                        if (_.find(lev1Values, function(currVal){ return currVal.value == lev1Val }))
+                        	{ /* skip already present */ }
+                        else 
+                    	{
+                        	lev1Values.push({value: lev1Val, record: null, shape: shape});
+                        	if (valueSet.length > totLevels)
+                        		totLevels = valueSet.length
+                    	}
+                	}
+            	});
+            	if (totLevels > 1)
+        		{
+            		currActiveFilter.useLevel2 = true;
+            		currActiveFilter.showLevel2 = "none";
+            		currActiveFilter.all2Selected = "btn-primary";
+        		}
+            	if (totLevels > 2)
+        		{
+            		currActiveFilter.useLevel3 = true;
+            		currActiveFilter.showLevel3 = "none";
+            		currActiveFilter.all3Selected = "btn-primary";
+        		}
+            	// populate level 1
+            	_.each(lev1Values, function(lev1Val) {
+                    var selected = "";
+                    var v = lev1Val.value;
+                    var val = v;
+                    var record = lev1Val.record;
+                    
+                	if (userSelection && userSelection != "" && self.areValuesEqual(userSelection.split(currActiveFilter.separator)[0], v))
+                        selected = 'btn-primary'
+                        	
+                    if (currActiveFilter.useShapeOnly == true)
+                	{
+                        var shape = lev1Val.shape;
+                    	if (shape && shape.indexOf("undefined") < 0)
+                    	{
+                        	tooltip = "rel=tooltip title="+v
+                        	v = "<div class='shape'>"+shape+"</div>"
+                    	}
+                    	else v = "<div class='shapeH'>"+v+"</div>"
+                	}
+                    currActiveFilter.values.push({value: val, val:v, record:record, selected:selected, valCount: v, tooltip: tooltip });
+                });
+            	// handle user selection
+            	if (userSelection && userSelection != "")
+        		{
+            		currActiveFilter.valuesLev2 = []
+            		var userSelectionParts = userSelection.split(currActiveFilter.separator)
+            		var subValues = _.filter(fullLevelValues, function(currVal){ return currVal.indexOf(userSelectionParts[0] + currActiveFilter.separator) == 0 })
+            		if (subValues && subValues.length)
+        			{
+            			// 2 or more levels
+            			// populate level 2
+            			currActiveFilter.showLevel2 = "block";
+                		_.each(subValues, function(subValue) {
+                            var selected = "";
+                            var subValueParts = subValue.split(currActiveFilter.separator) 
+                            var v = subValueParts[1];
+                            var val = v;
+                            if (_.find(currActiveFilter.valuesLev2, function(valueLev2) { return valueLev2.value == v}))
+                        	{
+                            	// do nothing. Item already present
+                        	}
+                            else
+                        	{
+                                var record = null;
+                                if (subValueParts.length == 2)
+                            	{
+                                	record = _.find(self._sourceDataset.getRecords(), function(record) {
+                                        var field = self._sourceDataset.fields.get(currActiveFilter.field);
+                                        var currV = record.getFieldValue(field);
+                                        return currV == subValue; 
+                                	});
+                            	}
+                                if (self.areValuesEqual(userSelectionParts[0], subValueParts[0]) && self.areValuesEqual(userSelectionParts[1], subValueParts[1]))
+                            	{
+                                    selected = 'btn-primary'
+                                    currActiveFilter.all2Selected = ""
+                            	}
+                                if (currActiveFilter.useShapeOnly == true)
+                            	{
+                                	var shape = record.getFieldShape(field, false, false);
+                                	if (shape && shape.indexOf("undefined") < 0)
+                                	{
+                                    	tooltip = "rel=tooltip title="+v
+                                    	v = "<div class='shape'>"+shape+"</div>"
+                                	}
+                                	else v = "<div class='shapeH'>"+v+"</div>"
+                            	}
+                    			currActiveFilter.valuesLev2.push({value: val, val:v, selected:selected, valCount: v, tooltip: tooltip, record: record });
+                        		// check if 3 levels must be shown
+                    			if (subValueParts.length >= 2 && userSelectionParts.length >= 2)
+                    			{
+                            		var subSubValues = _.filter(fullLevelValues, function(currVal){ return currVal.indexOf(userSelectionParts[0] + currActiveFilter.separator + userSelectionParts[1]) == 0 })
+                            		if (subSubValues && subSubValues.length)
+                        			{
+                            			// populate level 3
+                            			currActiveFilter.showLevel3 = "block";
+                            			currActiveFilter.valuesLev3 = []
+	                            		_.each(subSubValues, function(subSubValue) {
+	                                        var selected = "";
+	                                        var subValueParts = subSubValue.split(currActiveFilter.separator) 
+	                                        var v = subValueParts[2];
+	                                        var val = v;
+	                                        if (_.find(currActiveFilter.valuesLev3, function(valueLev3) { return valueLev3.value == v}))
+	                                    	{
+	                                        	// do nothing. Item already present
+	                                    	}
+	                                        else
+	                                    	{
+	                                            var record = null;
+	                                            if (subValueParts.length == 3)
+	                                        	{
+	                                            	record = _.find(self._sourceDataset.getRecords(), function(record) {
+	                                                    var field = self._sourceDataset.fields.get(currActiveFilter.field);
+	                                                    var currV = record.getFieldValue(field);
+	                                                    return currV == subSubValue; 
+	                                            	});
+	                                        	}
+	                                            if (self.areValuesEqual(userSelection, subSubValue))
+	                                        	{
+	                                                selected = 'btn-primary'
+	                                                currActiveFilter.all2Selected = ""
+	                                        	}
+	                                            if (currActiveFilter.useShapeOnly == true)
+	                                        	{
+	                                            	var shape = record.getFieldShape(field, false, false);
+	                                            	if (shape && shape.indexOf("undefined") < 0)
+	                                            	{
+	                                                	tooltip = "rel=tooltip title="+v
+	                                                	v = "<div class='shape'>"+shape+"</div>"
+	                                            	}
+	                                            	else v = "<div class='shapeH'>"+v+"</div>"
+	                                        	}
+	                                			currActiveFilter.valuesLev3.push({value: val, val:v, selected:selected, valCount: v, tooltip: tooltip, record: record });
+	                                    	}
+	                            		})
+                        			}
+                    			}
+                        	}
+                		})
+        			}
+        		}
+            }
+            else {
+                var lastV = null;
+                currActiveFilter.step = null;
+
+                if(facetTerms) {
+                    for (var i in facetTerms) {
+                        var selected = "";
+                        var tooltip = "";
+                        var v = facetTerms[i].term;
+                        var val = v;
+                        var count = facetTerms[i].count
+                        if (currActiveFilter.controlType == "list") {
+                            if (count > 0)
+                                selected = self._selectedClassName;
+                        }
+                        else if (currActiveFilter.controlType == "radiobuttons") {
+                            if (self.areValuesEqual(currActiveFilter.term, v) || (typeof currActiveFilter.list != "undefined" && currActiveFilter.list && currActiveFilter.list.length == 1 && self.areValuesEqual(currActiveFilter.list[0], v)))
+                                selected = 'btn-primary'
+                            
+                            if (currActiveFilter.useShapeOnly == true)
+                            	if (facetTerms[i].shape && facetTerms[i].shape.indexOf("undefined") < 0)
+	                        	{
+	                            	tooltip = "rel=tooltip title="+v
+	                            	v = "<div class='shape'>"+facetTerms[i].shape+"</div>"
+	                        	}
+                            	else v = "<div class='shapeH'>"+v+"</div>"
+                        }
+                        else if (currActiveFilter.controlType == "multibutton") {
+                            if (self.areValuesEqual(currActiveFilter.term, v))
+                                selected = 'btn-info'
+                            else if (typeof currActiveFilter.list != "undefined" && currActiveFilter.list != null) {
+                                for (var j in currActiveFilter.list)
+                                    if (self.areValuesEqual(currActiveFilter.list[j], v))
+                                        selected = 'btn-info'
+                            }
+                            if (currActiveFilter.useShapeOnly == true)
+                            	if (facetTerms[i].shape && facetTerms[i].shape.indexOf("undefined") < 0)
+	                        	{
+	                            	tooltip = "rel=tooltip title="+v
+	                            	v = "<div class='shape'>"+facetTerms[i].shape+"</div>"
+	                        	}
+                            	else v = "<div class='shapeH'>"+v+"</div>"
+                        }
+                        else if (currActiveFilter.controlType == "dropdown" || currActiveFilter.controlType == "dropdown_styled") {
+                            if (self.areValuesEqual(currActiveFilter.term, v) || (typeof currActiveFilter.list != "undefined" && currActiveFilter.list && currActiveFilter.list.length == 1 && self.areValuesEqual(currActiveFilter.list[0], v)))
+                                selected = "selected"
+                        }
+                        else if (currActiveFilter.controlType == "listbox" || currActiveFilter.controlType == "listbox_styled") {
+                            if (self.areValuesEqual(currActiveFilter.term, v))
+                                selected = "selected"
+                            else if (typeof currActiveFilter.list != "undefined" && currActiveFilter.list != null) {
+                                for (var j in currActiveFilter.list)
+                                    if (self.areValuesEqual(currActiveFilter.list[j], v))
+                                        selected = "selected"
+                            }
+                        }
+                        if (currActiveFilter.showCount)
+                            currActiveFilter.values.push({value: val, val:v, selected:selected, valCount: v+"\t["+count+"]", count: "["+count+"]", tooltip: tooltip });
+                        else currActiveFilter.values.push({value: val, val:v, selected:selected, valCount: v, tooltip: tooltip });
+
+                        if (currActiveFilter.controlType.indexOf('slider') >= 0) {
+                            if (v > currActiveFilter.max)
+                                currActiveFilter.max = v;
+
+                            if (v < currActiveFilter.min)
+                                currActiveFilter.min = v;
+
+                            if (currActiveFilter.controlType.indexOf('styled') > 0 && lastV != null) {
+                                if (currActiveFilter.step == null)
+                                    currActiveFilter.step = v - lastV;
+                                else if (v - lastV != currActiveFilter.step)
+                                    currActiveFilter.step = 1;
+                            }
+                        }
+                        lastV = v;
+                    }
+                } else if(self._sourceDataset) {
+                    _.each(self._sourceDataset.getRecords(), function(record) {
+                        var selected = "";
+                        var tooltip = "";
+                        var field = self._sourceDataset.fields.get(currActiveFilter.field);
+                        if(!field) {
+                            throw "widget.genericfilter: unable to find field ["+currActiveFilter.field+"] in dataset";
+                        }
+
+                        var v = record.getFieldValue(field);
+                        var val = v;
+                        if (currActiveFilter.controlType == "radiobuttons") {
+                            if (self.areValuesEqual(currActiveFilter.term, v) || (typeof currActiveFilter.list != "undefined" && currActiveFilter.list && currActiveFilter.list.length == 1 && self.areValuesEqual(currActiveFilter.list[0], v)))
+                                selected = 'btn-primary'
+                                	
+                            if (currActiveFilter.useShapeOnly == true)
+                        	{
+                            	var shape = record.getFieldShape(field, false, false);
+                            	if (shape && shape.indexOf("undefined") < 0)
+	                        	{
+	                            	tooltip = "rel=tooltip title="+v
+	                            	v = "<div class='shape'>"+shape+"</div>"
+	                        	}
+                            	else v = "<div class='shapeH'>"+v+"</div>"
+                        	}
+                        }
+                        else if (currActiveFilter.controlType == "multibutton") {
+                            if (self.areValuesEqual(currActiveFilter.term, v))
+                                selected = 'btn-info'
+                            else if (typeof currActiveFilter.list != "undefined" && currActiveFilter.list != null) {
+                                for (var j in currActiveFilter.list)
+                                    if (self.areValuesEqual(currActiveFilter.list[j], v))
+                                        selected = 'btn-info'
+                            }
+                            if (currActiveFilter.useShapeOnly == true)
+                        	{
+                            	var shape = record.getFieldShape(field, false, false);
+                            	if (shape && shape.indexOf("undefined") < 0)
+	                        	{
+	                            	tooltip = "rel=tooltip title="+v
+	                            	v = "<div class='shape'>"+shape+"</div>"
+	                        	}
+                            	else v = "<div class='shapeH'>"+v+"</div>"
+                        	}
+                        }
+                        else if (currActiveFilter.controlType == "dropdown" || currActiveFilter.controlType == "dropdown_styled") {
+                            if (self.areValuesEqual(currActiveFilter.term, v) || (typeof currActiveFilter.list != "undefined" && currActiveFilter.list && currActiveFilter.list.length == 1 && self.areValuesEqual(currActiveFilter.list[0], v)))
+                                selected = "selected"
+                        }
+                        else if (currActiveFilter.controlType == "listbox" || currActiveFilter.controlType == "listbox_styled") {
+                            if (self.areValuesEqual(currActiveFilter.term, v))
+                                selected = "selected"
+                            else if (typeof currActiveFilter.list != "undefined" && currActiveFilter.list != null) {
+                                for (var j in currActiveFilter.list)
+                                    if (self.areValuesEqual(currActiveFilter.list[j], v))
+                                        selected = "selected"
+                            }
+                        }
+                        currActiveFilter.values.push({value: val, val:v, record:record, selected:selected, valCount: v, tooltip: tooltip });
+
+                        if (currActiveFilter.controlType.indexOf('slider') >= 0) {
+                            if (v > currActiveFilter.max)
+                                currActiveFilter.max = v;
+
+                            if (v < currActiveFilter.min)
+                                currActiveFilter.min = v;
+
+                            if (currActiveFilter.controlType.indexOf('styled') > 0 && lastV != null) {
+                                if (currActiveFilter.step == null)
+                                    currActiveFilter.step = v - lastV;
+                                else if (v - lastV != currActiveFilter.step)
+                                    currActiveFilter.step = 1;
+                            }
+                        }
+                        lastV = v;
+
+                    })
+                } else {
+                    throw "widget.genericfilter: nor facet or dataset present to build filter"
+                }
+
+                if (currActiveFilter.controlType.indexOf('slider') >= 0) {
+                    if (typeof currActiveFilter.from == "undefined")
+                        currActiveFilter.from = currActiveFilter.min;
+
+                    if (typeof currActiveFilter.to == "undefined")
+                        currActiveFilter.to = currActiveFilter.max;
+
+                    if (typeof currActiveFilter.term == "undefined")
+                        currActiveFilter.term = currActiveFilter.min;
+
+                    if (currActiveFilter.controlType.indexOf('styled') > 0) {
+                        if (currActiveFilter.min % 2 == 0 && currActiveFilter.max % 2 == 0) {
+                            currActiveFilter.step1 = (currActiveFilter.max - currActiveFilter.min) / 4 + currActiveFilter.min
+                            currActiveFilter.mean = (currActiveFilter.max - currActiveFilter.min) / 2
+                            currActiveFilter.step2 = (currActiveFilter.max - currActiveFilter.min) * 3 / 4 + currActiveFilter.min
+                            if (currActiveFilter.step1 != Math.floor(currActiveFilter.step1) || currActiveFilter.step2 != Math.floor(currActiveFilter.step2)) {
+                                currActiveFilter.step1 = "|"
+                                currActiveFilter.step2 = "|"
+                            }
+                        }
+                        else {
+                            currActiveFilter.step1 = "|"
+                            currActiveFilter.mean = "|"
+                            currActiveFilter.step2 = "|"
+                        }
+                    }
+                }
+            }
+            currActiveFilter.ctrlId = self.uid + "_" + self.numId;
+            self.numId++;
+
+            return Mustache.render(self.filterTemplates[currActiveFilter.controlType], currActiveFilter);
+        },
+
+        render:function () {
+            var self = this;
+            var tmplData = {filters:this.activeFilters};
+            _.each(tmplData.filters, function (flt) {
+                flt.hrVisible = 'block';
+                flt.self = self; // pass self to filters!
+            });
+
+            //  map them to the correct controlType and retain their values (start/from/term/...)
+            if (self._sourceDataset) {
+                _.each(self._sourceDataset.queryState.get('selections'), function (filter) {
+                    for (var j in tmplData.filters) {
+                        if (tmplData.filters[j].field == filter.field) {
+                            tmplData.filters[j].list = filter.list
+                            tmplData.filters[j].term = filter.term
+                            tmplData.filters[j].start = filter.start
+                            tmplData.filters[j].stop = filter.stop
+                        }
+                    }
+                });
+
+                tmplData.fields = this._sourceDataset.fields.toJSON();
+
+            }
+
+            if (tmplData.filters.length > 0)
+                tmplData.filters[tmplData.filters.length - 1].hrVisible = 'none'
+
+            var resultType = "filtered";
+            if (self.options.resultType !== null)
+                resultType = self.options.resultType;
+
+            tmplData.filterDialogTitle = this.filterDialogTitle;
+            tmplData.filterDialogDescription = this.filterDialogDescription;
+            if (this.filterDialogTitle || this.filterDialogDescription)
+                tmplData.titlePresent = "block";
+            else tmplData.titlePresent = "none";
+            tmplData.dateConvert = self.dateConvert;
+            tmplData.filterRender = self.filterRender;
+            var currTemplate = this.template;
+            if (this.useHorizontalLayout)
+                currTemplate = this.templateHoriz
+
+            if (self.showBackground == false) {
+                self.className = self.className.replace("well", "")
+                $(self).removeClass("well");
+                $(self.el).removeClass("well");
+            }
+            else {
+                tmplData.backgroundColor = self.backgroundColor;
+                if (self.showBackground == true) {
+                    if (self.className.indexOf("well") < 0)
+                        self.className += " well";
+
+                    $(self).addClass("well");
+                    $(self.el).addClass("well");
+                }
+            }
+
+            var out = Mustache.render(currTemplate, tmplData);
+            this.el.html(out);
+        },
+
+        complementColor:function (c) {
+            // calculates a readable color to use over a given color
+            // usually returns black for light colors and white for dark colors.
+//	  var c1 = c.hsv();
+//	  if (c1[2] >= 0.5)
+//		  return chroma.hsv(c1[0],c1[1],0);
+//	  else return chroma.hsv(c1[0],c1[1],1);
+            var c1 = c.rgb;
+            if (c1[0] + c1[1] + c1[2] < 255 * 3 / 2)
+                return "white";
+            else return "black";
+        },
+        onButtonsetClicked:function (e) {
+            e.preventDefault();
+            var self = this;
+            var $target = $(e.currentTarget);
+            var $fieldSet = $target.parent().parent();
+            var type = $fieldSet.attr('data-filter-type');
+            var fieldId = $fieldSet.attr('data-filter-field');
+            var controlType = $fieldSet.attr('data-control-type');
+            if (controlType == "hierarchic_radiobuttons")
+        	{
+                // ensure one and only one selection is performed
+                var classToUse = "btn-primary"
+                $target.parent().find('button.' + classToUse).each(function () {
+                    $(this).removeClass(classToUse);
+                });
+                $target.addClass(classToUse);
+                var currLevel = $target.parent().attr("level")
+                var currActiveFilter = this.findActiveFilterByField(fieldId, controlType);
+                var prefix = ""
+                if (currLevel >= 2)
+                {
+                	var lev1Selection = $fieldSet.find('div.data-control-id button.' + classToUse); 
+                	prefix = lev1Selection.attr('val').valueOf() + currActiveFilter.separator;
+                }
+    			if (currLevel == 3)
+				{
+                	var lev2Selection = $fieldSet.find('div.level2 button.' + classToUse); 
+                	prefix += lev2Selection.attr('val').valueOf() + currActiveFilter.separator;
+				}
+                var listaValori = [];
+                if ($target.attr('val') && $target.attr('val').length)
+                	listaValori.push(prefix + $target.attr('val').valueOf());
+                else if (prefix.length)
+                	listaValori.push(prefix.substring(0, prefix.length-1))
+                	
+                currActiveFilter.userChanged = true;
+                if (listaValori.length == 1 && listaValori[0] == "All" && !currActiveFilter.noAllButton) {
+                    listaValori = [];
+                    currActiveFilter.term = "";
+                    currActiveFilter.showLevel2 = "none";
+                    currActiveFilter.showLevel3 = "none";
+                }
+                else
+            	{
+                	// check if leaf or if it has sublevels
+                	var currSelectedValue = $target.attr('val').valueOf();
+                	var currActiveFilterValue = null;
+                	if (currLevel == 1)
+                		currActiveFilterValue = _.find(currActiveFilter.values, function (currVal) {return currVal.value == currSelectedValue})
+                	else if (currLevel == 2)
+                		currActiveFilterValue = _.find(currActiveFilter.valuesLev2, function (currVal) {return currVal.value == currSelectedValue})
+                	else if (currLevel == 3)
+                		currActiveFilterValue = _.find(currActiveFilter.valuesLev3, function (currVal) {return currVal.value == currSelectedValue})
+                		
+                	if (currActiveFilterValue && currActiveFilterValue.record)
+            		{
+                    	currActiveFilter.term = prefix + currSelectedValue;
+                    	if (currLevel == 1)
+                		{
+                    		var divLev2 = $fieldSet.find('div.level2') 
+                    		if (divLev2.length > 0)
+                			{
+                    			divLev2[0].style.display="none"
+                        		var divLev3 = $fieldSet.find('div.level3') 
+                        		if (divLev3.length)
+                        			divLev3[0].style.display="none"
+                			}
+                		}
+                    	else if (currLevel == 2)
+                		{
+                    		var divLev3 = $fieldSet.find('div.level3') 
+                    		if (divLev3.length > 0)
+                    			divLev3[0].style.display="none"
+                		}
+                        this.doAction("onButtonsetClicked", fieldId, listaValori, "add", currActiveFilter);
+            		}
+                	else
+            		{
+                		currActiveFilter.term = prefix + currSelectedValue;
+                		// redraw the filter!!!
+                		// TODO: devi trovare flt giusto se ce n'è più di uno!!!
+	                    var flt = this.el.find("div.filter"); 
+	            		var currFilterCtrl = $(flt).find(".data-control-id");
+	            		this.updateHierarchicRadiobuttons($(flt), currActiveFilter, $(currFilterCtrl));                		
+                		
+                		listaValori = [];
+                		// THEN send a list of all values compatible with the choice. Eg: if user selected ANDROID
+                		// which has sublevels TABLET & SMARTPHONE, both ANDROID.TABLET and ANDROID.SMARTPHONE must be sent
+                    	_.each(this._sourceDataset.getRecords(), function(record) {
+                            var field = self._sourceDataset.fields.get(currActiveFilter.field);
+                            var currV = record.getFieldValue(field);
+                            if (currV.indexOf(prefix + currSelectedValue+currActiveFilter.separator) == 0)
+                            	listaValori.push(currV)
+                    	});
+                		this.doAction("onButtonsetClicked", fieldId, listaValori, "add", currActiveFilter);
+            		}
+            	}
+        	}
+            else
+        	{
+                var $fieldSet = $target.parent().parent();
+                var type = $fieldSet.attr('data-filter-type');
+                var fieldId = $fieldSet.attr('data-filter-field');
+                var controlType = $fieldSet.attr('data-control-type');
+                var classToUse = "btn-info"
+                if (controlType == "multibutton") {
+                    $target.toggleClass(classToUse);
+                }
+                else if (controlType == "radiobuttons") {
+                    // ensure one and only one selection is performed
+                    classToUse = "btn-primary"
+                    $fieldSet.find('div.btn-group button.' + classToUse).each(function () {
+                        $(this).removeClass(classToUse);
+                    });
+                    $target.addClass(classToUse);
+                }
+                var listaValori = [];
+                $fieldSet.find('div.btn-group button.' + classToUse).each(function () {
+                    listaValori.push($(this).attr('val').valueOf()); // in case there's a date, convert it with valueOf
+                });
+                var currActiveFilter = this.findActiveFilterByField(fieldId, controlType);
+                currActiveFilter.userChanged = true;
+                if (controlType == "multibutton")
+                    currActiveFilter.list = listaValori;
+                else if (controlType == "radiobuttons") {
+                    if (listaValori.length == 1 && listaValori[0] == "All" && !currActiveFilter.noAllButton) {
+                        listaValori = [];
+                        currActiveFilter.term = "";
+                    }
+                    else currActiveFilter.term = $target.attr('val').valueOf();
+                }
+                this.doAction("onButtonsetClicked", fieldId, listaValori, "add", currActiveFilter);
+        	}
+        },
+        onLegendItemClicked:function (e) {
+            e.preventDefault();
+            var $target = $(e.currentTarget);
+            var $fieldSet = $target.parent().parent().parent().parent().parent();
+            var type = $fieldSet.attr('data-filter-type');
+            var fieldId = $fieldSet.attr('data-filter-field');
+            var controlType = $fieldSet.attr('data-control-type');
+
+            $target.toggleClass("not-selected");
+            var listaValori = [];
+            $fieldSet.find('div.legend-item').each(function () {
+                if (!$(this).hasClass("not-selected"))
+                    listaValori.push($(this).attr("myValue").valueOf()); // in case there's a date, convert it with valueOf
+            });
+
+            // make sure at least one value is selected
+            if (listaValori.length > 0) {
+                var currActiveFilter = this.findActiveFilterByField(fieldId, controlType)
+                currActiveFilter.userChanged = true;
+                currActiveFilter.legend = listaValori;
+
+                this.doAction("onLegendItemClicked", fieldId, listaValori, "add", currActiveFilter);
+            }
+            else $target.toggleClass("not-selected"); // reselect the item and exit
+        },
+        onListItemClicked:function (e) {
+            e.preventDefault();
+            // let's check if user clicked on combobox or table and behave consequently
+            var $target = $(e.currentTarget);
+            var $table;
+            var $targetTD;
+            var $targetOption;
+            var $combo;
+            if ($target.is('td')) {
+                $targetTD = $target;
+                $table = $target.parent().parent().parent();
+                var type = $table.attr('data-filter-type');
+                if (type == "range")
+                    $combo = $table.parent().parent().find(".drop-down2");
+            }
+            else if ($target.is('select')) {
+                $combo = $target;
+                $table = $combo.parent().find(".table");
+            }
+            this.handleListItemClicked($targetTD, $table, $combo, e.ctrlKey);
+        },
+        handleListItemClicked:function ($targetTD, $table, $combo, ctrlKey) {
+            var fieldId = $table.attr('data-filter-field');
+            var controlType = $table.attr('data-control-type');
+            var type = $table.attr('data-filter-type');
+            if (type == "range" && typeof $targetTD == "undefined") {
+                // case month_week_calendar
+                // user clicked on year combo
+                var year = parseInt($combo.val());
+                // update year value in filter (so that the value is retained after re-rendering)
+                this.findActiveFilterByField(fieldId, controlType).year = year;
+                this.render();
+            }
+            if (typeof $targetTD != "undefined") {
+                // user clicked on table
+                if (!ctrlKey) {
+                    $table.find('tr').each(function () {
+                        $(this).removeClass(this._selectedClassName);
+                    });
+                }
+                $targetTD.parent().addClass(this._selectedClassName);
+                var listaValori = [];
+                if (type == "list") {
+                    $table.find('tr.' + this._selectedClassName + " td").each(function () {
+                        listaValori.push($(this).text());
+                    });
+                }
+
+                var currFilter = this.findActiveFilterByField(fieldId, controlType);
+                currFilter.userChanged = true;
+
+                if (type == "range") {
+                    // case month_week_calendar
+                    var year = parseInt($combo.val());
+                    var startDate = $targetTD.attr('startDate');
+                    var endDate = $targetTD.attr('stopDate');
+
+                    currFilter.term = $targetTD.attr('myValue'); // save selected item for re-rendering later
+
+                    this.doAction("onListItemClicked", fieldId, [startDate, endDate], "add", currFilter);
+                }
+                else if (type == "list") {
+                    this.doAction("onListItemClicked", fieldId, listaValori, "add", currFilter);
+                }
+                else if (type == "term") {
+                    this.doAction("onListItemClicked", fieldId, [$targetTD.text()], "add", currFilter);
+                }
+            }
+        },
+
+        // action could be add or remove
+        doAction:function (eventType, fieldName, values, actionType, currFilter) {
+            var self=this;
+
+            var res = [];
+            // make sure you use all values, even 2nd or 3rd level if present (hierarchic radiobuttons only)
+            var allValues = currFilter.values
+            if (currFilter.valuesLev3)
+            	allValues = currFilter.values.concat(currFilter.valuesLev2, currFilter.valuesLev3)
+            else if (currFilter.valuesLev2)
+            	allValues = currFilter.values.concat(currFilter.valuesLev2)
+            	
+            // TODO it is not efficient, record must be indexed by term
+            // TODO conversion to string is not correct, original value must be used
+            _.each(allValues, function(v) {
+              if(v.record) {
+                  var field = v.record.fields.get(currFilter.field);
+                  if(_.contains(values,v.record.getFieldValueUnrendered(field).toString()))
+                    res.push(v.record);
+              };
+            });
+
+            // I'm using record (not facet) so I can pass it to actions
+            if(res.length>0) {
+                var actions = self.options.actions;
+                actions.forEach(function(currAction){
+                    currAction.action.doAction(res, currAction.mapping);
+                });
+            } else
+            {
+
+                var actions = this.options.actions;
+                var eventData = {};
+                eventData[fieldName] = values;
+
+                recline.ActionUtility.doAction(actions, eventType, eventData, actionType);
+            }
+        },
+
+        dateConvert:function (d) {
+            var dd = new Date(d);
+            return dd.toDateString();
+        },
+
+        dateConvertBack:function (d) {
+            // convert 01/31/2012  to 2012-01-31 00:00:00
+            try {
+                var p = d.split(/\D/);
+                return p[2] + "-" + p[0] + "-" + p[1] + " 00:00:00";
+            }
+            catch (ex) {
+                return d;
+            }
+        },
+
+        onStyledSliderValueChanged:function (e, value) {
+            e.preventDefault();
+            var $target = $(e.target).parent().parent();
+            var fieldId = $target.attr('data-filter-field');
+            var fieldType = $target.attr('data-filter-type');
+            var controlType = $target.attr('data-control-type');
+            if (fieldType == "term") {
+                var term = value;
+                var activeFilter = this.findActiveFilterByField(fieldId, controlType);
+                activeFilter.userChanged = true;
+                activeFilter.term = term;
+                activeFilter.list = [term];
+                this.doAction("onStyledSliderValueChanged", fieldId, [term], "add", activeFilter);
+            }
+            else if (fieldType == "range") {
+                var activeFilter = this.findActiveFilterByField(fieldId, controlType);
+                activeFilter.userChanged = true;
+                var fromTo = value.split(";");
+                var from = fromTo[0];
+                var to = fromTo[1];
+                activeFilter.from = from;
+                activeFilter.to = to;
+                this.doAction("onStyledSliderValueChanged", fieldId, [from, to], "add", activeFilter);
+            }
+        },
+        onFilterValueChanged:function (e) {
+            e.preventDefault();
+            var $target = $(e.target).parent();
+            var fieldId = $target.attr('data-filter-field');
+            var fieldType = $target.attr('data-filter-type');
+            var controlType = $target.attr('data-control-type');
+
+            var activeFilter = this.findActiveFilterByField(fieldId, controlType);
+            activeFilter.userChanged = true;
+            if (fieldType == "term") {
+                var term;
+                var termObj = $target.find('.data-control-id');
+                switch (controlType) {
+                    case "term":
+                        term = termObj.val();
+                        break;
+                    case "slider":
+                        term = termObj.slider("value");
+                        break;
+                    case "slider_styled":
+                        term = termObj.attr("value");
+                        if (term = "")
+                        	term = null;
+                        break;
+                    case "dropdown":
+                    case "dropdown_styled":
+                        term = termObj.val();
+                        break;
+                    case "listbox":
+                        term = termObj.val();
+                        break;
+                }
+                activeFilter.term = term;
+                if (term)
+                	activeFilter.list = [term];
+                else activeFilter.list = [];
+                
+                this.doAction("onFilterValueChanged", fieldId, activeFilter.list, "add", activeFilter);
+            }
+            else if (fieldType == "list") {
+                var list = new Array();
+                var listObj = $target.find('.data-control-id')[0]; //return a plain HTML select obj
+                for (var i in listObj.options)
+                    if (listObj.options[i].selected)
+                        list.push(listObj.options[i].value);
+
+                activeFilter.list = list;
+                this.doAction("onFilterValueChanged", fieldId, list, "add", activeFilter);
+            }
+            else if (fieldType == "range") {
+                var from;
+                var to;
+                var fromTo;
+                var fromObj = $target.find('.data-control-id-from');
+                var toObj = $target.find('.data-control-id-to');
+                var fromToObj = $target.find('.data-control-id');
+                switch (controlType) {
+                    case "range":
+                        from = fromObj.val();
+                        to = toObj.val();
+                        break;
+                    case "range_slider":
+                        from = fromToObj.slider("values", 0);
+                        to = fromToObj.slider("values", 1);
+                        break;
+                    case "range_slider_styled":
+                        fromTo = fromToObj.attr("value").split(";");
+                        from = fromTo[0];
+                        to = fromTo[1];
+                        break;
+                    case "range_calendar":
+                        from = new Date(fromObj.val());
+                        to = new Date(toObj.val());
+                        break;
+                    case "dropdown_date_range":
+                        from = fromToObj.find(":selected").attr("startDate");
+                        to = fromToObj.find(":selected").attr("stopDate");
+                        activeFilter.term = fromToObj.val();
+                        break;
+                }
+                activeFilter.from = from;
+                activeFilter.to = to;
+                this.doAction("onFilterValueChanged", fieldId, [from, to], "add",activeFilter);
+            }
+        },
+        onAddFilterShow:function (e) {
+            e.preventDefault();
+            var $target = $(e.target);
+            $target.hide();
+            this.el.find('div.js-add').show();
+        },
+        hidePanel:function (obj) {
+            $(function () {
+                obj.hide("blind", {}, 1000, function () {
+                });
+            });
+        },
+        getFilterTypeFromControlType:function (controlType) {
+            switch (controlType) {
+                case "dropdown" :
+                case "dropdown_styled" :
+                case "slider" :
+                case "slider_styled" :
+                case "radiobuttons" :
+                    return "term";
+                case "range_slider" :
+                case "range_slider_styled" :
+                case "range_calendar" :
+                case "month_week_calendar" :
+                case "dropdown_date_range" :
+                    return "range";
+                case "list" :
+                case "listbox":
+                case "listbox_styled":
+                case "legend" :
+                case "multibutton" :
+                case "hierarchic_radiobuttons" :
+                    return "list";
+            }
+            return controlType;
+        },
+        getFieldType:function (field) {
+            var fieldFound = this._sourceDataset.fields.find(function (e) {
+                return e.get('id') === field
+            })
+            if (typeof fieldFound != "undefined" && fieldFound != null)
+                return fieldFound.get('type');
+
+            return "string";
+        },
+        onAddFilter:function (e) {
+            e.preventDefault();
+            var $target = $(e.target).parent().parent();
+            $target.hide();
+            var controlType = $target.find('select.filterType').val();
+            var filterType = this.getFilterTypeFromControlType(controlType);
+            var field = $target.find('select.fields').val();
+            this.addNewFilterControl({type:filterType, field:field, controlType:controlType});
+        },
+        addNewFilterControl:function (newFilter) {
+            if (typeof newFilter.type == 'undefined')
+                newFilter.type = this.getFilterTypeFromControlType(newFilter.controlType)
+
+            if (typeof newFilter.fieldType == 'undefined')
+                newFilter.fieldType = this.getFieldType(newFilter.field)
+
+            if (newFilter.controlType == "radiobuttons")
+        	{
+            	if (newFilter.noAllButton && newFilter.noAllButton == true)
+            		newFilter.useAllButton = false 
+            	else newFilter.useAllButton = true
+        	}
+            if (newFilter.controlType == "radiobuttons" || newFilter.controlType == "multibutton")
+            	newFilter.useShapeOnly = (newFilter.useShapeOnly && newFilter.useShapeOnly == true)
+
+            if (newFilter.controlType == "month_week_calendar") {
+                if (typeof newFilter.period == "undefined")
+                    newFilter.period = "Months"
+
+                if (typeof newFilter.year == "undefined")
+                    newFilter.year = new Date().getFullYear();
+            }
+            this.activeFilters.push(newFilter);
+
+        },
+        onPeriodChanged:function (e) {
+            e.preventDefault();
+            var $table = $(e.target).parent().find(".table");
+            //var $yearCombo = $(e.target).parent().find(".drop-down2");
+            var fieldId = $table.attr('data-filter-field');
+            var controlType = $table.attr('data-control-type');
+
+            var type = $table.attr('data-filter-type');
+            var currFilter = this.findActiveFilterByField(fieldId, controlType);
+            currFilter.period = $(e.target).val();
+            currFilter.term = null;
+            this.render();
+        },
+        findActiveFilterByField:function (fieldId, controlType) {
+            for (var j in this.activeFilters) {
+                if (this.activeFilters[j].field == fieldId && this.activeFilters[j].controlType == controlType)
+                    return this.activeFilters[j];
+            }
+            return new Object(); // to avoid "undefined" errors
+        },
+        onRemoveFilter:function (e) {
+            e.preventDefault();
+            var $target = $(e.target);
+            var field = $target.parent().parent().attr('data-filter-field');
+            var controlType = $target.parent().parent().attr('data-control-type');
+            var currFilter = this.findActiveFilterByField(field, controlType);
+            currFilter.term = undefined;
+            currFilter.value = [];
+            currFilter.userChanged = undefined;
+
+            if (currFilter.controlType == "list" || currFilter.controlType == "month_week_calendar") {
+                $table = $target.parent().parent().find(".table")
+                if (typeof $table != "undefined") {
+                    $table.find('tr').each(function () {
+                        $(this).removeClass(this._selectedClassName);
+                    });
+                }
+            }
+            else if (currFilter.controlType == "slider_styled") {
+                var filterCtrl = $target.parent().parent().find(".slider-styled")
+                filterCtrl.jslider("value", filterCtrl.jslider().settings.from);
+            }
+
+            this.doAction("onRemoveFilter", field, [], "remove", currFilter);
+
+        },
+
+        composeStateData:function () {
+            var self = this;
+            var queryString = '?';
+            var items = [];
+            $.each(self._sourceDataset.queryState.toJSON(), function (key, value) {
+                if (typeof(value) === 'object') {
+                    value = JSON.stringify(value);
+                }
+                items.push(key + '=' + encodeURIComponent(value));
+            });
+
+            return items;
+        },
+
+
+    });
+
+})(jQuery, recline.View);
+this.recline = this.recline || {};
 this.recline.View = this.recline.View || {};
 
 (function ($, view) {
@@ -3765,7 +7065,12 @@ this.recline.View = this.recline.View || {};
             var field = this.model.fields.get(this.options.fieldRanges);
             var fieldMeasure = this.model.fields.get(this.options.fieldMeasures);
 
-            var records = _.map(this.options.model.getRecords(this.options.resultType.type), function (record) {
+            var type;
+            if(this.options.resultType) {
+                type = this.options.resultType;
+            }
+
+            var records = _.map(this.options.model.getRecords(type), function (record) {
                 var ranges = [];
                 _.each(self.options.fieldRanges, function (f) {
                     var field = self.model.fields.get(f);
@@ -3781,7 +7086,7 @@ this.recline.View = this.recline.View || {};
                     var field = self.model.fields.get(f);
                     markers.push(record.getFieldValueUnrendered(field));
                 });
-                return {ranges:ranges, measures:measures, markers: markers};
+                return {ranges:ranges, measures:measures, markers: markers, customTicks: self.options.customTicks};
             });
 
             var margin = {top: 5, right: 40, bottom: 40, left: 40};
@@ -3795,7 +7100,7 @@ this.recline.View = this.recline.View || {};
                 .height(height);
 
             this.drawD3(records, width, height, margin);
-        },
+       },
 
         drawD3:function (data, width, height, margin) {
             var self = this;
@@ -3840,7 +7145,8 @@ this.recline.View = this.recline.View || {};
                     measures = bulletMeasures,
                     width = 380,
                     height = 30,
-                    tickFormat = null;
+                    tickFormat = null,
+                	customTicks = bulletCustomTicks;
 
                 // For each small multipleâ€¦
                 function bullet(g) {
@@ -3848,6 +7154,7 @@ this.recline.View = this.recline.View || {};
                         var rangez = ranges.call(this, d, i).slice().sort(d3.descending),
                             markerz = markers.call(this, d, i).slice().sort(d3.descending),
                             measurez = measures.call(this, d, i).slice().sort(d3.descending),
+                            customTickz = customTicks.call(this, d, i),
                             g = d3.select(this);
 
                         // Compute the new x-scale.
@@ -3898,9 +7205,9 @@ this.recline.View = this.recline.View || {};
                                 return "measure s" + i;
                             })
                             .attr("width", w0)
-                            .attr("height", height / 3)
+                            .attr("height", function (d, i) { return height / (i*4+3); })
                             .attr("x", reverse ? x0 : 0)
-                            .attr("y", height / 3)
+                            .attr("y", function (d, i) { return (height / 3.0 - height / (i*4+3.0)) /2.0 + height / 3.0; })
                             .transition()
                             .duration(duration)
                             .attr("width", w1)
@@ -3909,9 +7216,9 @@ this.recline.View = this.recline.View || {};
                         measure.transition()
                             .duration(duration)
                             .attr("width", w1)
-                            .attr("height", height / 3)
+                            .attr("height", function (d, i) { return height / (i*4+3); })
                             .attr("x", reverse ? x1 : 0)
-                            .attr("y", height / 3);
+                            .attr("y", function (d, i) { return (height / 3.0 - height / (i*4+3.0)) /2.0 + height / 3.0; });
 
                         // Update the marker lines.
                         var marker = g.selectAll("line.marker")
@@ -3943,12 +7250,20 @@ this.recline.View = this.recline.View || {};
                             .data(x1.ticks(8), function (d) {
                                 return this.textContent || format(d);
                             });
-
+                        
                         // Initialize the ticks with the old scale, x0.
                         var tickEnter = tick.enter().append("g")
                             .attr("class", "tick")
                             .attr("transform", bulletTranslate(x0))
                             .style("opacity", 1e-6);
+
+                        var idx = -1;
+                        var customFormat = function() {
+//                        	var customTicks = [null, null, "MIN", null, "Current", null, "Previous", null, "MAX"]
+                        	if (customTickz && customTickz[++idx])
+                        		return customTickz[idx];
+                        	else return ""
+                        }
 
                         tickEnter.append("line")
                             .attr("y1", height)
@@ -3958,7 +7273,7 @@ this.recline.View = this.recline.View || {};
                             .attr("text-anchor", "middle")
                             .attr("dy", "1em")
                             .attr("y", height * 7 / 6)
-                            .text(format);
+                            .text((customTickz ? customFormat: format));
 
                         // Transition the entering ticks to the new scale, x1.
                         tickEnter.transition()
@@ -4036,14 +7351,25 @@ this.recline.View = this.recline.View || {};
                     return bullet;
                 };
 
+                bullet.customTicks = function (x) {
+                    if (!arguments.length) return customTicks;
+                    customTicks = x;
+                    return bullet;
+                };
+
                 bullet.duration = function (x) {
                     if (!arguments.length) return duration;
                     duration = x;
                     return bullet;
                 };
 
+                
                 return bullet;
             };
+
+            function bulletCustomTicks(d) {
+                return d.customTicks;
+            }
 
             function bulletRanges(d) {
                 return d.ranges;

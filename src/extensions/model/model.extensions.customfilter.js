@@ -1,6 +1,6 @@
 (function ($) {
 
-    recline.Model.Dataset = recline.Model.Dataset.extend({
+    recline.Model.Dataset.prototype = $.extend(recline.Model.Dataset.prototype, {
             addCustomFilterLogic: function(f) {
             if(this.attributes.customFilterLogic)
                 this.attributes.customFilterLogic.push(f);

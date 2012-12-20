@@ -67,7 +67,7 @@ my.SlickGrid = Backbone.View.extend({
       showLineNumbers: this.state.get('showLineNumbers'),
       showTotals: this.state.get('showTotals'),
       showPartitionedData: this.state.get('showPartitionedData'),
-      selectedCellFocus: this.state.get('selectedCellFocus'),
+      selectedCellFocus: this.state.get('selectedCellFocus')
 	};
 
     // We need all columns, even the hidden ones, to show on the column picker
@@ -139,7 +139,7 @@ my.SlickGrid = Backbone.View.extend({
   	          field: options.showPartitionedData.partition,
   	          sortable: false,
   	          minWidth: 80,
-  	          formatter: formatter,
+  	          formatter: formatter
   	        };
         var widthInfo = _.find(self.state.get('columnsWidth'),function(c){return c.column == field.id});
         if (widthInfo){
@@ -168,7 +168,9 @@ my.SlickGrid = Backbone.View.extend({
     	}
         else columns.push(column);
     });
-    
+	var innerChartSerie1Name = self.state.get('innerChartSerie1');
+	var innerChartSerie2Name = self.state.get('innerChartSerie2');
+	
 	if (options.useInnerChart == true && self.model.getRecords(self.resultType).length > 0)
 	{
 		columns.push({
@@ -178,7 +180,8 @@ my.SlickGrid = Backbone.View.extend({
         sortable: false,
 		alignLeft: true,
         minWidth: 150,
-        formatter: Slick.Formatters.TwinBarFormatter
+        // if single series, use percent bar formatter, else twinbar formatter
+        formatter: (innerChartSerie1Name && innerChartSerie2Name ? Slick.Formatters.TwinBarFormatter : Slick.Formatters.PercentCompleteBar)
       })
 	}
 	if (self.state.get('fieldLabels') && self.state.get('fieldLabels').length > 0)
@@ -242,10 +245,9 @@ my.SlickGrid = Backbone.View.extend({
 			else return (firstChar+1)*Math.pow(10, totDigits-1)
 		}
 	}
-	var innerChartSerie1Name = self.state.get('innerChartSerie1');
-	var innerChartSerie2Name = self.state.get('innerChartSerie2');
 
-    if (self.state.get('useInnerChart') == true && innerChartSerie1Name != null && innerChartSerie2Name != null && self.model.getRecords(self.resultType).length > 0)
+
+    if (self.state.get('useInnerChart') == true && innerChartSerie1Name && self.model.getRecords(self.resultType).length > 0)
 	{
         _.each(self.model.getRecords(self.resultType), function(doc){
 		  var row = {};
@@ -371,15 +373,20 @@ my.SlickGrid = Backbone.View.extend({
 	
 	        _.each(self.model.getFields(self.resultType).models, function(field){
 	        row[field.id] = doc.getFieldValue(field);
-	        if (innerChartSerie1Name != null && field.id == innerChartSerie1Name)
+	        if (innerChartSerie1Name && field.id == innerChartSerie1Name)
 	    		row.schema_colors[0] = doc.getFieldColor(field);
 	        
-	        if (innerChartSerie2Name != null && field.id == innerChartSerie2Name)
+	        if (innerChartSerie2Name && field.id == innerChartSerie2Name)
 	    		row.schema_colors[1] = doc.getFieldColor(field);
 	      });
 		  
-		  if (self.state.get('useInnerChart') == true && innerChartSerie1Name != null && innerChartSerie2Name != null) 
-			row['innerChart'] = [ row[innerChartSerie1Name], row[innerChartSerie2Name], max ];
+		  if (self.state.get('useInnerChart') == true && innerChartSerie1Name)
+		  {
+			  if (innerChartSerie2Name)
+				  row['innerChart'] = [ row[innerChartSerie1Name], row[innerChartSerie2Name], max ]; // twinbar for 2 series
+			  else row['innerChart'] = row[innerChartSerie1Name]; // percent bar for 1 series
+		  }
+		  
 	
 		  data.push(row);
 			
@@ -430,7 +437,7 @@ my.SlickGrid = Backbone.View.extend({
 	this.grid.removeClassesFromGrid(["ui-widget"]);
 	
 	this.grid.setSelectionModel(new Slick.RowSelectionModel());
-	this.grid.getSelectionModel().setSelectedRows(rowsToSelect);
+	//this.grid.getSelectionModel().setSelectedRows(rowsToSelect);
 
 	
     this.grid.onSelectedRowsChanged.subscribe(function(e, args){
@@ -517,13 +524,15 @@ my.SlickGrid = Backbone.View.extend({
     }
     resizeSlickGrid();
     nv.utils.windowResize(resizeSlickGrid);
+    this.handleRequestOfRowSelection();
     
     return this;
  },
   handleRequestOfRowSelection: function() {
+	  console.log("handleRequestOfRowSelection")
 	  this.discardSelectionEvents = true;
 	  var rowsToSelect = [];
-	  var myRecords = this.model.getRecords(self.resultType); 
+	  var myRecords = this.model.getRecords(this.resultType); 
 	  var selRow;
 	  for (row in myRecords) 
 	      if (myRecords[row].is_selected)
@@ -540,7 +549,7 @@ my.SlickGrid = Backbone.View.extend({
 	var self = this;
 	var selectedRecords = [];
 	_.each(rows, function(row) {
-		selectedRecords.push(self.model.records.models[row]);
+		selectedRecords.push(self.model.getRecords(self.resultType)[row]);//self.model.records.models[row]);
 	});
 	var actions = this.options.actions;
 	   if(actions != null)

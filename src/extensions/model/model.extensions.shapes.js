@@ -1,6 +1,6 @@
 (function ($) {
 
-    recline.Model.Dataset = recline.Model.Dataset.extend({
+    recline.Model.Dataset.prototype = $.extend(recline.Model.Dataset.prototype, {
         setShapeSchema:function () {
             var self = this;
             _.each(self.attributes.shapeSchema, function (d) {
@@ -14,7 +14,7 @@
     });
 
 
-    recline.Model.Record = recline.Model.Record.extend({
+    recline.Model.Record.prototype = $.extend(recline.Model.Record.prototype, {
         getFieldShapeName:function (field) {
             if (!field.attributes.shapeSchema)
                 return null;
@@ -43,10 +43,6 @@
 
             return field.attributes.shapeSchema.getShapeFor(fieldValue, fieldColor, isSVG, isNode);
         }
-    });
-
-    recline.Model.RecordList = recline.Model.RecordList.extend({
-        model: recline.Model.Record
     });
 
 

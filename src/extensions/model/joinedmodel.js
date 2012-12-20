@@ -19,15 +19,13 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
 
             self.ds_fetched = [];
 
-            this.fields = new my.FieldList();
+            self.joinedModel = new my.Dataset({backend: "Memory", records:[], fields: []});
 
-
-            this.records = new my.RecordList();
-
-            this.facets = new my.FacetList();
-            this.recordCount = null;
-
-            this.queryState = new my.Query();
+            self.fields = self.joinedModel.fields;
+            self.records = self.joinedModel.records;
+            self.facets = self.joinedModel.facets;
+            self.recordCount = self.joinedModel.recordCount;
+            self.queryState = self.joinedModel.queryState;
 
             if (this.get('initialState')) {
                 this.get('initialState').setState(this);
@@ -39,10 +37,7 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
             _.each(this.attributes.join, function(p) {
                 p.model.fields.bind('reset', self.generatefields);
                 p.model.fields.bind('add', self.generatefields);
-
             });
-
-            this.generatefields();
 
             this.attributes.model.bind('query:done', function () {
                 self.ds_fetched.push("model");
@@ -89,94 +84,39 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
             var tmpFields = [];
             _.each(this.attributes.model.fields.models, function (f) {
                 var c = f.toJSON();
-                c.id = "model." + c.id;
+                c.id = c.id;
                 tmpFields.push(c);
             });
 
             _.each(this.attributes.join, function(p) {
                 _.each(p.model.fields.models, function (f) {
                     var c = f.toJSON();
-                    c.id = p.id + "." + c.id;
+                    c.id = p.id + "_" + c.id;
                     tmpFields.push(c);
                 });
             });
-
-
-
-            var options = {renderer:recline.Data.Formatters.Renderers};
-
-            this.fields.reset(tmpFields, options);
-            this.setColorSchema();
-            this.setShapeSchema();
-
-
+            this.joinedModel.resetFields(tmpFields);
         },
 
-        query:function (queryObj) {
-            var self = this;
-            this.trigger('query:start');
 
+
+        query:function (queryObj) {
+            var self=this;
+            self.trigger('query:start');
             if (queryObj) {
                 this.queryState.set(queryObj, {silent:true});
             }
-
-            var queryObj = this.queryState.toJSON();
-
-            console.log("Query on model query [" + JSON.stringify(queryObj) + "]");
-
             var results = self.join();
 
-            var numRows = queryObj.size || results.length;
-            var start = queryObj.from || 0;
-
-            _.each(queryObj.sort, function (sortObj) {
-                var fieldName = sortObj.field;
-                results = _.sortBy(results, function (doc) {
-                    var _out = doc[fieldName];
-                    return _out;
-                });
-                if (sortObj.order == 'desc') {
-                    results.reverse();
-                }
-            });
-
-            results = results.slice(start, start + numRows);
-            facets = recline.Data.Faceting.computeFacets(results, queryObj);
-
-            self.recordCount = results.length;
-
-            var docs = _.map(results, function (hit) {
-                var _doc = new my.Record(hit);
-                _doc.fields = self.fields;
-                _doc.bind('change', function (doc) {
-                    self._changes.updates.push(doc.toJSON());
-                });
-                _doc.bind('destroy', function (doc) {
-                    self._changes.deletes.push(doc.toJSON());
-                });
-                return _doc;
-            });
-
-
-            self.records.reset(docs);
-
-            if (facets) {
-                var facets = _.map(facets, function (facetResult, facetId) {
-                    facetResult.id = facetId;
-                    var result = new my.Facet(facetResult);
-                    recline.Data.ColorSchema.addColorsToTerms(facetId, result.attributes.terms, self.attributes.colorSchema);
-                    recline.Data.ShapeSchema.addShapesToTerms(facetId, result.attributes.terms, self.attributes.shapeSchema);
-
-                    return result;
-                });
-                self.facets.reset(facets);
-            }
+            self.joinedModel.resetRecords(results);
+            self.joinedModel.fetch();
+            self.recordCount = self.joinedModel.recordCount;
 
             self.trigger('query:done');
         },
 
         join:function () {
-            var joinon = this.attributes.joinon;
+
             var joinType = this.attributes.joinType;
             var model = this.attributes.model;
             var joinModel = this.attributes.join;
@@ -194,7 +134,7 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
                 // define the record with all data from model
                 var record = {};
                 _.each(r.toJSON(), function (f, index) {
-                    record["model." + index] = f;
+                    record[index] = f;
                 });
 
                 _.each(joinModel, function(p) {
@@ -211,7 +151,7 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
 
                     _.each(resultsFromDataset2, function (res) {
                         _.each(res, function (field_value, index) {
-                            record[p.id + "." + index] = field_value;
+                            record[p.id + "_" + index] = field_value;
                         })
                     })
 
@@ -226,51 +166,32 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
             return results;
         },
 
-        getRecords:function () {
-            return this.records.models;
+        addCustomFilterLogic: function(f) {
+            return this.joinedModel.addCustomFilterLogic(f);
+        },
+
+        getRecords:function (type) {
+            return this.joinedModel.getRecords(type);
         },
 
         getFields:function (type) {
-            return this.fields;
+            return this.joinedModel.getFields(type);
         },
 
         toTemplateJSON:function () {
-            var data = this.records.toJSON();
-            data.recordCount = this.recordCount;
-            data.fields = this.fields.toJSON();
-            return data;
+            return this.joinedModel.toTemplateJSON();
         },
 
 
         getFacetByFieldId:function (fieldId) {
-            return _.find(this.facets.models, function (facet) {
-                return facet.id == fieldId;
-            });
+            return this.joinedModel.getFacetByFieldId(fieldId);
         },
 
-        setColorSchema:function () {
-            var self = this;
-            _.each(self.attributes.colorSchema, function (d) {
-                var field = _.find(self.fields.models, function (f) {
-                    return d.field === f.id
-                });
-                if (field != null)
-                    field.attributes.colorSchema = d.schema;
-            })
-        },
-
-        setShapeSchema:function () {
-            var self = this;
-            _.each(self.attributes.shapeSchema, function (d) {
-                var field = _.find(self.fields.models, function (f) {
-                    return d.field === f.id
-                });
-                if (field != null)
-                    field.attributes.shapeSchema = d.schema;
-            })
-        },
         isFieldPartitioned:function (field) {
             return false
+        },
+        toFullJSON:function (resultType) {
+            return this.joinedModel.toFullJSON(resultType);
         }
 
     })

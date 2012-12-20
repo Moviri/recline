@@ -125,7 +125,7 @@ this.recline.Data.ShapeSchema = this.recline.Data.ShapeSchema || {};
             var self=this;
             var ret = [];
 
-            if(dataset.dataset.isFieldPartitioned(dataset.field, dataset.type))   {
+            if(dataset.dataset.isFieldPartitioned && dataset.dataset.isFieldPartitioned(dataset.field, dataset.type))   {
                 var fields = dataset.dataset.getPartitionedFields(dataset.field);
             _.each(dataset.dataset.getRecords(dataset.type), function(d) {
                 _.each(fields, function (field) {

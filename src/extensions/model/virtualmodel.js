@@ -18,12 +18,14 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
 
 
             var self = this;
-            this.backend = recline.Backend.Memory;
-            this.fields = new my.FieldList();
-            this.records = new my.RecordList();
-            this.facets = new my.FacetList();
-            this.recordCount = null;
-            this.queryState = new my.Query();
+
+            self.vModel = new my.Dataset({backend: "Memory", records:[], fields: []});
+
+            self.fields = self.vModel.fields;
+            self.records = self.vModel.records;
+            self.facets = self.vModel.facets;
+            self.recordCount = self.vModel.recordCount;
+            self.queryState = self.vModel.queryState;
 
             if (this.get('initialState')) {
                 this.get('initialState').setState(this);
@@ -32,9 +34,6 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
             this.attributes.dataset.bind('query:done', function () {
                 self.initializeCrossfilter();
             })
-
-            //this.attributes.dataset.records.bind('add',     function() { self.initializeCrossfilter(); });
-            //this.attributes.dataset.records.bind('reset',   function() { self.initializeCrossfilter(); });
 
             this.queryState.bind('change', function () {
                 self.query();
@@ -52,36 +51,21 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
             // TODO USE crossfilter as backend memory
         },
 
-        getRecords:function (type) {
+            getRecords:function (type) {
             var self = this;
 
-            if (type === 'filtered' || type == null) {
+            if (type === 'totals') {
                 if(self.needsTableCalculation && self.totals == null)
                     self.rebuildTotals();
-
-                return self.records.models;
-            } else if (type === 'totals') {
-                if(self.totals == null)
-                    self.rebuildTotals();
-
                 return self.totals.records.models;
             } else if (type === 'totals_unfiltered') {
+
                 if(self.totals_unfiltered == null)
                     self.rebuildUnfilteredTotals();
 
                 return self.totals_unfiltered.records.models;
             } else {
-                if (self._store.data == null) {
-                    throw "VirtualModel: unable to retrieve not filtered data, store can't provide data. Use a backend that use memory store";
-                }
-
-                var docs = _.map(self._store.data, function (hit) {
-                    var _doc = new my.Record(hit);
-                    _doc.fields = self.fields;
-                    return _doc;
-                });
-
-                return docs;
+                return self.vModel.getRecords(type);
             }
         },
 
@@ -94,9 +78,7 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
         getFields:function (type) {
             var self = this;
 
-            if (type === 'filtered' || type == null) {
-                return self.fields;
-            } else if (type === 'totals') {
+            if (type === 'totals') {
                 if(self.totals == null)
                     self.rebuildTotals();
 
@@ -107,8 +89,12 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
 
                 return self.totals_unfiltered.fields;
             } else {
-                return self.fields;
+                return self.vModel.getFields(type);
             }
+        },
+
+        fetch: function() {
+            this.initializeCrossfilter();
         },
 
         initializeCrossfilter:function () {
@@ -130,7 +116,16 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
         setDimensions:function (dimensions) {
             this.attributes.aggregation.dimensions = dimensions;
             this.trigger('dimensions:change');
-            this.initializeCrossfilter();
+        },
+
+        setMeasures:function (measures) {
+            this.attributes.aggregation.measures = measures;
+            this.trigger('measures:change');
+        },
+
+        setTotalsMeasures: function(measures) {
+            this.attributes.totals.measures = measures;
+            this.trigger('totals:change');
         },
 
         getDimensions:function () {
@@ -303,13 +298,14 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
             var fields = self.buildFields(reducedResult, originalFields, partitionFields, dimensions, aggregationFunctions);
             var result = self.buildResult(reducedResult, originalFields, partitionFields, dimensions, aggregationFunctions, aggregatedFields, partitions);
 
-            this._store = new recline.Backend.Memory.Store(result, fields);
+            self.vModel.resetFields(fields);
+            self.vModel.resetRecords(result);
 
             recline.Data.FieldsUtility.setFieldsAttributes(fields, self);
-            this.fields.reset(fields, {renderer:recline.Data.Formatters.Renderers});
+
             this.clearUnfilteredTotals();
 
-            this.query();
+            self.vModel.fetch();
 
         },
 
@@ -564,7 +560,13 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
                     tempValue = tmpField[aggregationFunctions[j]];
 
                 for (var x in tempValue) {
-                    var originalFieldAttributes = originalFields.get(x).attributes;
+                    var originalField = originalFields.get(x);
+                    if(!originalField)
+                    throw "Virtualmodel: unable to find field ["+x+"] in model";
+
+                    var originalFieldAttributes = originalField.attributes;
+
+
                     var newType = recline.Data.Aggregations.resultingDataType[aggregationFunctions[j]](originalFieldAttributes.type);
 
                     fields.push({
@@ -635,108 +637,37 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
         },
 
         query:function (queryObj) {
-
-            var self = this;
-            var dfd = $.Deferred();
-            this.trigger('query:start');
-
+            var self=this;
+            self.trigger('query:start');
             if (queryObj) {
                 this.queryState.set(queryObj, {silent:true});
-            }
-            var actualQuery = this.queryState.toJSON();
-            console.log("VModel [" + self.attributes.name + "] query [" + JSON.stringify(actualQuery) + "]");
-
-            if (this._store == null) {
-                console.log("Warning query called before data has been calculated for virtual model, call fetch on source dataset");
-                return;
             }
 
             self.clearFilteredTotals();
 
-            this._store.query(actualQuery, this.toJSON())
-                .done(function (queryResult) {
-                    self._handleQueryResult(queryResult);
-                    self.trigger('query:done');
-                    dfd.resolve(self.records);
-                })
-                .fail(function (arguments) {
-                    self.trigger('query:fail', arguments);
-                    dfd.reject(arguments);
-                });
-            return dfd.promise();
+            self.vModel.query(queryObj);
+
+            self.recordCount = self.vModel.recordCount;
+
+
+            self.trigger('query:done');
         },
 
         selection:function (queryObj) {
-            var self = this;
-
-            this.trigger('selection:start');
-
-            if (queryObj) {
-                self.queryState.set(queryObj, {silent:true});
-            }
-            var actualQuery = self.queryState
-
-
-            // apply on current records
-            // needed cause memory store is not mandatory
-            recline.Data.Filters.applySelectionsOnData(self.queryState.get('selections'), self.records.models, self.fields);
-
-            self.queryState.trigger('selection:done');
+           return this.vModel.selection(queryObj);
 
         },
-
-        _handleQueryResult:function (queryResult) {
-            var self = this;
-            self.recordCount = queryResult.total;
-            var docs = _.map(queryResult.hits, function (hit) {
-                var _doc = new my.Record(hit);
-                _doc.fields = self.fields;
-                return _doc;
-            });
-
-                self.clearFilteredTotals();
-                self.records.reset(docs);
-
-
-            if (queryResult.facets) {
-                var facets = _.map(queryResult.facets, function (facetResult, facetId) {
-                    facetResult.id = facetId;
-                    var result = new my.Facet(facetResult);
-
-                    self.addColorsToTerms(facetId, result.attributes.terms);
-
-                    return result;
-                });
-                self.facets.reset(facets);
-            }
-
-
-        },
-
 
         setColorSchema:function (type) {
-            var self = this;
-            _.each(self.attributes.colorSchema, function (d) {
-                var field = _.find(self.getFields(type).models, function (f) {
-                    return d.field === f.id
-                });
-                if (field != null)
-                    field.attributes.colorSchema = d.schema;
-            })
+            return this.vModel.setColorSchema(type);
+
         },
 
         setShapeSchema:function (type) {
-            var self = this;
-            _.each(self.attributes.shapeSchema, function (d) {
-                var field = _.find(self.getFields(type).models, function (f) {
-                    return d.field === f.id
-                });
-                if (field != null)
-                    field.attributes.shapeSchema = d.schema;
-            })
+            return this.vModel.setShapeSchema(type);
         },
 
-        addColorsToTerms:function (field, terms) {
+        /*addColorsToTerms:function (field, terms) {
             var self = this;
             _.each(terms, function (t) {
 
@@ -748,46 +679,18 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
                     })
                 }
             });
-        },
+        },*/
 
         getFacetByFieldId:function (fieldId) {
-            return _.find(this.facets.models, function (facet) {
-                return facet.id == fieldId;
-            });
+            return this.vModel.getFacetByFieldId(fieldId);
         },
 
         toTemplateJSON:function () {
-            var data = this.records.toJSON();
-            data.recordCount = this.recordCount;
-            data.fields = this.fields.toJSON();
-            return data;
+            return this.vModel.toTemplateJSON();
         },
 
-        // ### getFieldsSummary
-        //
-        // Get a summary for each field in the form of a `Facet`.
-        //
-        // @return null as this is async function. Provides deferred/promise interface.
         getFieldsSummary:function () {
-            // TODO update function in order to manage facets/filter and selection
-
-            var self = this;
-            var query = new my.Query();
-            query.set({size:0});
-
-            var dfd = $.Deferred();
-            this._store.query(query.toJSON(), this.toJSON()).done(function (queryResult) {
-                if (queryResult.facets) {
-                    _.each(queryResult.facets, function (facetResult, facetId) {
-                        facetResult.id = facetId;
-                        var facet = new my.Facet(facetResult);
-                        // TODO: probably want replace rather than reset (i.e. just replace the facet with this id)
-                        self.fields.get(facetId).facets.reset(facet);
-                    });
-                }
-                dfd.resolve(queryResult);
-            });
-            return dfd.promise();
+            return this.vModel.getFieldsSummary();
         },
 
         // Retrieve the list of partitioned field for the specified aggregated field
@@ -825,7 +728,12 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
             });
 
             return fields;
+        },
+
+        addCustomFilterLogic: function(f) {
+            return this.vModel.addCustomFilterLogic(f);
         }
+
 
     });
 

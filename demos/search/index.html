@@ -47,6 +47,9 @@
   <script type="text/javascript" src="../../vendor/slickgrid/2.0.1/slick.grid.min.js"></script>
   <script type="text/javascript" src="../../vendor/moment/1.6.2/moment.js"></script>
   <script type="text/javascript" src="../../vendor/timeline/20120520/js/timeline.js"></script>
+  <!--[if lte IE 7]>
+  <script language="javascript" type="text/javascript" src="../../vendor/json/json2.js"></script>
+  <![endif]-->
 
   <!--
     ## Just use the all in one library version rather than individual files
@@ -220,7 +223,7 @@ ul.facet-items {
 </div>
 
 <div class="info">
-  <p>This demo shows how Recline can be used to build a search app. It includes faceting as well as search. You can find the <a href="app.js">source javascript here</a> &ndash; please feel free to reuse!</p>
+  <p>This demo shows how Recline can be used to build a search app. It includes faceting as well as search. You can find the <a href="demo.search.app.js">source javascript here</a> (plus <a href="../..//docs/src/demo.search.app.html">prettified version of source for readability</a>) &ndash; please feel free to reuse!</p>
   <p>The default setup uses local example data but you can also connect directly to any other <a href="../..//docs/backends.html">backend supported by Recline</a>, for example SOLR, ElasticSearch or even a google docs spreadsheet. As an example: here's an <a href="?backend=solr&amp;url=http://openspending.org/api/search">example running against the SOLR-style OpenSpending API</a> and here's an example <a href="?backend=gdocs&amp;url=https://docs.google.com/spreadsheet/ccc?key=0Aon3JiuouxLUdExXSTl2Y01xZEszOTBFZjVzcGtzVVE">running against a GDocs spreadsheet (Oil spills in the Niger Delta)</a>.</p>
 </div>
 
@@ -230,7 +233,7 @@ ul.facet-items {
 
 <div style="clear: both;"></div>
 
-<script type="text/javascript" src="app.js"></script>
+<script type="text/javascript" src="demo.search.app.js"></script>
 
 
 </div>
