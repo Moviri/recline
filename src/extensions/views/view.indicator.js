@@ -32,7 +32,7 @@ this.recline.View = this.recline.View || {};
                 var data = recline.Data.Formatters.Renderers(unrenderedValue, tmpField);
                 var template = templates.templatePercentage;
                 if (condensed == true)
-                	template = templates.templateCondensed2;
+                	template = templates.templateCondensed;
                 
                 return {data:data, template:template, unrenderedValue: unrenderedValue, percentageMsg: "% of total: "};
             },
@@ -42,14 +42,14 @@ this.recline.View = this.recline.View || {};
                 var data = recline.Data.Formatters.Renderers( unrenderedValue, tmpField);
                 var template = templates.templatePercentage;
                 if (condensed == true)
-                	template = templates.templateCondensed2;
+                	template = templates.templateCondensed;
 
                 return {data:data, template:template, unrenderedValue: unrenderedValue, percentageMsg: "% variation: "};
             },
             nocompare: function (kpi, compare, templates, condensed){
                 var template = templates.templateBase;
                 if (condensed == true)
-                	template = templates.templateCondensed2;
+                	template = templates.templateCondensed;
             	
                 return {data:null, template:template, unrenderedValue:null};
             }
@@ -73,11 +73,11 @@ this.recline.View = this.recline.View || {};
 		</div>\
       </div> \
     </div> ',
-    templateBaseCondensed:
+    templateBaseCondensed_old:
 	'<div class="indicator " style="width:100%;"> \
 	    <div class="panel indicator_{{viewId}}" style="width:100%;"> \
     		<div id="indicator_{{viewId}}" class="indicator-container well" style="width:85%;"> \
-    			<div style="width:100%;"> \
+    			<div style="width:100%;margin-left:5px"> \
 	                <div class="value-cell" style="float:left">{{value}}</div> \
     				{{#compareShape}} \
 					<div class="compareshape" style="float:right">{{{compareShape}}}</div> \
@@ -87,11 +87,11 @@ this.recline.View = this.recline.View || {};
 	   				{{/shape}} \
 				</div> \
     			<div style="width:100%;padding-top:10px"><hr></div> \
-                <div style="text-align:justify;width:100%;" class="title">{{{label}}}</div>\
+                <div style="text-align:justify;width:100%;margin-right:8px" class="title">{{{label}}}</div>\
 			</div> \
 	    </div> \
     </div>',
-    templateCondensed2:
+    templateCondensed:
         '<style> \
         .round-border { \
     	    border: 1px solid #DDDDDD; \
@@ -108,7 +108,7 @@ this.recline.View = this.recline.View || {};
         	<div class="indicator round-border-dark" > \
     	    <div class="panel indicator_{{viewId}}" > \
         		<div id="indicator_{{viewId}}" class="indicator-container" > \
-        			<div class="round-border" style="float:left"> \
+        			<div class="round-border" style="float:left;margin:2px 2px 0px 2px"> \
     					{{#compareShape}} \
     					<div class="compareshape" style="float:left">{{{compareShape}}}</div> \
     					{{/compareShape}} \
@@ -117,7 +117,7 @@ this.recline.View = this.recline.View || {};
     					{{/shape}} \
         				<div class="value-cell" style="float:left">{{value}}</div> \
     				</div> \
-                    <div style="text-align:justify;float:left" class="title">&nbsp;&nbsp;{{{label}}}</div>\
+                    <div style="text-align:justify;float:left;margin-right:8px" class="title">&nbsp;&nbsp;{{{label}}}</div>\
     			</div> \
     	    </div> \
         </div>'
@@ -193,7 +193,7 @@ this.recline.View = this.recline.View || {};
 
             var template = this.templates.templateBase;
             if (self.options.state.condensed == true)
-            	template = self.templates.templateCondensed2;            
+            	template = self.templates.templateCondensed;            
 
             if (self.options.state.compareWith) {
                 var compareWithRecord = self.model.getRecords(self.options.state.compareWith.type);
