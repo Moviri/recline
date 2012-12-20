@@ -274,7 +274,7 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
 
         var filters = queryObj.filters;
         var data = [];
-        var multivsep = "~";
+        var multivsep = "|";
 
 
         // register filters

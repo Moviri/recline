@@ -29,6 +29,19 @@ recline.Model.Dataset.prototype = $.extend(recline.Model.Dataset.prototype, {
                 throw "Model: unable to retrieve not filtered data, store can't provide data. Use a backend that use a memory store";
             }
 
+            if(self.queryState.get('sort').length > 0)
+            {
+                _.each(self.queryState.get('sort'), function (sortObj) {
+                    var fieldName = sortObj.field;
+                    self._store.data = _.sortBy(self._store.data, function (doc) {
+                        var _out = doc[fieldName];
+                        return _out;
+                    });
+                    if (sortObj.order == 'desc') {
+                        self._store.dataex.reverse();
+                    }
+                });
+            }
 
             var docs = _.map(self._store.data, function (hit) {
                 var _doc = new recline.Model.Record(hit);
@@ -38,6 +51,9 @@ recline.Model.Dataset.prototype = $.extend(recline.Model.Dataset.prototype, {
 
             if(self.queryState.get('selections').length > 0)
                 recline.Data.Filters.applySelectionsOnData(self.queryState.get('selections'), docs, self.fields);
+
+
+
 
             return docs;
         }

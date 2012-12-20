@@ -443,6 +443,19 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
                 throw "Model: unable to retrieve not filtered data, store can't provide data. Use a backend that use a memory store";
             }
 
+            if(self.queryState.get('sort').length > 0)
+            {
+                _.each(self.queryState.get('sort'), function (sortObj) {
+                    var fieldName = sortObj.field;
+                    self._store.data = _.sortBy(self._store.data, function (doc) {
+                        var _out = doc[fieldName];
+                        return _out;
+                    });
+                    if (sortObj.order == 'desc') {
+                        self._store.data.reverse();
+                    }
+                });
+            }
 
             var docs = _.map(self._store.data, function (hit) {
                 var _doc = new recline.Model.Record(hit);
@@ -452,6 +465,9 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
 
             if(self.queryState.get('selections').length > 0)
                 recline.Data.Filters.applySelectionsOnData(self.queryState.get('selections'), docs, self.fields);
+
+
+
 
             return docs;
         }
@@ -647,7 +663,10 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
 
             var self = this;
 
-            self.vModel = new my.Dataset({backend: "Memory", records:[], fields: []});
+            self.vModel = new my.Dataset(
+                {
+                    backend: "Memory",
+                    records:[], fields: []});
 
             self.fields = self.vModel.fields;
             self.records = self.vModel.records;
@@ -1197,6 +1216,15 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
 
                     var newType = recline.Data.Aggregations.resultingDataType[aggregationFunctions[j]](originalFieldAttributes.type);
 
+                    var fieldLabel = x + "_" + aggregationFunctions[j];
+
+                    if (self.attributes.fieldLabelForFields) {
+                        fieldLabel = self.attributes.fieldLabelForFields
+                            .replace("{originalFieldLabel}", originalFieldAttributes.label)
+                            .replace("{aggregatedFunction}", aggregationFunctions[j]);
+                    }
+
+
                     fields.push({
                         id:x + "_" + aggregationFunctions[j],
                         type:newType,
@@ -1204,7 +1232,8 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
                         colorSchema:originalFieldAttributes.colorSchema,
                         shapeSchema:originalFieldAttributes.shapeSchema,
                         originalField:x,
-                        aggregationFunction:aggregationFunctions[j]
+                        aggregationFunction:aggregationFunctions[j],
+                        label:fieldLabel
                     });
                 }
 
@@ -1215,10 +1244,10 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
                         var newType = recline.Data.Aggregations.resultingDataType[aggregationFunctions[j]](originalFieldAttributes.type);
 
                         var fieldId = d.id;
-                        var fieldLabel = fieldId;
+                        var partitionedFieldLabel = fieldId;
 
                         if (self.attributes.fieldLabelForPartitions) {
-                            fieldLabel = self.attributes.fieldLabelForPartitions
+                            partitionedFieldLabel = self.attributes.fieldLabelForPartitions
                                 .replace("{originalField}", d.originalField)
                                 .replace("{partitionFieldName}", d.field)
                                 .replace("{partitionFieldValue}", d.value)
@@ -1235,7 +1264,7 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
                                 shapeSchema:originalFieldAttributes.shapeSchema,
                                 originalField:d.originalField,
                                 aggregationFunction:aggregationFunctions[j],
-                                label:fieldLabel
+                                label:partitionedFieldLabel
                             }
                         );
                     })
@@ -2131,6 +2160,149 @@ my.Filters = {};
             number: function (e) { return parseFloat(e, 10); }
         };
 }(this.recline.Data))
+this.recline = this.recline || {};
+this.recline.Data = this.recline.Data || {};
+
+(function(my){
+
+	my.Format = {};
+    my.Formatters = {};
+
+    // formatters define how data is rapresented in internal dataset
+    my.FormattersMODA = {
+        integer : function (e) { return parseInt(e); },
+        string  : function (e) {
+            if(e!=null)
+                return e.toString();
+            else
+                return null; },
+        date    : function (e) { return new Date(parseInt(e)).valueOf() },
+        float   : function (e) { return parseFloat(e, 10); },
+        number  : function (e) { return parseFloat(e, 10); }
+    };
+
+    
+    my.Format.decimal = d3.format(".00f");
+	
+	my.Format.scale = function(options) {
+		var calculateRange = function(rangePerc, dimwidth){			
+			return [0, rangePerc*dimwidth];
+		};
+		
+		return function(records, width, range) {			
+			var ret = {}, count;
+			
+			ret.axisScale = {};
+			var calcRange = calculateRange(range, width);
+			
+			if (options.type === 'linear') {
+				var max = d3.max(records, function(record) {
+					var max=0;
+					count=0;
+					_.each(options.domain, function(field) {
+						max = (record.getFieldValue({"id":field}) > max) ? record.getFieldValue({"id":field}) : max;
+						count++;
+					});
+					return max*count;
+				});
+								
+				_.each(options.domain, function(field, i){
+					var domain;
+					var frange = [calcRange[0],calcRange[1]/count];
+					
+					if(i%2==1 && options.invertEven){
+						domain = [max/count, 0];
+					}else{
+						domain=[0, max/count];
+					}					
+
+					ret.axisScale[field] = d3.scale.linear().domain(domain).range(frange);
+				});			
+				
+				ret.scale = d3.scale.linear().domain([0, max]).range(calcRange);
+			}
+			
+			return ret;
+		};
+	};
+
+    my.Formatters.Renderers = function(val, field, doc)   {
+        var r = my.Formatters.RenderersImpl[field.attributes.type];
+        if(r==null) {
+            throw "No renderers defined for field type " + field.attributes.type;
+        }
+
+        return r(val, field, doc);
+    };
+
+    // renderers use fieldtype and fieldformat to generate output for getFieldValue
+    my.Formatters.RenderersImpl = {
+        object: function(val, field, doc) {
+            return JSON.stringify(val);
+        },
+        integer: function(val, field, doc) {
+            var format = field.get('format');
+            if(format === "currency_euro") {
+                return "€ " + val;
+            }
+
+            return val;
+        },
+        date: function(val, field, doc) {
+            var format = field.get('format');
+            if(format == null || format == "date")
+                return val;
+            if(format === "localeTimeString") {
+                return (new Date(val)).toLocaleString();
+            }
+
+            return new Date(val).toLocaleString();
+        },
+        geo_point: function(val, field, doc) {
+            return JSON.stringify(val);
+        },
+        number: function(val, field, doc) {
+            var format = field.get('format');
+            if (format === 'percentage') {
+                return parseFloat(val.toFixed(2)) + '%';
+            } else if(format === "currency_euro") {
+                return "€ " + val;
+            }
+
+            try {
+                return parseFloat(val.toFixed(2));
+            }
+            catch(err) {
+                //console.log("Error in conferting val " + val + " toFixed");
+                return "N.A.";
+            }
+
+
+        },
+        string: function(val, field, doc) {
+            var format = field.get('format');
+            if (format === 'markdown') {
+                if (typeof Showdown !== 'undefined') {
+                    var showdown = new Showdown.converter();
+                    out = showdown.makeHtml(val);
+                    return out;
+                } else {
+                    return val;
+                }
+            } else if (format == 'plain') {
+                return val;
+            } else {
+                // as this is the default and default type is string may get things
+                // here that are not actually strings
+                if (val && typeof val === 'string') {
+                    val = val.replace(/(https?:\/\/[^ ]+)/g, '<a href="$1">$1</a>');
+                }
+                return val
+            }
+        }
+    }
+
+})(this.recline.Data);
 // # Recline Backbone Models
 this.recline = this.recline || {};
 this.recline.Data = this.recline.Data || {};
@@ -2584,7 +2756,7 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
 
         var filters = queryObj.filters;
         var data = [];
-        var multivsep = "~";
+        var multivsep = "|";
 
 
         // register filters

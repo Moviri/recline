@@ -90,6 +90,9 @@ this.recline.Data = this.recline.Data || {};
             var format = field.get('format');
             if(format == null || format == "date")
                 return val;
+            if(format === "localeTimeString") {
+                return (new Date(val)).toLocaleString();
+            }
 
             return new Date(val).toLocaleString();
         },
