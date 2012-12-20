@@ -65,7 +65,10 @@ this.recline.View = this.recline.View || {};
 			<table class="indicator-table"> \
                 <tr class="titlerow"><td></td><td style="text-align: center;" class="title">{{{label}}}</td></tr>    \
                 <tr class="descriptionrow"><td></td><td style="text-align: center;" class="description"><small>{{description}}</small></td></tr>    \
-                <tr class="shaperow"><td><div class="shape">{{{shape}}}</div><div class="compareshape">{{{compareShape}}}</div></td><td class="value-cell">{{value}}</td></tr>  \
+                <tr class="shaperow"> \
+	   				<td><div class="shape">{{{shape}}}</div> \
+	   				<div class="compareshape">{{{compareShape}}}</div> \
+	   				</td><td class="value-cell">{{value}}</td></tr>  \
              </table>  \
 		</div>\
       </div> \
@@ -76,8 +79,12 @@ this.recline.View = this.recline.View || {};
     		<div id="indicator_{{viewId}}" class="indicator-container well" style="width:85%;"> \
     			<div style="width:100%;"> \
 	                <div class="value-cell" style="float:left">{{value}}</div> \
+    				{{#compareShape}} \
 					<div class="compareshape" style="float:right">{{{compareShape}}}</div> \
+    				{{/compareShape}} \
+	   				{{#shape}} \
 	                <div class="shape" style="float:right">{{{shape}}}</div> \
+	   				{{/shape}} \
 				</div> \
     			<div style="width:100%;padding-top:10px"><hr></div> \
                 <div style="text-align:justify;width:100%;" class="title">{{{label}}}</div>\
@@ -102,8 +109,12 @@ this.recline.View = this.recline.View || {};
     	    <div class="panel indicator_{{viewId}}" > \
         		<div id="indicator_{{viewId}}" class="indicator-container" > \
         			<div class="round-border" style="float:left"> \
+    					{{#compareShape}} \
     					<div class="compareshape" style="float:left">{{{compareShape}}}</div> \
+    					{{/compareShape}} \
+						{{#shape}} \
     	                <div class="shape" style="float:left">{{{shape}}}</div> \
+    					{{/shape}} \
         				<div class="value-cell" style="float:left">{{value}}</div> \
     				</div> \
                     <div style="text-align:justify;float:left" class="title">&nbsp;&nbsp;{{{label}}}</div>\
@@ -223,6 +234,9 @@ this.recline.View = this.recline.View || {};
                         template = compareValue.template;
                 }
             }
+            if ((tmplData["shape"] == null || typeof tmplData["shape"] == "undefined") 
+            	&& (tmplData["compareShape"] == null || typeof tmplData["compareShape"] == "undefined"))
+            	tmplData["compareShape"] = " " // ensure the space is filled
 
             if (this.options.state.description)
                 tmplData["description"] = this.options.state.description;
