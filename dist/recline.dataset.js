@@ -12,7 +12,7 @@ this.recline.Model = this.recline.Model || {};
 
         // ### initialize
         initialize:function () {
-            _.bindAll(this, 'query', 'selection');
+            _.bindAll(this, 'query');
             this.backend = null;
             if (this.get('backend')) {
                 this.backend = this._backendFromString(this.get('backend'));
@@ -40,7 +40,8 @@ this.recline.Model = this.recline.Model || {};
 
             this.queryState.bind('change', this.query);
             this.queryState.bind('facet:add', this.query);
-            this.queryState.bind('selection:change', this.selection);
+
+
             // store is what we query and save against
             // store will either be the backend or be a memory store if Backend fetch
             // tells us to use memory store
@@ -48,6 +49,7 @@ this.recline.Model = this.recline.Model || {};
             if (this.backend == recline.Backend.Memory) {
                 this.fetch();
             }
+
         },
 
         // ### fetch
@@ -267,29 +269,7 @@ this.recline.Model = this.recline.Model || {};
         },
 
 
-        selection:function (queryObj) {
-            var self = this;
 
-            this.trigger('selection:start');
-
-            if (queryObj) {
-                self.queryState.set(queryObj, {silent:true});
-            }
-            var actualQuery = self.queryState
-
-            // if memory store apply on memory
-            /*if (self.backend == recline.Backend.Memory
-             || self.backend == recline.Backend.Jsonp) {
-             self.backend.applySelections(this.queryState.get('selections'));
-             }*/
-
-            // apply on current records
-            // needed cause memory store is not mandatory
-            recline.Data.Filters.applySelectionsOnData(self.queryState.get('selections'), self.records.models, self.fields);
-
-            self.queryState.trigger('selection:done');
-
-        },
 
 
         toTemplateJSON:function () {
@@ -350,7 +330,7 @@ this.recline.Model = this.recline.Model || {};
             return _.find(this.facets.models, function (facet) {
                 return facet.id == fieldId;
             });
-        },
+        }
 
 
 
@@ -416,14 +396,6 @@ this.recline.Model = this.recline.Model || {};
 
 
 
-        isRecordSelected:function () {
-            var self = this;
-            return self["is_selected"];
-        },
-        setRecordSelection:function (sel) {
-            var self = this;
-            self["is_selected"] = sel;
-        },
 
         // ### summary
         //
@@ -761,62 +733,7 @@ this.recline.Model = this.recline.Model || {};
         },
 
 
-        // ### addSelection
-        //
-        // Add a new selection (appended to the list of selections)
-        //
-        // @param selection an object specifying the filter - see _filterTemplates for examples. If only type is provided will generate a filter by cloning _filterTemplates
-        addSelection:function (selection) {
-            // crude deep copy
-            var myselection = JSON.parse(JSON.stringify(selection));
-            // not full specified so use template and over-write
-            // 3 as for 'type', 'field' and 'fieldType'
-            if (_.keys(selection).length <= 3) {
-                myselection = _.extend(this._selectionTemplates[selection.type], myselection);
-            }
-            var selections = this.get('selections');
-            selections.push(myselection);
-            this.trigger('change:selections');
-        },
-        // ### removeSelection
-        //
-        // Remove a selection at index selectionIndex
-        removeSelection:function (selectionIndex) {
-            var selections = this.get('selections');
-            selections.splice(selectionIndex, 1);
-            this.set({selections:selections});
-            this.trigger('change:selections');
-        },
-        removeSelectionByField:function (field) {
-            var selections = this.get('selections');
-            for (var j in filters) {
-                if (selections[j].field == field) {
-                    removeSelection(j);
-                }
-            }
-        },
-        setSelection:function (filter) {
-            if (filter["remove"]) {
-                removeSelectionByField(filter.field);
-            } else {
 
-
-                var s = this.get('selections');
-                var found = false;
-                for (var j = 0; j < s.length; j++) {
-                    if (s[j].field == filter.field) {
-                        s[j] = filter;
-                        found = true;
-                    }
-                }
-                if (!found)
-                    s.push(filter);
-            }
-        },
-
-        isSelected:function () {
-            return this.get('selections').length > 0;
-        },
 
 
         // ### addFacet
