@@ -38,7 +38,7 @@ recline.Model.Dataset.prototype = $.extend(recline.Model.Dataset.prototype, {
                         return _out;
                     });
                     if (sortObj.order == 'desc') {
-                        self._store.dataex.reverse();
+                        self._store.data.reverse();
                     }
                 });
             }
