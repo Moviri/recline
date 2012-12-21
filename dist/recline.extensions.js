@@ -4721,6 +4721,8 @@ this.recline.View = this.recline.View || {};
                     var y = doc.getFieldValueUnrendered(fieldValue);
                     var y_formatted = doc.getFieldValue(fieldValue);
 
+                    if(y && !isNaN(y)) {
+
 
                     var point = {x:x, y:y, record:doc, y_formatted:y_formatted, x_formatted:x_formatted};
                     if (sizeField)
@@ -4736,7 +4738,7 @@ this.recline.View = this.recline.View || {};
                     }
 
                     seriesTmp[key] = tmpS;
-
+                    }
                 });
 
                 for (var j in seriesTmp) {
@@ -4791,7 +4793,7 @@ this.recline.View = this.recline.View || {};
                             var y = doc.getFieldValueUnrendered(yfield);
                             var y_formatted = doc.getFieldValue(yfield);
 
-                            if (y != null) {
+                            if (y != null && !isNaN(y)) {
                                 var color;
 
                                 var calculatedColor = doc.getFieldColor(yfield);

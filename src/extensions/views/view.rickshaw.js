@@ -32,9 +32,9 @@ this.recline.View = this.recline.View || {};
             console.log("View.Rickshaw: render");
             var self = this;
 
-            var graphid="#" + this.uid;
+            var graphid = "#" + this.uid;
 
-            if(self.graph)              {
+            if (self.graph) {
                 jQuery(graphid).empty();
                 delete self.graph;
             }
@@ -239,22 +239,23 @@ this.recline.View = this.recline.View || {};
                     var y = doc.getFieldValueUnrendered(fieldValue);
                     var y_formatted = doc.getFieldValue(fieldValue);
 
+                    if (y && !isNaN(y)) {
 
-                    var point = {x:x, y:y, record:doc, y_formatted:y_formatted, x_formatted:x_formatted};
-                    if (sizeField)
-                        point["size"] = doc.getFieldValueUnrendered(sizeField);
-                    if (shape != null)
-                        point["shape"] = shape;
 
-                    tmpS.data.push(point);
+                        var point = {x:x, y:y, record:doc, y_formatted:y_formatted, x_formatted:x_formatted};
+                        if (sizeField)
+                            point["size"] = doc.getFieldValueUnrendered(sizeField);
+                        if (shape != null)
+                            point["shape"] = shape;
 
-                    if (fillEmptyValuesWith != null) {
-                        uniqueX.push(x);
+                        tmpS.data.push(point);
 
+                        if (fillEmptyValuesWith != null) {
+                            uniqueX.push(x);
+                        }
+
+                        seriesTmp[key] = tmpS;
                     }
-
-                    seriesTmp[key] = tmpS;
-
                 });
 
                 for (var j in seriesTmp) {
@@ -309,7 +310,7 @@ this.recline.View = this.recline.View || {};
                             var y = doc.getFieldValueUnrendered(yfield);
                             var y_formatted = doc.getFieldValue(yfield);
 
-                            if (y != null) {
+                            if (y != null && !isNaN(y)) {
                                 var color;
 
                                 var calculatedColor = doc.getFieldColor(yfield);
