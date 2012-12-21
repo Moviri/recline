@@ -476,28 +476,10 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
 
     }
 
+
 });
 
-recline.Model.Field.prototype = $.extend(recline.Model.Field.prototype, {
 
-
-    getFieldLabel:function (field) {
-        var self = this;
-        var fieldLabel = field.attributes.label;
-        if (field.attributes.is_partitioned)
-            fieldLabel = field.attributes.partitionValue;
-
-        if (typeof self.options.state.fieldLabels != "undefined" && self.options.state.fieldLabels != null) {
-            var fieldLabel_alternateObj = _.find(self.state.attributes.fieldLabels, function (fl) {
-                return fl.id == fieldLabel
-            });
-            if (typeof fieldLabel_alternateObj != "undefined" && fieldLabel_alternateObj != null)
-                fieldLabel = fieldLabel_alternateObj.label;
-        }
-
-        return fieldLabel;
-    }
-});
 recline.Model.Query.prototype = $.extend(recline.Model.Query.prototype, {
     removeFilterByFieldNoEvent:function (field) {
         var filters = this.get('filters');
@@ -2319,6 +2301,23 @@ this.recline.Data = this.recline.Data || {};
                 return val
             }
         }
+    },
+
+    my.Formatters.getFieldLabel = function (field, fieldLabels) {
+
+        var fieldLabel = field.attributes.label;
+        if (field.attributes.is_partitioned)
+            fieldLabel = field.attributes.partitionValue;
+
+        if (fieldLabels) {
+            var fieldLabel_alternateObj = _.find(fieldLabels, function (fl) {
+                return fl.id == fieldLabel
+            });
+            if (typeof fieldLabel_alternateObj != "undefined" && fieldLabel_alternateObj != null)
+                fieldLabel = fieldLabel_alternateObj.label;
+        }
+
+        return fieldLabel;
     }
 
 })(this.recline.Data);
@@ -2338,28 +2337,29 @@ this.recline.Data.SeriesUtility = this.recline.Data.SeriesUtility || {};
         calculated at runtime by the virtualmodel
             series: {type: "byPartitionedField", aggregatedField: "fieldName", sizeField: "fieldName", aggregationFunctions: ["fieldName1"]}
 
-        unselectedColor: (optional) define the color of unselected datam default is #C0C0C0
+ unselectedColorValue: (optional) define the color of unselected datam default is #C0C0C0
         model: dataset source of data
-        resultType: (optional) "filtered"/"unfiltered", let access to unfiltered data
+ resultTypeValue: (optional) "filtered"/"unfiltered", let access to unfiltered data
+ fieldLabels: (optional) [{id: fieldName, label: "fieldLabel"}]
 
 
  */
 (function($, my) {
-    my.createSeries = function (seriesAttr, unselectedColor, model, resultType, groupField) {
+    my.createSeries = function (seriesAttr, unselectedColorValue, model, resultTypeValue, groupField) {
             var series = [];
 
             var fillEmptyValuesWith = seriesAttr.fillEmptyValuesWith;
 
             var unselectedColor = "#C0C0C0";
-            if (unselectedColor)
-                unselectedColor = unselectedColor;
+            if (unselectedColorValue)
+                unselectedColor = unselectedColorValue;
             var selectionActive = false;
             if (model.queryState.isSelected())
                 selectionActive = true;
 
             var resultType = "filtered";
-            if (resultType !== null)
-                resultType = resultType;
+            if (resultTypeValue !== null)
+                resultType = resultTypeValue;
 
             var records = model.getRecords(resultType);  //self.model.records.models;
 
@@ -2523,7 +2523,7 @@ this.recline.Data.SeriesUtility = this.recline.Data.SeriesUtility || {};
                             color = fixedColor;
                         else
                             color = yfield.getColorForPartition();
-                        var ret = {data:points, name:self.getFieldLabel(yfield)};
+                        var ret = {data:points, name: recline.Data.Formatters.getFieldLabel(yfield, model.attributes.fieldLabels)};
                         if (color)
                             ret["color"] = color;
                         series.push(ret);
@@ -3549,19 +3549,7 @@ this.recline.View = this.recline.View || {};
 	    </div> \
     </div>',
     templateCondensed:
-        '<style> \
-        .round-border { \
-    	    border: 1px solid #DDDDDD; \
-    	    border-radius: 4px 4px 4px 4px; \
-        } \
-        .round-border-dark { \
-    	    border: 1px solid #808080; \
-    	    border-radius: 4px 4px 4px 4px; \
-    		margin:3px; \
-    		height: 30px; \
-        } \
-    	</style> \
-        	<div class="indicator round-border-dark" > \
+        '<div class="indicator round-border-dark" > \
     	    <div class="panel indicator_{{viewId}}" > \
         		<div id="indicator_{{viewId}}" class="indicator-container" > \
         			<div class="round-border" style="float:left;margin:2px 2px 0px 2px"> \
@@ -5147,7 +5135,7 @@ this.recline.View = this.recline.View || {};
     "use strict";
 
     view.xCharts = Backbone.View.extend({
-        template:'<div id="{{uid}}"> <div> ',
+        template:'<figure style="width: {{width}}px; height: {{height}}px;" id="{{uid}}"></figure>',
 
         initialize:function (options) {
 
@@ -5166,7 +5154,8 @@ this.recline.View = this.recline.View || {};
 
             this.options = options;
 
-
+            this.height= options.height;
+            this.width = options.width;
         },
 
         render:function () {
@@ -5212,7 +5201,36 @@ this.recline.View = this.recline.View || {};
             var self = this;
             var state = self.options.state;
 
-            console.log(recline.Data.SeriesUtility.createSeries(state.series, state.unselectedColor, self.model, self.resultType, state.groupField));
+
+
+            self.graph = new xChart('bar', self.series, '#' + self.uid);
+
+
+        },
+
+        updateSeries: function() {
+            var self = this;
+            var state = self.options.state;
+            var series =  recline.Data.SeriesUtility.createSeries(
+                state.series,
+                state.unselectedColor,
+                self.model,
+                self.resultType,
+                state.group);
+
+            var data = { main: [] };
+
+            /* series is:
+                [ color: , name: , data[ [record:, x:, x_formatted:, y:, y_formatted: ] ]
+             */
+
+            _.each( series, function(d) {
+                var serie = {data:_.map(d.data, function(c) { return {x:c.x, y:c.y} })};
+
+                data.main.push(serie);
+            });
+
+           self.series = series;
         }
 
 

@@ -6,7 +6,7 @@ this.recline.View = this.recline.View || {};
     "use strict";
 
     view.xCharts = Backbone.View.extend({
-        template:'<div id="{{uid}}"> <div> ',
+        template:'<figure style="width: {{width}}px; height: {{height}}px;" id="{{uid}}"></figure>',
 
         initialize:function (options) {
 
@@ -25,7 +25,8 @@ this.recline.View = this.recline.View || {};
 
             this.options = options;
 
-
+            this.height= options.height;
+            this.width = options.width;
         },
 
         render:function () {
@@ -71,7 +72,36 @@ this.recline.View = this.recline.View || {};
             var self = this;
             var state = self.options.state;
 
-            console.log(recline.Data.SeriesUtility.createSeries(state.series, state.unselectedColor, self.model, self.resultType, state.groupField));
+
+
+            self.graph = new xChart('bar', self.series, '#' + self.uid);
+
+
+        },
+
+        updateSeries: function() {
+            var self = this;
+            var state = self.options.state;
+            var series =  recline.Data.SeriesUtility.createSeries(
+                state.series,
+                state.unselectedColor,
+                self.model,
+                self.resultType,
+                state.group);
+
+            var data = { main: [] };
+
+            /* series is:
+                [ color: , name: , data[ [record:, x:, x_formatted:, y:, y_formatted: ] ]
+             */
+
+            _.each( series, function(d) {
+                var serie = {data:_.map(d.data, function(c) { return {x:c.x, y:c.y} })};
+
+                data.main.push(serie);
+            });
+
+           self.series = series;
         }
 
 

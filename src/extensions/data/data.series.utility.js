@@ -14,28 +14,29 @@ this.recline.Data.SeriesUtility = this.recline.Data.SeriesUtility || {};
         calculated at runtime by the virtualmodel
             series: {type: "byPartitionedField", aggregatedField: "fieldName", sizeField: "fieldName", aggregationFunctions: ["fieldName1"]}
 
-        unselectedColor: (optional) define the color of unselected datam default is #C0C0C0
+ unselectedColorValue: (optional) define the color of unselected datam default is #C0C0C0
         model: dataset source of data
-        resultType: (optional) "filtered"/"unfiltered", let access to unfiltered data
+ resultTypeValue: (optional) "filtered"/"unfiltered", let access to unfiltered data
+ fieldLabels: (optional) [{id: fieldName, label: "fieldLabel"}]
 
 
  */
 (function($, my) {
-    my.createSeries = function (seriesAttr, unselectedColor, model, resultType, groupField) {
+    my.createSeries = function (seriesAttr, unselectedColorValue, model, resultTypeValue, groupField) {
             var series = [];
 
             var fillEmptyValuesWith = seriesAttr.fillEmptyValuesWith;
 
             var unselectedColor = "#C0C0C0";
-            if (unselectedColor)
-                unselectedColor = unselectedColor;
+            if (unselectedColorValue)
+                unselectedColor = unselectedColorValue;
             var selectionActive = false;
             if (model.queryState.isSelected())
                 selectionActive = true;
 
             var resultType = "filtered";
-            if (resultType !== null)
-                resultType = resultType;
+            if (resultTypeValue !== null)
+                resultType = resultTypeValue;
 
             var records = model.getRecords(resultType);  //self.model.records.models;
 
@@ -199,7 +200,7 @@ this.recline.Data.SeriesUtility = this.recline.Data.SeriesUtility || {};
                             color = fixedColor;
                         else
                             color = yfield.getColorForPartition();
-                        var ret = {data:points, name:self.getFieldLabel(yfield)};
+                        var ret = {data:points, name: recline.Data.Formatters.getFieldLabel(yfield, model.attributes.fieldLabels)};
                         if (color)
                             ret["color"] = color;
                         series.push(ret);
