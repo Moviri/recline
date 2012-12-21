@@ -443,7 +443,7 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
                 throw "Model: unable to retrieve not filtered data, store can't provide data. Use a backend that use a memory store";
             }
 
-            if(self.queryState.get('sort').length > 0)
+            if(self.queryState.get('sort') && self.queryState.get('sort').length > 0)
             {
                 _.each(self.queryState.get('sort'), function (sortObj) {
                     var fieldName = sortObj.field;
