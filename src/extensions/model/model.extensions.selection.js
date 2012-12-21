@@ -74,15 +74,15 @@ recline.Model.Query.prototype = $.extend(recline.Model.Query.prototype, {
     },
     removeSelectionByField:function (field) {
         var selections = this.get('selections');
-        for (var j in filters) {
+        for (var j in selections) {
             if (selections[j].field == field) {
-                removeSelection(j);
+                this.removeSelection(j);
             }
         }
     },
     setSelection:function (filter) {
         if (filter["remove"]) {
-            removeSelectionByField(filter.field);
+        	this.removeSelectionByField(filter.field);
         } else {
          var s = this.get('selections');
             var found = false;
