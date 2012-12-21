@@ -57,7 +57,6 @@ this.recline.View = this.recline.View || {};
                 self.renderGraph();
 
         },
-
         updateGraph:function () {
             var self = this;
             //self.graphOptions.series = this.createSeries();
@@ -183,7 +182,7 @@ this.recline.View = this.recline.View || {};
             if (self.options.resultType !== null)
                 resultType = self.options.resultType;
 
-            var records = self.model.getRecords(resultType);  //self.model.records.models;
+            var records = self.model.getRecords(resultType);
 
             var xfield = self.model.fields.get(self.options.state.group);
 

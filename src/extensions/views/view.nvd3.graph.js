@@ -134,7 +134,6 @@ this.recline.View = this.recline.View || {};
                     .call(self.chart);
 
                 nv.utils.windowResize(self.graphResize);
-                nv.utils.windowResize(self.graphResize);
                 //self.graphResize()
                 return  self.chart;
             });
@@ -564,7 +563,7 @@ this.recline.View = this.recline.View || {};
             if(self.options.resultType !== null)
                 resultType = self.options.resultType;
 
-            var records = self.model.getRecords(resultType);  //self.model.records.models;
+            var records = self.model.getRecords(resultType); 
 
             var xfield = self.model.fields.get(self.state.attributes.group);
             if(!xfield)
@@ -595,8 +594,7 @@ this.recline.View = this.recline.View || {};
                 if(!fieldValue)
                     throw "View.nvd3: unable to find field [" + seriesAttr.valuesField + "] on model"
 
-
-                _.each(records, function (doc, index) {
+            	_.each(records, function (doc, index) {
 
                     // key is the field that identiy the value that "build" series
                     var key = doc.getFieldValueUnrendered(seriesNameField);
