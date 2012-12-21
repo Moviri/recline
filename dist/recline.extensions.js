@@ -3561,7 +3561,7 @@ this.recline.View = this.recline.View || {};
     					{{/shape}} \
         				<div class="value-cell" style="float:left">{{value}}</div> \
     				</div> \
-                    <div style="text-align:justify;float:left;margin-right:8px" class="title">&nbsp;&nbsp;{{{label}}}</div>\
+                    <div class="title">&nbsp;&nbsp;{{{label}}}</div>\
     			</div> \
     	    </div> \
         </div>'
