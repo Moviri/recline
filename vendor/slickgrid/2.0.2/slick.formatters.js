@@ -42,17 +42,20 @@
     if (value == null || value === "") {
       return "";
     }
-
     var color;
-
-    if (value < 30) {
-      color = "red";
-    } else if (value < 70) {
-      color = "silver";
-    } else {
-      color = "green";
-    }
-
+    var colors = dataContext.schema_colors;
+    if (colors)
+    	color = colors[0]
+    else
+	{
+        if (value < 30) {
+            color = "red";
+          } else if (value < 70) {
+            color = "silver";
+          } else {
+            color = "green";
+          }
+	}
     return "<span class='percent-complete-bar' style='background:" + color + ";width:" + value + "%'></span>";
   }
   function TwinBarFormatter(row, cell, values, columnDef, dataContext) {
