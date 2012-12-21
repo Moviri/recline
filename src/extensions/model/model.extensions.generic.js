@@ -12,11 +12,11 @@ recline.Model.Dataset.prototype = $.extend(recline.Model.Dataset.prototype, {
 
         });
     },
-    resetRecords: function(records) {
-        this.set({records: records});
+    resetRecords:function (records) {
+        this.set({records:records});
     },
-    resetFields: function(fields) {
-        this.set({fields: fields});
+    resetFields:function (fields) {
+        this.set({fields:fields});
     },
 
     getRecords:function (type) {
@@ -29,8 +29,7 @@ recline.Model.Dataset.prototype = $.extend(recline.Model.Dataset.prototype, {
                 throw "Model: unable to retrieve not filtered data, store can't provide data. Use a backend that use a memory store";
             }
 
-            if(self.queryState.get('sort') && self.queryState.get('sort').length > 0)
-            {
+            if (self.queryState.get('sort') && self.queryState.get('sort').length > 0) {
                 _.each(self.queryState.get('sort'), function (sortObj) {
                     var fieldName = sortObj.field;
                     self._store.data = _.sortBy(self._store.data, function (doc) {
@@ -49,10 +48,8 @@ recline.Model.Dataset.prototype = $.extend(recline.Model.Dataset.prototype, {
                 return _doc;
             });
 
-            if(self.queryState.get('selections').length > 0)
+            if (self.queryState.get('selections').length > 0)
                 recline.Data.Filters.applySelectionsOnData(self.queryState.get('selections'), docs, self.fields);
-
-
 
 
             return docs;
@@ -65,4 +62,25 @@ recline.Model.Dataset.prototype = $.extend(recline.Model.Dataset.prototype, {
 
     }
 
+});
+
+recline.Model.Field.prototype = $.extend(recline.Model.Field.prototype, {
+
+
+    getFieldLabel:function (field) {
+        var self = this;
+        var fieldLabel = field.attributes.label;
+        if (field.attributes.is_partitioned)
+            fieldLabel = field.attributes.partitionValue;
+
+        if (typeof self.options.state.fieldLabels != "undefined" && self.options.state.fieldLabels != null) {
+            var fieldLabel_alternateObj = _.find(self.state.attributes.fieldLabels, function (fl) {
+                return fl.id == fieldLabel
+            });
+            if (typeof fieldLabel_alternateObj != "undefined" && fieldLabel_alternateObj != null)
+                fieldLabel = fieldLabel_alternateObj.label;
+        }
+
+        return fieldLabel;
+    }
 });

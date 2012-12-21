@@ -426,11 +426,11 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
 
         });
     },
-    resetRecords: function(records) {
-        this.set({records: records});
+    resetRecords:function (records) {
+        this.set({records:records});
     },
-    resetFields: function(fields) {
-        this.set({fields: fields});
+    resetFields:function (fields) {
+        this.set({fields:fields});
     },
 
     getRecords:function (type) {
@@ -443,8 +443,7 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
                 throw "Model: unable to retrieve not filtered data, store can't provide data. Use a backend that use a memory store";
             }
 
-            if(self.queryState.get('sort') && self.queryState.get('sort').length > 0)
-            {
+            if (self.queryState.get('sort') && self.queryState.get('sort').length > 0) {
                 _.each(self.queryState.get('sort'), function (sortObj) {
                     var fieldName = sortObj.field;
                     self._store.data = _.sortBy(self._store.data, function (doc) {
@@ -463,10 +462,8 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
                 return _doc;
             });
 
-            if(self.queryState.get('selections').length > 0)
+            if (self.queryState.get('selections').length > 0)
                 recline.Data.Filters.applySelectionsOnData(self.queryState.get('selections'), docs, self.fields);
-
-
 
 
             return docs;
@@ -479,7 +476,29 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
 
     }
 
-});recline.Model.Query.prototype = $.extend(recline.Model.Query.prototype, {
+});
+
+recline.Model.Field.prototype = $.extend(recline.Model.Field.prototype, {
+
+
+    getFieldLabel:function (field) {
+        var self = this;
+        var fieldLabel = field.attributes.label;
+        if (field.attributes.is_partitioned)
+            fieldLabel = field.attributes.partitionValue;
+
+        if (typeof self.options.state.fieldLabels != "undefined" && self.options.state.fieldLabels != null) {
+            var fieldLabel_alternateObj = _.find(self.state.attributes.fieldLabels, function (fl) {
+                return fl.id == fieldLabel
+            });
+            if (typeof fieldLabel_alternateObj != "undefined" && fieldLabel_alternateObj != null)
+                fieldLabel = fieldLabel_alternateObj.label;
+        }
+
+        return fieldLabel;
+    }
+});
+recline.Model.Query.prototype = $.extend(recline.Model.Query.prototype, {
     removeFilterByFieldNoEvent:function (field) {
         var filters = this.get('filters');
         for (var j in filters) {
@@ -2303,6 +2322,238 @@ this.recline.Data = this.recline.Data || {};
     }
 
 })(this.recline.Data);
+this.recline = this.recline || {};
+this.recline.Data = this.recline.Data || {};
+this.recline.Data.SeriesUtility = this.recline.Data.SeriesUtility || {};
+
+
+
+/*
+    seriesAttr:
+        groupField: field used to group data (x axis)
+        defined a priori
+            series: {type: "byFieldName", valuesField: [{fieldName: "fieldName1" fieldColor: ""}], sizeField: "fieldName", fillEmptyValuesWith: 0},
+        calculated at runtime by the view based on field value
+            series: {type: "byFieldValue", seriesField: "fieldName", valuesField: "fieldName1", sizeField: "fieldName", fillEmptyValuesWith: 0}
+        calculated at runtime by the virtualmodel
+            series: {type: "byPartitionedField", aggregatedField: "fieldName", sizeField: "fieldName", aggregationFunctions: ["fieldName1"]}
+
+        unselectedColor: (optional) define the color of unselected datam default is #C0C0C0
+        model: dataset source of data
+        resultType: (optional) "filtered"/"unfiltered", let access to unfiltered data
+
+
+ */
+(function($, my) {
+    my.createSeries = function (seriesAttr, unselectedColor, model, resultType, groupField) {
+            var series = [];
+
+            var fillEmptyValuesWith = seriesAttr.fillEmptyValuesWith;
+
+            var unselectedColor = "#C0C0C0";
+            if (unselectedColor)
+                unselectedColor = unselectedColor;
+            var selectionActive = false;
+            if (model.queryState.isSelected())
+                selectionActive = true;
+
+            var resultType = "filtered";
+            if (resultType !== null)
+                resultType = resultType;
+
+            var records = model.getRecords(resultType);  //self.model.records.models;
+
+            var xfield = model.fields.get(groupField);
+
+
+            var uniqueX = [];
+            var sizeField;
+            if (seriesAttr.sizeField) {
+                sizeField = model.fields.get(seriesAttr.sizeField);
+            }
+
+
+            // series are calculated on data, data should be analyzed in order to create series
+            if (seriesAttr.type == "byFieldValue") {
+                var seriesTmp = {};
+                var seriesNameField = model.fields.get(seriesAttr.seriesField);
+                var fieldValue = model.fields.get(seriesAttr.valuesField);
+
+
+                if (!fieldValue) {
+                    throw "data.series.utility.CreateSeries: unable to find field [" + seriesAttr.valuesField + "] in model"
+                }
+
+
+                _.each(records, function (doc, index) {
+
+                    // key is the field that identiy the value that "build" series
+                    var key = doc.getFieldValueUnrendered(seriesNameField);
+                    var tmpS;
+
+                    // verify if the serie is already been initialized
+                    if (seriesTmp[key] != null) {
+                        tmpS = seriesTmp[key]
+                    }
+                    else {
+                        tmpS = {name:key, data:[], field:fieldValue};
+
+                        var color = doc.getFieldColor(seriesNameField);
+
+
+                        if (color != null)
+                            tmpS["color"] = color;
+
+
+                    }
+                    var shape = doc.getFieldShapeName(seriesNameField);
+
+                    var x = doc.getFieldValueUnrendered(xfield);
+                    var x_formatted = doc.getFieldValue(xfield);
+
+                    var y = doc.getFieldValueUnrendered(fieldValue);
+                    var y_formatted = doc.getFieldValue(fieldValue);
+
+                    if (y && !isNaN(y)) {
+
+                        var point = {x:x, y:y, record:doc, y_formatted:y_formatted, x_formatted:x_formatted};
+                        if (sizeField)
+                            point["size"] = doc.getFieldValueUnrendered(sizeField);
+                        if (shape != null)
+                            point["shape"] = shape;
+
+                        tmpS.data.push(point);
+
+                        if (fillEmptyValuesWith != null) {
+                            uniqueX.push(x);
+                        }
+
+                        seriesTmp[key] = tmpS;
+                    }
+                });
+
+                for (var j in seriesTmp) {
+                    series.push(seriesTmp[j]);
+                }
+
+            }
+            else if (seriesAttr.type == "byFieldName" || seriesAttr.type == "byPartitionedField") {
+                var serieNames;
+
+                // if partitions are active we need to retrieve the list of partitions
+                if (seriesAttr.type == "byFieldName") {
+                    serieNames = seriesAttr.valuesField;
+                }
+                else {
+                    serieNames = [];
+                    _.each(seriesAttr.aggregationFunctions, function (a) {
+                        _.each(model.getPartitionedFieldsForAggregationFunction(a, seriesAttr.aggregatedField), function (f) {
+                            serieNames.push(f.get("id"));
+                        })
+
+                    });
+
+                }
+
+                _.each(serieNames, function (field) {
+
+                    var yfield;
+                    if (seriesAttr.type == "byFieldName")
+                        yfield = model.fields.get(field.fieldName);
+                    else
+                        yfield = model.fields.get(field);
+
+                    var fixedColor;
+                    if (field.fieldColor)
+                        fixedColor = field.fieldColor;
+
+                    var points = [];
+
+                    _.each(records, function (doc, index) {
+                        var x = doc.getFieldValueUnrendered(xfield);
+                        var x_formatted = doc.getFieldValue(xfield); // rickshaw don't use millis
+
+
+                        try {
+
+                            var y = doc.getFieldValueUnrendered(yfield);
+                            var y_formatted = doc.getFieldValue(yfield);
+
+                            if (y != null && !isNaN(y)) {
+                                var color;
+
+                                var calculatedColor = doc.getFieldColor(yfield);
+
+                                if (selectionActive) {
+                                    if (doc.isRecordSelected())
+                                        color = calculatedColor;
+                                    else
+                                        color = unselectedColor;
+                                } else
+                                    color = calculatedColor;
+
+                                var shape = doc.getFieldShapeName(yfield);
+
+                                var point = {x:x, y:y, record:doc, y_formatted:y_formatted, x_formatted:x_formatted};
+
+                                if (color != null)
+                                    point["color"] = color;
+                                if (shape != null)
+                                    point["shape"] = shape;
+
+                                if (sizeField)
+                                    point["size"] = doc.getFieldValueUnrendered(sizeField);
+
+                                points.push(point);
+
+                                if (fillEmptyValuesWith != null) {
+                                    uniqueX.push(x);
+                                }
+                            }
+
+                        }
+                        catch (err) {
+                            //console.log("Can't add field [" + field + "] to graph, filtered?")
+                        }
+                    });
+
+                    if (points.length > 0) {
+                        var color;
+                        if (fixedColor)
+                            color = fixedColor;
+                        else
+                            color = yfield.getColorForPartition();
+                        var ret = {data:points, name:self.getFieldLabel(yfield)};
+                        if (color)
+                            ret["color"] = color;
+                        series.push(ret);
+                    }
+
+                });
+
+            } else throw "data.series.utility.CreateSeries: unsupported or not defined type " + seriesAttr.type;
+
+            // foreach series fill empty values
+            if (fillEmptyValuesWith != null) {
+                uniqueX = _.unique(uniqueX);
+                _.each(series, function (s) {
+                    // foreach series obtain the unique list of x
+                    var tmpValues = _.map(s.data, function (d) {
+                        return d.x
+                    });
+                    // foreach non present field set the value
+                    _.each(_.difference(uniqueX, tmpValues), function (diff) {
+                        s.data.push({x:diff, y:fillEmptyValuesWith});
+                    });
+
+                });
+            }
+
+
+        return series;
+    };
+
+}(jQuery, this.recline.Data.SeriesUtility));
 // # Recline Backbone Models
 this.recline = this.recline || {};
 this.recline.Data = this.recline.Data || {};
@@ -2366,11 +2617,16 @@ this.recline.Data.ShapeSchema = this.recline.Data.ShapeSchema || {};
 
         _generateLimits: function(data) {
             var self=this;
-            var res = this.limits["distinct"](data);
-            this.schema = {};
-            for(var i=0;i<res.length;i++){
-                this.schema[res[i]] = self.attributes.shapes[i];
-            }
+            //var res = this.limits["distinct"](data);
+
+
+            self.schema = {};
+            _.each(self.attributes.limits, function(s, index) {
+                self.schema[s] = self.attributes.shapes[index];
+            });
+
+
+
         },
 
 
@@ -2422,7 +2678,7 @@ this.recline.Data.ShapeSchema = this.recline.Data.ShapeSchema || {};
 
                 return shape;
             } else
-                return self.schema[recline.Data.Transform.getFieldHash(fieldValue)];
+                return self.schema[fieldValue];
         },
 
 
@@ -2456,8 +2712,9 @@ this.recline.Data.ShapeSchema = this.recline.Data.ShapeSchema || {};
 
         limits: {
             distinct: function(data) {
+                var tmp = {};
                 _.each(_.uniq(data), function(d, index) {
-                    data[index]=recline.Data.Transform.getFieldHash(d);
+                    tmp[d]=recline.Data.Transform.getFieldHash(d);
                 });
                 return data;
             }
@@ -4514,9 +4771,9 @@ this.recline.View = this.recline.View || {};
             console.log("View.Rickshaw: render");
             var self = this;
 
-            var graphid="#" + this.uid;
+            var graphid = "#" + this.uid;
 
-            if(self.graph)              {
+            if (self.graph) {
                 jQuery(graphid).empty();
                 delete self.graph;
             }
@@ -4721,23 +4978,22 @@ this.recline.View = this.recline.View || {};
                     var y = doc.getFieldValueUnrendered(fieldValue);
                     var y_formatted = doc.getFieldValue(fieldValue);
 
-                    if(y && !isNaN(y)) {
+                    if (y && !isNaN(y)) {
 
 
-                    var point = {x:x, y:y, record:doc, y_formatted:y_formatted, x_formatted:x_formatted};
-                    if (sizeField)
-                        point["size"] = doc.getFieldValueUnrendered(sizeField);
-                    if (shape != null)
-                        point["shape"] = shape;
+                        var point = {x:x, y:y, record:doc, y_formatted:y_formatted, x_formatted:x_formatted};
+                        if (sizeField)
+                            point["size"] = doc.getFieldValueUnrendered(sizeField);
+                        if (shape != null)
+                            point["shape"] = shape;
 
-                    tmpS.data.push(point);
+                        tmpS.data.push(point);
 
-                    if (fillEmptyValuesWith != null) {
-                        uniqueX.push(x);
+                        if (fillEmptyValuesWith != null) {
+                            uniqueX.push(x);
+                        }
 
-                    }
-
-                    seriesTmp[key] = tmpS;
+                        seriesTmp[key] = tmpS;
                     }
                 });
 
@@ -4881,6 +5137,86 @@ this.recline.View = this.recline.View || {};
 
             return fieldLabel;
         }
+
+
+    });
+})(jQuery, recline.View);this.recline = this.recline || {};
+this.recline.View = this.recline.View || {};
+
+(function ($, view) {
+
+    "use strict";
+
+    view.xCharts = Backbone.View.extend({
+        template:'<div id="{{uid}}"> <div> ',
+
+        initialize:function (options) {
+
+            this.el = $(this.el);
+            _.bindAll(this, 'render', 'redraw');
+
+
+            this.model.bind('change', this.render);
+            this.model.fields.bind('reset', this.render);
+            this.model.fields.bind('add', this.render);
+
+            this.model.bind('query:done', this.redraw);
+            this.model.queryState.bind('selection:done', this.redraw);
+
+            this.uid = options.id || ("d3_" + new Date().getTime() + Math.floor(Math.random() * 10000)); // generating an unique id for the chart
+
+            this.options = options;
+
+
+        },
+
+        render:function () {
+            console.log("View.Rickshaw: render");
+            var self = this;
+
+            var graphid = "#" + this.uid;
+
+            if (self.graph) {
+                jQuery(graphid).empty();
+                delete self.graph;
+            }
+
+            var out = Mustache.render(this.template, this);
+            this.el.html(out);
+
+
+        },
+
+        redraw:function () {
+            var self = this;
+
+            console.log("View.xCharts: redraw");
+
+
+            if (self.graph)
+                self.updateGraph();
+            else
+                self.renderGraph();
+
+        },
+
+        updateGraph:function () {
+            var self = this;
+            //self.graphOptions.series = this.createSeries();
+            //self.createSeries();
+
+            //self.graph.update();
+            //self.graph.render();
+        },
+
+        renderGraph:function () {
+            var self = this;
+            var state = self.options.state;
+
+            console.log(recline.Data.SeriesUtility.createSeries(state.series, state.unselectedColor, self.model, self.resultType, state.groupField));
+        }
+
+
 
 
     });

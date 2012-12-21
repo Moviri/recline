@@ -21,7 +21,7 @@ this.recline.Data.SeriesUtility = this.recline.Data.SeriesUtility || {};
 
  */
 (function($, my) {
-    my.CreateSeries = function (seriesAttr, unselectedColor, model, resultType, groupField) {
+    my.createSeries = function (seriesAttr, unselectedColor, model, resultType, groupField) {
             var series = [];
 
             var fillEmptyValuesWith = seriesAttr.fillEmptyValuesWith;
@@ -226,7 +226,7 @@ this.recline.Data.SeriesUtility = this.recline.Data.SeriesUtility || {};
             }
 
 
-
+        return series;
     };
 
-}(jQuery, this.recline.Data));
+}(jQuery, this.recline.Data.SeriesUtility));
