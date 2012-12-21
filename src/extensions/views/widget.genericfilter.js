@@ -1757,7 +1757,7 @@ this.recline.View = this.recline.View || {};
                 if (values.length)
                 	eventData[fieldName] = values;
                 else eventData[fieldName] = [null];
-
+				
                 recline.ActionUtility.doAction(actions, eventType, eventData, actionType);
             }
         },

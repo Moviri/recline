@@ -154,6 +154,87 @@
 <h3 id='example'>Example</h3>
 
 <p>Here is an example of the page setup for an app using every Recline component:</p>
+<div class='highlight'><pre><code class='html'>  <span class='c'>&lt;!-- bootstrap --&gt;</span>
+  <span class='c'>&lt;!-- Le HTML5 shim, for IE6-8 support of HTML elements --&gt;</span>
+  <span class='c'>&lt;!--[if lt IE 9]&gt;</span>
+<span class='c'>    &lt;script src=&quot;http://html5shim.googlecode.com/svn/trunk/html5.js&quot;&gt;&lt;/script&gt;</span>
+<span class='c'>  &lt;![endif]--&gt;</span>
+  <span class='nt'>&lt;link</span> <span class='na'>rel=</span><span class='s'>&quot;stylesheet&quot;</span> <span class='na'>href=</span><span class='s'>&quot;vendor/bootstrap/2.0.2/css/bootstrap.css&quot;</span> <span class='nt'>/&gt;</span>
+
+  <span class='nt'>&lt;link</span> <span class='na'>rel=</span><span class='s'>&quot;stylesheet&quot;</span> <span class='na'>href=</span><span class='s'>&quot;vendor/leaflet/0.4.4/leaflet.css&quot;</span><span class='nt'>&gt;</span>
+  <span class='c'>&lt;!--[if lte IE 8]&gt;</span>
+<span class='c'>  &lt;link rel=&quot;stylesheet&quot; href=&quot;vendor/leaflet/0.4.4/leaflet.ie.css&quot; /&gt;</span>
+<span class='c'>  &lt;![endif]--&gt;</span>
+  <span class='nt'>&lt;link</span> <span class='na'>rel=</span><span class='s'>&quot;stylesheet&quot;</span> <span class='na'>href=</span><span class='s'>&quot;vendor/leaflet.markercluster/MarkerCluster.css&quot;</span><span class='nt'>&gt;</span>
+  <span class='nt'>&lt;link</span> <span class='na'>rel=</span><span class='s'>&quot;stylesheet&quot;</span> <span class='na'>href=</span><span class='s'>&quot;vendor/leaflet.markercluster/MarkerCluster.Default.css&quot;</span><span class='nt'>&gt;</span>
+  <span class='c'>&lt;!--[if lte IE 8]&gt;</span>
+<span class='c'>  &lt;link rel=&quot;stylesheet&quot; href=&quot;vendor/leaflet.markercluster/MarkerCluster.Default.ie.css&quot; /&gt;</span>
+<span class='c'>  &lt;![endif]--&gt;</span>
+  <span class='nt'>&lt;link</span> <span class='na'>rel=</span><span class='s'>&quot;stylesheet&quot;</span> <span class='na'>href=</span><span class='s'>&quot;vendor/slickgrid/2.0.1/slick.grid.css&quot;</span><span class='nt'>&gt;</span>
+  <span class='nt'>&lt;link</span> <span class='na'>rel=</span><span class='s'>&quot;stylesheet&quot;</span> <span class='na'>href=</span><span class='s'>&quot;vendor/timeline/20120520/css/timeline.css&quot;</span><span class='nt'>&gt;</span>
+
+  <span class='c'>&lt;!-- Recline CSS components --&gt;</span>
+  <span class='nt'>&lt;link</span> <span class='na'>rel=</span><span class='s'>&quot;stylesheet&quot;</span> <span class='na'>href=</span><span class='s'>&quot;css/grid.css&quot;</span><span class='nt'>&gt;</span>
+  <span class='nt'>&lt;link</span> <span class='na'>rel=</span><span class='s'>&quot;stylesheet&quot;</span> <span class='na'>href=</span><span class='s'>&quot;css/slickgrid.css&quot;</span><span class='nt'>&gt;</span>
+  <span class='nt'>&lt;link</span> <span class='na'>rel=</span><span class='s'>&quot;stylesheet&quot;</span> <span class='na'>href=</span><span class='s'>&quot;css/graph.css&quot;</span><span class='nt'>&gt;</span>
+  <span class='nt'>&lt;link</span> <span class='na'>rel=</span><span class='s'>&quot;stylesheet&quot;</span> <span class='na'>href=</span><span class='s'>&quot;css/transform.css&quot;</span><span class='nt'>&gt;</span>
+  <span class='nt'>&lt;link</span> <span class='na'>rel=</span><span class='s'>&quot;stylesheet&quot;</span> <span class='na'>href=</span><span class='s'>&quot;css/map.css&quot;</span><span class='nt'>&gt;</span>
+  <span class='nt'>&lt;link</span> <span class='na'>rel=</span><span class='s'>&quot;stylesheet&quot;</span> <span class='na'>href=</span><span class='s'>&quot;css/multiview.css&quot;</span><span class='nt'>&gt;</span>
+  <span class='c'>&lt;!-- /Recline CSS components --&gt;</span>
+
+  <span class='c'>&lt;!-- 3rd party JS libraries --&gt;</span>
+  <span class='nt'>&lt;script </span><span class='na'>type=</span><span class='s'>&quot;text/javascript&quot;</span> <span class='na'>src=</span><span class='s'>&quot;vendor/jquery/1.7.1/jquery.js&quot;</span><span class='nt'>&gt;&lt;/script&gt;</span>
+  <span class='nt'>&lt;script </span><span class='na'>type=</span><span class='s'>&quot;text/javascript&quot;</span> <span class='na'>src=</span><span class='s'>&quot;vendor/underscore/1.4.2/underscore.js&quot;</span><span class='nt'>&gt;&lt;/script&gt;</span>
+  <span class='nt'>&lt;script </span><span class='na'>type=</span><span class='s'>&quot;text/javascript&quot;</span> <span class='na'>src=</span><span class='s'>&quot;vendor/backbone/0.9.2/backbone.js&quot;</span><span class='nt'>&gt;&lt;/script&gt;</span>
+  <span class='nt'>&lt;script </span><span class='na'>type=</span><span class='s'>&quot;text/javascript&quot;</span> <span class='na'>src=</span><span class='s'>&quot;vendor/mustache/0.5.0-dev/mustache.js&quot;</span><span class='nt'>&gt;&lt;/script&gt;</span>
+  <span class='nt'>&lt;script </span><span class='na'>type=</span><span class='s'>&quot;text/javascript&quot;</span> <span class='na'>src=</span><span class='s'>&quot;vendor/bootstrap/2.0.2/bootstrap.js&quot;</span><span class='nt'>&gt;&lt;/script&gt;</span>
+  <span class='nt'>&lt;script </span><span class='na'>type=</span><span class='s'>&quot;text/javascript&quot;</span> <span class='na'>src=</span><span class='s'>&quot;vendor/flotr2/flotr2.js&quot;</span><span class='nt'>&gt;&lt;/script&gt;</span>
+  <span class='nt'>&lt;script </span><span class='na'>type=</span><span class='s'>&quot;text/javascript&quot;</span> <span class='na'>src=</span><span class='s'>&quot;vendor/leaflet/0.4.4/leaflet.js&quot;</span><span class='nt'>&gt;&lt;/script&gt;</span>
+  <span class='nt'>&lt;script </span><span class='na'>type=</span><span class='s'>&quot;text/javascript&quot;</span> <span class='na'>src=</span><span class='s'>&quot;vendor/leaflet.markercluster/leaflet.markercluster.js&quot;</span><span class='nt'>&gt;&lt;/script&gt;</span>
+  <span class='nt'>&lt;script </span><span class='na'>type=</span><span class='s'>&quot;text/javascript&quot;</span> <span class='na'>src=</span><span class='s'>&quot;vendor/slickgrid/2.0.1/jquery-ui-1.8.16.custom.min.js&quot;</span><span class='nt'>&gt;&lt;/script&gt;</span>
+  <span class='nt'>&lt;script </span><span class='na'>type=</span><span class='s'>&quot;text/javascript&quot;</span> <span class='na'>src=</span><span class='s'>&quot;vendor/slickgrid/2.0.1/jquery.event.drag-2.0.min.js&quot;</span><span class='nt'>&gt;&lt;/script&gt;</span>
+  <span class='nt'>&lt;script </span><span class='na'>type=</span><span class='s'>&quot;text/javascript&quot;</span> <span class='na'>src=</span><span class='s'>&quot;vendor/slickgrid/2.0.1/slick.grid.min.js&quot;</span><span class='nt'>&gt;&lt;/script&gt;</span>
+  <span class='nt'>&lt;script </span><span class='na'>type=</span><span class='s'>&quot;text/javascript&quot;</span> <span class='na'>src=</span><span class='s'>&quot;vendor/moment/1.6.2/moment.js&quot;</span><span class='nt'>&gt;&lt;/script&gt;</span>
+  <span class='nt'>&lt;script </span><span class='na'>type=</span><span class='s'>&quot;text/javascript&quot;</span> <span class='na'>src=</span><span class='s'>&quot;vendor/timeline/20120520/js/timeline.js&quot;</span><span class='nt'>&gt;&lt;/script&gt;</span>
+  <span class='c'>&lt;!--[if lte IE 7]&gt;</span>
+<span class='c'>  &lt;script language=&quot;javascript&quot; type=&quot;text/javascript&quot; src=&quot;vendor/json/json2.js&quot;&gt;&lt;/script&gt;</span>
+<span class='c'>  &lt;![endif]--&gt;</span>
+
+  <span class='c'>&lt;!--</span>
+<span class='c'>    ## Just use the all in one library version rather than individual files</span>
+
+<span class='c'>  &lt;script type=&quot;text/javascript&quot; src=&quot;dist/recline.js&quot;&gt;&lt;/script&gt;</span>
+
+<span class='c'>  --&gt;</span>
+
+  <span class='c'>&lt;!-- model and backends --&gt;</span>
+  <span class='nt'>&lt;script </span><span class='na'>type=</span><span class='s'>&quot;text/javascript&quot;</span> <span class='na'>src=</span><span class='s'>&quot;src/ecma-fixes.js&quot;</span><span class='nt'>&gt;&lt;/script&gt;</span>
+  <span class='nt'>&lt;script </span><span class='na'>type=</span><span class='s'>&quot;text/javascript&quot;</span> <span class='na'>src=</span><span class='s'>&quot;src/model.js&quot;</span><span class='nt'>&gt;&lt;/script&gt;</span>
+  <span class='nt'>&lt;script </span><span class='na'>type=</span><span class='s'>&quot;text/javascript&quot;</span> <span class='na'>src=</span><span class='s'>&quot;src/backend.memory.js&quot;</span><span class='nt'>&gt;&lt;/script&gt;</span>
+  <span class='nt'>&lt;script </span><span class='na'>type=</span><span class='s'>&quot;text/javascript&quot;</span> <span class='na'>src=</span><span class='s'>&quot;src/backend.dataproxy.js&quot;</span><span class='nt'>&gt;&lt;/script&gt;</span>
+  <span class='nt'>&lt;script </span><span class='na'>type=</span><span class='s'>&quot;text/javascript&quot;</span> <span class='na'>src=</span><span class='s'>&quot;src/backend.gdocs.js&quot;</span><span class='nt'>&gt;&lt;/script&gt;</span>
+  <span class='nt'>&lt;script </span><span class='na'>type=</span><span class='s'>&quot;text/javascript&quot;</span> <span class='na'>src=</span><span class='s'>&quot;src/backend.elasticsearch.js&quot;</span><span class='nt'>&gt;&lt;/script&gt;</span>
+  <span class='nt'>&lt;script </span><span class='na'>type=</span><span class='s'>&quot;text/javascript&quot;</span> <span class='na'>src=</span><span class='s'>&quot;src/backend.csv.js&quot;</span><span class='nt'>&gt;&lt;/script&gt;</span>
+  <span class='nt'>&lt;script </span><span class='na'>type=</span><span class='s'>&quot;text/javascript&quot;</span> <span class='na'>src=</span><span class='s'>&quot;src/backend.ckan.js&quot;</span><span class='nt'>&gt;&lt;/script&gt;</span>
+  <span class='nt'>&lt;script </span><span class='na'>type=</span><span class='s'>&quot;text/javascript&quot;</span> <span class='na'>src=</span><span class='s'>&quot;src/backend.solr.js&quot;</span><span class='nt'>&gt;&lt;/script&gt;</span>
+
+  <span class='c'>&lt;!-- views --&gt;</span>
+  <span class='nt'>&lt;script </span><span class='na'>type=</span><span class='s'>&quot;text/javascript&quot;</span> <span class='na'>src=</span><span class='s'>&quot;src/view.grid.js&quot;</span><span class='nt'>&gt;&lt;/script&gt;</span>
+  <span class='nt'>&lt;script </span><span class='na'>type=</span><span class='s'>&quot;text/javascript&quot;</span> <span class='na'>src=</span><span class='s'>&quot;src/view.slickgrid.js&quot;</span><span class='nt'>&gt;&lt;/script&gt;</span>
+  <span class='nt'>&lt;script </span><span class='na'>type=</span><span class='s'>&quot;text/javascript&quot;</span> <span class='na'>src=</span><span class='s'>&quot;src/view.transform.js&quot;</span><span class='nt'>&gt;&lt;/script&gt;</span>
+  <span class='nt'>&lt;script </span><span class='na'>type=</span><span class='s'>&quot;text/javascript&quot;</span> <span class='na'>src=</span><span class='s'>&quot;src/data.transform.js&quot;</span><span class='nt'>&gt;&lt;/script&gt;</span>
+  <span class='nt'>&lt;script </span><span class='na'>type=</span><span class='s'>&quot;text/javascript&quot;</span> <span class='na'>src=</span><span class='s'>&quot;src/view.graph.js&quot;</span><span class='nt'>&gt;&lt;/script&gt;</span>
+  <span class='nt'>&lt;script </span><span class='na'>type=</span><span class='s'>&quot;text/javascript&quot;</span> <span class='na'>src=</span><span class='s'>&quot;src/view.map.js&quot;</span><span class='nt'>&gt;&lt;/script&gt;</span>
+  <span class='nt'>&lt;script </span><span class='na'>type=</span><span class='s'>&quot;text/javascript&quot;</span> <span class='na'>src=</span><span class='s'>&quot;src/view.timeline.js&quot;</span><span class='nt'>&gt;&lt;/script&gt;</span>
+  <span class='nt'>&lt;script </span><span class='na'>type=</span><span class='s'>&quot;text/javascript&quot;</span> <span class='na'>src=</span><span class='s'>&quot;src/widget.pager.js&quot;</span><span class='nt'>&gt;&lt;/script&gt;</span>
+  <span class='nt'>&lt;script </span><span class='na'>type=</span><span class='s'>&quot;text/javascript&quot;</span> <span class='na'>src=</span><span class='s'>&quot;src/widget.queryeditor.js&quot;</span><span class='nt'>&gt;&lt;/script&gt;</span>
+  <span class='nt'>&lt;script </span><span class='na'>type=</span><span class='s'>&quot;text/javascript&quot;</span> <span class='na'>src=</span><span class='s'>&quot;src/widget.filtereditor.js&quot;</span><span class='nt'>&gt;&lt;/script&gt;</span>
+  <span class='nt'>&lt;script </span><span class='na'>type=</span><span class='s'>&quot;text/javascript&quot;</span> <span class='na'>src=</span><span class='s'>&quot;src/widget.facetviewer.js&quot;</span><span class='nt'>&gt;&lt;/script&gt;</span>
+  <span class='nt'>&lt;script </span><span class='na'>type=</span><span class='s'>&quot;text/javascript&quot;</span> <span class='na'>src=</span><span class='s'>&quot;src/widget.datepicker.js&quot;</span><span class='nt'>&gt;&lt;/script&gt;</span>
+  <span class='nt'>&lt;script </span><span class='na'>type=</span><span class='s'>&quot;text/javascript&quot;</span> <span class='na'>src=</span><span class='s'>&quot;src/widget.fields.js&quot;</span><span class='nt'>&gt;&lt;/script&gt;</span>
+  <span class='nt'>&lt;script </span><span class='na'>type=</span><span class='s'>&quot;text/javascript&quot;</span> <span class='na'>src=</span><span class='s'>&quot;src/view.multiview.js&quot;</span><span class='nt'>&gt;&lt;/script&gt;</span>
+</code></pre>
+</div>
 </div>
 
 
