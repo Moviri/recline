@@ -237,11 +237,11 @@ this.recline = this.recline || {};
                     if (data.length === 0) {
                         //empty list
                         filter["term"] = null;
-                    } else if (data === null) {
-                        //null list
-                        filter["remove"] = true;
                     } else if (data.length === 1) {
-                        filter["term"] = data[0];
+                    	if(data[0] == null)
+                    		filter["remove"] = true;
+                    	else
+                    		filter["term"] = data[0];
                     } else {
                         throw "Data passed for filtertype term not valid. Data lenght should be 1 or empty but is " + data.length;
                     }

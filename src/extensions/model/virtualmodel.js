@@ -19,7 +19,10 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
 
             var self = this;
 
-            self.vModel = new my.Dataset({backend: "Memory", records:[], fields: []});
+            self.vModel = new my.Dataset(
+                {
+                    backend: "Memory",
+                    records:[], fields: []});
 
             self.fields = self.vModel.fields;
             self.records = self.vModel.records;
@@ -569,6 +572,15 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
 
                     var newType = recline.Data.Aggregations.resultingDataType[aggregationFunctions[j]](originalFieldAttributes.type);
 
+                    var fieldLabel = x + "_" + aggregationFunctions[j];
+
+                    if (self.attributes.fieldLabelForFields) {
+                        fieldLabel = self.attributes.fieldLabelForFields
+                            .replace("{originalFieldLabel}", originalFieldAttributes.label)
+                            .replace("{aggregatedFunction}", aggregationFunctions[j]);
+                    }
+
+
                     fields.push({
                         id:x + "_" + aggregationFunctions[j],
                         type:newType,
@@ -576,7 +588,8 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
                         colorSchema:originalFieldAttributes.colorSchema,
                         shapeSchema:originalFieldAttributes.shapeSchema,
                         originalField:x,
-                        aggregationFunction:aggregationFunctions[j]
+                        aggregationFunction:aggregationFunctions[j],
+                        label:fieldLabel
                     });
                 }
 
@@ -587,10 +600,10 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
                         var newType = recline.Data.Aggregations.resultingDataType[aggregationFunctions[j]](originalFieldAttributes.type);
 
                         var fieldId = d.id;
-                        var fieldLabel = fieldId;
+                        var partitionedFieldLabel = fieldId;
 
                         if (self.attributes.fieldLabelForPartitions) {
-                            fieldLabel = self.attributes.fieldLabelForPartitions
+                            partitionedFieldLabel = self.attributes.fieldLabelForPartitions
                                 .replace("{originalField}", d.originalField)
                                 .replace("{partitionFieldName}", d.field)
                                 .replace("{partitionFieldValue}", d.value)
@@ -607,7 +620,7 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
                                 shapeSchema:originalFieldAttributes.shapeSchema,
                                 originalField:d.originalField,
                                 aggregationFunction:aggregationFunctions[j],
-                                label:fieldLabel
+                                label:partitionedFieldLabel
                             }
                         );
                     })

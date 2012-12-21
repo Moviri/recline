@@ -157,6 +157,13 @@ my.SlickGrid = Backbone.View.extend({
           minWidth: 80,
           formatter: formatter,
         };
+        if (self.model.queryState.attributes.sort)
+    	{
+        	 _.each(self.model.queryState.attributes.sort,function(sortCondition){
+        		 if (column.sortable && field['id'] == sortCondition.field)
+        			 column["sorted"] = sortCondition.order; // this info will be checked when onSort is triggered to reverse to existing order (if any)
+        	 });
+    	}
         var widthInfo = _.find(self.state.get('columnsWidth'),function(c){return c.column == field.id});
         if (widthInfo){
           column['width'] = widthInfo.width;
@@ -438,7 +445,12 @@ my.SlickGrid = Backbone.View.extend({
 	
 	this.grid.setSelectionModel(new Slick.RowSelectionModel());
 	//this.grid.getSelectionModel().setSelectedRows(rowsToSelect);
-
+	
+    var sortedColumns = []
+    _.each(self.model.queryState.attributes.sort,function(sortCondition){
+    	sortedColumns.push({ columnId: sortCondition.field, sortAsc: sortCondition.order == "asc" })
+    });
+    this.grid.setSortColumns(sortedColumns);
 	
     this.grid.onSelectedRowsChanged.subscribe(function(e, args){
     	if (!self.discardSelectionEvents)
@@ -448,16 +460,24 @@ my.SlickGrid = Backbone.View.extend({
 	});
 
     // Column sorting
-    var sortInfo = this.model.queryState.get('sort');
-    // TODO sort is not present in slickgrid
-    /*if (sortInfo){
-      var column = sortInfo[0].field;
-      var sortAsc = !(sortInfo[0].order == 'desc');
-      this.grid.sort(column, sortAsc);
-    }*/
+//    var sortInfo = this.model.queryState.get('sort');
+//    // TODO sort is not present in slickgrid
+//    if (sortInfo){
+//      var column = sortInfo[0].field;
+//      var sortAsc = !(sortInfo[0].order == 'desc');
+//      this.grid.sort(column, sortAsc);
+//    }
 
     this.grid.onSort.subscribe(function(e, args){
       var order = (args.sortAsc) ? 'asc':'desc';
+      if (args.sortCol.sorted)
+	  {
+    	  // already ordered! switch ordering
+    	  if (args.sortCol.sorted == "asc")
+    		  order = "desc"
+    	  if (args.sortCol.sorted == "desc")
+    		  order = "asc"
+	  }
       var sort = [{
         field: args.sortCol.field,
         order: order

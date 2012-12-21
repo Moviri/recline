@@ -234,6 +234,7 @@ this.recline.Model = this.recline.Model || {};
             self.recordCount = queryResult.total;
             if (queryResult.fields && self.fields.length == 0) {
 
+                recline.Data.FieldsUtility.setFieldsAttributes(queryResult.fields, self);
                 var options = {renderer:recline.Data.Formatters.Renderers};
                 self.fields.reset(queryResult.fields, options);
 
