@@ -1599,12 +1599,12 @@ Rickshaw.Graph.HoverDetail = Rickshaw.Class.create({
 			if (!stackedData[0][i] || !stackedData[0][i + 1]) {
 				break;
 			}
-
-			if (stackedData[0][i].x <= domainX && stackedData[0][i + 1].x > domainX) {
+			// force subtractions here below to ensure numeric comparison is correct!!!
+			if (stackedData[0][i].x - domainX <= 0 && stackedData[0][i + 1].x - domainX > 0) {
 				dataIndex = i;
 				break;
 			}
-			if (stackedData[0][i + 1] <= domainX) { i++ } else { i-- }
+			if (stackedData[0][i + 1].x - domainX <= 0) { i++ } else { i-- }
 		}
 
 		var domainX = stackedData[0][dataIndex].x;
