@@ -1522,13 +1522,7 @@ my.Dataset = Backbone.Model.extend({
       }
 
       self.set(results.metadata);
-
-
-                recline.Data.FieldsUtility.setFieldsAttributes(out.fields, self);
-                var options = {renderer:recline.Data.Formatters.Renderers};
-
-                self.fields.reset(out.fields, options);
-
+      self.fields.reset(out.fields);
       self.query()
         .done(function() {
           dfd.resolve(self);
@@ -1671,14 +1665,6 @@ my.Dataset = Backbone.Model.extend({
   _handleQueryResult: function(queryResult) {
     var self = this;
     self.recordCount = queryResult.total;
-            if (queryResult.fields && self.fields.length == 0) {
-
-                recline.Data.FieldsUtility.setFieldsAttributes(queryResult.fields, self);
-                var options = {renderer:recline.Data.Formatters.Renderers};
-                self.fields.reset(queryResult.fields, options);
-
-            }
-
     var docs = _.map(queryResult.hits, function(hit) {
       var _doc = new my.Record(hit);
       _doc.fields = self.fields;
@@ -1690,8 +1676,6 @@ my.Dataset = Backbone.Model.extend({
       });
       return _doc;
     });
-
-            recline.Data.Filters.applySelectionsOnData(self.queryState.get('selections'), docs, self.fields);
     self.records.reset(docs);
     if (queryResult.facets) {
       var facets = _.map(queryResult.facets, function(facetResult, facetId) {

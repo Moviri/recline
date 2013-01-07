@@ -60,7 +60,17 @@ recline.Model.Dataset.prototype = $.extend(recline.Model.Dataset.prototype, {
         var self = this;
         return self.fields;
 
-    }
+    },
+
+    _normalizeRecordsAndFields:function () {
+        var super_init = recline.Model.Dataset.prototype._normalizeRecordsAndFields;
+        return function (records, fields) {
+            var self=this;
+            var out = super_init.call(this, records, fields);
+            recline.Data.FieldsUtility.setFieldsAttributes(out.fields, self);
+            return out;
+        };
+    }()
 
 
 });
