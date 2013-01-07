@@ -25,8 +25,8 @@ this.recline.View = this.recline.View || {};
 
             this.options = options;
 
-            this.height= options.height;
-            this.width = options.width;
+            this.height= options.state.height;
+            this.width = options.state.width;
         },
 
         render:function () {
@@ -71,10 +71,10 @@ this.recline.View = this.recline.View || {};
         renderGraph:function () {
             var self = this;
             var state = self.options.state;
+            self.updateSeries();
 
+            var myChart = new xChart(state.type, self.series, '#' + self.uid, opts);
 
-
-            self.graph = new xChart('bar', self.series, '#' + self.uid);
 
 
         },
@@ -89,7 +89,10 @@ this.recline.View = this.recline.View || {};
                 self.resultType,
                 state.group);
 
-            var data = { main: [] };
+            var data = { main: [],
+                xScale: state.xScale,
+                yScale: state.yScale
+            };
 
             /* series is:
                 [ color: , name: , data[ [record:, x:, x_formatted:, y:, y_formatted: ] ]
@@ -101,7 +104,7 @@ this.recline.View = this.recline.View || {};
                 data.main.push(serie);
             });
 
-           self.series = series;
+           self.series = data;
         }
 
 

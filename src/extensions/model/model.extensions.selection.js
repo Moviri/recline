@@ -44,7 +44,15 @@ recline.Model.Record.prototype = $.extend(recline.Model.Record.prototype, {
 
 
 recline.Model.Query.prototype = $.extend(recline.Model.Query.prototype, {
+    getSelections: function() {
+        var sel = this.get('selections');
+        if(sel)
+            return sel;
 
+        this.set({selections:[]});
+        return this.get('selections');
+
+    },
 
 // ### addSelection
 //
@@ -59,21 +67,23 @@ recline.Model.Query.prototype = $.extend(recline.Model.Query.prototype, {
         if (_.keys(selection).length <= 3) {
             myselection = _.extend(this._selectionTemplates[selection.type], myselection);
         }
-        var selections = this.get('selections');
+        var selections = this.getSelections();
         selections.push(myselection);
         this.trigger('change:selections');
     },
+
+
 // ### removeSelection
 //
 // Remove a selection at index selectionIndex
     removeSelection:function (selectionIndex) {
-        var selections = this.get('selections');
+        var selections = this.getSelections();
         selections.splice(selectionIndex, 1);
         this.set({selections:selections});
         this.trigger('change:selections');
     },
     removeSelectionByField:function (field) {
-        var selections = this.get('selections');
+        var selections = this.getSelections();
         for (var j in selections) {
             if (selections[j].field == field) {
                 this.removeSelection(j);
@@ -84,7 +94,7 @@ recline.Model.Query.prototype = $.extend(recline.Model.Query.prototype, {
         if (filter["remove"]) {
         	this.removeSelectionByField(filter.field);
         } else {
-         var s = this.get('selections');
+         var s = this.getSelections();
             var found = false;
             for (var j = 0; j < s.length; j++) {
                 if (s[j].field == filter.field) {
@@ -98,7 +108,7 @@ recline.Model.Query.prototype = $.extend(recline.Model.Query.prototype, {
     },
 
     isSelected:function () {
-        return this.get('selections').length > 0;
+        return this.getSelections().length > 0;
     }
 
 });
