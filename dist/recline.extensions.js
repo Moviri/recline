@@ -412,6 +412,18 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
     });
 
 
+}(jQuery));(function ($) {
+    recline.Model.Dataset.prototype = $.extend(recline.Model.Dataset.prototype, {
+
+
+        getFacetByFieldId:function (fieldId) {
+            return _.find(this.facets.models, function (facet) {
+                return facet.id == fieldId;
+            });
+        }
+
+    });
+
 }(jQuery));recline.Model.Dataset.prototype = $.extend(recline.Model.Dataset.prototype, {
     toFullJSON:function (resultType) {
         var self = this;
@@ -489,7 +501,106 @@ recline.Model.Query.prototype = $.extend(recline.Model.Query.prototype, {
                 this.set({filters:filters});
             }
         }
+    },
+    getFilterByFieldName:function (fieldName) {
+        var res = _.find(this.get('filters'), function (f) {
+            return f.field == fieldName;
+        });
+        if (res == -1)
+            return null;
+        else
+            return res;
+
+    },
+
+
+    // update or add the selected filter(s), a change event is not triggered after the update
+
+    setFilter:function (filter) {
+        if (filter["remove"]) {
+            this.removeFilterByField(filter.field);
+            delete filter["remove"];
+        } else {
+
+            var filters = this.get('filters');
+            var found = false;
+            for (var j = 0; j < filters.length; j++) {
+                if (filters[j].field == filter.field) {
+                    filters[j] = filter;
+                    found = true;
+                }
+            }
+            if (!found)
+                filters.push(filter);
+        }
+    },
+
+
+    removeFilterByField:function (field) {
+        var filters = this.get('filters');
+        for (var j in filters) {
+            if (filters[j].field == field) {
+                this.removeFilter(j);
+            }
+        }
+    },
+
+
+    clearFilter:function (field) {
+        var filters = this.get('filters');
+        for (var j in filters) {
+            if (filters[j].field == field) {
+                filters[j].term = null;
+                filters[j].start = null;
+                filters[j].stop = null;
+                break;
+            }
+        }
+    },
+
+    addSortCondition:function (field, order) {
+        var currentSort = this.get("sort");
+        if (!currentSort)
+            currentSort = [
+                {field:field, order:order}
+            ];
+        else
+            currentSort.push({field:field, order:order});
+
+        this.attributes["sort"] = currentSort;
+
+        this.trigger('change:filters:sort');
+
+    },
+
+    setSortCondition:function (sortCondition) {
+        var currentSort = this.get("sort");
+        if (!currentSort)
+            currentSort = [sortCondition];
+        else
+            currentSort.push(sortCondition);
+
+        this.attributes["sort"] = currentSort;
+
+    },
+
+    clearSortCondition:function () {
+        this.attributes["sort"] = null;
+    },
+
+    addFacetNoEvent: function(fieldId) {
+        var facets = this.get('facets');
+        // Assume id and fieldId should be the same (TODO: this need not be true if we want to add two different type of facets on same field)
+        if (_.contains(_.keys(facets), fieldId)) {
+            return;
+        }
+        facets[fieldId] = {
+            terms: { field: fieldId }
+        };
+        this.set({facets: facets}, {silent: true});
+
     }
+
 
 });recline.Model.Dataset.prototype = $.extend(recline.Model.Dataset.prototype, {
     selection:function (queryObj) {
@@ -537,7 +648,15 @@ recline.Model.Record.prototype = $.extend(recline.Model.Record.prototype, {
 
 
 recline.Model.Query.prototype = $.extend(recline.Model.Query.prototype, {
+    getSelections: function() {
+        var sel = this.get('selections');
+        if(sel)
+            return sel;
 
+        this.set({selections:[]});
+        return this.get('selections');
+
+    },
 
 // ### addSelection
 //
@@ -552,21 +671,23 @@ recline.Model.Query.prototype = $.extend(recline.Model.Query.prototype, {
         if (_.keys(selection).length <= 3) {
             myselection = _.extend(this._selectionTemplates[selection.type], myselection);
         }
-        var selections = this.get('selections');
+        var selections = this.getSelections();
         selections.push(myselection);
         this.trigger('change:selections');
     },
+
+
 // ### removeSelection
 //
 // Remove a selection at index selectionIndex
     removeSelection:function (selectionIndex) {
-        var selections = this.get('selections');
+        var selections = this.getSelections();
         selections.splice(selectionIndex, 1);
         this.set({selections:selections});
         this.trigger('change:selections');
     },
     removeSelectionByField:function (field) {
-        var selections = this.get('selections');
+        var selections = this.getSelections();
         for (var j in selections) {
             if (selections[j].field == field) {
                 this.removeSelection(j);
@@ -577,7 +698,7 @@ recline.Model.Query.prototype = $.extend(recline.Model.Query.prototype, {
         if (filter["remove"]) {
         	this.removeSelectionByField(filter.field);
         } else {
-         var s = this.get('selections');
+         var s = this.getSelections();
             var found = false;
             for (var j = 0; j < s.length; j++) {
                 if (s[j].field == filter.field) {
@@ -591,7 +712,7 @@ recline.Model.Query.prototype = $.extend(recline.Model.Query.prototype, {
     },
 
     isSelected:function () {
-        return this.get('selections').length > 0;
+        return this.getSelections().length > 0;
     }
 
 });
@@ -643,7 +764,25 @@ recline.Model.Query.prototype = $.extend(recline.Model.Query.prototype, {
     });
 
 
-}(jQuery));// # Recline Backbone Models
+}(jQuery));recline.Model.Dataset.prototype = $.extend(recline.Model.Dataset.prototype, {
+
+    initialize: function () {
+        var super_init = recline.Model.Dataset.prototype.initialize;
+        return function(){
+            super_init.call(this);
+
+            if (this.get('initialState')) {
+                this.get('initialState').setState(this);
+            }
+
+        };
+    }()
+
+
+
+});
+
+// # Recline Backbone Models
 this.recline = this.recline || {};
 this.recline.Model = this.recline.Model || {};
 this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
@@ -1702,7 +1841,186 @@ this.recline = this.recline || {};
 
 
 }(jQuery, this.recline));
-// # Recline Backbone Models
+this.recline = this.recline || {};
+this.recline.Data = this.recline.Data || {};
+
+(function(my){
+	
+	my.Aggregations = {};
+
+    my.Aggregations.aggregationFunctions = {
+        sum         : function (p,v) {
+            if(p==null) p=0;
+            return p+v;
+        },
+        avg         : function (p, v) {},
+        max         : function (p, v) {
+            if(p==null)
+                return v;
+            return Math.max(p, v);
+        },
+        min         : function (p, v) {
+            if(p==null)
+                return v;
+            return Math.min(p, v);
+        },
+        ratioToReport: function (p, v) {},
+        ratioToMax: function (p, v) {},
+        runningTotal: function (p, v) {}
+    };
+
+    my.Aggregations.initFunctions = {
+        sum           : function () {},
+        avg           : function () {},
+        max           : function () {},
+        min           : function () {},
+        ratioToReport : function () {},
+        ratioToMax    : function () {},
+        runningTotal  : function () {}
+    };
+
+    my.Aggregations.resultingDataType = {
+        sum           : function (original) { return original },
+        avg           : function (original) { return "float"},
+        max           : function (original) { return original},
+        min           : function (original) { return original},
+        ratioToReport : function (original) { return "float"},
+        ratioToMax :    function (original) { return "float"},
+        runningTotal  : function (original) { return original}
+    },
+
+    my.Aggregations.finalizeFunctions = {
+        sum         : function () {},
+        avg         : function (resultData, aggregatedFields, partitionsFields) {
+
+
+            resultData.avg = function(aggr, part){
+
+                return function(){
+
+                    var map = {};
+                    for(var o=0;o<aggr.length;o++){
+                        map[aggr[o]] = this.sum[aggr[o]] / this.count;
+                    }
+                    return map;
+                }
+            }(aggregatedFields, partitionsFields);
+
+            if(partitionsFields != null && partitionsFields.length > 0) {
+
+
+                resultData.partitions.avg = function(aggr, part){
+
+                return function(){
+
+                    var map = {};
+                    for (var j=0;j<part.length;j++) {
+                        if(resultData.partitions.sum[part[j]])   {
+                            map[part[j]] = {
+                                value: resultData.partitions.sum[part[j]].value / resultData.partitions.count[part[j]].value,
+                                partition: resultData.partitions.sum[part[j]].partition
+                            };
+                        }
+                    }
+                    return map;
+                }
+            }(aggregatedFields, partitionsFields);
+
+            }
+
+
+        },
+        max                     : function () {},
+        min                     : function () {},
+        ratioToReport           : function () {},
+        ratioToMax              : function () {},
+        runningTotal            : function () {}
+    };
+
+    my.Aggregations.tableCalculations = {
+        ratioToReport : function (aggregatedFields, p, r, totalRecords) {
+            _.each(aggregatedFields, function(f) {
+                if(totalRecords[f + "_sum_sum"] > 0)
+                    r[f + "_ratioToReport"]  = r[f + "_sum"] / totalRecords[f + "_sum_sum"];
+            });
+            return r;
+        },
+            ratioToMax : function (aggregatedFields, p, r, totalRecords) {
+            _.each(aggregatedFields, function(f) {
+                if(totalRecords[f + "_sum_max"] > 0)
+                    r[f + "_ratioToMax"]  = r[f + "_sum"] / totalRecords[f + "_sum_max"];
+            });
+                return r;
+        },
+        runningTotal : function (aggregatedFields, p, r, totalRecords) {
+            _.each(aggregatedFields, function(f) {
+                if(p)
+                    r[f + "_runningTotal"]  =  r[f + "_sum"] + p[f + "_runningTotal"] ;
+                else
+                    r[f + "_runningTotal"] = r[f + "_sum"];
+            });
+            return r;
+        }
+    };
+    
+	var myIsEqual = function (object, other, key) {
+
+        var spl = key.split('.'),
+            val1, val2;
+
+        if (spl.length > 0) {
+            val1 = object;
+            val2 = other;
+
+            for (var k = 0; k < spl.length; k++) {
+                arr = spl[k].match(/(.*)\[\'?(\d*\w*)\'?\]/i);
+                if (arr && arr.length == 3) {
+                    val1 = (val1[arr[1]]) ? val1[arr[1]][arr[2]] : val1[spl[k]];
+                    val2 = (val2[arr[1]]) ? val2[arr[1]][arr[2]] : val2[spl[k]];
+                } else {
+                    val1 = val1[spl[k]];
+                    val2 = val2[spl[k]];
+                }
+            }
+        }
+        return _.isEqual(val1, val2);
+    };
+
+    my.Aggregations.intersectionObjects = my.Aggregations.intersectObjects = function (key, array) {
+        var slice = Array.prototype.slice;
+        // added this line as a utility
+        var rest = slice.call(arguments, 1);
+        return _.filter(_.uniq(array), function (item) {
+            return _.every(rest, function (other) {
+                //return _.indexOf(other, item) >= 0;
+                return _.any(other, function (element) {
+                    var control = myIsEqual(element, item, key);
+                    if (control) _.extend(item, element);
+                    return control;
+                });
+            });
+        });
+    };
+
+    my.Aggregations.checkTableCalculation = function(aggregationFunctions, totalsConfig) {
+      var tableCalc = _.intersection(aggregationFunctions, ["runningTotal", "ratioToReport", "ratioToMax"]);
+      if(tableCalc.length > 0) {
+          _.each(tableCalc, function(d) {
+             if(!_.intersection(totalsConfig.aggregationFunctions, my.Aggregations.tableCalculationDependencies[d]))
+                 throw "Data.Aggregation: unable to calculate " + d + ", totals aggregation function ["+ my.Aggregations.tableCalculationDependencies[d] + "] must be defined";
+          });
+      }
+
+        return tableCalc;
+    };
+
+    my.Aggregations.tableCalculationDependencies =  {
+        runningTotal: [],
+        ratioToReport: ["sum"],
+        ratioToMax: ["max"]
+    };
+
+})(this.recline.Data);// # Recline Backbone Models
 this.recline = this.recline || {};
 this.recline.Data = this.recline.Data || {};
 this.recline.Data.ColorSchema = this.recline.Data.ColorSchema || {};
@@ -1957,6 +2275,170 @@ this.recline.Data.ColorSchema = this.recline.Data.ColorSchema || {};
         });
     };
 }(jQuery, this.recline.Data));
+this.recline = this.recline || {};
+this.recline.Data = this.recline.Data || {};
+
+(function(my) {
+
+
+my.Faceting = {};
+    my.Faceting.computeFacets = function (records, queryObj) {
+        var self = this;
+        var facetResults = {};
+        if (!queryObj.facets) {
+            return facetResults;
+        }
+        _.each(queryObj.facets, function (query, facetId) {
+            // TODO: remove dependency on recline.Model
+            facetResults[facetId] = new recline.Model.Facet({id:facetId}).toJSON();
+            facetResults[facetId].termsall = {};
+        });
+        // faceting
+        _.each(records, function (doc) {
+            _.each(queryObj.facets, function (query, facetId) {
+                var fieldId = query.terms.field;
+                var val = doc[fieldId];
+                var tmp = facetResults[facetId];
+                if (val) {
+                    tmp.termsall[val] = tmp.termsall[val] ? {count:tmp.termsall[val].count + 1, value:val} : {count:1, value:val};
+                } else {
+                    tmp.missing = tmp.missing + 1;
+                }
+            });
+        });
+
+        // if all_terms is specified add terms not presents
+        self.updateDistinctFieldsForFaceting(queryObj);
+
+        _.each(queryObj.facets, function (query, facetId) {
+            var tmp = facetResults[facetId];
+
+            var termsWithZeroCount =
+                _.difference(
+                    self.distinctFieldsValues[facetId],
+                    _.map(tmp.termsall, function (d) {
+                        return d.value
+                    })
+                );
+
+            _.each(termsWithZeroCount, function (d) {
+                tmp.termsall[d] = {count:0, value:d};
+            });
+
+        });
+
+
+        _.each(queryObj.facets, function (query, facetId) {
+            var tmp = facetResults[facetId];
+            var terms = _.map(tmp.termsall, function (res, term) {
+                return { term:res.value, count:res.count };
+            });
+            tmp.terms = _.sortBy(terms, function (item) {
+                // want descending order
+                return -item.count;
+            });
+        });
+
+
+        return facetResults;
+    };
+
+
+    //update uniq values for each terms present in facets with value all_terms
+    my.Faceting.updateDistinctFieldsForFaceting = function (queryObj) {
+        var self = this;
+        if (this.distinctFieldsValues == null)
+            this.distinctFieldsValues = {};
+
+        var fieldsToBeCalculated = [];
+
+        _.each(queryObj.facets, function (query, fieldId) {
+            if (query.terms.all_terms && self.distinctFieldsValues[fieldId] == null) {
+                fieldsToBeCalculated.push(fieldId);
+            }
+        });
+
+        if (fieldsToBeCalculated.length > 0) {
+            _.each(fieldsToBeCalculated, function (d) {
+                self.distinctFieldsValues[d] = []
+            });
+
+            _.each(self.data, function (d) {
+                _.each(fieldsToBeCalculated, function (field) {
+                    self.distinctFieldsValues[field].push(d[field]);
+                });
+            });
+        }
+
+        _.each(fieldsToBeCalculated, function (d) {
+            self.distinctFieldsValues[d] = _.uniq(self.distinctFieldsValues[d])
+        });
+
+    };
+
+
+}(this.recline.Data))
+// # Recline Backbone Models
+this.recline = this.recline || {};
+this.recline.Data = this.recline.Data || {};
+this.recline.Data.FieldsUtility = this.recline.Data.FieldsUtility || {};
+
+(function($, my) {
+
+    my.setFieldsAttributes = function(fields, model) {
+
+
+        // if labels are declared in dataset properties merge it;
+        if (model.attributes.fieldLabels) {
+            for (var i = 0; i < fields.length; i++) {
+                var tmp = _.find(model.attributes.fieldLabels, function (x) {
+                    return x.id == fields[i].id;
+                });
+                if (tmp != null)
+                    fields[i].label = tmp.label;
+
+            }
+
+        }
+
+        // if format is declared it is updated
+        if (model.attributes.fieldsFormat) {
+            // if format is declared in dataset properties merge it;
+            _.each(model.attributes.fieldsFormat, function (d) {
+                var field = _.find(fields, function (f) {
+                    return d.id === f.id
+                });
+                if (field != null)
+                    field.format = d.format;
+            })
+        }
+
+
+        // assignment of color schema to fields
+        if (model.attributes.colorSchema) {
+            _.each(model.attributes.colorSchema, function (d) {
+                var field = _.find(fields, function (f) {
+                    return d.field === f.id
+                });
+                if (field != null)
+                    field.colorSchema = d.schema;
+            })
+        }
+
+        // assignment of shapes schema to fields
+        if (model.attributes.shapeSchema) {
+            _.each(model.attributes.shapeSchema, function (d) {
+                var field = _.find(fields, function (f) {
+                    return d.field === f.id
+                });
+                if (field != null)
+                    field.shapeSchema = d.schema;
+            })
+        }
+    }
+
+
+}(jQuery, this.recline.Data.FieldsUtility));
 this.recline = this.recline || {};
 this.recline.Data = this.recline.Data || {};
 
@@ -2737,6 +3219,116 @@ this.recline.Data.ShapeSchema = this.recline.Data.ShapeSchema || {};
     };
 
 }(jQuery, this.recline.Data));
+this.recline = this.recline || {};
+this.recline.Data = this.recline.Data || {};
+
+(function($, my) {
+// adapted from https://github.com/harthur/costco. heather rules
+
+my.StateManagement = {};
+
+
+    my.StateManagement.State = Backbone.Model.extend({
+        constructor:function State() {
+            Backbone.Model.prototype.constructor.apply(this, arguments);
+        },
+
+        // ### initialize
+        initialize:function () {
+
+        },
+
+        setState: function(dataset) {
+            var self=this;
+            var filters;
+            var selections;
+
+            if(this.attributes.fromQueryString) {
+                self.attributes.data = jQuery.deparam($.param.querystring());
+            }
+
+            if(this.attributes.useOnlyFields) {
+                filters = _.filter(self.attributes.data.filters, function(f) {
+                    return _.contains(self.attributes.useOnlyFields, f.field)
+                });
+                selections =_.filter(self.attributes.data.selections, function(f) {
+                    return _.contains(self.attributes.useOnlyFields, f.field)
+                });
+            } else {
+                if(self.attributes.data) {
+                if(self.attributes.data.filters)
+                    filters = self.attributes.data.filters;
+
+                if(self.attributes.data.selections)
+                    selections = self.attributes.data.selections;
+                }
+            }
+
+            _.each(filters, function(f) {
+                dataset.queryState.setFilter(f);
+            });
+
+            _.each(selections, function(f) {
+                dataset.queryState.setSelection(f);
+            });
+
+        }
+
+
+    });
+
+    my.StateManagement.getQueryString = function(objects) {
+        var state = this.getState(objects);
+        return decodeURIComponent($.param(state));
+    }
+
+
+my.StateManagement.getState = function(objects) {
+    var state = {filters: [], selections: []};
+    _.each(objects, function(o) {
+        if(o.queryState) {
+            _.each(o.queryState.get('filters'), function(f)     {state.filters.push(f)});
+            _.each(o.queryState.get('selections'), function(f)  {state.selections.push(f)});
+        }
+    });
+
+    return state;
+};
+
+
+}(jQuery, this.recline.Data))
+this.recline = this.recline || {};
+this.recline.Template = this.recline.Template || {};
+this.recline.Template.Shapes = this.recline.Template.Shapes || {};
+
+(function($, my) {
+
+   my.Shapes = {
+        circle: function(color, isNode, isSVG) {
+            var template = '<circle cx="100" cy="50" r="40" stroke="black" stroke-width="2" fill="{{color}}"/>';
+
+            var data = {color: color};
+
+            return my._internalDataConversion(isNode, isSVG, template, data );
+
+
+        },
+       empty: function(color, isNode, isSVG) { my._internalDataConversion(isNode, isSVG,  ""); }
+   };
+
+   my._internalDataConversion = function(isNode, isSVG, mustacheTemplate, mustacheData) {
+       if(isSVG) {
+           mustacheTemplate = "<svg>"+ mustacheTemplate +"</svg>";
+       }
+       var res =  Mustache.render(mustacheTemplate, mustacheData);
+
+        if(isNode)
+            return jQuery(res);
+        else
+            return res;
+   }
+
+}(jQuery, this.recline.Template));
 this.recline = this.recline || {};
 this.recline.Backend = this.recline.Backend || {};
 this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
@@ -5154,8 +5746,8 @@ this.recline.View = this.recline.View || {};
 
             this.options = options;
 
-            this.height= options.height;
-            this.width = options.width;
+            this.height= options.state.height;
+            this.width = options.state.width;
         },
 
         render:function () {
@@ -5200,10 +5792,10 @@ this.recline.View = this.recline.View || {};
         renderGraph:function () {
             var self = this;
             var state = self.options.state;
+            self.updateSeries();
 
+            var myChart = new xChart(state.type, self.series, '#' + self.uid, opts);
 
-
-            self.graph = new xChart('bar', self.series, '#' + self.uid);
 
 
         },
@@ -5218,7 +5810,10 @@ this.recline.View = this.recline.View || {};
                 self.resultType,
                 state.group);
 
-            var data = { main: [] };
+            var data = { main: [],
+                xScale: state.xScale,
+                yScale: state.yScale
+            };
 
             /* series is:
                 [ color: , name: , data[ [record:, x:, x_formatted:, y:, y_formatted: ] ]
@@ -5230,14 +5825,118 @@ this.recline.View = this.recline.View || {};
                 data.main.push(serie);
             });
 
-           self.series = series;
+           self.series = data;
         }
 
 
 
 
     });
-})(jQuery, recline.View);this.recline = this.recline || {};
+})(jQuery, recline.View);/*jshint multistr:true */
+this.recline = this.recline || {};
+this.recline.View = this.recline.View || {};
+
+(function ($, my) {
+
+    my.CurrentFilter = Backbone.View.extend({
+        template:'\
+    	<script> \
+    	$(function() { \
+    		$(".chzn-select-deselect").chosen({allow_single_deselect:true}); \
+    	}); \
+    	</script> \
+      <div"> \
+        <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}"> \
+			<select class="chzn-select-deselect data-control-id" multiple data-placeholder="{{label}}"> \
+            {{#values}} \
+            <option value="{{dataset_index}}-{{filter_index}}" selected>{{val}}</option> \
+            {{/values}} \
+          </select> \
+        </fieldset> \
+      </div>',
+        events:{
+            'change .chzn-select-deselect':'onFilterValueChanged'
+        },
+
+        initialize:function (args) {
+            var self = this;
+            this.el = $(this.el);
+            _.bindAll(this, 'render');
+
+            this._sourceDatasets = args.models;
+            this.uid = args.id || Math.floor(Math.random() * 100000);
+
+            _.each(this._sourceDatasets, function (d) {
+                d.bind('query:done', self.render);
+                d.queryState.bind('selection:done', self.render);
+            });
+
+        },
+
+        render:function () {
+            var self = this;
+            var tmplData = {
+                id:self.uid,
+                label:"Active filters"
+            };
+
+            var values = [];
+            _.each(self._sourceDatasets, function (ds, ds_index) {
+                _.each(ds.queryState.getFilters(), function (filter, filter_index) {
+                    var v = {dataset_index:ds_index, filter_index:filter_index};
+                    v["val"] = self.filterDescription[filter.type](filter, ds);
+
+                    values.push(v);
+
+                });
+            });
+            tmplData["values"] = values;
+
+
+            var out = Mustache.render(self.template, tmplData);
+            this.el.html(out);
+        },
+
+        filterDescription:{
+            term:function (filter, dataset) {
+                return dataset.fields.get(filter.field).attributes.label + ": " + filter.term;
+            },
+            range:function (filter, dataset) {
+                return dataset.fields.get(filter.field).attributes.label + ": " + filter.start + "-" + filter.stop;
+            },
+            list:function (filter, dataset) {
+                var val = dataset.fields.get(filter.field).attributes.label + ": ";
+                _.each(filter.list, function (data, index) {
+                    if (index > 0)
+                        val += ",";
+
+                    val += data;
+                });
+
+                return val;
+            }
+        },
+
+        onFilterValueChanged:function (e) {
+            var self=this;
+
+            e.preventDefault();
+            var $target = $(e.target).parent();
+           var values = $target.find('.data-control-id')[0][0].value.split("-");
+
+            var dataset_index = values[0];
+            var filter_index = values[1];
+
+            self._sourceDatasets[dataset_index].queryState.removeFilter(filter_index);
+
+
+        }
+
+
+    });
+
+})(jQuery, recline.View);
+this.recline = this.recline || {};
 this.recline.View = this.recline.View || {};
 
 (function ($, view) {
@@ -7519,6 +8218,209 @@ this.recline.View = this.recline.View || {};
     });
 
 })(jQuery, recline.View);
+/*jshint multistr:true */
+
+this.recline = this.recline || {};
+this.recline.View = this.recline.View || {};
+
+(function ($, my) {
+
+
+    my.VisualSearch = Backbone.View.extend({
+
+        template:'<div id="search_box_container"></div><div id="search_query">&nbsp;</div>',
+
+        initialize:function (options) {
+            var self = this;
+
+            this.el = $(this.el);
+            _.bindAll(this, 'render', 'redraw');
+
+            /*
+            this.model.bind('change', self.render);
+            this.model.fields.bind('reset', self.render);
+            this.model.fields.bind('add', self.render);
+            this.model.records.bind('add', self.redraw);
+            this.model.records.bind('reset', self.redraw);
+            */
+
+
+        },
+
+        render:function () {
+            var self = this;
+
+
+            var tmplData = {};
+            tmplData["viewId"] = self.uid;
+            var htmls = Mustache.render(this.template, tmplData);
+            $(this.el).html(htmls);
+
+
+            return this;
+        },
+
+        redraw:function () {
+            var self = this;
+
+            console.log($().jquery);
+            console.log($.ui.version);
+
+            window.visualSearch = VS.init({
+                container  : $('#search_box_container'),
+                query      : 'country: "South Africa" account: 5-samuel "U.S. State": California',
+                showFacets : true,
+                unquotable : [
+                    'text',
+                    'account',
+                    'filter',
+                    'access'
+                ],
+                callbacks  : {
+                    search : function(query, searchCollection) {
+                        var $query = $('#search_query');
+                        $query.stop().animate({opacity : 1}, {duration: 300, queue: false});
+                        $query.html('<span class="raquo">&raquo;</span> You searched for: <b>' + searchCollection.serialize() + '</b>');
+                        clearTimeout(window.queryHideDelay);
+                        window.queryHideDelay = setTimeout(function() {
+                            $query.animate({
+                                opacity : 0
+                            }, {
+                                duration: 1000,
+                                queue: false
+                            });
+                        }, 2000);
+                    },
+                    valueMatches : function(category, searchTerm, callback) {
+                        switch (category) {
+                            case 'account':
+                                callback([
+                                    { value: '1-amanda', label: 'Amanda' },
+                                    { value: '2-aron',   label: 'Aron' },
+                                    { value: '3-eric',   label: 'Eric' },
+                                    { value: '4-jeremy', label: 'Jeremy' },
+                                    { value: '5-samuel', label: 'Samuel' },
+                                    { value: '6-scott',  label: 'Scott' }
+                                ]);
+                                break;
+                            case 'filter':
+                                callback(['published', 'unpublished', 'draft']);
+                                break;
+                            case 'access':
+                                callback(['public', 'private', 'protected']);
+                                break;
+                            case 'title':
+                                callback([
+                                    'Pentagon Papers',
+                                    'CoffeeScript Manual',
+                                    'Laboratory for Object Oriented Thinking',
+                                    'A Repository Grows in Brooklyn'
+                                ]);
+                                break;
+                            case 'city':
+                                callback([
+                                    'Cleveland',
+                                    'New York City',
+                                    'Brooklyn',
+                                    'Manhattan',
+                                    'Queens',
+                                    'The Bronx',
+                                    'Staten Island',
+                                    'San Francisco',
+                                    'Los Angeles',
+                                    'Seattle',
+                                    'London',
+                                    'Portland',
+                                    'Chicago',
+                                    'Boston'
+                                ])
+                                break;
+                            case 'U.S. State':
+                                callback([
+                                    "Alabama", "Alaska", "Arizona", "Arkansas", "California",
+                                    "Colorado", "Connecticut", "Delaware", "District of Columbia", "Florida",
+                                    "Georgia", "Guam", "Hawaii", "Idaho", "Illinois",
+                                    "Indiana", "Iowa", "Kansas", "Kentucky", "Louisiana",
+                                    "Maine", "Maryland", "Massachusetts", "Michigan", "Minnesota",
+                                    "Mississippi", "Missouri", "Montana", "Nebraska", "Nevada",
+                                    "New Hampshire", "New Jersey", "New Mexico", "New York", "North Carolina",
+                                    "North Dakota", "Ohio", "Oklahoma", "Oregon", "Pennsylvania",
+                                    "Puerto Rico", "Rhode Island", "South Carolina", "South Dakota", "Tennessee",
+                                    "Texas", "Utah", "Vermont", "Virginia", "Virgin Islands",
+                                    "Washington", "West Virginia", "Wisconsin", "Wyoming"
+                                ]);
+                                break
+                            case 'country':
+                                callback([
+                                    "China", "India", "United States", "Indonesia", "Brazil",
+                                    "Pakistan", "Bangladesh", "Nigeria", "Russia", "Japan",
+                                    "Mexico", "Philippines", "Vietnam", "Ethiopia", "Egypt",
+                                    "Germany", "Turkey", "Iran", "Thailand", "D. R. of Congo",
+                                    "France", "United Kingdom", "Italy", "Myanmar", "South Africa",
+                                    "South Korea", "Colombia", "Ukraine", "Spain", "Tanzania",
+                                    "Sudan", "Kenya", "Argentina", "Poland", "Algeria",
+                                    "Canada", "Uganda", "Morocco", "Iraq", "Nepal",
+                                    "Peru", "Afghanistan", "Venezuela", "Malaysia", "Uzbekistan",
+                                    "Saudi Arabia", "Ghana", "Yemen", "North Korea", "Mozambique",
+                                    "Taiwan", "Syria", "Ivory Coast", "Australia", "Romania",
+                                    "Sri Lanka", "Madagascar", "Cameroon", "Angola", "Chile",
+                                    "Netherlands", "Burkina Faso", "Niger", "Kazakhstan", "Malawi",
+                                    "Cambodia", "Guatemala", "Ecuador", "Mali", "Zambia",
+                                    "Senegal", "Zimbabwe", "Chad", "Cuba", "Greece",
+                                    "Portugal", "Belgium", "Czech Republic", "Tunisia", "Guinea",
+                                    "Rwanda", "Dominican Republic", "Haiti", "Bolivia", "Hungary",
+                                    "Belarus", "Somalia", "Sweden", "Benin", "Azerbaijan",
+                                    "Burundi", "Austria", "Honduras", "Switzerland", "Bulgaria",
+                                    "Serbia", "Israel", "Tajikistan", "Hong Kong", "Papua New Guinea",
+                                    "Togo", "Libya", "Jordan", "Paraguay", "Laos",
+                                    "El Salvador", "Sierra Leone", "Nicaragua", "Kyrgyzstan", "Denmark",
+                                    "Slovakia", "Finland", "Eritrea", "Turkmenistan"
+                                ], {preserveOrder: true});
+                                break;
+                        }
+                    },
+                    facetMatches : function(callback) {
+                        callback([
+                            'account', 'filter', 'access', 'title',
+                            { label: 'city',    category: 'location' },
+                            { label: 'address', category: 'location' },
+                            { label: 'country', category: 'location' },
+                            { label: 'U.S. State', category: 'location' }
+                        ]);
+                    }
+                }
+            });
+
+        },
+
+
+
+        doActions:function (actions, records) {
+
+            _.each(actions, function (d) {
+                d.action.doAction(records, d.mapping);
+            });
+
+        },
+
+        getActionsForEvent:function (eventType) {
+            var self = this;
+            var actions = [];
+
+            _.each(self.options.actions, function (d) {
+                if (_.contains(d.event, eventType))
+                    actions.push(d);
+            });
+
+            return actions;
+        }
+
+
+    });
+
+
+})(jQuery, recline.View);
+
 this.recline = this.recline || {};
 this.recline.View = this.recline.View || {};
 

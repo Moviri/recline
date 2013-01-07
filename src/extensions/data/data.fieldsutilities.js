@@ -21,7 +21,7 @@ this.recline.Data.FieldsUtility = this.recline.Data.FieldsUtility || {};
 
         }
 
-        // if format is desclared is updated
+        // if format is declared it is updated
         if (model.attributes.fieldsFormat) {
             // if format is declared in dataset properties merge it;
             _.each(model.attributes.fieldsFormat, function (d) {
