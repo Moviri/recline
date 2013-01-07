@@ -48,7 +48,7 @@ recline.Model.Dataset.prototype = $.extend(recline.Model.Dataset.prototype, {
                 return _doc;
             });
 
-            if (self.queryState.get('selections').length > 0)
+            if (self.queryState.getSelections().length > 0)
                 recline.Data.Filters.applySelectionsOnData(self.queryState.get('selections'), docs, self.fields);
 
 

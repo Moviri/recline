@@ -474,7 +474,7 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
                 return _doc;
             });
 
-            if (self.queryState.get('selections').length > 0)
+            if (self.queryState.getSelections().length > 0)
                 recline.Data.Filters.applySelectionsOnData(self.queryState.get('selections'), docs, self.fields);
 
 
