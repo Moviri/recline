@@ -29,7 +29,7 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
 
     my.query = function (queryObj, dataset) {
 
-        
+
         var data = buildRequestFromQuery(queryObj);
         console.log("Querying backend for ");
         console.log(data);
@@ -37,13 +37,6 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
 
     };
 
-    function isArrayEquals(a, b) {
-        return !(a < b || b < a);
-    }
-
-    ;
-
-   
 
     function requestJson(dataset, data, queryObj) {
         var dfd = $.Deferred();
@@ -60,12 +53,10 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
 
             // verify if returned data is not an error
             if (results.results.length != 1 || results.results[0].status.code != 0) {
-                console.log("Error in fetching data: " + results.results[0].status.message + " Statuscode:[" + results.results[0].status.code + "] AdditionalInfo:["+results.results[0].status.additionalInfo+"]");
-
+                console.log("Error in fetching data: " + results.results[0].status.message + " Statuscode:[" + results.results[0].status.code + "] AdditionalInfo:[" + results.results[0].status.additionalInfo + "]");
                 dfd.reject(results.results[0].status);
             } else
                 dfd.resolve(_handleJsonResult(results.results[0].result, queryObj));
-
         })
             .fail(function (arguments) {
                 dfd.reject(arguments);
@@ -73,35 +64,35 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
 
         return dfd.promise();
 
-    }
+    };
 
-    ;
+
+
 
     function _handleJsonResult(data, queryObj) {
-            if (data.data == null) {
-                return {
-                    fields:_handleFieldDescription(data.description),
-                    useMemoryStore:false
-                }
+        if (data.data == null) {
+            return {
+                fields:_handleFieldDescription(data.description),
+                useMemoryStore:false
             }
-            else {
-                var fields = _handleFieldDescription(data.description);
-                var facets = recline.Data.Faceting.computeFacets(data.data, queryObj);
+        }
+        else {
+            var fields = _handleFieldDescription(data.description);
+            var facets = recline.Data.Faceting.computeFacets(data.data, queryObj);
 
-                return {
-                    hits:_normalizeRecords(data.data, fields),
-                    fields: fields,
-                    facets: facets,
-                    useMemoryStore:false,
-                    total: data.data.length
-                }
+            return {
+                hits:_normalizeRecords(data.data, fields),
+                fields:fields,
+                facets:facets,
+                useMemoryStore:false,
+                total:data.data.length
             }
-        
+        }
+
     }
 
     ;
 
-  
 
     // convert each record in native format
     // todo verify if could cause performance problems

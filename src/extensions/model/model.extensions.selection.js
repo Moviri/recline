@@ -18,18 +18,18 @@ recline.Model.Dataset.prototype = $.extend(recline.Model.Dataset.prototype, {
         return function () {
             super_init.call(this);
             _.bindAll(this, 'selection');
-            //_.bindAll(this, 'applySelectionOnRecords');
+            _.bindAll(this, 'applySelectionOnRecords');
 
             this.queryState.bind('selection:change', this.selection);
-//            this.records.bind('reset', this.applySelectionOnRecords());
+            this.records.bind('reset', this.applySelectionOnRecords());
         };
     }(),
-//    applySelectionOnRecords: function() {
-//    	var self = this;
-//    	if (this.queryState && this.queryState.getSelections().lenght > 0)
-//    		recline.Data.Filters.applySelectionsOnRecord(self.queryState.getSelections(), self.records.models, self.fields);
-//    	
-//    }
+    applySelectionOnRecords: function() {
+    	var self = this;
+    	if (this.queryState && this.queryState.getSelections().lenght > 0)
+    		recline.Data.Filters.applySelectionsOnRecord(self.queryState.getSelections(), self.records.models, self.fields);
+
+    }
 });
 
 
@@ -51,7 +51,8 @@ recline.Model.Query.prototype = $.extend(recline.Model.Query.prototype, {
         if (sel)
             return sel;
 
-        this.set({selections:[]});
+
+        this.set({selections:[]}, {silent: true});
         return this.get('selections');
 
     },
@@ -81,7 +82,7 @@ recline.Model.Query.prototype = $.extend(recline.Model.Query.prototype, {
     removeSelection:function (selectionIndex) {
         var selections = this.getSelections();
         selections.splice(selectionIndex, 1);
-        this.set({selections:selections});
+        this.set({selections:selections}, {silent: true});
         this.trigger('change:selections');
     },
     removeSelectionByField:function (field) {

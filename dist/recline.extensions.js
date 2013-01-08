@@ -372,7 +372,7 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
             var super_init = recline.Model.Dataset.prototype._handleQueryResult;
 
             return function (queryResult) {
-
+                //console.log("-----> " + this.id +  " HQR colors");
                 var self = this;
 
                 if (queryResult.facets) {
@@ -524,6 +524,7 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
         var super_init = recline.Model.Dataset.prototype._handleQueryResult;
 
         return function (queryResult) {
+            //console.log("-----> " + this.id +  " HQR generic");
 
             var self=this;
             if (queryResult.fields && self.fields.length == 0) {
@@ -705,18 +706,18 @@ recline.Model.Query.prototype = $.extend(recline.Model.Query.prototype, {
         return function () {
             super_init.call(this);
             _.bindAll(this, 'selection');
-            //_.bindAll(this, 'applySelectionOnRecords');
+            _.bindAll(this, 'applySelectionOnRecords');
 
             this.queryState.bind('selection:change', this.selection);
-//            this.records.bind('reset', this.applySelectionOnRecords());
+            this.records.bind('reset', this.applySelectionOnRecords());
         };
     }(),
-//    applySelectionOnRecords: function() {
-//    	var self = this;
-//    	if (this.queryState && this.queryState.getSelections().lenght > 0)
-//    		recline.Data.Filters.applySelectionsOnRecord(self.queryState.getSelections(), self.records.models, self.fields);
-//    	
-//    }
+    applySelectionOnRecords: function() {
+    	var self = this;
+    	if (this.queryState && this.queryState.getSelections().lenght > 0)
+    		recline.Data.Filters.applySelectionsOnRecord(self.queryState.getSelections(), self.records.models, self.fields);
+
+    }
 });
 
 
@@ -738,7 +739,8 @@ recline.Model.Query.prototype = $.extend(recline.Model.Query.prototype, {
         if (sel)
             return sel;
 
-        this.set({selections:[]});
+
+        this.set({selections:[]}, {silent: true});
         return this.get('selections');
 
     },
@@ -768,7 +770,7 @@ recline.Model.Query.prototype = $.extend(recline.Model.Query.prototype, {
     removeSelection:function (selectionIndex) {
         var selections = this.getSelections();
         selections.splice(selectionIndex, 1);
-        this.set({selections:selections});
+        this.set({selections:selections}, {silent: true});
         this.trigger('change:selections');
     },
     removeSelectionByField:function (field) {
@@ -818,6 +820,8 @@ recline.Model.Dataset.prototype = $.extend(recline.Model.Dataset.prototype, {
         var super_init = recline.Model.Dataset.prototype._handleQueryResult;
 
         return function (queryResult) {
+
+            //console.log("-----> " + this.id +  " HQR shapes");
 
             var self = this;
 
@@ -3499,7 +3503,7 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
 
     my.query = function (queryObj, dataset) {
 
-        
+
         var data = buildRequestFromQuery(queryObj);
         console.log("Querying backend for ");
         console.log(data);
@@ -3507,13 +3511,6 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
 
     };
 
-    function isArrayEquals(a, b) {
-        return !(a < b || b < a);
-    }
-
-    ;
-
-   
 
     function requestJson(dataset, data, queryObj) {
         var dfd = $.Deferred();
@@ -3530,12 +3527,10 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
 
             // verify if returned data is not an error
             if (results.results.length != 1 || results.results[0].status.code != 0) {
-                console.log("Error in fetching data: " + results.results[0].status.message + " Statuscode:[" + results.results[0].status.code + "] AdditionalInfo:["+results.results[0].status.additionalInfo+"]");
-
+                console.log("Error in fetching data: " + results.results[0].status.message + " Statuscode:[" + results.results[0].status.code + "] AdditionalInfo:[" + results.results[0].status.additionalInfo + "]");
                 dfd.reject(results.results[0].status);
             } else
                 dfd.resolve(_handleJsonResult(results.results[0].result, queryObj));
-
         })
             .fail(function (arguments) {
                 dfd.reject(arguments);
@@ -3543,35 +3538,35 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
 
         return dfd.promise();
 
-    }
+    };
 
-    ;
+
+
 
     function _handleJsonResult(data, queryObj) {
-            if (data.data == null) {
-                return {
-                    fields:_handleFieldDescription(data.description),
-                    useMemoryStore:false
-                }
+        if (data.data == null) {
+            return {
+                fields:_handleFieldDescription(data.description),
+                useMemoryStore:false
             }
-            else {
-                var fields = _handleFieldDescription(data.description);
-                var facets = recline.Data.Faceting.computeFacets(data.data, queryObj);
+        }
+        else {
+            var fields = _handleFieldDescription(data.description);
+            var facets = recline.Data.Faceting.computeFacets(data.data, queryObj);
 
-                return {
-                    hits:_normalizeRecords(data.data, fields),
-                    fields: fields,
-                    facets: facets,
-                    useMemoryStore:false,
-                    total: data.data.length
-                }
+            return {
+                hits:_normalizeRecords(data.data, fields),
+                fields:fields,
+                facets:facets,
+                useMemoryStore:false,
+                total:data.data.length
             }
-        
+        }
+
     }
 
     ;
 
-  
 
     // convert each record in native format
     // todo verify if could cause performance problems

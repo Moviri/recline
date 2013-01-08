@@ -80,6 +80,7 @@ recline.Model.Dataset.prototype = $.extend(recline.Model.Dataset.prototype, {
         var super_init = recline.Model.Dataset.prototype._handleQueryResult;
 
         return function (queryResult) {
+            //console.log("-----> " + this.id +  " HQR generic");
 
             var self=this;
             if (queryResult.fields && self.fields.length == 0) {

@@ -15,6 +15,8 @@ recline.Model.Dataset.prototype = $.extend(recline.Model.Dataset.prototype, {
 
         return function (queryResult) {
 
+            //console.log("-----> " + this.id +  " HQR shapes");
+
             var self = this;
 
             if (queryResult.facets) {

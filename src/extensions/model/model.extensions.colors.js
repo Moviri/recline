@@ -17,7 +17,7 @@
             var super_init = recline.Model.Dataset.prototype._handleQueryResult;
 
             return function (queryResult) {
-
+                //console.log("-----> " + this.id +  " HQR colors");
                 var self = this;
 
                 if (queryResult.facets) {
