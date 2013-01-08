@@ -1640,15 +1640,6 @@ my.Dataset = Backbone.Model.extend({
     }
     var actualQuery = this.queryState.toJSON();
 
-            // add possibility to modify filter externally before execution
-
-            _.each(self.attributes.customFilterLogic, function (f) {
-                f(actualQuery);
-            });
-
-
-            console.log("Query on model [" + (self.attributes.id?self.attributes.id:"") + "] query [" + JSON.stringify(actualQuery) + "]");
-
     this._store.query(actualQuery, this.toJSON())
       .done(function(queryResult) {
         self._handleQueryResult(queryResult);
