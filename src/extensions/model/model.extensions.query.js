@@ -105,7 +105,42 @@ recline.Model.Query.prototype = $.extend(recline.Model.Query.prototype, {
         };
         this.set({facets: facets}, {silent: true});
 
-    }
+    },
+
+    query:function (queryObj) {
+        var super_init = recline.Model.Dataset.prototype.query;
+
+        return function (queryResult) {
+            var self=this;
+
+            if (queryObj) {
+                this.queryState.set(queryObj, {silent: true});
+            }
+            var actualQuery = this.queryState.toJSON();
+
+            var modified = false;
+            // add possibility to modify filter externally before execution
+            _.each(self.attributes.customFilterLogic, function (f) {
+                f(actualQuery);
+                modified = true;
+            });
+
+            console.log("Query on model [" + (self.attributes.id?self.attributes.id:"") + "] query [" + JSON.stringify(actualQuery) + "]");
+
+            if(queryObj || modified)
+                return super_init.call(this, actualQuery);
+            else
+                return super_init.call(this, queryObj);
+
+
+        };
+    }()
+
+
+
+
+
+
 
 
 });
