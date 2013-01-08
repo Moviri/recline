@@ -1,3 +1,34 @@
+recline.Model.Dataset.prototype = $.extend(recline.Model.Dataset.prototype, {
+    query:function (queryObj) {
+        var super_init = recline.Model.Dataset.prototype.query;
+
+        return function (queryResult) {
+            var self = this;
+
+            if (queryObj) {
+                this.queryState.set(queryObj, {silent:true});
+            }
+            var actualQuery = this.queryState.toJSON();
+
+            var modified = false;
+            // add possibility to modify filter externally before execution
+            _.each(self.attributes.customFilterLogic, function (f) {
+                f(actualQuery);
+                modified = true;
+            });
+
+            console.log("Query on model [" + (self.attributes.id ? self.attributes.id : "") + "] query [" + JSON.stringify(actualQuery) + "]");
+
+            if (queryObj || modified)
+                return super_init.call(this, actualQuery);
+            else
+                return super_init.call(this, queryObj);
+
+
+        };
+    }()
+});
+
 recline.Model.Query.prototype = $.extend(recline.Model.Query.prototype, {
     removeFilterByFieldNoEvent:function (field) {
         var filters = this.get('filters');
@@ -94,52 +125,18 @@ recline.Model.Query.prototype = $.extend(recline.Model.Query.prototype, {
         this.attributes["sort"] = null;
     },
 
-    addFacetNoEvent: function(fieldId) {
+    addFacetNoEvent:function (fieldId) {
         var facets = this.get('facets');
         // Assume id and fieldId should be the same (TODO: this need not be true if we want to add two different type of facets on same field)
         if (_.contains(_.keys(facets), fieldId)) {
             return;
         }
         facets[fieldId] = {
-            terms: { field: fieldId }
+            terms:{ field:fieldId }
         };
-        this.set({facets: facets}, {silent: true});
+        this.set({facets:facets}, {silent:true});
 
-    },
-
-    query:function (queryObj) {
-        var super_init = recline.Model.Dataset.prototype.query;
-
-        return function (queryResult) {
-            var self=this;
-
-            if (queryObj) {
-                this.queryState.set(queryObj, {silent: true});
-            }
-            var actualQuery = this.queryState.toJSON();
-
-            var modified = false;
-            // add possibility to modify filter externally before execution
-            _.each(self.attributes.customFilterLogic, function (f) {
-                f(actualQuery);
-                modified = true;
-            });
-
-            console.log("Query on model [" + (self.attributes.id?self.attributes.id:"") + "] query [" + JSON.stringify(actualQuery) + "]");
-
-            if(queryObj || modified)
-                return super_init.call(this, actualQuery);
-            else
-                return super_init.call(this, queryObj);
-
-
-        };
-    }()
-
-
-
-
-
+    }
 
 
 

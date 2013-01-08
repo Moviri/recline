@@ -29,6 +29,7 @@ recline.Model.Dataset.prototype = $.extend(recline.Model.Dataset.prototype, {
         var super_init = recline.Model.Dataset.prototype._handleQueryResult;
 
         return function (queryResult) {
+
             var self=this;
             if (queryResult.fields && self.fields.length == 0) {
 
@@ -45,8 +46,7 @@ recline.Model.Dataset.prototype = $.extend(recline.Model.Dataset.prototype, {
         };
     }()
 
-})
-;
+});
 
 
 recline.Model.Record.prototype = $.extend(recline.Model.Record.prototype, {
