@@ -11,7 +11,25 @@
                     field.attributes.colorSchema = d.schema;
             })
 
-        }
+        },
+
+        _handleQueryResult:function () {
+            var super_init = recline.Model.Dataset.prototype._handleQueryResult;
+
+            return function (queryResult) {
+
+                var self = this;
+
+                if (queryResult.facets) {
+                    _.each(queryResult.facets, function (f, index) {
+                        recline.Data.ColorSchema.addColorsToTerms(f.id, f.terms, self.attributes.colorSchema);
+                    });
+
+                    return super_init.call(this, queryResult);
+
+                }
+            };
+        }()
     });
 
 

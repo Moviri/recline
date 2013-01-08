@@ -203,6 +203,7 @@ my.Dataset = Backbone.Model.extend({
   },
 
   _handleQueryResult: function(queryResult) {
+
     var self = this;
     self.recordCount = queryResult.total;
     var docs = _.map(queryResult.hits, function(hit) {
@@ -222,7 +223,7 @@ my.Dataset = Backbone.Model.extend({
         facetResult.id = facetId;
                     var result = new my.Facet(facetResult);
                     recline.Data.ColorSchema.addColorsToTerms(facetId, result.attributes.terms, self.attributes.colorSchema);
-                    recline.Data.ShapeSchema.addShapesToTerms(facetId, result.attributes.terms, self.attributes.shapeSchema);
+                    //  recline.Data.ShapeSchema.addShapesToTerms(facetId, result.attributes.terms, self.attributes.shapeSchema);
 
                     return result;
       });
