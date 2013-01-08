@@ -251,9 +251,9 @@ this.recline.View = this.recline.View || {};
                 }
             }
 
-
-            if (self.state.get('useInnerChart') == true && innerChartSerie1Name && self.model.getRecords(self.resultType).length > 0) {
-                _.each(self.model.getRecords(self.resultType), function (doc) {
+            var myRecords = self.model.getRecords(self.resultType);
+            if (self.state.get('useInnerChart') == true && innerChartSerie1Name && myRecords.length > 0) {
+                _.each(myRecords, function (doc) {
                     var row = {};
                     _.each(self.model.getFields(self.resultType).models, function (field) {
                         row[field.id] = doc.getFieldValue(field);
@@ -275,7 +275,7 @@ this.recline.View = this.recline.View || {};
             if (options.showPartitionedData) {
                 var partitionFieldname = options.showPartitionedData.partition;
                 var dimensionFieldnames = self.model.attributes.aggregation.dimensions;
-                var records = self.model.getRecords(self.resultType);
+                var records = myRecords;
                 var dimensionValues = []
                 for (var d in dimensionFieldnames) {
                     var dimensionFieldname = dimensionFieldnames[d];
@@ -339,6 +339,9 @@ this.recline.View = this.recline.View || {};
                             if (options.showLineNumbers == true)
                                 row['lineNumberField'] = jj;
 
+                            row['rowNumber'] = jj;
+                            row['__orig_record__'] = rec;
+                            
                             data.push(row);
                         }
                         if (options.showPartitionedData.showSubTotals) {
@@ -393,10 +396,13 @@ this.recline.View = this.recline.View || {};
 
                     if (options.showLineNumbers == true)
                         row['lineNumberField'] = jj;
+                    
+                    row['rowNumber'] = jj;
+                    row['__orig_record__'] = doc;
                 });
             }
 
-            if (options.showTotals && self.model.records.length > 0) {
+            if (options.showTotals && self.model.getRecords(self.resultType).length > 0) {
                 options.totals = {};
                 var totalsRecord = self.model.getRecords("totals");
                 for (var f in options.showTotals) {
@@ -554,8 +560,10 @@ this.recline.View = this.recline.View || {};
         onSelectionChanged:function (rows) {
             var self = this;
             var selectedRecords = [];
+            //var myRecords = self.model.getRecords(self.resultType);
             _.each(rows, function (row) {
-                selectedRecords.push(self.model.getRecords(self.resultType)[row]);//self.model.records.models[row]);
+            	var dataItem = self.grid.getDataItem(row);
+                selectedRecords.push(dataItem.__orig_record__);
             });
             var actions = this.options.actions;
             if (actions != null)
