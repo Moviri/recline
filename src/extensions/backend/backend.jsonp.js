@@ -29,76 +29,11 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
 
     my.query = function (queryObj, dataset) {
 
-        //var tmpQueryStateInMemory = new recline.Model.Query();
-        //var tmpQueryStateOnBackend = new recline.Model.Query();
-
-
-        //if (dataset.inMemoryQueryFields == null && !queryObj.facets && !dataset.useMemoryStore) {
-        //    dataset.useMemoryStore = [];
-        //} else
-        //    self.useMemoryStore = true;
-
-        /*var filters = queryObj.filters;
-         for (var i = 0; i < filters.length; i++) {
-         // verify if filter is specified in inmemoryfields
-
-         if (_.indexOf(dataset.inMemoryQueryFields, filters[i].field) == -1) {
-         //console.log("filtering " + filters[i].field + " on backend");
-         tmpQueryStateOnBackend.addFilter(filters[i]);
-         }
-         else {
-         //console.log("filtering " + filters[i].field + " on memory");
-         tmpQueryStateInMemory.addFilter(filters[i]);
-         }
-         }
-         tmpQueryStateOnBackend.set({sort: queryObj.sort});
-         tmpQueryStateInMemory.set({sort: queryObj.sort});
-
-         var changedOnBackend = false;
-         var changedOnMemory = false;
-         var changedFacets = false;
-
-         // verify if filters on backend are changed since last query
-         if (self.firstFetchExecuted == null ||
-         !_.isEqual(self.queryStateOnBackend.attributes.filters, tmpQueryStateOnBackend.attributes.filters) ||
-         !_.isEqual(self.queryStateOnBackend.attributes.sort, tmpQueryStateOnBackend.attributes.sort)
-         ) {
-         self.queryStateOnBackend = tmpQueryStateOnBackend;
-         changedOnBackend = true;
-         self.firstFetchExecuted = true;
-         }
-
-         // verify if filters on memory are changed since last query
-         if (dataset.inMemoryQueryFields && dataset.inMemoryQueryFields.length > 0
-         && !_.isEqual(self.queryStateInMemory.attributes.filters, tmpQueryStateInMemory.attributes.filters)
-         && !_.isEqual(self.queryStateInMemory.attributes.sort, tmpQueryStateInMemory.attributes.sort)
-         ) {
-         self.queryStateInMemory = tmpQueryStateInMemory;
-         changedOnMemory = true;
-         }
-
-         // verify if facets are changed
-         if (queryObj.facets && !_.isEqual(self.queryStateInMemory.attributes.facets, queryObj.facets)) {
-         self.queryStateInMemory.attributes.facets = queryObj.facets;
-         changedFacets = true;
-         }
-         */
-
-        //if (changedOnBackend) {
+        
         var data = buildRequestFromQuery(queryObj);
         console.log("Querying backend for ");
         console.log(data);
         return requestJson(dataset, data, queryObj);
-        //}
-
-        /*if (self.inMemoryStore == null) {
-         throw "No memory store available for in memory query, execute initial load"
-         }*/
-
-        /*var dfd = $.Deferred();
-         dfd.resolve(applyInMemoryFilters());
-         return dfd.promise();
-         */
 
     };
 
@@ -108,6 +43,7 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
 
     ;
 
+   
 
     function requestJson(dataset, data, queryObj) {
         var dfd = $.Deferred();
@@ -160,79 +96,12 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
                     total: data.data.length
                 }
             }
-        /*
-         var self = this;
-         var fields;
-         if (data.description) {
-         fields = _handleFieldDescription(data.description);
-         //my.memoryFields = _handleFieldDescription(data.description);
-         }
-
-         // Im fetching only record description
-         if (data.data == null) {
-         return prepareReturnedData(data);
-         }
-
-         var result = data;
-         */
-
-        /*if (my.useMemoryStore) {
-         // check if is the first time I use the memory store
-         my.inMemoryStore = new recline.Backend.Memory.Store(result.data, _handleFieldDescription(result.description));
-         my.data = my.inMemoryStore.data;
-         return applyInMemoryFilters();
-
-         }
-         else {
-         // no need to query on memory, return json data
-         return prepareReturnedData(result);
-         } */
-        //return prepareReturnedData(result);
+        
     }
 
     ;
 
-    /*
-     function applyInMemoryFilters() {
-     var self=this;
-     var tmpValue;
-
-     my.inMemoryStore.query(my.queryStateInMemory.toJSON())
-     .done(function (value) {
-     tmpValue = value;
-     tmpValue["fields"] = my.memoryFields;
-     });
-
-
-     return tmpValue;
-     };
-     */
-
-    /*function prepareReturnedData(data) {
-
-        if (data.hits == null)
-
-
-            if (data.data == null) {
-
-                return {
-                    fields:my.memoryFields,
-                    useMemoryStore:false
-                }
-            }
-            else {
-
-                return {
-                    hits:_normalizeRecords(data.data, my.memoryFields),
-                    fields:my.memoryFields,
-                    useMemoryStore:false
-                }
-            }
-
-        return data;
-    }
-
-    ;*/
+  
 
     // convert each record in native format
     // todo verify if could cause performance problems

@@ -48,23 +48,7 @@ this.recline.Data = this.recline.Data || {};
 
     },
 
-        // data should be {object, fields:[model]}
-        my.Filters.applySelectionsOnData = function (selections, objects, fields) {
-            _.each(objects, function (currentRecord) {
-                currentRecord["is_selected"] = false;
-
-                _.each(selections, function (sel) {
-                    if (!recline.Data.Filters._isNullFilter[sel.type](sel) &&
-                        recline.Data.Filters._filterFunctions[sel.type](currentRecord, sel, fields)) {
-
-                        currentRecord["is_selected"] = true;
-                    }
-                });
-            });
-
-
-        },
-
+ 
         my.Filters._getDataParser = function (filter, fields) {
 
             var keyedFields = {};

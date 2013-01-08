@@ -22,6 +22,8 @@ recline.Model.Dataset.prototype = $.extend(recline.Model.Dataset.prototype, {
     getRecords:function (type) {
         var self = this;
 
+        
+        
         if (type === 'filtered' || type == null) {
             return self.records.models;
         } else {
@@ -47,9 +49,11 @@ recline.Model.Dataset.prototype = $.extend(recline.Model.Dataset.prototype, {
                 _doc.fields = self.fields;
                 return _doc;
             });
-
+            
             if (self.queryState.getSelections().length > 0)
-                recline.Data.Filters.applySelectionsOnData(self.queryState.get('selections'), docs, self.fields);
+                recline.Data.Filters.applySelectionsOnRecord(self.queryState.get('selections'), docs, self.fields);
+
+           
 
 
             return docs;
@@ -69,6 +73,25 @@ recline.Model.Dataset.prototype = $.extend(recline.Model.Dataset.prototype, {
             var out = super_init.call(this, records, fields);
             recline.Data.FieldsUtility.setFieldsAttributes(out.fields, self);
             return out;
+        };
+    }(),
+    
+    _handleQueryResult:function () {
+        var super_init = recline.Model.Dataset.prototype._handleQueryResult;
+
+        return function (queryResult) {
+
+            var self=this;
+            if (queryResult.fields && self.fields.length == 0) {
+
+                recline.Data.FieldsUtility.setFieldsAttributes(queryResult.fields, self);
+                var options = {renderer:recline.Data.Formatters.Renderers};
+                self.fields.reset(queryResult.fields, options);
+            }
+
+
+            return super_init.call(this, queryResult);
+
         };
     }()
 

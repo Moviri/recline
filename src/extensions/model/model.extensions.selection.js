@@ -9,43 +9,27 @@ recline.Model.Dataset.prototype = $.extend(recline.Model.Dataset.prototype, {
         }
         var actualQuery = self.queryState
 
-        recline.Data.Filters.applySelectionsOnData(self.queryState.get('selections'), self.records.models, self.fields);
+        recline.Data.Filters.applySelectionsOnRecord(self.queryState.getSelections(), self.records.models, self.fields);
 
         self.queryState.trigger('selection:done');
-
     },
     initialize:function () {
         var super_init = recline.Model.Dataset.prototype.initialize;
         return function () {
             super_init.call(this);
             _.bindAll(this, 'selection');
+            //_.bindAll(this, 'applySelectionOnRecords');
 
             this.queryState.bind('selection:change', this.selection);
+//            this.records.bind('reset', this.applySelectionOnRecords());
         };
     }(),
-
-
-    _handleQueryResult:function () {
-        var super_init = recline.Model.Dataset.prototype._handleQueryResult;
-
-        return function (queryResult) {
-
-            var self=this;
-            if (queryResult.fields && self.fields.length == 0) {
-
-                recline.Data.FieldsUtility.setFieldsAttributes(queryResult.fields, self);
-                var options = {renderer:recline.Data.Formatters.Renderers};
-                self.fields.reset(queryResult.fields, options);
-
-            }
-
-            recline.Data.Filters.applySelectionsOnData(self.queryState.getSelections(), queryResult.hits, self.fields);
-
-            return super_init.call(this, queryResult);
-
-        };
-    }()
-
+//    applySelectionOnRecords: function() {
+//    	var self = this;
+//    	if (this.queryState && this.queryState.getSelections().lenght > 0)
+//    		recline.Data.Filters.applySelectionsOnRecord(self.queryState.getSelections(), self.records.models, self.fields);
+//    	
+//    }
 });
 
 
@@ -109,6 +93,7 @@ recline.Model.Query.prototype = $.extend(recline.Model.Query.prototype, {
         }
     },
     setSelection:function (filter) {
+    	
         if (filter["remove"]) {
             this.removeSelectionByField(filter.field);
         } else {
