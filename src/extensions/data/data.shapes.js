@@ -61,11 +61,16 @@ this.recline.Data.ShapeSchema = this.recline.Data.ShapeSchema || {};
 
         _generateLimits: function(data) {
             var self=this;
-            var res = this.limits["distinct"](data);
-            this.schema = {};
-            for(var i=0;i<res.length;i++){
-                this.schema[res[i]] = self.attributes.shapes[i];
-            }
+            //var res = this.limits["distinct"](data);
+
+
+            self.schema = {};
+            _.each(self.attributes.limits, function(s, index) {
+                self.schema[s] = self.attributes.shapes[index];
+            });
+
+
+
         },
 
 
@@ -117,7 +122,7 @@ this.recline.Data.ShapeSchema = this.recline.Data.ShapeSchema || {};
 
                 return shape;
             } else
-                return self.schema[recline.Data.Transform.getFieldHash(fieldValue)];
+                return self.schema[fieldValue];
         },
 
 
@@ -151,8 +156,9 @@ this.recline.Data.ShapeSchema = this.recline.Data.ShapeSchema || {};
 
         limits: {
             distinct: function(data) {
+                var tmp = {};
                 _.each(_.uniq(data), function(d, index) {
-                    data[index]=recline.Data.Transform.getFieldHash(d);
+                    tmp[d]=recline.Data.Transform.getFieldHash(d);
                 });
                 return data;
             }

@@ -12,11 +12,11 @@ recline.Model.Dataset.prototype = $.extend(recline.Model.Dataset.prototype, {
 
         });
     },
-    resetRecords: function(records) {
-        this.set({records: records});
+    resetRecords:function (records) {
+        this.set({records:records});
     },
-    resetFields: function(fields) {
-        this.set({fields: fields});
+    resetFields:function (fields) {
+        this.set({fields:fields});
     },
 
     getRecords:function (type) {
@@ -29,8 +29,7 @@ recline.Model.Dataset.prototype = $.extend(recline.Model.Dataset.prototype, {
                 throw "Model: unable to retrieve not filtered data, store can't provide data. Use a backend that use a memory store";
             }
 
-            if(self.queryState.get('sort').length > 0)
-            {
+            if (self.queryState.get('sort') && self.queryState.get('sort').length > 0) {
                 _.each(self.queryState.get('sort'), function (sortObj) {
                     var fieldName = sortObj.field;
                     self._store.data = _.sortBy(self._store.data, function (doc) {
@@ -49,10 +48,8 @@ recline.Model.Dataset.prototype = $.extend(recline.Model.Dataset.prototype, {
                 return _doc;
             });
 
-            if(self.queryState.get('selections').length > 0)
+            if (self.queryState.getSelections().length > 0)
                 recline.Data.Filters.applySelectionsOnData(self.queryState.get('selections'), docs, self.fields);
-
-
 
 
             return docs;
@@ -63,6 +60,19 @@ recline.Model.Dataset.prototype = $.extend(recline.Model.Dataset.prototype, {
         var self = this;
         return self.fields;
 
-    }
+    },
+
+    _normalizeRecordsAndFields:function () {
+        var super_init = recline.Model.Dataset.prototype._normalizeRecordsAndFields;
+        return function (records, fields) {
+            var self=this;
+            var out = super_init.call(this, records, fields);
+            recline.Data.FieldsUtility.setFieldsAttributes(out.fields, self);
+            return out;
+        };
+    }()
+
 
 });
+
+

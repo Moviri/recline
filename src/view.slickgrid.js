@@ -460,13 +460,13 @@ my.SlickGrid = Backbone.View.extend({
 	});
 
     // Column sorting
-    var sortInfo = this.model.queryState.get('sort');
-    // TODO sort is not present in slickgrid
-    /*if (sortInfo){
-      var column = sortInfo[0].field;
-      var sortAsc = !(sortInfo[0].order == 'desc');
-      this.grid.sort(column, sortAsc);
-    }*/
+//    var sortInfo = this.model.queryState.get('sort');
+//    // TODO sort is not present in slickgrid
+//    if (sortInfo){
+//      var column = sortInfo[0].field;
+//      var sortAsc = !(sortInfo[0].order == 'desc');
+//      this.grid.sort(column, sortAsc);
+//    }
 
     this.grid.onSort.subscribe(function(e, args){
       var order = (args.sortAsc) ? 'asc':'desc';

@@ -138,6 +138,23 @@ this.recline.Data = this.recline.Data || {};
                 return val
             }
         }
+    },
+
+    my.Formatters.getFieldLabel = function (field, fieldLabels) {
+
+        var fieldLabel = field.attributes.label;
+        if (field.attributes.is_partitioned)
+            fieldLabel = field.attributes.partitionValue;
+
+        if (fieldLabels) {
+            var fieldLabel_alternateObj = _.find(fieldLabels, function (fl) {
+                return fl.id == fieldLabel
+            });
+            if (typeof fieldLabel_alternateObj != "undefined" && fieldLabel_alternateObj != null)
+                fieldLabel = fieldLabel_alternateObj.label;
+        }
+
+        return fieldLabel;
     }
 
 })(this.recline.Data);
