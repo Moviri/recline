@@ -482,8 +482,9 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
                         var _out = doc[fieldName];
                         return _out;
                     });
-                    if (sortObj.order == 'desc') {
+                    if (sortObj.order == 'desc' && typeof sortObj.sorted == "undefined") {
                         self._store.data.reverse();
+                        sortObj.sorted = true;
                     }
                 });
             }
@@ -5804,7 +5805,8 @@ this.recline.View = this.recline.View || {};
                     return value;
                 }
             }
-            if (options.showLineNumbers == true && self.model.getRecords(self.resultType).length > 0) {
+            var myRecords = self.model.getRecords(self.resultType);
+            if (options.showLineNumbers == true && myRecords.length > 0) {
                 var column = {
                     id:'lineNumberField',
                     name:'#',
@@ -5903,7 +5905,7 @@ this.recline.View = this.recline.View || {};
             var innerChartSerie1Name = self.state.get('innerChartSerie1');
             var innerChartSerie2Name = self.state.get('innerChartSerie2');
 
-            if (options.useInnerChart == true && self.model.getRecords(self.resultType).length > 0) {
+            if (options.useInnerChart == true && myRecords.length > 0) {
                 columns.push({
                     name:self.state.get('innerChartHeader'),
                     id:'innerChart',
@@ -5928,7 +5930,7 @@ this.recline.View = this.recline.View || {};
                 visibleColumns = columns.filter(function (column) {
                     return (_.indexOf(self.state.get('visibleColumns'), column.id) >= 0 || (options.showLineNumbers == true && column.id == 'lineNumberField'));
                 });
-                if (self.state.get('useInnerChart') == true && self.model.getRecords(self.resultType).length > 0)
+                if (self.state.get('useInnerChart') == true && myRecords.length > 0)
                     visibleColumns.push(columns[columns.length - 1]); // innerChart field is last one added
             }
             else {
@@ -5973,7 +5975,6 @@ this.recline.View = this.recline.View || {};
                 }
             }
 
-            var myRecords = self.model.getRecords(self.resultType);
             if (self.state.get('useInnerChart') == true && innerChartSerie1Name && myRecords.length > 0) {
                 _.each(myRecords, function (doc) {
                     var row = {};
@@ -6090,7 +6091,7 @@ this.recline.View = this.recline.View || {};
                 }
             }
             else {
-                _.each(self.model.getRecords(self.resultType), function (doc) {
+                _.each(myRecords, function (doc) {
                     if (doc.is_selected)
                         rowsToSelect.push(jj);
 
@@ -6124,7 +6125,7 @@ this.recline.View = this.recline.View || {};
                 });
             }
 
-            if (options.showTotals && self.model.getRecords(self.resultType).length > 0) {
+            if (options.showTotals && myRecords.length > 0) {
                 options.totals = {};
                 var totalsRecord = self.model.getRecords("totals");
                 for (var f in options.showTotals) {
@@ -6282,7 +6283,6 @@ this.recline.View = this.recline.View || {};
         onSelectionChanged:function (rows) {
             var self = this;
             var selectedRecords = [];
-            //var myRecords = self.model.getRecords(self.resultType);
             _.each(rows, function (row) {
             	var dataItem = self.grid.getDataItem(row);
                 selectedRecords.push(dataItem.__orig_record__);
