@@ -785,6 +785,7 @@ recline.Model.Query.prototype = $.extend(recline.Model.Query.prototype, {
     	
         if (filter["remove"]) {
             this.removeSelectionByField(filter.field);
+            delete filter["remove"];
         } else {
             var s = this.getSelections();
             var found = false;
