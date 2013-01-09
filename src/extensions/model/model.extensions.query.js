@@ -2,7 +2,7 @@ recline.Model.Dataset.prototype = $.extend(recline.Model.Dataset.prototype, {
     query:function (queryObj) {
         var super_init = recline.Model.Dataset.prototype.query;
 
-        return function (queryResult) {
+        return function (queryObj) {
             var self = this;
 
             if (queryObj) {
