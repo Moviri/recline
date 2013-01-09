@@ -554,7 +554,7 @@ this.recline.View = this.recline.View || {};
                 }
 
             this.grid.getSelectionModel().setSelectedRows(rowsToSelect)
-            if (selRow && this.options.state.selectedCellFocus)
+            if (selRow && this.options.state && this.options.state.selectedCellFocus)
                 this.grid.scrollRowToTop(selRow);
         },
         onSelectionChanged:function (rows) {
