@@ -431,7 +431,7 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
                         var originalFieldAttributes = originalFields.get(field).attributes;
                         var type = originalFieldAttributes.type;
 
-                        var parse = recline.Data.FormattersMODA[type];
+                        var parse = recline.Data.FormattersMoviri[type];
                         var value = parse(keyField[j]);
 
                         tmp[dimensions[j]] = value;

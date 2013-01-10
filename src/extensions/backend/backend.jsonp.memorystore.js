@@ -1,9 +1,9 @@
 this.recline = this.recline || {};
 this.recline.Backend = this.recline.Backend || {};
-this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
+this.recline.Backend.JsonpMemoryStore = this.recline.Backend.JsonpMemoryStore || {};
 
 (function ($, my) {
-    my.__type__ = 'Jsonp';
+    my.__type__ = 'JsonpMemoryStore';
     // Timeout for request (after this time if no response we error)
     // Needed because use JSONP so do not receive e.g. 500 errors
     my.timeout = 30000;
@@ -14,16 +14,13 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
     //
     // Returns array of field names and array of arrays for records
 
-    //my.queryStateInMemory = new recline.Model.Query();
-    //my.queryStateOnBackend = new recline.Model.Query();
 
-    // todo has to be merged with query (part is in common)
     my.fetch = function (dataset) {
 
         console.log("Fetching data structure " + dataset.url);
 
-        var data = {onlydesc:"true"};
-        return requestJson(dataset, data);
+        // var data = {onlydesc:"true"}; due to the fact that we use memory store we need to get all data even in first fetch
+        return requestJson(dataset, "fetch", {});
 
     };
 
@@ -31,14 +28,14 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
 
 
         var data = buildRequestFromQuery(queryObj);
-        console.log("Querying jsonp backend for ");
+        console.log("Querying JsonpMemoryStore backend for ");
         console.log(data);
-        return requestJson(dataset, data, queryObj);
+        return requestJson(dataset, "query", data, queryObj);
 
     };
 
 
-    function requestJson(dataset, data, queryObj) {
+    function requestJson(dataset, requestType, data, queryObj) {
         var dfd = $.Deferred();
 
         var jqxhr = $.ajax({
@@ -56,7 +53,7 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
                 console.log("Error in fetching data: " + results.results[0].status.message + " Statuscode:[" + results.results[0].status.code + "] AdditionalInfo:[" + results.results[0].status.additionalInfo + "]");
                 dfd.reject(results.results[0].status);
             } else
-                dfd.resolve(_handleJsonResult(results.results[0].result, queryObj));
+                dfd.resolve(_handleJsonResult(results.results[0].result, queryObj, requestType));
         })
             .fail(function (arguments) {
                 dfd.reject(arguments);
@@ -64,31 +61,40 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
 
         return dfd.promise();
 
-    };
+    }
+
+    ;
 
 
-
-
-    function _handleJsonResult(data, queryObj) {
+    function _handleJsonResult(data, queryObj, requestType) {
         if (data.data == null) {
             return {
                 fields:_handleFieldDescription(data.description),
-                useMemoryStore:false
+                useMemoryStore:true
             }
         }
         else {
             var fields = _handleFieldDescription(data.description);
-
             var facets = [];
-            if(queryObj)
+            if (queryObj)
                 var facets = recline.Data.Faceting.computeFacets(data.data, queryObj);
 
-            return {
-                hits:_normalizeRecords(data.data, fields),
-                fields:fields,
-                facets:facets,
-                useMemoryStore:false,
-                total:data.data.length
+            if (requestType == "fetch") {
+                return {
+                    records:_normalizeRecords(data.data, fields),
+                    fields:fields,
+                    facets:facets,
+                    useMemoryStore:true,
+                    total:data.data.length
+                }
+            } else {
+                return {
+                    hits:_normalizeRecords(data.data, fields),
+                    fields:fields,
+                    facets:facets,
+                    useMemoryStore:true,
+                    total:data.data.length
+                }
             }
         }
 
@@ -281,4 +287,4 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
     }
 
 
-}(jQuery, this.recline.Backend.Jsonp));
+}(jQuery, this.recline.Backend.JsonpMemoryStore));
