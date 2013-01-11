@@ -4892,7 +4892,6 @@ this.recline.View = this.recline.View || {};
 
     view.NoDataMsg = Backbone.View.extend({
     	template:"<div class='noData' style='display:table;width:100%;height:100%;border:1px dotted lightgrey;font-size:18px;'><p style='display:table-cell;height:100%;margin-left: auto;margin-right: auto;text-align: center;margin-bottom: auto;margin-top: auto;vertical-align: middle;'>No Data Available!</p></div>",
-
         initialize:function() {
         },
         create:function() {
@@ -5000,10 +4999,29 @@ this.recline.View = this.recline.View || {};
         redraw:function () {
 
             var self = this;
+            var svgElem = this.el.find('#nvd3chart_' + self.uid+ ' svg') 
+        	svgElem.css("display", "block")
+        	// get computed dimensions
+        	var width = svgElem.width()
+        	var height = svgElem.height()
 
             var state = this.state;
             var seriesNVD3 = this.createSeriesNVD3();
-
+        	var totalValues = 0;
+            if (seriesNVD3)
+        	{
+            	_.each(seriesNVD3, function(s) {
+            		if (s.values)
+            			totalValues += s.values.length
+            	});
+        	}
+            if (!totalValues)
+        	{
+            	// display noData message and exit
+            	svgElem.css("display", "none")
+            	this.el.find('#nvd3chart_' + self.uid).width(width).height(height).append(new recline.View.NoDataMsg().create());
+            	return null;
+        	}
             var graphType = this.state.get("graphType");
 
             var viewId = this.uid;

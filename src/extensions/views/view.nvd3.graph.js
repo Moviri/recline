@@ -98,10 +98,29 @@ this.recline.View = this.recline.View || {};
         redraw:function () {
 
             var self = this;
+            var svgElem = this.el.find('#nvd3chart_' + self.uid+ ' svg') 
+        	svgElem.css("display", "block")
+        	// get computed dimensions
+        	var width = svgElem.width()
+        	var height = svgElem.height()
 
             var state = this.state;
             var seriesNVD3 = this.createSeriesNVD3();
-
+        	var totalValues = 0;
+            if (seriesNVD3)
+        	{
+            	_.each(seriesNVD3, function(s) {
+            		if (s.values)
+            			totalValues += s.values.length
+            	});
+        	}
+            if (!totalValues)
+        	{
+            	// display noData message and exit
+            	svgElem.css("display", "none")
+            	this.el.find('#nvd3chart_' + self.uid).width(width).height(height).append(new recline.View.NoDataMsg().create());
+            	return null;
+        	}
             var graphType = this.state.get("graphType");
 
             var viewId = this.uid;
