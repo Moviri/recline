@@ -4884,6 +4884,22 @@ this.recline.View = this.recline.View || {};
 
 })(jQuery, recline.View);
 
+this.recline = this.recline || {};
+this.recline.View = this.recline.View || {};
+
+(function ($, view) {
+    "use strict";
+
+    view.NoDataMsg = Backbone.View.extend({
+    	template:"<div class='noData' style='display:table;width:100%;height:100%;border:1px dotted lightgrey;font-size:18px;'><p style='display:table-cell;height:100%;margin-left: auto;margin-right: auto;text-align: center;margin-bottom: auto;margin-top: auto;vertical-align: middle;'>No Data Available!</p></div>",
+
+        initialize:function() {
+        },
+        create:function() {
+        	return this.template;
+        }
+    });
+})(jQuery, recline.View);
 /*jshint multistr:true */
 
 this.recline = this.recline || {};
@@ -6817,7 +6833,7 @@ this.recline.View = this.recline.View || {};
                     jQuery(graphid).empty();
                     delete self.graph;
                 }
-                this.el.find('figure').append("<div class='noData'><p>No Data Available!</p></div>");
+                this.el.find('figure').append(new recline.View.NoDataMsg().create());
             	self.graph = null
         	}
         },
@@ -6830,7 +6846,7 @@ this.recline.View = this.recline.View || {};
             self.updateSeries();
             if (self.series.main && self.series.main.length && self.series.main[0].data && self.series.main[0].data.length)
             	self.graph = new xChart(state.type, self.series, '#' + self.uid, opts);
-            else this.el.find('figure').append("<div class='noData'><p>No Data Available!</p></div>");
+            else this.el.find('figure').append(new recline.View.NoDataMsg().create());
         },
 
         updateSeries: function() {
