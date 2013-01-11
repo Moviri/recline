@@ -43,13 +43,11 @@ this.recline.View = this.recline.View || {};
 
         resize:function () {
         	this.firstResizeDone = true;
-//        	console.log($("#"+this.uid))
         	var currH = $("#"+this.uid).height()
         	var currW = $("#"+this.uid).width()
         	var $parent = this.el
         	var newH = $parent.height()
         	var newW = $parent.width()
-//        	console.log("Resize from W"+currW+" H"+currH+" to W"+newW+" H"+newH)
         	if (typeof this.options.width == "undefined")
     		{
             	$("#"+this.uid).width(newW)
@@ -73,14 +71,7 @@ this.recline.View = this.recline.View || {};
             self.graph = d3.select(graphid);
             
             if (!self.firstResizeDone)
-        	{
-            	// bruttissimo! ogni resize avvicina alla dimensione desiderata
             	self.resize();
-            	self.resize();
-	        	self.resize();
-	        	self.resize();
-	        	self.resize();
-        	}
         },
 
         redraw:function () {
@@ -282,7 +273,6 @@ this.recline.View = this.recline.View || {};
 
                         var idx = -1;
                         var customFormat = function() {
-//                        	var customTicks = [null, null, "MIN", null, "Current", null, "Previous", null, "MAX"]
                         	if (customTickz && customTickz[++idx])
                         		return customTickz[idx];
                         	else return ""

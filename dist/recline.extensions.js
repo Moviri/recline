@@ -518,9 +518,9 @@ recline.Model.Query.prototype = $.extend(recline.Model.Query.prototype, {
                         var _out = doc[fieldName];
                         return _out;
                     });
-                    if (sortObj.order == 'desc' && typeof sortObj.sorted == "undefined") {
+                    if (sortObj.order == 'desc' && typeof sortObj.alreadySorted == "undefined") {
                         self._store.data.reverse();
-                        sortObj.sorted = true;
+                        sortObj.alreadySorted = true;
                     }
                 });
             }
@@ -4256,6 +4256,9 @@ this.recline.View = this.recline.View || {};
             this.el.html(out);
 
             this.attachViews();
+            
+            // force a resize to ensure that contained object have the correct amount of width/height
+            this.el.trigger('resize');
 
             //var field = this.model.getFields();
             //var records = _.map(this.options.model.getRecords(this.options.resultType.type), function(record) {
@@ -4904,6 +4907,22 @@ this.recline.View = this.recline.View || {};
 
 })(jQuery, recline.View);
 
+this.recline = this.recline || {};
+this.recline.View = this.recline.View || {};
+
+(function ($, view) {
+    "use strict";
+
+    view.NoDataMsg = Backbone.View.extend({
+    	template:"<div class='noData' style='display:table;width:100%;height:100%;border:1px dotted lightgrey;font-size:18px;'><p style='display:table-cell;height:100%;margin-left: auto;margin-right: auto;text-align: center;margin-bottom: auto;margin-top: auto;vertical-align: middle;'>No Data Available!</p></div>",
+
+        initialize:function() {
+        },
+        create:function() {
+        	return this.template;
+        }
+    });
+})(jQuery, recline.View);
 /*jshint multistr:true */
 
 this.recline = this.recline || {};
@@ -6791,27 +6810,28 @@ this.recline.View = this.recline.View || {};
         },
 
         render:function () {
-            console.log("View.Rickshaw: render");
+            //console.log("View.xCharts: render");
             var self = this;
 
             var graphid = "#" + this.uid;
-
-            if (self.graph) {
-                jQuery(graphid).empty();
-                delete self.graph;
+            if (self.graph)
+            {
+            	self.updateGraph();
+//                jQuery(graphid).empty();
+//                delete self.graph;
+//                console.log("View.xCharts: Deleted old graph");
             }
-
-            var out = Mustache.render(this.template, this);
-            this.el.html(out);
-
-
+            else
+        	{
+                var out = Mustache.render(this.template, this);
+                this.el.html(out);
+        	}
         },
 
         redraw:function () {
             var self = this;
 
-            console.log("View.xCharts: redraw");
-
+            //console.log("View.xCharts: redraw");
 
             if (self.graph)
                 self.updateGraph();
@@ -6821,23 +6841,35 @@ this.recline.View = this.recline.View || {};
         },
 
         updateGraph:function () {
+            //console.log("View.xCharts: updateGraph");
             var self = this;
-            //self.graphOptions.series = this.createSeries();
-            //self.createSeries();
-
-            //self.graph.update();
-            //self.graph.render();
+            self.updateSeries();
+            
+            if (self.series.main && self.series.main.length && self.series.main[0].data && self.series.main[0].data.length)
+            	self.graph.setData(self.series);
+            else
+        	{
+            	//self.graph.setData(self.series);
+                var graphid = "#" + this.uid;
+                if (self.graph)
+                {
+                    jQuery(graphid).empty();
+                    delete self.graph;
+                }
+                this.el.find('figure').append(new recline.View.NoDataMsg().create());
+            	self.graph = null
+        	}
         },
 
         renderGraph:function () {
+            //console.log("View.xCharts: renderGraph");
+            this.el.find('figure').html("")
             var self = this;
             var state = self.options.state;
             self.updateSeries();
-
-            var myChart = new xChart(state.type, self.series, '#' + self.uid, opts);
-
-
-
+            if (self.series.main && self.series.main.length && self.series.main[0].data && self.series.main[0].data.length)
+            	self.graph = new xChart(state.type, self.series, '#' + self.uid, opts);
+            else this.el.find('figure').append(new recline.View.NoDataMsg().create());
         },
 
         updateSeries: function() {
@@ -6865,7 +6897,7 @@ this.recline.View = this.recline.View || {};
                 data.main.push(serie);
             });
 
-           self.series = data;
+            self.series = data;
         }
 
 
@@ -9506,13 +9538,11 @@ this.recline.View = this.recline.View || {};
 
         resize:function () {
         	this.firstResizeDone = true;
-//        	console.log($("#"+this.uid))
         	var currH = $("#"+this.uid).height()
         	var currW = $("#"+this.uid).width()
         	var $parent = this.el
         	var newH = $parent.height()
         	var newW = $parent.width()
-//        	console.log("Resize from W"+currW+" H"+currH+" to W"+newW+" H"+newH)
         	if (typeof this.options.width == "undefined")
     		{
             	$("#"+this.uid).width(newW)
@@ -9536,14 +9566,7 @@ this.recline.View = this.recline.View || {};
             self.graph = d3.select(graphid);
             
             if (!self.firstResizeDone)
-        	{
-            	// bruttissimo! ogni resize avvicina alla dimensione desiderata
             	self.resize();
-            	self.resize();
-	        	self.resize();
-	        	self.resize();
-	        	self.resize();
-        	}
         },
 
         redraw:function () {
@@ -9745,7 +9768,6 @@ this.recline.View = this.recline.View || {};
 
                         var idx = -1;
                         var customFormat = function() {
-//                        	var customTicks = [null, null, "MIN", null, "Current", null, "Previous", null, "MAX"]
                         	if (customTickz && customTickz[++idx])
                         		return customTickz[idx];
                         	else return ""

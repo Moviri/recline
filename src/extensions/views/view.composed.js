@@ -180,6 +180,9 @@ this.recline.View = this.recline.View || {};
             this.el.html(out);
 
             this.attachViews();
+            
+            // force a resize to ensure that contained object have the correct amount of width/height
+            this.el.trigger('resize');
 
             //var field = this.model.getFields();
             //var records = _.map(this.options.model.getRecords(this.options.resultType.type), function(record) {

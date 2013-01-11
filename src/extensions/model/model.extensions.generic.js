@@ -38,9 +38,9 @@ recline.Model.Dataset.prototype = $.extend(recline.Model.Dataset.prototype, {
                         var _out = doc[fieldName];
                         return _out;
                     });
-                    if (sortObj.order == 'desc' && typeof sortObj.sorted == "undefined") {
+                    if (sortObj.order == 'desc' && typeof sortObj.alreadySorted == "undefined") {
                         self._store.data.reverse();
-                        sortObj.sorted = true;
+                        sortObj.alreadySorted = true;
                     }
                 });
             }

@@ -30,27 +30,28 @@ this.recline.View = this.recline.View || {};
         },
 
         render:function () {
-            console.log("View.Rickshaw: render");
+            //console.log("View.xCharts: render");
             var self = this;
 
             var graphid = "#" + this.uid;
-
-            if (self.graph) {
-                jQuery(graphid).empty();
-                delete self.graph;
+            if (self.graph)
+            {
+            	self.updateGraph();
+//                jQuery(graphid).empty();
+//                delete self.graph;
+//                console.log("View.xCharts: Deleted old graph");
             }
-
-            var out = Mustache.render(this.template, this);
-            this.el.html(out);
-
-
+            else
+        	{
+                var out = Mustache.render(this.template, this);
+                this.el.html(out);
+        	}
         },
 
         redraw:function () {
             var self = this;
 
-            console.log("View.xCharts: redraw");
-
+            //console.log("View.xCharts: redraw");
 
             if (self.graph)
                 self.updateGraph();
@@ -60,23 +61,35 @@ this.recline.View = this.recline.View || {};
         },
 
         updateGraph:function () {
+            //console.log("View.xCharts: updateGraph");
             var self = this;
-            //self.graphOptions.series = this.createSeries();
-            //self.createSeries();
-
-            //self.graph.update();
-            //self.graph.render();
+            self.updateSeries();
+            
+            if (self.series.main && self.series.main.length && self.series.main[0].data && self.series.main[0].data.length)
+            	self.graph.setData(self.series);
+            else
+        	{
+            	//self.graph.setData(self.series);
+                var graphid = "#" + this.uid;
+                if (self.graph)
+                {
+                    jQuery(graphid).empty();
+                    delete self.graph;
+                }
+                this.el.find('figure').append(new recline.View.NoDataMsg().create());
+            	self.graph = null
+        	}
         },
 
         renderGraph:function () {
+            //console.log("View.xCharts: renderGraph");
+            this.el.find('figure').html("")
             var self = this;
             var state = self.options.state;
             self.updateSeries();
-
-            var myChart = new xChart(state.type, self.series, '#' + self.uid, opts);
-
-
-
+            if (self.series.main && self.series.main.length && self.series.main[0].data && self.series.main[0].data.length)
+            	self.graph = new xChart(state.type, self.series, '#' + self.uid, opts);
+            else this.el.find('figure').append(new recline.View.NoDataMsg().create());
         },
 
         updateSeries: function() {
@@ -104,7 +117,7 @@ this.recline.View = this.recline.View || {};
                 data.main.push(serie);
             });
 
-           self.series = data;
+            self.series = data;
         }
 
 
