@@ -34,8 +34,7 @@ this.recline.View = this.recline.View || {};
             var self = this;
 
             var graphid = "#" + this.uid;
-
-            if (self.graph) 
+            if (self.graph)
             {
             	self.updateGraph();
 //                jQuery(graphid).empty();
@@ -63,19 +62,29 @@ this.recline.View = this.recline.View || {};
 
         updateGraph:function () {
             //console.log("View.xCharts: updateGraph");
+            this.el.find('figure').html("")
             var self = this;
             self.updateSeries();
-            self.graph.setData(self.series);
             
-            //self.graphOptions.series = this.createSeries();
-            //self.createSeries();
-
-            //self.graph.update();
-            //self.graph.render();
+            if (self.series.main && self.series.main.length && self.series.main[0].data && self.series.main[0].data.length)
+            	self.graph.setData(self.series);
+            else
+        	{
+            	//self.graph.setData(self.series);
+                var graphid = "#" + this.uid;
+                if (self.graph)
+                {
+                    jQuery(graphid).empty();
+                    delete self.graph;
+                }
+            	console.log(this.el)
+                this.el.find('figure').append("<div class='noData'><p>No Data Available!</p></div>");
+        	}
         },
 
         renderGraph:function () {
             //console.log("View.xCharts: renderGraph");
+            this.el.find('figure').html("")
             var self = this;
             var state = self.options.state;
             self.updateSeries();
