@@ -106,6 +106,11 @@ this.recline.View = this.recline.View || {};
             var margin = {top: 5, right: 40, bottom: 40, left: 40};
             var width = self.width - margin.left - margin.right;
             var height = self.height - margin.top - margin.bottom;
+            if (width < 0)
+            	width = 0;
+
+            if (height < 0)
+            	height = 0;
 
             self.plugin();
 
