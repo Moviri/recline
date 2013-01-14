@@ -4069,7 +4069,7 @@ this.recline.View = this.recline.View || {};
 
     view.Composed = Backbone.View.extend({
         templates:{
-            vertical:'<div id="{{uid}}"> ' +
+            vertical:'<div id="{{uid}}">' +
                 '<div class="composedview_table">' +
                 '<div class="c_group c_header">' +
                 '<div class="c_row">' +
@@ -4080,6 +4080,7 @@ this.recline.View = this.recline.View || {};
                 '</div>' +
                 '</div>' +
                 '<div class="c_group c_body">' +
+                '<div class="c_row"><div class="cell cell_empty"/>{{{noData}}}</div>'+
                 '{{#measures}}' +
                 '<div class="c_row">' +
                 '<div class="cell cell_title"><div><div class="rawhtml" style="vertical-align:middle;float:left">{{{rawhtml}}}</div><div style="vertical-align:middle;float:left"><div class="title">{{title}}</div><div class="subtitle">{{{subtitle}}}</div></div><div class="shape" style="vertical-align:middle;float:left">{{shape}}</div></div></div>' +
@@ -4091,9 +4092,10 @@ this.recline.View = this.recline.View || {};
                 '</div>' +
                 '<div class="c_group c_footer"></div>' +
                 '</div>' +
-                '</div> ',
+                '</div>',
 
-            horizontal:'<div id="{{uid}}"> ' +
+            horizontal:'<div id="{{uid}}">' +
+            	'<table><tr><td>' +
                 '<div class="composedview_table">' +
                 '<div class="c_group c_header">' +
                 '<div class="c_row">' +
@@ -4113,9 +4115,9 @@ this.recline.View = this.recline.View || {};
                 '</div>' +
                 '{{/dimensions}}' +
                 '</div>' +
-                '<div class="c_group c_footer"></div>' +
                 '</div>' +
-                '</div> '
+                '</td></tr><tr><td>{{{noData}}}</td></tr></table>'+
+                '</div>'
         },
 
         initialize:function (options) {
@@ -4160,6 +4162,7 @@ this.recline.View = this.recline.View || {};
             var self = this;
 
             self.dimensions = [ ];
+            self.noData = "";
 
             // if a dimension is defined I need a facet to identify all possibile values
             if (self.options.groupBy) {
@@ -4170,7 +4173,10 @@ this.recline.View = this.recline.View || {};
                     throw "ComposedView: no facet present for groupby field [" + self.options.groupBy + "]. Define a facet on the model before view render";
                 }
 
-                _.each(facets.attributes.terms, function (t) {
+                if(facets.attributes.terms.length == 0) 
+                	self.noData = new recline.View.NoDataMsg().create2();
+                
+                else _.each(facets.attributes.terms, function (t) {
                     if (t.count > 0) {
                         var uid = (new Date().getTime() + Math.floor(Math.random() * 10000)); // generating an unique id for the chart
                         var dim = {term:t.term, id_dimension:uid, shape:t.shape};
@@ -4219,10 +4225,7 @@ this.recline.View = this.recline.View || {};
                 })
 
                 self.dimensions = dim;
-
             }
-
-
             this.measures = this.options.measures;
 
             var tmpl = this.templates.vertical;
@@ -4892,7 +4895,9 @@ this.recline.View = this.recline.View || {};
 
     view.NoDataMsg = Backbone.View.extend({
     	templateP1:"<div class='noData' style='display:table;width:100%;height:100%;border:1px dotted lightgrey;font-size:18px;'>" +
-    			"<p style='display:table-cell;height:100%;margin-left: auto;margin-right: auto;text-align: center;margin-bottom: auto;margin-top: auto;vertical-align: middle;'>",
+    			"<p style='display:table-cell;width:100%;height:100%;margin-left: auto;margin-right: auto;text-align: center;margin-bottom: auto;margin-top: auto;vertical-align: middle;'>",
+    	template2P1:"<div class='noData' style='width:100%;height:100%;border:1px dotted lightgrey;font-size:18px;'>" +
+    			"<p style='width:100%;height:100%;margin-left: auto;margin-right: auto;text-align: center;margin-bottom: 10px;margin-top:10px;'>",
     	_internalMsg : "No Data Available!",
     	templateP2:"</p></div>",
         initialize:function() {
@@ -4902,6 +4907,12 @@ this.recline.View = this.recline.View || {};
         		return this.templateP1+msg+this.templateP2;
         	
         	return this.templateP1+this._internalMsg+this.templateP2
+        },
+        create2:function(msg) {
+        	if (msg)
+        		return this.template2P1+msg+this.templateP2;
+        	
+        	return this.template2P1+this._internalMsg+this.templateP2
         }
     });
 })(jQuery, recline.View);
@@ -4983,12 +4994,29 @@ this.recline.View = this.recline.View || {};
             tmplData["viewId"] = this.uid;
 
             delete this.chart;
+            
+            if (tmplData.recordCount && tmplData.recordCount > 0)
+            {
+                var htmls = Mustache.render(this.template, tmplData);
+                $(this.el).html(htmls);
+                this.$graph = this.el.find('.panel.nvd3graph_' + tmplData["viewId"]);
+                return this;
+            }
+            else
+            {
+                var svgElem = this.el.find('#nvd3chart_' + self.uid+ ' svg') 
+            	svgElem.css("display", "block")
+            	// get computed dimensions
+            	var width = svgElem.width()
+            	var height = svgElem.height()
+
+            	// display noData message and exit
+            	svgElem.css("display", "none")
+            	this.el.find('#nvd3chart_' + self.uid).width(width).height(height).append(new recline.View.NoDataMsg().create());
+            	return this;
+        	}
 
 
-            var htmls = Mustache.render(this.template, tmplData);
-            $(this.el).html(htmls);
-            this.$graph = this.el.find('.panel.nvd3graph_' + tmplData["viewId"]);
-            return this;
         },
 
         getActionsForEvent:function (eventType) {

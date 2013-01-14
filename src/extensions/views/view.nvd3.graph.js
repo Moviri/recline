@@ -76,12 +76,29 @@ this.recline.View = this.recline.View || {};
             tmplData["viewId"] = this.uid;
 
             delete this.chart;
+            
+            if (tmplData.recordCount && tmplData.recordCount > 0)
+            {
+                var htmls = Mustache.render(this.template, tmplData);
+                $(this.el).html(htmls);
+                this.$graph = this.el.find('.panel.nvd3graph_' + tmplData["viewId"]);
+                return this;
+            }
+            else
+            {
+                var svgElem = this.el.find('#nvd3chart_' + self.uid+ ' svg') 
+            	svgElem.css("display", "block")
+            	// get computed dimensions
+            	var width = svgElem.width()
+            	var height = svgElem.height()
+
+            	// display noData message and exit
+            	svgElem.css("display", "none")
+            	this.el.find('#nvd3chart_' + self.uid).width(width).height(height).append(new recline.View.NoDataMsg().create());
+            	return this;
+        	}
 
 
-            var htmls = Mustache.render(this.template, tmplData);
-            $(this.el).html(htmls);
-            this.$graph = this.el.find('.panel.nvd3graph_' + tmplData["viewId"]);
-            return this;
         },
 
         getActionsForEvent:function (eventType) {
