@@ -15,6 +15,7 @@ my.Faceting = {};
             // TODO: remove dependency on recline.Model
             facetResults[facetId] = new recline.Model.Facet({id:facetId}).toJSON();
             facetResults[facetId].termsall = {};
+
         });
         // faceting
         _.each(records, function (doc) {
@@ -23,7 +24,7 @@ my.Faceting = {};
                 var val = doc[fieldId];
                 var tmp = facetResults[facetId];
                 if (val) {
-                    tmp.termsall[val] = tmp.termsall[val] ? {count:tmp.termsall[val].count + 1, value:val} : {count:1, value:val};
+                    tmp.termsall[val] = tmp.termsall[val] ? {count:tmp.termsall[val].count + 1, value:val, records: records.push(doc)} : {count:1, value:val, records: [doc]};
                 } else {
                     tmp.missing = tmp.missing + 1;
                 }
@@ -45,7 +46,7 @@ my.Faceting = {};
                 );
 
             _.each(termsWithZeroCount, function (d) {
-                tmp.termsall[d] = {count:0, value:d};
+                tmp.termsall[d] = {count:0, value:d, records: []    };
             });
 
         });
@@ -54,7 +55,7 @@ my.Faceting = {};
         _.each(queryObj.facets, function (query, facetId) {
             var tmp = facetResults[facetId];
             var terms = _.map(tmp.termsall, function (res, term) {
-                return { term:res.value, count:res.count };
+                return { term:res.value, count:res.count, records: res.records };
             });
             tmp.terms = _.sortBy(terms, function (item) {
                 // want descending order

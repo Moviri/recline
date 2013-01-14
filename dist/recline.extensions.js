@@ -295,7 +295,10 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
                     // retrieve records from secondary model
                     _.each(p.joinon, function (f) {
                         var field = p.model.fields.get(f);
-                        filters.push({field:field.id, type:"term", term:r.getFieldValueUnrendered(field), fieldType:field.attributes.type });
+                        if(!field)
+                            throw "joinedmodel.js: unable to find field [" + f + "] on secondary model";
+
+                        filters.push({field:field.id, type:"term", term: r.getFieldValueUnrendered(field), fieldType:field.attributes.type });
                     })
 
                     var resultsFromDataset2 = recline.Data.Filters.applyFiltersOnData(filters, p.model.records.toJSON(), p.model.fields.toJSON());
@@ -453,7 +456,29 @@ recline.Model.Query.prototype = $.extend(recline.Model.Query.prototype, {
 
     });
 
-}(jQuery));recline.Model.Dataset.prototype = $.extend(recline.Model.Dataset.prototype, {
+
+
+
+
+
+
+}(jQuery));
+
+recline.Model.Query.prototype = $.extend(recline.Model.Query.prototype, {
+    addFacetNoEvent:function (fieldId) {
+        var facets = this.get('facets');
+        // Assume id and fieldId should be the same (TODO: this need not be true if we want to add two different type of facets on same field)
+        if (_.contains(_.keys(facets), fieldId)) {
+            return;
+        }
+        facets[fieldId] = {
+            terms:{ field:fieldId }
+        };
+        this.set({facets:facets}, {silent:true});
+
+    }
+
+});recline.Model.Dataset.prototype = $.extend(recline.Model.Dataset.prototype, {
     toFullJSON:function (resultType) {
         var self = this;
         return _.map(self.getRecords(resultType), function (r) {
@@ -682,20 +707,8 @@ recline.Model.Query.prototype = $.extend(recline.Model.Query.prototype, {
 
     clearSortCondition:function () {
         this.attributes["sort"] = null;
-    },
-
-    addFacetNoEvent:function (fieldId) {
-        var facets = this.get('facets');
-        // Assume id and fieldId should be the same (TODO: this need not be true if we want to add two different type of facets on same field)
-        if (_.contains(_.keys(facets), fieldId)) {
-            return;
-        }
-        facets[fieldId] = {
-            terms:{ field:fieldId }
-        };
-        this.set({facets:facets}, {silent:true});
-
     }
+
 
 
 
@@ -2412,6 +2425,7 @@ my.Faceting = {};
             // TODO: remove dependency on recline.Model
             facetResults[facetId] = new recline.Model.Facet({id:facetId}).toJSON();
             facetResults[facetId].termsall = {};
+
         });
         // faceting
         _.each(records, function (doc) {
@@ -2420,7 +2434,7 @@ my.Faceting = {};
                 var val = doc[fieldId];
                 var tmp = facetResults[facetId];
                 if (val) {
-                    tmp.termsall[val] = tmp.termsall[val] ? {count:tmp.termsall[val].count + 1, value:val} : {count:1, value:val};
+                    tmp.termsall[val] = tmp.termsall[val] ? {count:tmp.termsall[val].count + 1, value:val, records: records.push(doc)} : {count:1, value:val, records: [doc]};
                 } else {
                     tmp.missing = tmp.missing + 1;
                 }
@@ -2442,7 +2456,7 @@ my.Faceting = {};
                 );
 
             _.each(termsWithZeroCount, function (d) {
-                tmp.termsall[d] = {count:0, value:d};
+                tmp.termsall[d] = {count:0, value:d, records: []    };
             });
 
         });
@@ -2451,7 +2465,7 @@ my.Faceting = {};
         _.each(queryObj.facets, function (query, facetId) {
             var tmp = facetResults[facetId];
             var terms = _.map(tmp.termsall, function (res, term) {
-                return { term:res.value, count:res.count };
+                return { term:res.value, count:res.count, records: res.records };
             });
             tmp.terms = _.sortBy(terms, function (item) {
                 // want descending order
@@ -4075,7 +4089,7 @@ this.recline.View = this.recline.View || {};
                 '<div class="c_row">' +
                 '<div class="cell cell_empty"></div>' +
                 '{{#dimensions}}' +
-                '<div class="cell cell_name"><div class="title" style="float:left">{{term}}</div><div class="shape" style="float:left">{{{shape}}}</div></div>' +
+                '<div class="cell cell_name"><div class="title" style="float:left">{{term_desc}}</div><div class="shape" style="float:left">{{{shape}}}</div></div>' +
                 '{{/dimensions}}' +
                 '</div>' +
                 '</div>' +
@@ -4108,7 +4122,7 @@ this.recline.View = this.recline.View || {};
                 '<div class="c_group c_body">' +
                 '{{#dimensions}}' +
                 '<div class="c_row">' +
-                '<div class="cell cell_name"><div class="title" style="float:left">{{term}}</div><div class="shape" style="float:left">{{{shape}}}</div></div>' +
+                '<div class="cell cell_name"><div class="title" style="float:left">{{term_desc}}</div><div class="shape" style="float:left">{{{shape}}}</div></div>' +
                 '{{#measures}}' +
                 '<div class="cell cell_graph" id="{{viewid}}"></div>' +
                 '{{/measures}}' +
@@ -4179,7 +4193,14 @@ this.recline.View = this.recline.View || {};
                 else _.each(facets.attributes.terms, function (t) {
                     if (t.count > 0) {
                         var uid = (new Date().getTime() + Math.floor(Math.random() * 10000)); // generating an unique id for the chart
-                        var dim = {term:t.term, id_dimension:uid, shape:t.shape};
+
+                        var term_desc;
+                        if(self.options.rowTitle)
+                            term_desc =  self.options.rowTitle(t);
+                        else
+                            term_desc = t.term;
+
+                        var dim = {term:t.term, term_desc: term_desc, id_dimension:uid, shape:t.shape};
 
                         dim["getDimensionIDbyMeasureID"] = function () {
                             return function (measureID) {
@@ -4253,6 +4274,8 @@ this.recline.View = this.recline.View || {};
 
         attachViews:function () {
             var self = this;
+            self.views = []
+
             _.each(self.dimensions, function (dim) {
                 _.each(dim.measures, function (m) {
                     var $el = $('#' + m.viewid);
@@ -4280,7 +4303,7 @@ this.recline.View = this.recline.View || {};
             // a filtered dataset should be created on the original data and must be associated to the view
             var filtereddataset = new recline.Model.FilteredDataset({dataset:self.model});
 
-            var filter = {field:dimensionField.get("id"), type:"term", term:currentRow.term, fieldType:dimensionField.get("type") };
+            var filter = {field:dimensionField.get("id"), type:"term", term:currentRow.term, term_desc: currentRow.term,fieldType:dimensionField.get("type") };
             filtereddataset.queryState.addFilter(filter);
             filtereddataset.query();
             // foreach measure we need to add a view do the dimension

@@ -141,7 +141,10 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
                     // retrieve records from secondary model
                     _.each(p.joinon, function (f) {
                         var field = p.model.fields.get(f);
-                        filters.push({field:field.id, type:"term", term:r.getFieldValueUnrendered(field), fieldType:field.attributes.type });
+                        if(!field)
+                            throw "joinedmodel.js: unable to find field [" + f + "] on secondary model";
+
+                        filters.push({field:field.id, type:"term", term: r.getFieldValueUnrendered(field), fieldType:field.attributes.type });
                     })
 
                     var resultsFromDataset2 = recline.Data.Filters.applyFiltersOnData(filters, p.model.records.toJSON(), p.model.fields.toJSON());

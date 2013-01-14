@@ -13,7 +13,7 @@ this.recline.View = this.recline.View || {};
                 '<div class="c_row">' +
                 '<div class="cell cell_empty"></div>' +
                 '{{#dimensions}}' +
-                '<div class="cell cell_name"><div class="title" style="float:left">{{term}}</div><div class="shape" style="float:left">{{{shape}}}</div></div>' +
+                '<div class="cell cell_name"><div class="title" style="float:left">{{term_desc}}</div><div class="shape" style="float:left">{{{shape}}}</div></div>' +
                 '{{/dimensions}}' +
                 '</div>' +
                 '</div>' +
@@ -46,7 +46,7 @@ this.recline.View = this.recline.View || {};
                 '<div class="c_group c_body">' +
                 '{{#dimensions}}' +
                 '<div class="c_row">' +
-                '<div class="cell cell_name"><div class="title" style="float:left">{{term}}</div><div class="shape" style="float:left">{{{shape}}}</div></div>' +
+                '<div class="cell cell_name"><div class="title" style="float:left">{{term_desc}}</div><div class="shape" style="float:left">{{{shape}}}</div></div>' +
                 '{{#measures}}' +
                 '<div class="cell cell_graph" id="{{viewid}}"></div>' +
                 '{{/measures}}' +
@@ -117,7 +117,14 @@ this.recline.View = this.recline.View || {};
                 else _.each(facets.attributes.terms, function (t) {
                     if (t.count > 0) {
                         var uid = (new Date().getTime() + Math.floor(Math.random() * 10000)); // generating an unique id for the chart
-                        var dim = {term:t.term, id_dimension:uid, shape:t.shape};
+
+                        var term_desc;
+                        if(self.options.rowTitle)
+                            term_desc =  self.options.rowTitle(t);
+                        else
+                            term_desc = t.term;
+
+                        var dim = {term:t.term, term_desc: term_desc, id_dimension:uid, shape:t.shape};
 
                         dim["getDimensionIDbyMeasureID"] = function () {
                             return function (measureID) {
@@ -191,6 +198,8 @@ this.recline.View = this.recline.View || {};
 
         attachViews:function () {
             var self = this;
+            self.views = []
+
             _.each(self.dimensions, function (dim) {
                 _.each(dim.measures, function (m) {
                     var $el = $('#' + m.viewid);
@@ -218,7 +227,7 @@ this.recline.View = this.recline.View || {};
             // a filtered dataset should be created on the original data and must be associated to the view
             var filtereddataset = new recline.Model.FilteredDataset({dataset:self.model});
 
-            var filter = {field:dimensionField.get("id"), type:"term", term:currentRow.term, fieldType:dimensionField.get("type") };
+            var filter = {field:dimensionField.get("id"), type:"term", term:currentRow.term, term_desc: currentRow.term,fieldType:dimensionField.get("type") };
             filtereddataset.queryState.addFilter(filter);
             filtereddataset.query();
             // foreach measure we need to add a view do the dimension
