@@ -6839,7 +6839,7 @@ this.recline.View = this.recline.View || {};
     "use strict";
 
     view.xCharts = Backbone.View.extend({
-        template:'<figure style="width: {{width}}px; height: {{height}}px;" id="{{uid}}"></figure>',
+        template:'<figure style="width: {{width}}px; height: {{height}}px;" id="{{uid}}"></figure><div class="xCharts-title-x" style="width:{{width}}px;text-align:center;margin-left:50px">{{xAxisTitle}}</div>',
 
         initialize:function (options) {
 
@@ -6860,6 +6860,7 @@ this.recline.View = this.recline.View || {};
 
             this.height= options.state.height;
             this.width = options.state.width;
+            this.xAxisTitle = options.state.xAxisTitle;
         },
 
         render:function () {
@@ -6899,7 +6900,10 @@ this.recline.View = this.recline.View || {};
             self.updateSeries();
             
             if (self.series.main && self.series.main.length && self.series.main[0].data && self.series.main[0].data.length)
+        	{
             	self.graph.setData(self.series);
+                this.el.find('div.xCharts-title-x').html(self.options.state.xAxisTitle)
+        	}
             else
         	{
             	//self.graph.setData(self.series);
@@ -6910,6 +6914,7 @@ this.recline.View = this.recline.View || {};
                     delete self.graph;
                 }
                 this.el.find('figure').append(new recline.View.NoDataMsg().create());
+                this.el.find('div.xCharts-title-x').html("")
             	self.graph = null
         	}
         },
@@ -6921,8 +6926,15 @@ this.recline.View = this.recline.View || {};
             var state = self.options.state;
             self.updateSeries();
             if (self.series.main && self.series.main.length && self.series.main[0].data && self.series.main[0].data.length)
+        	{
             	self.graph = new xChart(state.type, self.series, '#' + self.uid, opts);
-            else this.el.find('figure').append(new recline.View.NoDataMsg().create());
+                this.el.find('div.xCharts-title-x').html(self.options.state.xAxisTitle)
+        	}
+            else
+            {
+            	this.el.find('figure').append(new recline.View.NoDataMsg().create());
+            	this.el.find('div.xCharts-title-x').html("")
+            }
         },
 
         updateSeries: function() {
