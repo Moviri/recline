@@ -4177,6 +4177,7 @@ this.recline.View = this.recline.View || {};
 
             self.dimensions = [ ];
             self.noData = "";
+
             // if a dimension is defined I need a facet to identify all possibile values
             if (self.options.groupBy) {
                 var facets = this.model.getFacetByFieldId(self.options.groupBy);
@@ -4276,24 +4277,18 @@ this.recline.View = this.recline.View || {};
             self.views = []
 
             _.each(self.dimensions, function (dim) {
-            	console.log("Dimension")
-            	console.log(dim)
                 _.each(dim.measures, function (m) {
-                	console.log("Measure"+m.viewid)
-                	console.log(m)
                     var $el = $('#' + m.viewid);
                     m.props["el"] = $el;
                     m.props["model"] = m.dataset;
                     var view = new recline.View[m.view](m.props);
                     self.views.push(view);
-                    console.log("Total views = "+self.views.length)
 
                     if (typeof(view.render) != 'undefined') {
                         view.render();
                     }
                     if (typeof(view.redraw) != 'undefined') {
                         view.redraw();
-                        console.log("redrawn")
                     }
 
                 })
@@ -5148,7 +5143,8 @@ this.recline.View = this.recline.View || {};
 	                $('#nvd3chart_' + viewId + '  svg').height(newH);
 	            }
             }
-            self.chart.update(); // calls original 'update' function
+            if (self.chart)
+            	self.chart.update(); // calls original 'update' function
         },
 
 
@@ -9631,7 +9627,7 @@ this.recline.View = this.recline.View || {};
             var field = this.model.fields.get(this.options.fieldRanges);
             var fieldMeasure = this.model.fields.get(this.options.fieldMeasures);
 
-            var type = "unfiltered";
+            var type;
             if(this.options.resultType) {
                 type = this.options.resultType;
             }
@@ -9674,10 +9670,6 @@ this.recline.View = this.recline.View || {};
        },
 
         drawD3:function (data, width, height, margin) {
-        	console.log("drawD3")
-        	if (data)
-        		console.log("Records count"+data.length)
-        		
             var self = this;
 
             self.graph
