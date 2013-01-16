@@ -361,10 +361,10 @@ this.recline.View = this.recline.View || {};
     			<div style="float:left;padding-right:10px;padding-top:4px;display:{{useLeftLabel}}">{{label}}</div> \
     			<div class="btn-group data-control-id" > \
             		{{#useAllButton}} \
-            		<button class="btn grouped-button btn-primary">All</button> \
+            		<button class="btn btn-mini grouped-button btn-primary">All</button> \
             		{{/useAllButton}} \
     	            {{#values}} \
-    	    		<button class="btn grouped-button {{selected}}" val="{{value}}" {{tooltip}}>{{{val}}}</button> \
+    	    		<button class="btn btn-mini grouped-button {{selected}}" val="{{value}}" {{tooltip}}>{{{val}}}</button> \
     	            {{/values}} \
               	</div> \
             </div> \
@@ -377,24 +377,24 @@ this.recline.View = this.recline.View || {};
     			<div style="float:left;padding-right:10px;padding-top:4px;display:{{useLeftLabel}}">{{label}}</div> \
     			<div class="btn-group data-control-id" level="1" style="float:left"> \
             		{{#useAllButton}} \
-            		<button class="btn grouped-button btn-primary">All</button> \
+            		<button class="btn btn-mini grouped-button btn-primary">All</button> \
             		{{/useAllButton}} \
     	            {{#values}} \
-    	    		<button class="btn grouped-button {{selected}}" val="{{value}}" {{tooltip}}>{{{val}}}</button> \
+    	    		<button class="btn btn-mini grouped-button {{selected}}" val="{{value}}" {{tooltip}}>{{{val}}}</button> \
     	            {{/values}} \
               	</div> \
         		{{#useLevel2}} \
 	    			<div class="btn-group level2" level="2" style="float:left;display:{{showLevel2}}"> \
-	            		<button class="btn grouped-button {{all2Selected}}" val="">All</button> \
+	            		<button class="btn btn-mini grouped-button {{all2Selected}}" val="">All</button> \
 			            {{#valuesLev2}} \
-	            			<button class="btn grouped-button {{selected}}" val="{{value}}" {{tooltip}}>{{{val}}}</button> \
+	            			<button class="btn btn-mini grouped-button {{selected}}" val="{{value}}" {{tooltip}}>{{{val}}}</button> \
 			            {{/valuesLev2}} \
 	            	</div> \
             		{{#useLevel3}} \
 		    			<div class="btn-group level3" level="3" style="float:left;display:{{showLevel3}}"> \
-	            			<button class="btn grouped-button {{all3Selected}}" val="">All</button> \
+	            			<button class="btn btn-mini grouped-button {{all3Selected}}" val="">All</button> \
 				            {{#valuesLev3}} \
-			        			<button class="btn grouped-button {{selected}}" val="{{value}}" {{tooltip}}>{{{val}}}</button> \
+			        			<button class="btn btn-mini grouped-button {{selected}}" val="{{value}}" {{tooltip}}>{{{val}}}</button> \
 				            {{/valuesLev3}} \
 			        	</div> \
             		{{/useLevel3}} \
@@ -410,7 +410,7 @@ this.recline.View = this.recline.View || {};
     		<div style="float:left;padding-right:10px;padding-top:4px;display:{{useLeftLabel}}">{{label}}</div> \
     		<div class="btn-group data-control-id" > \
 	            {{#values}} \
-	    		<button class="btn grouped-button {{selected}}" val="{{value}}" {{tooltip}}>{{{val}}}</button> \
+	    		<button class="btn btn-mini grouped-button {{selected}}" val="{{value}}" {{tooltip}}>{{{val}}}</button> \
 	            {{/values}} \
           </div> \
         </fieldset> \
