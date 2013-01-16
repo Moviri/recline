@@ -7084,10 +7084,12 @@ this.recline.View = this.recline.View || {};
 
 
         template:'<div style="width: 230px;" id="datepicker-calendar-{{uid}}"></div>',
-
-
+        fullyInitialized: false,
+        maindateFromChanged: false,
+        maindateToChanged: false,
+        comparedateFromChanged: false,
+        comparedateToChanged: false,
         initialize:function (options) {
-
             this.el = $(this.el);
             _.bindAll(this, 'render', 'redraw', 'redrawCompare');
 
@@ -7105,7 +7107,6 @@ this.recline.View = this.recline.View || {};
 
             var out = Mustache.render(this.template, this);
             this.el.html(out);
-
         },
 
         daterange: {
@@ -7123,6 +7124,7 @@ this.recline.View = this.recline.View || {};
         //previousperiod
 
         onChange: function(view) {
+        	console.log("on change")
             var exec = function (data, widget) {
 
             var actions = view.getActionsForEvent("selection");
@@ -7186,7 +7188,7 @@ this.recline.View = this.recline.View || {};
                     values:{
                         comparisonEnabled:false,
                         daterangePreset:"lastweeks",
-                        comparisonPreset:"previousperiod"
+                        comparisonPreset:"custom"
                     },
                     onChange: self.onChange(self)
 
@@ -7195,6 +7197,7 @@ this.recline.View = this.recline.View || {};
             self.redraw();
             self.redrawCompare();
 
+            self.fullyInitialized = true;
         },
 
         redraw:function () {
@@ -7246,10 +7249,32 @@ this.recline.View = this.recline.View || {};
             $('.dr1.to', self.datepicker).val(values.dr1to);
             $('.dr1.from_millis', self.datepicker).val(values.dr1from_millis);
             $('.dr1.to_millis', self.datepicker).val(values.dr1to_millis);
-
-
+            
+            
+            if (!self.fullyInitialized)
+        	{
+                $('.dr1.from').bind("keypress", function(e) {
+                    self.maindateFromChanged = true
+                })
+                $('.dr1.to').bind("keypress", function(e) {
+                	self.maindateToChanged = true
+                })
+                $('.dr1.from').bind("blur", function(e) {
+                	if (self.maindateFromChanged)
+            		{
+                    	self.applyTextInputDateChange($(this).val(), self, true, true)
+                    	self.maindateFromChanged = false
+            		}
+                })
+                $('.dr1.to').bind("blur", function(e) {
+                	if (self.maindateFromChanged)
+            		{
+    	            	self.applyTextInputDateChange($(this).val(), self, true, false)
+    	            	self.maindateToChanged = false
+            		}
+                })        
+        	}
         },
-
         redrawCompare:function () {
             console.log("Widget.datepicker: redrawcompare");
             var self=this;
@@ -7276,6 +7301,7 @@ this.recline.View = this.recline.View || {};
                     values.dr2from_millis = (new Date(period[2])).getTime();
                     values.dr2to = period[3].getDate() + '/' + (period[3].getMonth()+1) + '/' + period[3].getFullYear();
                     values.dr2to_millis = (new Date(period[3])).getTime();
+                    $('.comparison-preset').val("custom")
                 } else
                 {
                     values.comparisonEnabled = false;
@@ -7301,10 +7327,86 @@ this.recline.View = this.recline.View || {};
 
                 $('.dr2.from_millis', self.datepicker).val(values.dr2from_millis);
                 $('.dr2.to_millis', self.datepicker).val(values.dr2to_millis);
-
+                
+                
+                if (!self.fullyInitialized)
+            	{
+                    $('.dr2.from').bind("keypress", function(e) {
+                        self.comparedateFromChanged = true
+                    })
+                    $('.dr2.to').bind("keypress", function(e) {
+                    	self.comparedateToChanged = true
+                    })
+                    $('.dr2.from').bind("blur", function(e) {
+                    	if (self.comparedateFromChanged)
+                		{
+                        	self.applyTextInputDateChange($(this).val(), self, false, true)
+                        	self.comparedateFromChanged = false
+                		}
+                    })
+                    $('.dr2.to').bind("blur", function(e) {
+                    	if (self.comparedateFromChanged)
+                		{
+        	            	self.applyTextInputDateChange($(this).val(), self, false, false)
+        	            	self.comparedateToChanged = false
+                		}
+                    })        
+            	}
+                
             }
         },
-
+        retrieveDMYDate: function(dateStr) {
+			// Expect input as d/m/y
+			var bits = dateStr.split('\/');
+			if (bits.length < 3)
+				return null;
+			
+			var d = new Date(bits[2], bits[1] - 1, bits[0]);
+			if (bits[2] >= 1970 && d && (d.getMonth() + 1) == bits[1] && d.getDate() == Number(bits[0]))
+				return d;
+			else return null;
+        },
+        applyTextInputDateChange: function(currVal, self, isMain, isFrom)
+        {
+    		//console.log(currVal)
+    		var d = self.retrieveDMYDate(currVal)
+    		if (d)
+			{
+    			//console.log(currVal+ " is VALID!: "+d.toLocaleDateString())
+        		var options = self.datepicker.data("DateRangesWidget").options
+        		console.log(options)
+        		var values = options.values;
+    			if (isMain)
+				{
+    				if (isFrom)
+    				{
+    					values.dr1from = currVal
+                        values.dr1from_millis = d.getTime()
+    				}
+    				else
+					{
+            			values.dr1to = currVal
+                        values.dr1to_millis = d.getTime()
+					}
+				}
+    			else
+				{
+    				if (isFrom)
+    				{
+    					values.dr2from = currVal
+    	                values.dr2from_millis = d.getTime()
+    				}
+    				else
+					{
+    	                values.dr2to = currVal
+    	                values.dr2to_millis = d.getTime()
+					}
+				}
+    			options.onChange(values);
+			}
+    		//else console.log(currVal+ " is NOT VALID!")
+    			
+        },
 
 
         getActionsForEvent:function (eventType) {
