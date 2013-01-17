@@ -4561,11 +4561,25 @@ this.recline.View = this.recline.View || {};
                 kpiValue = kpi[0].getFieldValueUnrendered(field);
                 tmplData["value"] = kpi[0].getFieldValue(field);
                 tmplData["shape"] = kpi[0].getFieldShape(field, true, false);
-                if (self.options.state.condensed == true && textField)
-                	tmplData["label"] = kpi[0].getFieldValue(textField);
+                if (self.options.state.condensed == true && textField){
+                	if (self.options.maxLabelLength){ // TODO DOCUMENT the maxLabelLength option
+                		var fullText =  kpi[0].getFieldValue(textField);
+                		var truncatedText = fullText.substring(0, self.options.maxLabelLength);
+                		if ( fullText && fullText.length > self.options.maxLabelLength){
+                			tmplData["label"] = '<abbr title="' + fullText + '">'+truncatedText+'...</abbr>';	
+                		} else {
+                			tmplData["label"] = kpi[0].getFieldValue(textField);
+                		}                			
+                	} else {
+                		tmplData["label"] = kpi[0].getFieldValue(textField);	
+                	}                	
+                }	
             }
-            else tmplData["value"] = "N/A"
+            else tmplData["value"] = "N/A";
 
+            
+            console.log("###### " + tmplData["label"]  + " ######");
+            
             var template = this.templates.templateBase;
             if (self.options.state.condensed == true)
             	template = self.templates.templateCondensed;            
@@ -6839,7 +6853,7 @@ this.recline.View = this.recline.View || {};
     "use strict";
 
     view.xCharts = Backbone.View.extend({
-        template:'<figure style="width: {{width}}px; height: {{height}}px;" id="{{uid}}"></figure><div class="xCharts-title-x" style="width:{{width}}px;text-align:center;margin-left:50px">{{xAxisTitle}}</div>',
+        template:'<figure style="clear:both; width: {{width}}px; height: {{height}}px;" id="{{uid}}"></figure><div class="xCharts-title-x" style="width:{{width}}px;text-align:center;margin-left:50px">{{xAxisTitle}}</div>',
 
         initialize:function (options) {
 
