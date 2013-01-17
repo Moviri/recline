@@ -35,7 +35,7 @@ this.recline.View = this.recline.View || {};
             var self = this;
 
             var graphid = "#" + this.uid;
-            if (self.graph)
+            if (false/*self.graph*/)
             {
             	self.updateGraph();
 //                jQuery(graphid).empty();
@@ -54,7 +54,7 @@ this.recline.View = this.recline.View || {};
 
             //console.log("View.xCharts: redraw");
 
-            if (self.graph)
+            if (false/*self.graph*/)
                 self.updateGraph();
             else
                 self.renderGraph();
