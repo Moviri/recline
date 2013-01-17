@@ -5243,9 +5243,9 @@ this.recline.View = this.recline.View || {};
     "use strict";
 
     view.NoDataMsg = Backbone.View.extend({
-    	templateP1:"<div class='noData' style='display:table;width:100%;height:100%;border:1px dotted lightgrey;font-size:18px;'>" +
+    	templateP1:"<div class='noData' style='display:table;width:100%;height:100%;'>" +
     			"<p style='display:table-cell;width:100%;height:100%;margin-left: auto;margin-right: auto;text-align: center;margin-bottom: auto;margin-top: auto;vertical-align: middle;'>",
-    	template2P1:"<div class='noData' style='width:100%;height:100%;border:1px dotted lightgrey;font-size:18px;'>" +
+    	template2P1:"<div class='noData' style='width:100%;height:100%;'>" +
     			"<p style='width:100%;height:100%;margin-left: auto;margin-right: auto;text-align: center;margin-bottom: 10px;margin-top:10px;'>",
     	_internalMsg : "No Data Available!",
     	templateP2:"</p></div>",
