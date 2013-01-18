@@ -17,7 +17,7 @@ recline.Model.Dataset.prototype = $.extend(recline.Model.Dataset.prototype, {
                 modified = true;
             });
 
-            console.log("Query on model [" + (self.attributes.id ? self.attributes.id : "") + "] query [" + JSON.stringify(actualQuery) + "]");
+            //console.log("Query on model [" + (self.attributes.id ? self.attributes.id : "") + "] query [" + JSON.stringify(actualQuery) + "]");
 
             if (queryObj || modified)
                 return super_init.call(this, actualQuery);

@@ -34,7 +34,7 @@ this.recline.View = this.recline.View || {};
                 if (condensed == true)
                 	template = templates.templateCondensed;
                 
-                return {data:data, template:template, unrenderedValue: unrenderedValue, percentageMsg: "% of total: "};
+                return {data:data, template:template, unrenderedValue: unrenderedValue, percentageMsg: " % of total: "};
             },
             percentageVariation:function (kpi, compare, templates, condensed) {
                 var tmpField = new recline.Model.Field({type:"number", format:"percentage"});
@@ -44,7 +44,7 @@ this.recline.View = this.recline.View || {};
                 if (condensed == true)
                 	template = templates.templateCondensed;
 
-                return {data:data, template:template, unrenderedValue: unrenderedValue, percentageMsg: "% variation: "};
+                return {data:data, template:template, unrenderedValue: unrenderedValue, percentageMsg: " % variation: "};
             },
             nocompare: function (kpi, compare, templates, condensed){
                 var template = templates.templateBase;

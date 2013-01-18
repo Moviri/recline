@@ -1591,8 +1591,6 @@ my.Dataset = Backbone.Model.extend({
     var dfd = new _.Deferred();
     this.trigger('query:start');
 
-      //console.log("-----> " + this.id +  " QUERY MODEL");
-
     if (queryObj) {
       this.queryState.set(queryObj, {silent: true});
     }

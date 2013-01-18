@@ -18,9 +18,8 @@ this.recline.Model.FilteredDataset = this.recline.Model.FilteredDataset || {};
 
 
             this.records = new my.RecordList();
-
             this.fields =  this.attributes.dataset.fields;
-
+            this.attributes.deriver = this.attributes.dataset.deriver;
 
             //todo
             //this.facets = new my.FacetList();
@@ -66,7 +65,7 @@ this.recline.Model.FilteredDataset = this.recline.Model.FilteredDataset || {};
             });
 
 
-            console.log("Query on model query [" + JSON.stringify(queryObj) + "]");
+            //console.log("Query on model query [" + JSON.stringify(queryObj) + "]");
 
             var dataset = self.attributes.dataset;
             var numRows = queryObj.size || dataset.recordCount;
