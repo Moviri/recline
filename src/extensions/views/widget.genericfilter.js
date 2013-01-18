@@ -361,10 +361,10 @@ this.recline.View = this.recline.View || {};
     			<div style="float:left;padding-right:10px;padding-top:4px;display:{{useLeftLabel}}">{{label}}</div> \
     			<div class="btn-group data-control-id" > \
             		{{#useAllButton}} \
-            		<button class="btn grouped-button btn-primary">All</button> \
+            		<button class="btn btn-mini grouped-button btn-primary">All</button> \
             		{{/useAllButton}} \
     	            {{#values}} \
-    	    		<button class="btn grouped-button {{selected}}" val="{{value}}" {{tooltip}}>{{{val}}}</button> \
+    	    		<button class="btn btn-mini grouped-button {{selected}}" val="{{value}}" {{tooltip}}>{{{val}}}</button> \
     	            {{/values}} \
               	</div> \
             </div> \
@@ -377,24 +377,24 @@ this.recline.View = this.recline.View || {};
     			<div style="float:left;padding-right:10px;padding-top:4px;display:{{useLeftLabel}}">{{label}}</div> \
     			<div class="btn-group data-control-id" level="1" style="float:left"> \
             		{{#useAllButton}} \
-            		<button class="btn grouped-button btn-primary">All</button> \
+            		<button class="btn btn-mini grouped-button btn-primary">All</button> \
             		{{/useAllButton}} \
     	            {{#values}} \
-    	    		<button class="btn grouped-button {{selected}}" val="{{value}}" {{tooltip}}>{{{val}}}</button> \
+    	    		<button class="btn btn-mini grouped-button {{selected}}" val="{{value}}" {{tooltip}}>{{{val}}}</button> \
     	            {{/values}} \
               	</div> \
         		{{#useLevel2}} \
 	    			<div class="btn-group level2" level="2" style="float:left;display:{{showLevel2}}"> \
-	            		<button class="btn grouped-button {{all2Selected}}" val="">All</button> \
+	            		<button class="btn btn-mini grouped-button {{all2Selected}}" val="">All</button> \
 			            {{#valuesLev2}} \
-	            			<button class="btn grouped-button {{selected}}" val="{{value}}" {{tooltip}}>{{{val}}}</button> \
+	            			<button class="btn btn-mini grouped-button {{selected}}" val="{{value}}" {{tooltip}}>{{{val}}}</button> \
 			            {{/valuesLev2}} \
 	            	</div> \
             		{{#useLevel3}} \
 		    			<div class="btn-group level3" level="3" style="float:left;display:{{showLevel3}}"> \
-	            			<button class="btn grouped-button {{all3Selected}}" val="">All</button> \
+	            			<button class="btn btn-mini grouped-button {{all3Selected}}" val="">All</button> \
 				            {{#valuesLev3}} \
-			        			<button class="btn grouped-button {{selected}}" val="{{value}}" {{tooltip}}>{{{val}}}</button> \
+			        			<button class="btn btn-mini grouped-button {{selected}}" val="{{value}}" {{tooltip}}>{{{val}}}</button> \
 				            {{/valuesLev3}} \
 			        	</div> \
             		{{/useLevel3}} \
@@ -410,7 +410,7 @@ this.recline.View = this.recline.View || {};
     		<div style="float:left;padding-right:10px;padding-top:4px;display:{{useLeftLabel}}">{{label}}</div> \
     		<div class="btn-group data-control-id" > \
 	            {{#values}} \
-	    		<button class="btn grouped-button {{selected}}" val="{{value}}" {{tooltip}}>{{{val}}}</button> \
+	    		<button class="btn btn-mini grouped-button {{selected}}" val="{{value}}" {{tooltip}}>{{{val}}}</button> \
 	            {{/values}} \
           </div> \
         </fieldset> \
@@ -1571,6 +1571,9 @@ this.recline.View = this.recline.View || {};
                 	else
             		{
                 		currActiveFilter.term = prefix + currSelectedValue;
+                		if (currActiveFilter.term.length && currActiveFilter.term[currActiveFilter.term.length-1] == currActiveFilter.separator)
+                			currActiveFilter.term = currActiveFilter.term.substring(0, currActiveFilter.term.length-1)
+                			
                 		// redraw the filter!!!
                 		// TODO: devi trovare flt giusto se ce n'è più di uno!!!
 	                    var flt = this.el.find("div.filter"); 
@@ -1583,7 +1586,11 @@ this.recline.View = this.recline.View || {};
                     	_.each(this._sourceDataset.getRecords(), function(record) {
                             var field = self._sourceDataset.fields.get(currActiveFilter.field);
                             var currV = record.getFieldValue(field);
-                            if (currV.indexOf(prefix + currSelectedValue+currActiveFilter.separator) == 0)
+                            var searchString = prefix + currSelectedValue+currActiveFilter.separator;
+                            if (currSelectedValue == "")
+                            	searchString = prefix;
+                            
+                            if (currV.indexOf(searchString) == 0)
                             	listaValori.push(currV)
                     	});
                 		this.doAction("onButtonsetClicked", fieldId, listaValori, "add", currActiveFilter);

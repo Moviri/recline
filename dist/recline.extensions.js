@@ -4635,11 +4635,25 @@ this.recline.View = this.recline.View || {};
                 kpiValue = kpi[0].getFieldValueUnrendered(field);
                 tmplData["value"] = kpi[0].getFieldValue(field);
                 tmplData["shape"] = kpi[0].getFieldShape(field, true, false);
-                if (self.options.state.condensed == true && textField)
-                	tmplData["label"] = kpi[0].getFieldValue(textField);
+                if (self.options.state.condensed == true && textField){
+                	if (self.options.maxLabelLength){ // TODO DOCUMENT the maxLabelLength option
+                		var fullText =  kpi[0].getFieldValue(textField);
+                		var truncatedText = fullText.substring(0, self.options.maxLabelLength);
+                		if ( fullText && fullText.length > self.options.maxLabelLength){
+                			tmplData["label"] = '<abbr title="' + fullText + '">'+truncatedText+'...</abbr>';	
+                		} else {
+                			tmplData["label"] = kpi[0].getFieldValue(textField);
+                		}                			
+                	} else {
+                		tmplData["label"] = kpi[0].getFieldValue(textField);	
+                	}                	
+                }	
             }
-            else tmplData["value"] = "N/A"
+            else tmplData["value"] = "N/A";
 
+            
+            console.log("###### " + tmplData["label"]  + " ######");
+            
             var template = this.templates.templateBase;
             if (self.options.state.condensed == true)
             	template = self.templates.templateCondensed;            
@@ -5217,7 +5231,8 @@ this.recline.View = this.recline.View || {};
 	                $('#nvd3chart_' + viewId + '  svg').height(newH);
 	            }
             }
-            self.chart.update(); // calls original 'update' function
+            if (self.chart)
+            	self.chart.update(); // calls original 'update' function
         },
 
 
@@ -6912,7 +6927,7 @@ this.recline.View = this.recline.View || {};
     "use strict";
 
     view.xCharts = Backbone.View.extend({
-        template:'<figure style="width: {{width}}px; height: {{height}}px;" id="{{uid}}"></figure>',
+        template:'<figure style="clear:both; width: {{width}}px; height: {{height}}px;" id="{{uid}}"></figure><div class="xCharts-title-x" style="width:{{width}}px;text-align:center;margin-left:50px">{{xAxisTitle}}</div>',
 
         initialize:function (options) {
 
@@ -6933,6 +6948,7 @@ this.recline.View = this.recline.View || {};
 
             this.height= options.state.height;
             this.width = options.state.width;
+            this.xAxisTitle = options.state.xAxisTitle;
         },
 
         render:function () {
@@ -6940,7 +6956,7 @@ this.recline.View = this.recline.View || {};
             var self = this;
 
             var graphid = "#" + this.uid;
-            if (self.graph)
+            if (false/*self.graph*/)
             {
             	self.updateGraph();
 //                jQuery(graphid).empty();
@@ -6959,7 +6975,7 @@ this.recline.View = this.recline.View || {};
 
             //console.log("View.xCharts: redraw");
 
-            if (self.graph)
+            if (false/*self.graph*/)
                 self.updateGraph();
             else
                 self.renderGraph();
@@ -6972,7 +6988,10 @@ this.recline.View = this.recline.View || {};
             self.updateSeries();
             
             if (self.series.main && self.series.main.length && self.series.main[0].data && self.series.main[0].data.length)
+        	{
             	self.graph.setData(self.series);
+                this.el.find('div.xCharts-title-x').html(self.options.state.xAxisTitle)
+        	}
             else
         	{
             	//self.graph.setData(self.series);
@@ -6983,6 +7002,7 @@ this.recline.View = this.recline.View || {};
                     delete self.graph;
                 }
                 this.el.find('figure').append(new recline.View.NoDataMsg().create());
+                this.el.find('div.xCharts-title-x').html("")
             	self.graph = null
         	}
         },
@@ -6994,8 +7014,15 @@ this.recline.View = this.recline.View || {};
             var state = self.options.state;
             self.updateSeries();
             if (self.series.main && self.series.main.length && self.series.main[0].data && self.series.main[0].data.length)
+        	{
             	self.graph = new xChart(state.type, self.series, '#' + self.uid, opts);
-            else this.el.find('figure').append(new recline.View.NoDataMsg().create());
+                this.el.find('div.xCharts-title-x').html(self.options.state.xAxisTitle)
+        	}
+            else
+            {
+            	this.el.find('figure').append(new recline.View.NoDataMsg().create());
+            	this.el.find('div.xCharts-title-x').html("")
+            }
         },
 
         updateSeries: function() {
@@ -7145,10 +7172,12 @@ this.recline.View = this.recline.View || {};
 
 
         template:'<div style="width: 230px;" id="datepicker-calendar-{{uid}}"></div>',
-
-
+        fullyInitialized: false,
+        maindateFromChanged: false,
+        maindateToChanged: false,
+        comparedateFromChanged: false,
+        comparedateToChanged: false,
         initialize:function (options) {
-
             this.el = $(this.el);
             _.bindAll(this, 'render', 'redraw', 'redrawCompare');
 
@@ -7166,7 +7195,6 @@ this.recline.View = this.recline.View || {};
 
             var out = Mustache.render(this.template, this);
             this.el.html(out);
-
         },
 
         daterange: {
@@ -7184,6 +7212,7 @@ this.recline.View = this.recline.View || {};
         //previousperiod
 
         onChange: function(view) {
+        	console.log("on change")
             var exec = function (data, widget) {
 
             var actions = view.getActionsForEvent("selection");
@@ -7247,7 +7276,7 @@ this.recline.View = this.recline.View || {};
                     values:{
                         comparisonEnabled:false,
                         daterangePreset:"lastweeks",
-                        comparisonPreset:"previousperiod"
+                        comparisonPreset:"custom"
                     },
                     onChange: self.onChange(self)
 
@@ -7256,6 +7285,7 @@ this.recline.View = this.recline.View || {};
             self.redraw();
             self.redrawCompare();
 
+            self.fullyInitialized = true;
         },
 
         redraw:function () {
@@ -7307,10 +7337,32 @@ this.recline.View = this.recline.View || {};
             $('.dr1.to', self.datepicker).val(values.dr1to);
             $('.dr1.from_millis', self.datepicker).val(values.dr1from_millis);
             $('.dr1.to_millis', self.datepicker).val(values.dr1to_millis);
-
-
+            
+            
+            if (!self.fullyInitialized)
+        	{
+                $('.dr1.from').bind("keypress", function(e) {
+                    self.maindateFromChanged = true
+                })
+                $('.dr1.to').bind("keypress", function(e) {
+                	self.maindateToChanged = true
+                })
+                $('.dr1.from').bind("blur", function(e) {
+                	if (self.maindateFromChanged)
+            		{
+                    	self.applyTextInputDateChange($(this).val(), self, true, true)
+                    	self.maindateFromChanged = false
+            		}
+                })
+                $('.dr1.to').bind("blur", function(e) {
+                	if (self.maindateFromChanged)
+            		{
+    	            	self.applyTextInputDateChange($(this).val(), self, true, false)
+    	            	self.maindateToChanged = false
+            		}
+                })        
+        	}
         },
-
         redrawCompare:function () {
             //console.log("Widget.datepicker: redrawcompare");
             var self=this;
@@ -7337,6 +7389,7 @@ this.recline.View = this.recline.View || {};
                     values.dr2from_millis = (new Date(period[2])).getTime();
                     values.dr2to = period[3].getDate() + '/' + (period[3].getMonth()+1) + '/' + period[3].getFullYear();
                     values.dr2to_millis = (new Date(period[3])).getTime();
+                    $('.comparison-preset').val("custom")
                 } else
                 {
                     values.comparisonEnabled = false;
@@ -7362,10 +7415,86 @@ this.recline.View = this.recline.View || {};
 
                 $('.dr2.from_millis', self.datepicker).val(values.dr2from_millis);
                 $('.dr2.to_millis', self.datepicker).val(values.dr2to_millis);
-
+                
+                
+                if (!self.fullyInitialized)
+            	{
+                    $('.dr2.from').bind("keypress", function(e) {
+                        self.comparedateFromChanged = true
+                    })
+                    $('.dr2.to').bind("keypress", function(e) {
+                    	self.comparedateToChanged = true
+                    })
+                    $('.dr2.from').bind("blur", function(e) {
+                    	if (self.comparedateFromChanged)
+                		{
+                        	self.applyTextInputDateChange($(this).val(), self, false, true)
+                        	self.comparedateFromChanged = false
+                		}
+                    })
+                    $('.dr2.to').bind("blur", function(e) {
+                    	if (self.comparedateFromChanged)
+                		{
+        	            	self.applyTextInputDateChange($(this).val(), self, false, false)
+        	            	self.comparedateToChanged = false
+                		}
+                    })        
+            	}
+                
             }
         },
-
+        retrieveDMYDate: function(dateStr) {
+			// Expect input as d/m/y
+			var bits = dateStr.split('\/');
+			if (bits.length < 3)
+				return null;
+			
+			var d = new Date(bits[2], bits[1] - 1, bits[0]);
+			if (bits[2] >= 1970 && d && (d.getMonth() + 1) == bits[1] && d.getDate() == Number(bits[0]))
+				return d;
+			else return null;
+        },
+        applyTextInputDateChange: function(currVal, self, isMain, isFrom)
+        {
+    		//console.log(currVal)
+    		var d = self.retrieveDMYDate(currVal)
+    		if (d)
+			{
+    			//console.log(currVal+ " is VALID!: "+d.toLocaleDateString())
+        		var options = self.datepicker.data("DateRangesWidget").options
+        		console.log(options)
+        		var values = options.values;
+    			if (isMain)
+				{
+    				if (isFrom)
+    				{
+    					values.dr1from = currVal
+                        values.dr1from_millis = d.getTime()
+    				}
+    				else
+					{
+            			values.dr1to = currVal
+                        values.dr1to_millis = d.getTime()
+					}
+				}
+    			else
+				{
+    				if (isFrom)
+    				{
+    					values.dr2from = currVal
+    	                values.dr2from_millis = d.getTime()
+    				}
+    				else
+					{
+    	                values.dr2to = currVal
+    	                values.dr2to_millis = d.getTime()
+					}
+				}
+    			options.onChange(values);
+			}
+    		//else console.log(currVal+ " is NOT VALID!")
+    			
+        },
 
 
         getActionsForEvent:function (eventType) {
@@ -7744,10 +7873,10 @@ this.recline.View = this.recline.View || {};
     			<div style="float:left;padding-right:10px;padding-top:4px;display:{{useLeftLabel}}">{{label}}</div> \
     			<div class="btn-group data-control-id" > \
             		{{#useAllButton}} \
-            		<button class="btn grouped-button btn-primary">All</button> \
+            		<button class="btn btn-mini grouped-button btn-primary">All</button> \
             		{{/useAllButton}} \
     	            {{#values}} \
-    	    		<button class="btn grouped-button {{selected}}" val="{{value}}" {{tooltip}}>{{{val}}}</button> \
+    	    		<button class="btn btn-mini grouped-button {{selected}}" val="{{value}}" {{tooltip}}>{{{val}}}</button> \
     	            {{/values}} \
               	</div> \
             </div> \
@@ -7760,24 +7889,24 @@ this.recline.View = this.recline.View || {};
     			<div style="float:left;padding-right:10px;padding-top:4px;display:{{useLeftLabel}}">{{label}}</div> \
     			<div class="btn-group data-control-id" level="1" style="float:left"> \
             		{{#useAllButton}} \
-            		<button class="btn grouped-button btn-primary">All</button> \
+            		<button class="btn btn-mini grouped-button btn-primary">All</button> \
             		{{/useAllButton}} \
     	            {{#values}} \
-    	    		<button class="btn grouped-button {{selected}}" val="{{value}}" {{tooltip}}>{{{val}}}</button> \
+    	    		<button class="btn btn-mini grouped-button {{selected}}" val="{{value}}" {{tooltip}}>{{{val}}}</button> \
     	            {{/values}} \
               	</div> \
         		{{#useLevel2}} \
 	    			<div class="btn-group level2" level="2" style="float:left;display:{{showLevel2}}"> \
-	            		<button class="btn grouped-button {{all2Selected}}" val="">All</button> \
+	            		<button class="btn btn-mini grouped-button {{all2Selected}}" val="">All</button> \
 			            {{#valuesLev2}} \
-	            			<button class="btn grouped-button {{selected}}" val="{{value}}" {{tooltip}}>{{{val}}}</button> \
+	            			<button class="btn btn-mini grouped-button {{selected}}" val="{{value}}" {{tooltip}}>{{{val}}}</button> \
 			            {{/valuesLev2}} \
 	            	</div> \
             		{{#useLevel3}} \
 		    			<div class="btn-group level3" level="3" style="float:left;display:{{showLevel3}}"> \
-	            			<button class="btn grouped-button {{all3Selected}}" val="">All</button> \
+	            			<button class="btn btn-mini grouped-button {{all3Selected}}" val="">All</button> \
 				            {{#valuesLev3}} \
-			        			<button class="btn grouped-button {{selected}}" val="{{value}}" {{tooltip}}>{{{val}}}</button> \
+			        			<button class="btn btn-mini grouped-button {{selected}}" val="{{value}}" {{tooltip}}>{{{val}}}</button> \
 				            {{/valuesLev3}} \
 			        	</div> \
             		{{/useLevel3}} \
@@ -7793,7 +7922,7 @@ this.recline.View = this.recline.View || {};
     		<div style="float:left;padding-right:10px;padding-top:4px;display:{{useLeftLabel}}">{{label}}</div> \
     		<div class="btn-group data-control-id" > \
 	            {{#values}} \
-	    		<button class="btn grouped-button {{selected}}" val="{{value}}" {{tooltip}}>{{{val}}}</button> \
+	    		<button class="btn btn-mini grouped-button {{selected}}" val="{{value}}" {{tooltip}}>{{{val}}}</button> \
 	            {{/values}} \
           </div> \
         </fieldset> \
@@ -8954,6 +9083,9 @@ this.recline.View = this.recline.View || {};
                 	else
             		{
                 		currActiveFilter.term = prefix + currSelectedValue;
+                		if (currActiveFilter.term.length && currActiveFilter.term[currActiveFilter.term.length-1] == currActiveFilter.separator)
+                			currActiveFilter.term = currActiveFilter.term.substring(0, currActiveFilter.term.length-1)
+                			
                 		// redraw the filter!!!
                 		// TODO: devi trovare flt giusto se ce n'è più di uno!!!
 	                    var flt = this.el.find("div.filter"); 
@@ -8966,7 +9098,11 @@ this.recline.View = this.recline.View || {};
                     	_.each(this._sourceDataset.getRecords(), function(record) {
                             var field = self._sourceDataset.fields.get(currActiveFilter.field);
                             var currV = record.getFieldValue(field);
-                            if (currV.indexOf(prefix + currSelectedValue+currActiveFilter.separator) == 0)
+                            var searchString = prefix + currSelectedValue+currActiveFilter.separator;
+                            if (currSelectedValue == "")
+                            	searchString = prefix;
+                            
+                            if (currV.indexOf(searchString) == 0)
                             	listaValori.push(currV)
                     	});
                 		this.doAction("onButtonsetClicked", fieldId, listaValori, "add", currActiveFilter);
