@@ -369,15 +369,19 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
 
             recline.Data.FieldsUtility.setFieldsAttributes(fields, self);
 
+            var options;
+            if (self.attributes.renderer)
+                options = { renderer: self.attributes.renderer};
+
             if(filtered) {
                 if(this.totals == null) { this.totals = {records: new my.RecordList(), fields: new my.FieldList() }}
 
-                    this.totals.fields.reset(fields, {renderer:recline.Data.Formatters.Renderers}) ;
+                    this.totals.fields.reset(fields, options) ;
                     this.totals.records.reset(result);
             }   else   {
                 if(this.totals_unfiltered == null) { this.totals_unfiltered = {records: new my.RecordList(), fields: new my.FieldList() }}
 
-                    this.totals_unfiltered.fields.reset(fields, {renderer:recline.Data.Formatters.Renderers}) ;
+                    this.totals_unfiltered.fields.reset(fields, options) ;
                     this.totals_unfiltered.records.reset(result);
             }
 

@@ -18,9 +18,8 @@ this.recline.Model.FilteredDataset = this.recline.Model.FilteredDataset || {};
 
 
             this.records = new my.RecordList();
-
             this.fields =  this.attributes.dataset.fields;
-
+            this.attributes.deriver = this.attributes.dataset.deriver;
 
             //todo
             //this.facets = new my.FacetList();
@@ -66,7 +65,7 @@ this.recline.Model.FilteredDataset = this.recline.Model.FilteredDataset || {};
             });
 
 
-            console.log("Query on model query [" + JSON.stringify(queryObj) + "]");
+            //console.log("Query on model query [" + JSON.stringify(queryObj) + "]");
 
             var dataset = self.attributes.dataset;
             var numRows = queryObj.size || dataset.recordCount;
@@ -444,7 +443,28 @@ recline.Model.Query.prototype = $.extend(recline.Model.Query.prototype, {
     });
 
 
-}(jQuery));(function ($) {
+}(jQuery));recline.Model.Dataset.prototype = $.extend(recline.Model.Dataset.prototype, {
+    fetch:function () {
+        var super_init = recline.Model.Dataset.prototype.fetch;
+        return function () {
+            super_init.call(this);
+            var self = this;
+            if (self.attributes.renderer) {
+
+                _.each(self.fields.models, function (f) {
+                    f.renderer = self.attributes.renderer;
+                });
+
+            }
+            ;
+
+
+        }
+    }()
+
+
+});
+(function ($) {
     recline.Model.Dataset.prototype = $.extend(recline.Model.Dataset.prototype, {
 
 
@@ -567,11 +587,14 @@ recline.Model.Query.prototype = $.extend(recline.Model.Query.prototype, {
             if (queryResult.fields && self.fields.length == 0) {
 
                 recline.Data.FieldsUtility.setFieldsAttributes(queryResult.fields, self);
-                var options = {renderer:recline.Data.Formatters.Renderers};
+                var options;
+                if (self.attributes.renderer)
+                  options = { renderer: self.attributes.renderer};
+
+
                 self.fields.reset(queryResult.fields, options);
 
             }
-
 
             return super_init.call(this, queryResult);
 
@@ -601,7 +624,7 @@ recline.Model.Dataset.prototype = $.extend(recline.Model.Dataset.prototype, {
                 modified = true;
             });
 
-            console.log("Query on model [" + (self.attributes.id ? self.attributes.id : "") + "] query [" + JSON.stringify(actualQuery) + "]");
+            //console.log("Query on model [" + (self.attributes.id ? self.attributes.id : "") + "] query [" + JSON.stringify(actualQuery) + "]");
 
             if (queryObj || modified)
                 return super_init.call(this, actualQuery);
@@ -1286,15 +1309,19 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
 
             recline.Data.FieldsUtility.setFieldsAttributes(fields, self);
 
+            var options;
+            if (self.attributes.renderer)
+                options = { renderer: self.attributes.renderer};
+
             if(filtered) {
                 if(this.totals == null) { this.totals = {records: new my.RecordList(), fields: new my.FieldList() }}
 
-                    this.totals.fields.reset(fields, {renderer:recline.Data.Formatters.Renderers}) ;
+                    this.totals.fields.reset(fields, options) ;
                     this.totals.records.reset(result);
             }   else   {
                 if(this.totals_unfiltered == null) { this.totals_unfiltered = {records: new my.RecordList(), fields: new my.FieldList() }}
 
-                    this.totals_unfiltered.fields.reset(fields, {renderer:recline.Data.Formatters.Renderers}) ;
+                    this.totals_unfiltered.fields.reset(fields, options) ;
                     this.totals_unfiltered.records.reset(result);
             }
 
@@ -2881,6 +2908,7 @@ this.recline.Data = this.recline.Data || {};
 	};
 
     my.Formatters.Renderers = function(val, field, doc)   {
+
         var r = my.Formatters.RenderersImpl[field.attributes.type];
         if(r==null) {
             throw "No renderers defined for field type " + field.attributes.type;
@@ -2918,7 +2946,13 @@ this.recline.Data = this.recline.Data || {};
         number: function(val, field, doc) {
             var format = field.get('format');
             if (format === 'percentage') {
-                return parseFloat(val.toFixed(2)) + '%';
+                try {
+                    return parseFloat(val.toFixed(2)) + ' %';
+                } catch(err) {
+                    return "N.A.";
+                }
+
+
             } else if(format === "currency_euro") {
                 return "€ " + val;
             }
@@ -4075,6 +4109,47 @@ this.recline.Backend.JsonpMemoryStore = this.recline.Backend.JsonpMemoryStore ||
 
 }(jQuery, this.recline.Backend.JsonpMemoryStore));
 this.recline = this.recline || {};
+this.recline.Backend = this.recline.Backend || {};
+this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
+
+(function ($, my) {
+
+    /*BackendConfiguration: {
+        Backends: {
+            [id: 1,
+            backend: "Jsonp",
+            params: { url: "http://"}]
+        },
+        Behaviour: {
+            [field: id,
+                value: ""
+            backend: 1]
+        },
+    }
+
+         // common sono i valori non in or
+        // il field deve essere singolo term
+        // il valore del field determina il backend
+        // passare id del dataset nei params
+
+    my.__type__ = 'VirtualBackend';
+    my.fetch = function (dataset) {
+        console.log("Fetching data structure " + dataset.url);
+        var data = {onlydesc:"true"};
+        return requestJson(dataset, data);
+    };
+
+    my.query = function (queryObj, dataset) {
+        var data = buildRequestFromQuery(queryObj);
+        console.log("Querying jsonp backend for ");
+        console.log(data);
+        return requestJson(dataset, data, queryObj);
+
+    };
+     */
+
+}(jQuery, this.recline.Backend.Jsonp));
+this.recline = this.recline || {};
 this.recline.View = this.recline.View || {};
 
 (function ($, view) {
@@ -4338,7 +4413,7 @@ this.recline.View = this.recline.View || {};
                 _.each(self.options.measures, function (d) {
 
 
-                    var model = new recline.Model.Dataset({ records:[r.toJSON()], fields:r.fields.toJSON() });
+                    var model = new recline.Model.Dataset({ records:[r.toJSON()], fields:r.fields.toJSON() , renderer:self.model.attributes.renderer});
 
                     var val = {
                         view:d.view,
@@ -4422,7 +4497,7 @@ this.recline.View = this.recline.View || {};
                 if (condensed == true)
                 	template = templates.templateCondensed;
                 
-                return {data:data, template:template, unrenderedValue: unrenderedValue, percentageMsg: "% of total: "};
+                return {data:data, template:template, unrenderedValue: unrenderedValue, percentageMsg: " % of total: "};
             },
             percentageVariation:function (kpi, compare, templates, condensed) {
                 var tmpField = new recline.Model.Field({type:"number", format:"percentage"});
@@ -4432,7 +4507,7 @@ this.recline.View = this.recline.View || {};
                 if (condensed == true)
                 	template = templates.templateCondensed;
 
-                return {data:data, template:template, unrenderedValue: unrenderedValue, percentageMsg: "% variation: "};
+                return {data:data, template:template, unrenderedValue: unrenderedValue, percentageMsg: " % variation: "};
             },
             nocompare: function (kpi, compare, templates, condensed){
                 var template = templates.templateBase;
@@ -4561,10 +4636,21 @@ this.recline.View = this.recline.View || {};
                 kpiValue = kpi[0].getFieldValueUnrendered(field);
                 tmplData["value"] = kpi[0].getFieldValue(field);
                 tmplData["shape"] = kpi[0].getFieldShape(field, true, false);
-                if (self.options.state.condensed == true && textField)
-                	tmplData["label"] = kpi[0].getFieldValue(textField);
+                if (self.options.state.condensed == true && textField){
+                	if (self.options.maxLabelLength){ // TODO DOCUMENT the maxLabelLength option
+                		var fullText =  kpi[0].getFieldValue(textField);
+                		var truncatedText = fullText.substring(0, self.options.maxLabelLength);
+                		if ( fullText && fullText.length > self.options.maxLabelLength){
+                			tmplData["label"] = '<abbr title="' + fullText + '">'+truncatedText+'...</abbr>';	
+                		} else {
+                			tmplData["label"] = kpi[0].getFieldValue(textField);
+                		}                			
+                	} else {
+                		tmplData["label"] = kpi[0].getFieldValue(textField);	
+                	}                	
+                }	
             }
-            else tmplData["value"] = "N/A"
+            else tmplData["value"] = "N/A";
 
             var template = this.templates.templateBase;
             if (self.options.state.condensed == true)
@@ -6859,7 +6945,7 @@ this.recline.View = this.recline.View || {};
     "use strict";
 
     view.xCharts = Backbone.View.extend({
-        template:'<figure style="width: {{width}}px; height: {{height}}px;" id="{{uid}}"></figure><div class="xCharts-title-x" style="width:{{width}}px;text-align:center;margin-left:50px">{{xAxisTitle}}</div>',
+        template:'<figure style="clear:both; width: {{width}}px; height: {{height}}px;" id="{{uid}}"></figure><div class="xCharts-title-x" style="width:{{width}}px;text-align:center;margin-left:50px">{{xAxisTitle}}</div>',
 
         initialize:function (options) {
 
@@ -7221,7 +7307,7 @@ this.recline.View = this.recline.View || {};
         },
 
         redraw:function () {
-            console.log("Widget.datepicker: redraw");
+            //console.log("Widget.datepicker: redraw");
             // todo must use dateranges methods
 
            if(!this.model) return;
@@ -7297,7 +7383,7 @@ this.recline.View = this.recline.View || {};
         	}
         },
         redrawCompare:function () {
-            console.log("Widget.datepicker: redrawcompare");
+            //console.log("Widget.datepicker: redrawcompare");
             var self=this;
 
             var period = $('.date-ranges-picker').DatePickerGetDate()[0];

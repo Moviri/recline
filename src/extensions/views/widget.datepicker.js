@@ -126,7 +126,7 @@ this.recline.View = this.recline.View || {};
         },
 
         redraw:function () {
-            console.log("Widget.datepicker: redraw");
+            //console.log("Widget.datepicker: redraw");
             // todo must use dateranges methods
 
            if(!this.model) return;
@@ -202,7 +202,7 @@ this.recline.View = this.recline.View || {};
         	}
         },
         redrawCompare:function () {
-            console.log("Widget.datepicker: redrawcompare");
+            //console.log("Widget.datepicker: redrawcompare");
             var self=this;
 
             var period = $('.date-ranges-picker').DatePickerGetDate()[0];

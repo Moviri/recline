@@ -87,11 +87,14 @@ recline.Model.Dataset.prototype = $.extend(recline.Model.Dataset.prototype, {
             if (queryResult.fields && self.fields.length == 0) {
 
                 recline.Data.FieldsUtility.setFieldsAttributes(queryResult.fields, self);
-                var options = {renderer:recline.Data.Formatters.Renderers};
+                var options;
+                if (self.attributes.renderer)
+                  options = { renderer: self.attributes.renderer};
+
+
                 self.fields.reset(queryResult.fields, options);
 
             }
-
 
             return super_init.call(this, queryResult);
 

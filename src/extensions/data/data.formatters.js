@@ -65,6 +65,7 @@ this.recline.Data = this.recline.Data || {};
 	};
 
     my.Formatters.Renderers = function(val, field, doc)   {
+
         var r = my.Formatters.RenderersImpl[field.attributes.type];
         if(r==null) {
             throw "No renderers defined for field type " + field.attributes.type;
@@ -102,7 +103,13 @@ this.recline.Data = this.recline.Data || {};
         number: function(val, field, doc) {
             var format = field.get('format');
             if (format === 'percentage') {
-                return parseFloat(val.toFixed(2)) + '%';
+                try {
+                    return parseFloat(val.toFixed(2)) + ' %';
+                } catch(err) {
+                    return "N.A.";
+                }
+
+
             } else if(format === "currency_euro") {
                 return "€ " + val;
             }

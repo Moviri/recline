@@ -262,7 +262,7 @@ this.recline.View = this.recline.View || {};
                 _.each(self.options.measures, function (d) {
 
 
-                    var model = new recline.Model.Dataset({ records:[r.toJSON()], fields:r.fields.toJSON() });
+                    var model = new recline.Model.Dataset({ records:[r.toJSON()], fields:r.fields.toJSON() , renderer:self.model.attributes.renderer});
 
                     var val = {
                         view:d.view,

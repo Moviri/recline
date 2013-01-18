@@ -34,7 +34,7 @@ this.recline.View = this.recline.View || {};
                 if (condensed == true)
                 	template = templates.templateCondensed;
                 
-                return {data:data, template:template, unrenderedValue: unrenderedValue, percentageMsg: "% of total: "};
+                return {data:data, template:template, unrenderedValue: unrenderedValue, percentageMsg: " % of total: "};
             },
             percentageVariation:function (kpi, compare, templates, condensed) {
                 var tmpField = new recline.Model.Field({type:"number", format:"percentage"});
@@ -44,7 +44,7 @@ this.recline.View = this.recline.View || {};
                 if (condensed == true)
                 	template = templates.templateCondensed;
 
-                return {data:data, template:template, unrenderedValue: unrenderedValue, percentageMsg: "% variation: "};
+                return {data:data, template:template, unrenderedValue: unrenderedValue, percentageMsg: " % variation: "};
             },
             nocompare: function (kpi, compare, templates, condensed){
                 var template = templates.templateBase;
@@ -173,10 +173,21 @@ this.recline.View = this.recline.View || {};
                 kpiValue = kpi[0].getFieldValueUnrendered(field);
                 tmplData["value"] = kpi[0].getFieldValue(field);
                 tmplData["shape"] = kpi[0].getFieldShape(field, true, false);
-                if (self.options.state.condensed == true && textField)
-                	tmplData["label"] = kpi[0].getFieldValue(textField);
+                if (self.options.state.condensed == true && textField){
+                	if (self.options.maxLabelLength){ // TODO DOCUMENT the maxLabelLength option
+                		var fullText =  kpi[0].getFieldValue(textField);
+                		var truncatedText = fullText.substring(0, self.options.maxLabelLength);
+                		if ( fullText && fullText.length > self.options.maxLabelLength){
+                			tmplData["label"] = '<abbr title="' + fullText + '">'+truncatedText+'...</abbr>';	
+                		} else {
+                			tmplData["label"] = kpi[0].getFieldValue(textField);
+                		}                			
+                	} else {
+                		tmplData["label"] = kpi[0].getFieldValue(textField);	
+                	}                	
+                }	
             }
-            else tmplData["value"] = "N/A"
+            else tmplData["value"] = "N/A";
 
             var template = this.templates.templateBase;
             if (self.options.state.condensed == true)
