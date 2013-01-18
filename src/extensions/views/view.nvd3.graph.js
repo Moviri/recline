@@ -150,6 +150,36 @@ this.recline.View = this.recline.View || {};
 
             nv.addGraph(function () {
                 self.chart = self.getGraph[graphType](self);
+                
+                if (self.options.state.options.noTicksX)
+                    self.chart.xAxis.tickFormat(function (d) { return ''; });                	
+                if (self.options.state.options.noTicksY)
+                    self.chart.yAxis.tickFormat(function (d) { return ''; });                	
+                	
+//                console.log("Replacing original tooltips")
+//                self.chart.tooltips = false;
+//                var tooltip2 = document.getElementById('chart_custom_Tooltip')
+//                if (!tooltip2)
+//            	{
+//                    tooltip2 = document.createElement('div')
+//                    tooltip2.className = 'hero-unit';
+//                    tooltip2.id='chart_custom_Tooltip'
+//                    $(tooltip2).css('min-height', 0).css('display', 'none').css('white-space', 'nowrap');
+//                    document.body.appendChild(tooltip2);
+//            	}
+                
+//                self.chart.multibar.dispatch.on('elementMouseover.tooltip', function(e) {
+//                	//console.log(e)
+//         		    $(tooltip2).html('<h5 style="text-align:center">'+e.series.key+' - '+new Date(e.point.x).toLocaleDateString()+'</h5><hr><p style="text-align:center">'+e.point.y+'</p>')
+//         		      .css({top: e.e.pageY, left: e.e.pageX, position:"absolute"})
+//        		    
+//         	    	$(tooltip2).show();
+//                	
+//                  });
+//                self.chart.multibar.dispatch.on('elementMouseout.tooltip', function(e) {
+//                	//console.log(e)
+//                	$(tooltip2).hide();
+//                });
 
                 if (self.state.attributes.options) {
                     _.each(_.keys(self.state.attributes.options), function (d) {
@@ -170,6 +200,8 @@ this.recline.View = this.recline.View || {};
                     .call(self.chart);
 
                 nv.utils.windowResize(self.graphResize);
+                
+
                 //self.graphResize()
                 return  self.chart;
             });
@@ -335,18 +367,6 @@ this.recline.View = this.recline.View || {};
                 else
                     chart = nv.models.multiBarHorizontalChart();
                 view.setAxis("all", chart);
-
-                return chart;
-            },
-            "multiBarHorizontalChart2":function (view) {
-                var chart;
-                if (view.chart != null)
-                    chart = view.chart;
-                else
-                    chart = nv.models.multiBarHorizontalChart();
-                
-                // remove ticks on Y axis (NOTE Y axis ticks are on xAxis for this chart type)
-                chart.xAxis.tickFormat(function (d) { return ''; });
 
                 return chart;
             },
