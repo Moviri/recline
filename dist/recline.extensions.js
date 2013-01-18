@@ -4126,7 +4126,8 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
             backend: 1]
         },
     }
-        // common sono i valori non in or
+
+         // common sono i valori non in or
         // il field deve essere singolo term
         // il valore del field determina il backend
         // passare id del dataset nei params
@@ -4651,9 +4652,6 @@ this.recline.View = this.recline.View || {};
             }
             else tmplData["value"] = "N/A";
 
-            
-            console.log("###### " + tmplData["label"]  + " ######");
-            
             var template = this.templates.templateBase;
             if (self.options.state.condensed == true)
             	template = self.templates.templateCondensed;            

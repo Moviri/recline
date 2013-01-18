@@ -4,7 +4,7 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
 
 (function ($, my) {
 
-    BackendConfiguration: {
+    /*BackendConfiguration: {
         Backends: {
             [id: 1,
             backend: "Jsonp",
@@ -16,7 +16,8 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
             backend: 1]
         },
     }
-        // common sono i valori non in or
+
+         // common sono i valori non in or
         // il field deve essere singolo term
         // il valore del field determina il backend
         // passare id del dataset nei params
