@@ -358,7 +358,27 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
             if(this.attributes["colorSchema"])
                 this.joinedModel.attributes["colorSchema"] = this.attributes["colorSchema"];
             return this.joinedModel.setColorSchema();
+        },
+        // a color schema is linked to the dataset but colors are not recalculated upon data/field reset
+        addStaticColorSchema: function(colorSchema, field) {
+            var self = this;
+            if (!self.attributes["colorSchema"])
+                self.attributes["colorSchema"] = [];
+
+            self.attributes["colorSchema"].push({schema:colorSchema, field:field});
+            this.joinedModel.attributes["colorSchema"] = this.attributes["colorSchema"];
+
+            self.setColorSchema();
+
+            self.fields.bind('reset', function () {
+                self.setColorSchema();
+            });
+            self.fields.bind('add', function () {
+                self.setColorSchema();
+            });
+
         }
+
 
     })
 
@@ -399,9 +419,16 @@ recline.Model.Query.prototype = $.extend(recline.Model.Query.prototype, {
 
             self.attributes["colorSchema"].push({schema:colorSchema, field:field});
 
-            self.setColorSchema();
+            if(self.fields.length > 0)
+                self.setColorSchema();
 
             self.fields.bind('reset', function () {
+                self.setColorSchema();
+            });
+            self.fields.bind('add', function () {
+                self.setColorSchema();
+            });
+            self.fields.bind('change', function () {
                 self.setColorSchema();
             });
 
@@ -2604,8 +2631,9 @@ this.recline.Data.ColorSchema = this.recline.Data.ColorSchema || {};
                 case "scaleWithDistinctData":
                     self.schema = new chroma.ColorScale({
                         colors:this.attributes.colors,
-                        limits:this.limits["distinct"](data)
+                        limits: [0, 1]
                     });
+                     self.limitsMapping = this.limits["distinct"](data);
                     break;
                 case "fixedLimits":
                     self.schema = new chroma.ColorScale({
@@ -2636,8 +2664,11 @@ this.recline.Data.ColorSchema = this.recline.Data.ColorSchema || {};
             if (this.schema == null)
                 throw "data.colors.js: colorschema not yet initialized, datasource not fetched?"
 
-
-            return this.schema.getColor(recline.Data.Transform.getFieldHash(fieldValue));
+            var hashed = recline.Data.Transform.getFieldHash(fieldValue);
+            if(self.limitsMapping)
+                return this.schema.getColor( self.limitsMapping[hashed] );
+            else
+                return this.schema.getColor(hashed);
         },
 
         getTwoDimensionalColor:function (startingvalue, variation) {
@@ -2705,12 +2736,16 @@ this.recline.Data.ColorSchema = this.recline.Data.ColorSchema || {};
                 return limit;
             },
             distinct:function (data) {
-                var tmp = [];
-                _.each(_.uniq(data), function (d) {
-                    tmp.push(recline.Data.Transform.getFieldHash(d));
 
+                var i = 1;
+                var uniq = _.uniq(data);
+                var obj = {};
+                _.each(uniq, function (d) {
+
+                    obj[recline.Data.Transform.getFieldHash(d)] = i/uniq.length;
+                    i++;
                 });
-                return tmp;
+                return obj;
             }
 
         }
