@@ -5020,7 +5020,8 @@ this.recline.View = this.recline.View || {};
                 if (condensed == true)
                 	template = templates.templateCondensed;
 
-                return {data:data, template:template, unrenderedValue: unrenderedValue, percentageMsg: " % variation: "};
+//                return {data:data, template:template, unrenderedValue: unrenderedValue, percentageMsg: " % variation: "};
+                return {data:data, template:template, unrenderedValue: unrenderedValue, percentageMsg: ""};
             },
             nocompare: function (kpi, compare, templates, condensed){
                 var template = templates.templateBase;
@@ -5086,19 +5087,34 @@ this.recline.View = this.recline.View || {};
         </div>'
 
 ,
-   templatePercentage:
-   '<div class="indicator"> \
-      <div class="panel indicator_{{viewId}}"> \
-        <div id="indicator_{{viewId}}"> \
-			 <table class="indicator-table"> \
-                <tr class="titlerow"><td></td><td class="title">{{{label}}}</td></tr>    \
-                <tr class="descriptionrow"><td></td><td class="description"><small>{{description}}</small></td></tr>    \
-                <tr class="shaperow"><td><div class="shape">{{{shape}}}</div><div class="compareshape">{{{compareShape}}}</div></td><td class="value-cell">{{value}}</td></tr>  \
-                <tr class="comparerow"><td></td><td class="comparelabel">{{percentageMsg}}<b>{{compareValue}}</b> (<b>{{compareWithValue}}</b>)</td></tr>  \
-             </table>  \
-		</div>\
-      </div> \
-    </div> '
+//   templatePercentage:
+//   '<div class="indicator"> \
+//      <div class="panel indicator_{{viewId}}"> \
+//        <div id="indicator_{{viewId}}"> \
+//			 <table class="indicator-table"> \
+//                <tr class="titlerow"><td></td><td class="title">{{{label}}}</td></tr>    \
+//                <tr class="descriptionrow"><td></td><td class="description"><small>{{description}}</small></td></tr>    \
+//                <tr class="shaperow"><td><div class="shape">{{{shape}}}</div><div class="compareshape">{{{compareShape}}}</div></td><td class="value-cell">{{value}}</td></tr>  \
+//                <tr class="comparerow"><td></td><td class="comparelabel">{{percentageMsg}}<b>{{compareValue}}</b> (<b>{{compareWithValue}}</b>)</td></tr>  \
+//             </table>  \
+//		</div>\
+//      </div> \
+//    </div> '
+		
+	templatePercentage:
+	   '<div class="indicator"> \
+	      <div class="panel indicator_{{viewId}}"> \
+	        <div id="indicator_{{viewId}}"> \
+				 <table class="indicator-table"> \
+	                <tr class="titlerow"><td></td><td class="title">{{{label}}}</td></tr>    \
+	                <tr class="descriptionrow"><td></td><td class="description"><small>{{description}}</small></td></tr>    \
+	                <tr class="shaperow"><td class="value-cell"> <div style="white-space: nowrap"> {{value}} {{{compareShape}}}</div> </td></tr>  \
+	                <tr class="comparerow"><td></td><td class="comparelabel">{{percentageMsg}}<b>{{compareValue}}</b> (<b>{{compareWithValue}}</b>)</td></tr>  \
+	             </table>  \
+			</div>\
+	      </div> \
+	    </div> '
+	
         },
         initialize:function (options) {
             var self = this;
@@ -7684,18 +7700,34 @@ this.recline.View = this.recline.View || {};
 
         createLegend: function() {
             var self=this;
-            var res = "";
-            var resStyle = "<style>";
+            var res = $("<div/>");
             var i =0;
             _.each(self.series.main, function(d) {
-                res +=("class='xchart color" +i+ "' " + d.name + " " + "</br>");
-                resStyle += "color"+i+":"  + d.color;
+            	
+            	if (d.color){
+                	$("<style type='text/css'> " +
+                			".color"+i+"{ color:rgb("+d.color.rgb+");} " +
+                			".legendcolor"+i+"{ color:rgb("+d.color.rgb+"); background-color:rgb("+d.color.rgb+"); } " +
+                			".xchart .color"+i+" .fill { fill:rgba("+d.color.rgb+",0.1);} " +
+        					".xchart .color"+i+" .line { stroke:rgb("+d.color.rgb+");} " +    
+        					".xchart .color"+i+" rect, .xchart .color"+i+" circle { fill:rgb("+d.color.rgb+");} " +
+    					"</style>").appendTo("head");
+                	var legendItem = $('<div class="legend_item"/>');
+                	var name = $("<span/>");
+                	name.html(d.name);
+                	legendItem.append(name);
+                	var value = $('<div class="legend_item_value"/>');
+                	value.addClass("legendcolor"+i);
+                	legendItem.append(value);
+                	res.append(legendItem);
+            	} else {
+            		console.log('d.color not defined');
+            	}   
+            	
                 i++;
             })
 
-            resStyle +="</style>"
-            self.options.state.legend.append(res);
-            self.options.state.legend.append(resStyle);
+            self.options.state.legend.html(res);
 
         },
 
