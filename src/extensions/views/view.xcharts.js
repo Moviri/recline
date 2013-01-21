@@ -28,6 +28,7 @@ this.recline.View = this.recline.View || {};
             this.height= options.state.height;
             this.width = options.state.width;
             this.xAxisTitle = options.state.xAxisTitle;
+            this.yAxisTitle = options.state.yAxisTitle;
         },
 
         render:function () {
@@ -96,7 +97,17 @@ this.recline.View = this.recline.View || {};
         	{
             	self.graph = new xChart(state.type, self.series, '#' + self.uid, state.opts);
                 this.el.find('div.xCharts-title-x').html(self.options.state.xAxisTitle)
-        	}
+
+                // add Y-Axis title
+                if (self.options.state.yAxisTitle)
+            	{
+                	var fullHeight = self.graph._height + self.graph._options.axisPaddingTop + self.graph._options.axisPaddingBottom
+            	
+	                self.graph._gScale.selectAll('g.axisY g.titleY').data([self.options.state.yAxisTitle]).enter()
+	                	.append('g').attr('class', 'titleY').attr('transform', 'translate(-30,'+fullHeight/2+') rotate(-90)')
+	                	.append('text').attr('x', -3).attr('y', 0).attr('dy', ".32em").attr('text-anchor', "middle").text(function(d) { return d; });
+            	}
+            }
             else
             {
             	this.el.find('figure').append(new recline.View.NoDataMsg().create());
