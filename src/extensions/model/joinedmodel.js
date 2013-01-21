@@ -95,7 +95,12 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
                     tmpFields.push(c);
                 });
             });
-            this.joinedModel.resetFields(tmpFields);
+
+            var options;
+            if (this.attributes.renderer)
+                options = { renderer: self.attributes.renderer};
+
+            this.joinedModel.resetFields(tmpFields, options);
         },
 
 

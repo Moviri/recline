@@ -248,7 +248,12 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
                     tmpFields.push(c);
                 });
             });
-            this.joinedModel.resetFields(tmpFields);
+
+            var options;
+            if (this.attributes.renderer)
+                options = { renderer: self.attributes.renderer};
+
+            this.joinedModel.resetFields(tmpFields, options);
         },
 
 
@@ -1044,7 +1049,12 @@ this.recline.Model.UnionDataset = this.recline.Model.UnionDataset || {};
                     tmpFields.push(f.toJSON());
                 });
             });
-            this.unionModel.resetFields(tmpFields);
+
+            var options;
+            if (this.attributes.renderer)
+                options = { renderer: self.attributes.renderer};
+
+            this.unionModel.resetFields(tmpFields, options);
         },
 
 
