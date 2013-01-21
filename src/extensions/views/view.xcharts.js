@@ -94,7 +94,7 @@ this.recline.View = this.recline.View || {};
             self.updateSeries();
             if (self.series.main && self.series.main.length && self.series.main[0].data && self.series.main[0].data.length)
         	{
-            	self.graph = new xChart(state.type, self.series, '#' + self.uid, opts);
+            	self.graph = new xChart(state.type, self.series, '#' + self.uid, state.opts);
                 this.el.find('div.xCharts-title-x').html(self.options.state.xAxisTitle)
         	}
             else
