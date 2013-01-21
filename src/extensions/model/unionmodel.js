@@ -107,7 +107,7 @@ this.recline.Model.UnionDataset = this.recline.Model.UnionDataset || {};
 
             var options;
             if (this.attributes.renderer)
-                options = { renderer: self.attributes.renderer};
+                options = { renderer: this.attributes.renderer};
 
             this.unionModel.resetFields(tmpFields, options);
         },
