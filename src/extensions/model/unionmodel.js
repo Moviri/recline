@@ -19,7 +19,7 @@ this.recline.Model.UnionDataset = this.recline.Model.UnionDataset || {};
 
             self.ds_fetched = [];
 
-            self.unionModel = new my.Dataset({backend: "Memory", records:[], fields: []});
+            self.unionModel = new my.Dataset({backend: "Memory", records:[], fields: [], renderer: self.attributes.renderer});
 
             self.fields = self.unionModel.fields;
             self.records = self.unionModel.records;
@@ -93,6 +93,7 @@ this.recline.Model.UnionDataset = this.recline.Model.UnionDataset || {};
         },
 
         generateFields:function () {
+            var self=this;
             var tmpFields = [];
             _.each(this.attributes.model.fields.models, function (f) {
                 tmpFields.push(f.toJSON());
@@ -105,11 +106,10 @@ this.recline.Model.UnionDataset = this.recline.Model.UnionDataset || {};
                 });
             });
 
-            var options;
-            if (this.attributes.renderer)
-                options = { renderer: this.attributes.renderer};
 
-            this.unionModel.resetFields(tmpFields, options);
+            this.unionModel.resetFields(tmpFields);
+
+
         },
 
 

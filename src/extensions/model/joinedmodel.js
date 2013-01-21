@@ -19,7 +19,7 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
 
             self.ds_fetched = [];
 
-            self.joinedModel = new my.Dataset({backend: "Memory", records:[], fields: []});
+            self.joinedModel = new my.Dataset({backend: "Memory", records:[], fields: [], renderer: self.attributes.renderer});
 
             self.fields = self.joinedModel.fields;
             self.records = self.joinedModel.records;
@@ -81,6 +81,7 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
         },
 
         generatefields:function () {
+            var self=this;
             var tmpFields = [];
             _.each(this.attributes.model.fields.models, function (f) {
                 var c = f.toJSON();
@@ -96,11 +97,9 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
                 });
             });
 
-            var options;
-            if (this.attributes.renderer)
-                options = { renderer: this.attributes.renderer};
 
-            this.joinedModel.resetFields(tmpFields, options);
+            this.joinedModel.resetFields(tmpFields);
+
         },
 
 
@@ -114,6 +113,7 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
             var results = self.join();
 
             self.joinedModel.resetRecords(results);
+
             self.joinedModel.fetch();
             self.recordCount = self.joinedModel.recordCount;
 
