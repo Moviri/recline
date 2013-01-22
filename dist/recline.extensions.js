@@ -1041,13 +1041,13 @@ this.recline.Model.UnionDataset = this.recline.Model.UnionDataset || {};
             var self=this;
             var tmpFields = [];
             _.each(this.attributes.model.fields.models, function (f) {
-                tmpFields.push(f.toJSON());
+                tmpFields.push(f);
             });
 
             _.each(this.attributes.union, function(p) {
                 _.each(p.model.fields.models, function (f) {
                     if(!_.find(tmpFields, function(r) { return r.id==f.id; } ))
-                    tmpFields.push(f.toJSON());
+                    tmpFields.push(f);
                 });
             });
 

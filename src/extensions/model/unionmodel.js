@@ -94,15 +94,20 @@ this.recline.Model.UnionDataset = this.recline.Model.UnionDataset || {};
 
         generateFields:function () {
             var self=this;
+
             var tmpFields = [];
+            var derivedFields = [];
+
             _.each(this.attributes.model.fields.models, function (f) {
                 tmpFields.push(f.toJSON());
+
             });
 
             _.each(this.attributes.union, function(p) {
                 _.each(p.model.fields.models, function (f) {
                     if(!_.find(tmpFields, function(r) { return r.id==f.id; } ))
                     tmpFields.push(f.toJSON());
+
                 });
             });
 
