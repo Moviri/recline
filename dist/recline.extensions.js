@@ -7208,14 +7208,6 @@ this.recline.View = this.recline.View || {};
             this.width = options.state.width;
             this.xAxisTitle = options.state.xAxisTitle;
             this.yAxisTitle = options.state.yAxisTitle;
-            
-//            var myAxisVis = {
-//               	 enter: function () { console.log("enter"); }, 
-//               	 update: function () { console.log("update"); }, 
-//               	 exit: function () { console.log("exit"); }, 
-//               	 destroy: function () { console.log("destroy"); } 
-//               	};
-//               xChart.setVis('myAxisVis', myAxisVis);
         },
 
         render:function () {
@@ -7289,7 +7281,6 @@ this.recline.View = this.recline.View || {};
                 if (self.options.state.yAxisTitle)
             	{
                 	var fullHeight = self.graph._height + self.graph._options.axisPaddingTop + self.graph._options.axisPaddingBottom
-                	console.log("fullHeight = "+fullHeight)
             	
 	                self.graph._gScale.selectAll('g.axisY g.titleY').data([self.options.state.yAxisTitle]).enter()
 	                	.append('g').attr('class', 'titleY').attr('transform', 'translate(-30,'+fullHeight/2+') rotate(-90)')
