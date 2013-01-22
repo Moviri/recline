@@ -5414,7 +5414,6 @@ this.recline.View = this.recline.View || {};
             var xLabel = this.state.get("xLabel");
             var yLabel = this.state.get("yLabel");
 
-
             nv.addGraph(function () {
                 self.chart = self.getGraph[graphType](self);
                 
@@ -5423,30 +5422,32 @@ this.recline.View = this.recline.View || {};
                 if (self.options.state.options.noTicksY)
                     self.chart.yAxis.tickFormat(function (d) { return ''; });                	
                 	
-//                console.log("Replacing original tooltips")
-//                self.chart.tooltips = false;
-//                var tooltip2 = document.getElementById('chart_custom_Tooltip')
-//                if (!tooltip2)
-//            	{
-//                    tooltip2 = document.createElement('div')
-//                    tooltip2.className = 'hero-unit';
-//                    tooltip2.id='chart_custom_Tooltip'
-//                    $(tooltip2).css('min-height', 0).css('display', 'none').css('white-space', 'nowrap');
-//                    document.body.appendChild(tooltip2);
-//            	}
-                
-//                self.chart.multibar.dispatch.on('elementMouseover.tooltip', function(e) {
-//                	//console.log(e)
-//         		    $(tooltip2).html('<h5 style="text-align:center">'+e.series.key+' - '+new Date(e.point.x).toLocaleDateString()+'</h5><hr><p style="text-align:center">'+e.point.y+'</p>')
-//         		      .css({top: e.e.pageY, left: e.e.pageX, position:"absolute"})
-//        		    
-//         	    	$(tooltip2).show();
-//                	
-//                  });
-//                self.chart.multibar.dispatch.on('elementMouseout.tooltip', function(e) {
-//                	//console.log(e)
-//                	$(tooltip2).hide();
-//                });
+                if (self.options.state.options.customTooltips)
+            	{
+                	var leftOffset = 10;
+                	var topOffset = 0;
+                    console.log("Replacing original tooltips")
+                    
+                    var xfield = self.model.fields.get(self.state.attributes.group);
+                    var yfield = self.model.fields.get(self.state.attributes.series);
+                    
+                    self.chart.multibar.dispatch.on('elementMouseover.tooltip', function(e) {
+                        var pos = {top: e.e.pageY, left: e.e.pageX}
+                        var values = { 
+                        				x: self.getFormatter[xfield.get('type')](e.point.x),
+                        				y: e.point.y,
+                        				xLabel: e.series.key,
+                        				yLabel: "" 
+                        			}
+                        var content = Mustache.render(self.options.state.options.customTooltips, values);
+
+                        nv.tooltip.show([pos.left+leftOffset, pos.top+topOffset], content, (pos.left < self.el[0].offsetLeft + self.el.width()/2 ? 'w' : 'e'), null, self.el[0]);
+                      });
+                    
+                    self.chart.multibar.dispatch.on('elementMouseout.tooltip', function(e) {
+                    	nv.tooltip.cleanup();
+                    });
+            	}
 
                 if (self.state.attributes.options) {
                     _.each(_.keys(self.state.attributes.options), function (d) {
