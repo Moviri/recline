@@ -1039,15 +1039,20 @@ this.recline.Model.UnionDataset = this.recline.Model.UnionDataset || {};
 
         generateFields:function () {
             var self=this;
+
             var tmpFields = [];
+            var derivedFields = [];
+
             _.each(this.attributes.model.fields.models, function (f) {
-                tmpFields.push(f);
+                tmpFields.push(f.toJSON());
+
             });
 
             _.each(this.attributes.union, function(p) {
                 _.each(p.model.fields.models, function (f) {
                     if(!_.find(tmpFields, function(r) { return r.id==f.id; } ))
-                    tmpFields.push(f);
+                    tmpFields.push(f.toJSON());
+
                 });
             });
 
@@ -7482,46 +7487,41 @@ this.recline.View = this.recline.View || {};
         //previousperiod
 
         onChange: function(view) {
-        	console.log("on change")
+        	//console.log("on change")
             var exec = function (data, widget) {
-
+        	var value = []
             var actions = view.getActionsForEvent("selection");
-
             if (actions.length > 0) {
                 var startDate= new Date(data.dr1from_millis);
                 var endDate= new Date(data.dr1to_millis);
                 var rangetype = view.daterange[data.daterangePreset];
 
-                var value =   [
+                value =   [
                     {field: "date", value: [startDate, endDate]},
                     {field: "rangetype", value: [rangetype]}
                 ];
-
                 view.doActions(actions, value );
             }
-
-
-
             var actions_compare = view.getActionsForEvent("selection_compare");
-
+        	var value_compare = []
             if (actions_compare.length > 0) {
                 var rangetype = view.daterange[data.daterangePreset];
                 if(data.comparisonPreset != "previousperiod")
                     rangetype = view.daterange[data.comparisonPreset];
 
-                var date_compare = [{field: "date", value: [null, null]}];
+                value_compare = [{field: "date", value: [null, null]}];
 
                 if (data.comparisonEnabled) {
                     var startDate= new Date(data.dr2from_millis);
                     var endDate= new Date(data.dr2to_millis);
                     if(startDate != null && endDate != null)
-                        var date_compare =   [
+                    	value_compare = [
                             {field: "date", value: [startDate, endDate]},
                             {field: "rangetype", value: [rangetype]}
                         ];
                 }
 
-                view.doActions(actions_compare, date_compare);
+                view.doActions(actions_compare, value_compare);
             }
 
         }
@@ -7533,7 +7533,6 @@ this.recline.View = this.recline.View || {};
             _.each(actions, function (d) {
                 d.action.doActionWithValues(values, d.mapping);
             });
-
         },
 
         render:function () {
@@ -7554,8 +7553,6 @@ this.recline.View = this.recline.View || {};
 
             self.redraw();
             self.redrawCompare();
-
-            self.fullyInitialized = true;
         },
 
         redraw:function () {
@@ -7623,10 +7620,9 @@ this.recline.View = this.recline.View || {};
                     	self.applyTextInputDateChange($(this).val(), self, true, true)
                     	self.maindateFromChanged = false
             		}
-                	console.log(self)
                 })
                 $('.dr1.to').bind("blur", function(e) {
-                	if (self.maindateFromChanged)
+                	if (self.maindateToChanged)
             		{
     	            	self.applyTextInputDateChange($(this).val(), self, true, false)
     	            	self.maindateToChanged = false
@@ -7704,14 +7700,14 @@ this.recline.View = this.recline.View || {};
                 		}
                     })
                     $('.dr2.to').bind("blur", function(e) {
-                    	if (self.comparedateFromChanged)
+                    	if (self.comparedateToChanged)
                 		{
         	            	self.applyTextInputDateChange($(this).val(), self, false, false)
         	            	self.comparedateToChanged = false
                 		}
-                    })        
+                    })
+                    self.fullyInitialized = true;
             	}
-                
             }
         },
         retrieveDMYDate: function(dateStr) {
@@ -7733,7 +7729,6 @@ this.recline.View = this.recline.View || {};
 			{
     			//console.log(currVal+ " is VALID!: "+d.toLocaleDateString())
         		var options = self.datepicker.data("DateRangesWidget").options
-        		//console.log(options)
         		var values = options.values;
     			if (isMain)
 				{
@@ -7758,24 +7753,22 @@ this.recline.View = this.recline.View || {};
     				{
     					values.dr2from = currVal
     	                values.dr2from_millis = d.getTime()
-                        $('.dr2.from_millis', self.datepicker).val(values.dr2from_millis);
+                        $('.dr2.from_millis').val(d.toString());
     	    			$(".datepicker.selectableRange").data('datepicker').date[2] = d.getTime()
     				}
     				else
 					{
     	                values.dr2to = currVal
     	                values.dr2to_millis = d.getTime()
-                        $('.dr2.to_millis', self.datepicker).val(values.dr2to_millis);
+                        $('.dr2.to_millis').val(d.toString());
     	    			$(".datepicker.selectableRange").data('datepicker').date[3] = d.getTime()
 					}
 				}
-    			// this hack is used to force a refresh of the month calendar, since setmode calls fill() method 
-    			$('.date-ranges-picker').DatePickerSetMode($('.date-ranges-picker').DatePickerGetMode());
+    			// this hack is used to force a refresh of the month calendar, since setmode calls fill() method
+				$('.date-ranges-picker').DatePickerSetMode($('.date-ranges-picker').DatePickerGetMode());
 			}
     		//else console.log(currVal+ " is NOT VALID!")
-    			
         },
-
 
         getActionsForEvent:function (eventType) {
             var actions = [];
