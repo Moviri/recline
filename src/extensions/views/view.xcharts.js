@@ -74,13 +74,19 @@ this.recline.View = this.recline.View || {};
         	}
             else
         	{
+            	// display NO DATA MSG
+            	
             	//self.graph.setData(self.series);
                 var graphid = "#" + this.uid;
                 if (self.graph)
                 {
-                    jQuery(graphid).empty();
+                	// removes resize event or last chart will popup again!
+                	d3.select(window).on('resize.for.' + graphid, null);
+                	$(graphid).off()
+                    $(graphid).empty();
                     delete self.graph;
                 }
+                this.el.find('figure').html("");
                 this.el.find('figure').append(new recline.View.NoDataMsg().create());
                 this.el.find('div.xCharts-title-x').html("")
             	self.graph = null
@@ -110,6 +116,17 @@ this.recline.View = this.recline.View || {};
             }
             else
             {
+            	// display NO DATA MSG
+                var graphid = "#" + this.uid;
+                if (self.graph)
+                {
+                	// removes resize event or last chart will popup again!
+                	d3.select(window).on('resize.for.' + graphid, null);
+                	$(graphid).off()
+                    $(graphid).empty();
+                    delete self.graph;
+                }
+                this.el.find('figure').html("");
             	this.el.find('figure').append(new recline.View.NoDataMsg().create());
             	this.el.find('div.xCharts-title-x').html("")
             }

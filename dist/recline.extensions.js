@@ -7266,6 +7266,7 @@ this.recline.View = this.recline.View || {};
                     jQuery(graphid).empty();
                     delete self.graph;
                 }
+                this.el.find('figure').html("");
                 this.el.find('figure').append(new recline.View.NoDataMsg().create());
                 this.el.find('div.xCharts-title-x').html("")
             	self.graph = null
@@ -7295,6 +7296,15 @@ this.recline.View = this.recline.View || {};
             }
             else
             {
+                var graphid = "#" + this.uid;
+                if (self.graph)
+                {
+                	d3.select(window).on('resize.for.' + graphid, null);
+                	$(graphid).off()
+                    $(graphid).empty();
+                    delete self.graph;
+                }
+                this.el.find('figure').html("");
             	this.el.find('figure').append(new recline.View.NoDataMsg().create());
             	this.el.find('div.xCharts-title-x').html("")
             }
