@@ -6703,7 +6703,17 @@ this.recline.View = this.recline.View || {};
             // Order them if there is ordering info on the state
             if (columnsOrderToUse) {
                 visibleColumns = visibleColumns.sort(function (a, b) {
-                    return _.indexOf(columnsOrderToUse, a.id) > _.indexOf(columnsOrderToUse, b.id) ? 1 : -1;
+                	var posA = _.indexOf(columnsOrderToUse, a.id);
+                	var posB = _.indexOf(columnsOrderToUse, b.id);
+                	if (posA >= 0 && posB >= 0)
+                		return (posA > posB ? 1 : -1);
+                	// innerChart must always be last
+                	// lineNumberField must always be first
+                	else if (a.id == 'innerChart'  || b.id == 'lineNumberField') 
+                		return 1
+                	else if (b.id == 'innerChart' || a.id == 'lineNumberField' )
+                		return -1
+                	else return (posA < posB ? 1 : -1)
                 });
                 columns = columns.sort(function (a, b) {
                     return _.indexOf(columnsOrderToUse, a.id) > _.indexOf(columnsOrderToUse, b.id) ? 1 : -1;
