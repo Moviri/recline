@@ -130,10 +130,14 @@ this.recline = this.recline || {};
                 // foreach type and dataset add all filters and trigger events
                 _.each(type, function (type) {
                     _.each(models, function (m) {
-
+                    	// use the same starting filter object on all datasets, to ensure setFilter works correctly on filter removal
+                    	var clonedTargetFilters = []
+                    	_.each(targetFilters, function(targetF) {
+                    		clonedTargetFilters.push(_.clone(targetF))
+                    	}) 
                         var modified = false;
 
-                        _.each(targetFilters, function (f) {
+                        _.each(clonedTargetFilters, function (f) {
 
                             // verify if filter is associated with current model
                             if (_.find(m.filters, function (x) {
