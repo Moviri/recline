@@ -667,7 +667,7 @@ recline.Model.Query.prototype = $.extend(recline.Model.Query.prototype, {
 
     setFilter:function (filter) {
         if (filter["remove"]) {
-            this.removeFilterByField(filter.field);
+            this.removeFilterByFieldNoEvent(filter.field);
             delete filter["remove"];
         } else {
 
@@ -2050,7 +2050,12 @@ this.recline = this.recline || {};
                         }
                     });
                 });
-
+                // at this points all filter removals have already been parsed. 
+                // so: delete all "remove" flags from internal filter list 
+                _.each(data, function (f) {
+                    var currentFilter = filters[f.filter];
+                    delete currentFilter["remove"]
+                });
 
             },
 
