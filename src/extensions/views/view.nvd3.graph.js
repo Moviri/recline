@@ -298,9 +298,18 @@ this.recline.View = this.recline.View || {};
                 };
                 chart.tooltip(t);
             },
-            "minmax":function () {
+            "minmax":function (chart, value) {
             },
-            "trendlines":function () {
+            "trendlines":function (chart, value) {
+            },
+            "showLegend":function(chart, value) {
+                chart.showLegend(value);
+            },
+            "showControls":function(chart, value) {
+                chart.showControls(value);
+            },
+            showValues: function(chart, value) {
+                chart.showValues(value);
             }
 
         },

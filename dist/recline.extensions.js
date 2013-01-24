@@ -1039,15 +1039,20 @@ this.recline.Model.UnionDataset = this.recline.Model.UnionDataset || {};
 
         generateFields:function () {
             var self=this;
+
             var tmpFields = [];
+            var derivedFields = [];
+
             _.each(this.attributes.model.fields.models, function (f) {
-                tmpFields.push(f);
+                tmpFields.push(f.toJSON());
+
             });
 
             _.each(this.attributes.union, function(p) {
                 _.each(p.model.fields.models, function (f) {
                     if(!_.find(tmpFields, function(r) { return r.id==f.id; } ))
-                    tmpFields.push(f);
+                    tmpFields.push(f.toJSON());
+
                 });
             });
 
@@ -1766,7 +1771,10 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
             if (dimensions != null) {
                 fields.push({id:"dimension"});
                 for (var i = 0; i < dimensions.length; i++) {
-                    var originalFieldAttributes = originalFields.get(dimensions[i]).attributes;
+                    var field = originalFields.get(dimensions[i]);
+                    if(!field)
+                        throw "VirtualModel.js: unable to find field [" + dimensions[i] + "] in model";
+                    var originalFieldAttributes = field.attributes;
                     fields.push({
                         id:dimensions[i],
                         type:originalFieldAttributes.type,
@@ -4409,7 +4417,7 @@ this.recline.View = this.recline.View || {};
                 '</div>' +
                 '</div>' +
                 '<div class="c_group c_body">' +
-                '<div class="c_row"><div class="cell cell_empty"/>{{{noData}}}</div>'+
+                '<div class="c_row"><div class="cell cell_empty"/>{{{noData}}}</div>' +
                 '{{#measures}}' +
                 '<div class="c_row">' +
                 '<div class="cell cell_title"><div><div class="rawhtml" style="vertical-align:middle;float:left">{{{rawhtml}}}</div><div style="vertical-align:middle;float:left"><div class="title">{{title}}</div><div class="subtitle">{{{subtitle}}}</div></div><div class="shape" style="vertical-align:middle;float:left">{{shape}}</div></div></div>' +
@@ -4424,7 +4432,7 @@ this.recline.View = this.recline.View || {};
                 '</div>',
 
             horizontal:'<div id="{{uid}}">' +
-            	'<table><tr><td>' +
+                '<table><tr><td>' +
                 '<div class="composedview_table">' +
                 '<div class="c_group c_header">' +
                 '<div class="c_row">' +
@@ -4445,7 +4453,7 @@ this.recline.View = this.recline.View || {};
                 '{{/dimensions}}' +
                 '</div>' +
                 '</div>' +
-                '</td></tr><tr><td>{{{noData}}}</td></tr></table>'+
+                '</td></tr><tr><td>{{{noData}}}</td></tr></table>' +
                 '</div>'
         },
 
@@ -4469,6 +4477,7 @@ this.recline.View = this.recline.View || {};
                 self.options.measures[index]["measure_id"] = new Date().getTime() + Math.floor(Math.random() * 10000);
             });
 
+
             //contains the array of views contained in the composed view
             this.views = [];
 
@@ -4487,6 +4496,15 @@ this.recline.View = this.recline.View || {};
 
         },
 
+        getViewFunction:function () {
+            return function (measureID) {
+                var measure = _.find(this.measures, function (f) {
+                    return f.measure_id == measureID;
+                });
+                return measure.viewid;
+            }
+        },
+
         redraw:function () {
             var self = this;
 
@@ -4502,20 +4520,20 @@ this.recline.View = this.recline.View || {};
                     throw "ComposedView: no facet present for groupby field [" + self.options.groupBy + "]. Define a facet on the model before view render";
                 }
 
-                if(facets.attributes.terms.length == 0) 
-                	self.noData = new recline.View.NoDataMsg().create2();
-                
+                if (facets.attributes.terms.length == 0)
+                    self.noData = new recline.View.NoDataMsg().create2();
+
                 else _.each(facets.attributes.terms, function (t) {
                     if (t.count > 0) {
                         var uid = (new Date().getTime() + Math.floor(Math.random() * 10000)); // generating an unique id for the chart
 
                         var term_desc;
-                        if(self.options.rowTitle)
-                            term_desc =  self.options.rowTitle(t);
+                        if (self.options.rowTitle)
+                            term_desc = self.options.rowTitle(t);
                         else
                             term_desc = t.term;
 
-                        var dim = {term:t.term, term_desc: term_desc, id_dimension:uid, shape:t.shape};
+                        var dim = {term:t.term, term_desc:term_desc, id_dimension:uid, shape:t.shape};
 
                         dim["getDimensionIDbyMeasureID"] = function () {
                             return function (measureID) {
@@ -4529,6 +4547,20 @@ this.recline.View = this.recline.View || {};
                         self.dimensions.push(self.addFilteredMeasuresToDimension(dim, field));
                     }
                 })
+
+
+                if (self.options.totals) {
+                    var uid = (new Date().getTime() + Math.floor(Math.random() * 10000));
+                    _.each(self.addMeasuresToDimensionAllModel({id_dimension:uid}, self.options.measures, true), function (f) {
+                        self.dimensions.push(f);
+                    });
+
+
+                    _.each(self.dimensions, function (f, index) {
+                        f["getDimensionIDbyMeasureID"] = self.getViewFunction;
+                        self.dimensions[index] = f;
+                    })
+                }
 
             } else {
                 /*var field = this.model.fields.get(self.options.dimension);
@@ -4545,18 +4577,10 @@ this.recline.View = this.recline.View || {};
                 if (self.options.type == "groupByRecord")
                     dim = self.addMeasuresToDimension({id_dimension:uid});
                 else
-                    dim = self.addMeasuresToDimensionAllModel({id_dimension:uid});
+                    dim = self.addMeasuresToDimensionAllModel({id_dimension:uid}, self.options.measures);
 
-                var getViewFunction = function () {
-                    return function (measureID) {
-                        var measure = _.find(this.measures, function (f) {
-                            return f.measure_id == measureID;
-                        });
-                        return measure.viewid;
-                    }
-                };
-                _.each(dim, function(f, index) {
-                    f["getDimensionIDbyMeasureID"] = getViewFunction;
+                _.each(dim, function (f, index) {
+                    f["getDimensionIDbyMeasureID"] = self.getViewFunction;
                     dim[index] = f;
                 })
 
@@ -4574,7 +4598,7 @@ this.recline.View = this.recline.View || {};
             this.el.html(out);
 
             this.attachViews();
-            
+
             // force a resize to ensure that contained object have the correct amount of width/height
             this.el.trigger('resize');
 
@@ -4610,7 +4634,9 @@ this.recline.View = this.recline.View || {};
             })
         },
 
-
+        /*
+         for each facet pass to the view a new model containing all rows with same facet value
+         */
         addFilteredMeasuresToDimension:function (currentRow, dimensionField) {
             var self = this;
 
@@ -4618,7 +4644,7 @@ this.recline.View = this.recline.View || {};
             // a filtered dataset should be created on the original data and must be associated to the view
             var filtereddataset = new recline.Model.FilteredDataset({dataset:self.model});
 
-            var filter = {field:dimensionField.get("id"), type:"term", term:currentRow.term, term_desc: currentRow.term,fieldType:dimensionField.get("type") };
+            var filter = {field:dimensionField.get("id"), type:"term", term:currentRow.term, term_desc:currentRow.term, fieldType:dimensionField.get("type") };
             filtereddataset.queryState.addFilter(filter);
             filtereddataset.query();
             // foreach measure we need to add a view do the dimension
@@ -4643,6 +4669,11 @@ this.recline.View = this.recline.View || {};
             return currentRow;
 
         },
+
+        /*
+         for each record pass to the view a new model containing only that row
+         */
+
         addMeasuresToDimension:function (currentRow) {
             var self = this;
             var ret = [];
@@ -4653,7 +4684,7 @@ this.recline.View = this.recline.View || {};
                 _.each(self.options.measures, function (d) {
 
 
-                    var model = new recline.Model.Dataset({ records:[r.toJSON()], fields:r.fields.toJSON() , renderer:self.model.attributes.renderer});
+                    var model = new recline.Model.Dataset({ records:[r.toJSON()], fields:r.fields.toJSON(), renderer:self.model.attributes.renderer});
 
                     var val = {
                         view:d.view,
@@ -4667,25 +4698,45 @@ this.recline.View = this.recline.View || {};
                     data.push(val);
 
                 });
-                var currentRec = {measures: data, id_dimension: currentRow.id_dimension};
+                var currentRec = {measures:data, id_dimension:currentRow.id_dimension};
                 ret.push(currentRec);
             });
 
             return ret;
 
         },
-        addMeasuresToDimensionAllModel:function (currentRow) {
+
+        /*
+         pass to the view all the model
+         */
+
+        addMeasuresToDimensionAllModel:function (currentRow, measures, totals) {
             var self = this;
 
             var data = [];
 
-            _.each(self.options.measures, function (d) {
+
+            _.each(measures, function (d) {
+                var view;
+                var props;
+                if (totals) {
+                    view = d.totals.view;
+                    if(d.totals.props)
+                        props = d.totals.props;
+                    else
+                        props = {};
+                }
+                else {
+                    view = d.view;
+                    props = d.props;
+                }
+
 
                 var val = {
-                    view:d.view,
+                    view:view,
                     viewid:new Date().getTime() + Math.floor(Math.random() * 10000),
                     measure_id:d.measure_id,
-                    props:d.props,
+                    props:props,
                     dataset:self.model,
                     title:d.title,
                     subtitle:d.subtitle,
@@ -5565,9 +5616,18 @@ this.recline.View = this.recline.View || {};
                 };
                 chart.tooltip(t);
             },
-            "minmax":function () {
+            "minmax":function (chart, value) {
             },
-            "trendlines":function () {
+            "trendlines":function (chart, value) {
+            },
+            "showLegend":function(chart, value) {
+                chart.showLegend(value);
+            },
+            "showControls":function(chart, value) {
+                chart.showControls(value);
+            },
+            showValues: function(chart, value) {
+                chart.showValues(value);
             }
 
         },

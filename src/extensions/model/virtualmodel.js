@@ -636,7 +636,10 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
             if (dimensions != null) {
                 fields.push({id:"dimension"});
                 for (var i = 0; i < dimensions.length; i++) {
-                    var originalFieldAttributes = originalFields.get(dimensions[i]).attributes;
+                    var field = originalFields.get(dimensions[i]);
+                    if(!field)
+                        throw "VirtualModel.js: unable to find field [" + dimensions[i] + "] in model";
+                    var originalFieldAttributes = field.attributes;
                     fields.push({
                         id:dimensions[i],
                         type:originalFieldAttributes.type,
