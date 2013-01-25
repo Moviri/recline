@@ -3055,15 +3055,11 @@ this.recline.Data = this.recline.Data || {};
 
     // formatters define how data is rapresented in internal dataset
     my.FormattersMoviri = {
-        integer : function (e) { return parseInt(e); },
-        string  : function (e) {
-            if(e!=null)
-                return e.toString();
-            else
-                return null; },
+        integer : function (e) { return (isFinite(e) ? parseInt(e, 10) : 0);},
+        string  : function (e) { return (e ? e.toString() : null); }, 
         date    : function (e) { return new Date(parseInt(e)).valueOf() },
-        float   : function (e) { return parseFloat(e, 10); },
-        number  : function (e) { return parseFloat(e, 10); }
+        float   : function (e) { return (isFinite(e) ? parseFloat(e, 10) : 0);},
+        number  : function (e) { return (isFinite(e) ? parseFloat(e, 10) : 0);}
     };
 
     
