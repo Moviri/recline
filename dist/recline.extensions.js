@@ -4355,35 +4355,117 @@ this.recline.Backend.ParallelUnionBackend = this.recline.Backend.ParallelUnionBa
 
     my.__type__ = 'ParallelUnionBackend';
 
-    my.fetch = function (dataset) {
+    my.deferreds = function(dataset) {
         var backendsFetch = [];
         _.each(dataset.backendConfiguration.backends, function(b) {
             b["instance"] = my._backendFromString(b.backend);
-            backendsFetch.push(b.instance.fetch(dataset));
+            var deferred = b.instance.fetch(b["props"]);
+            deferred.done(function(res) {
+                _.extend(data, res);
+            });
+            backendsFetch.push(deferred) ;
+        });
+        return backendsFetch;
+    },
+
+    my.fetch = function (dataset) {
+        var dfd = new $.Deferred();
+        var data = { fields: [], records: [], useMemoryStore: false};
+
+        var backendsFetch = [];
+        _.each(dataset.backendConfiguration.backends, function(b) {
+            b["instance"] = my._backendFromString(b.backend);
+            var deferred = b.instance.fetch(b["props"]);
+            deferred.done(function(res) {
+               if(data.useMemoryStore) {
+                   data["useMemoryStore"] =  true;
+               }
+                // make the union of fields
+                _.each(res.fields, function(f) {
+                    if(!_.find(data.fields, function(ff) { return f.id==ff.id })) {
+                        data.fields.push(f);
+                    }
+                });
+
+            });
+            backendsFetch.push(deferred) ;
         });
 
-        my.fetchedData = [];
+        $.when.apply(window, backendsFetch).done(function() {
+            dfd.resolve(data).fail(my.errorOnFetching);
+        });
 
-        var dfd = $.when(backendsFetch).then(my.handleFetchedData, my.errorOnFetching);
-        return dfd;
+        return dfd.promise();
     };
 
     my.query = function (queryObj, dataset) {
-        var data = buildRequestFromQuery(queryObj);
-        console.log("Querying jsonp backend for ");
-        console.log(data);
-        return requestJson(dataset, data, queryObj);
+        var dfd = new $.Deferred();
+        var data = { fields: [], hits: [], useMemoryStore: false, facets: []};
 
+        var backendsFetch = [];
+
+        if(dataset.backendConfiguration.backendChoser) {
+            var be = dataset.backendConfiguration.backendChoser(queryObj);
+            _.each(be, function(b) {
+                var query = _.clone(queryObj);
+                query.filters = b.filters;
+                b["instance"] = my._backendFromString(b.backend.backend);
+                var deferred = b.backend.instance.query(query, b.backend["props"]);
+                deferred.done(function(res) {
+                    if(data.useMemoryStore) {
+                        data["useMemoryStore"] =  true;
+                    }
+                    // make the union of fields
+                    _.each(res.fields, function(f) {
+                        if(!_.find(data.fields, function(ff) { return f.id==ff.id })) {
+                            data.fields.push(f);
+                        }
+                    });
+                    data.hits = $.merge(data.hits, res.hits);
+                    data.facets = $.merge(data.facets, res.facets);
+                    data["total"] = data.hits.length;
+
+                });
+                backendsFetch.push(deferred) ;
+            });
+
+        } else {
+            _.each(dataset.backendConfiguration.backends, function(b) {
+                b["instance"] = my._backendFromString(b.backend);
+                var deferred = b.instance.query(queryObj, b["props"]);
+                deferred.done(function(res) {
+                    if(data.useMemoryStore) {
+                        data["useMemoryStore"] =  true;
+                    }
+                    // make the union of fields
+                    _.each(res.fields, function(f) {
+                        if(!_.find(data.fields, function(ff) { return f.id==ff.id })) {
+                            data.fields.push(f);
+                        }
+                    });
+                    data.hits = $.merge(data.hits, res.hits);
+                    data.facets = $.merge(data.facets, res.facets);
+                    data["total"] = data.hits.length;
+
+                });
+                backendsFetch.push(deferred) ;
+            });
+
+        }
+
+
+        $.when.apply(window, backendsFetch).done(function() {
+            dfd.resolve(data).fail(my.errorOnFetching);
+        });
+
+        return dfd.promise();
     };
 
-    my.handleFetchedData = function(results) {
-        console.log(results);
-    };
+
 
     my.errorOnFetching = function() {
         return {
-            message:'Request Error: error on fetching union parallel backends',
-                configuration: dataset.backendConfiguration
+            message:'Request Error: error on fetching union parallel backends'
         };
     };
 
