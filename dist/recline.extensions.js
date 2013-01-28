@@ -1918,11 +1918,9 @@ this.recline = this.recline || {};
             var actionParameters = [];
             //foreach mapping set destination field
             _.each(mapping, function (map) {
-                if (eventData[map["srcField"]] == null) {
+            	if (eventData[map["srcField"]] == null && currentAction.action.attributes.filters[map.filter].type != "list") {
                     console.log("warn: sourceField: [" + map["srcField"] + "] not present in event data");
                 } else {
-
-
                     var param = {
                         filter:map["filter"],
                         value:eventData[map["srcField"]]
@@ -1930,7 +1928,6 @@ this.recline = this.recline || {};
                     actionParameters.push(param);
                 }
             });
-
             if (actionParameters.length > 0) {
                 currentAction.action._internalDoAction(actionParameters);
             }
@@ -2171,12 +2168,13 @@ this.recline = this.recline || {};
                 },
                 list:function (filter, data) {
 
-                    if (data.length === 0) {
-                        //empty list
-                        filter["list"] = null;
-                    } else if (data === null) {
+                	if (data === null) {
                         //null list
                         filter["remove"] = true;
+                	}
+                	else if (data.length === 0) {
+                        //empty list
+                        filter["list"] = null;
                     } else {
                         filter["list"] = data;
                     }
@@ -9603,7 +9601,15 @@ this.recline.View = this.recline.View || {};
                 var eventData = {};
                 if (values.length)
                 	eventData[fieldName] = values;
-                else eventData[fieldName] = [null];
+                else
+            	{
+                	if (currFilter.type == "term")
+                		eventData[fieldName] = [null];
+                	else if (currFilter.type == "list")
+                		eventData[fieldName] = null;
+                	else if (currFilter.type == "range")
+                		eventData[fieldName] = [null, null];
+            	}
 				
                 recline.ActionUtility.doAction(actions, eventType, eventData, actionType);
             }
