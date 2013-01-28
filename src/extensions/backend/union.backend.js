@@ -98,7 +98,7 @@ this.recline.Backend.ParallelUnionBackend = this.recline.Backend.ParallelUnionBa
                 var query = _.clone(queryObj);
                 query.filters = b.filters;
                 b["instance"] = my._backendFromString(b.backend.backend);
-                var deferred = b.backend.instance.query(query, b.backend["props"]);
+                var deferred = b.instance.query(query, b.backend["props"]);
                 deferred.done(function(res) {
                     if(data.useMemoryStore) {
                         data["useMemoryStore"] =  true;
@@ -143,13 +143,40 @@ this.recline.Backend.ParallelUnionBackend = this.recline.Backend.ParallelUnionBa
 
 
         $.when.apply(window, backendsFetch).done(function() {
-            dfd.resolve(data).fail(my.errorOnFetching);
+            dfd.resolve(my.prepareResults(data, dataset.backendConfiguration.result)).fail(my.errorOnFetching);
         });
 
         return dfd.promise();
     };
 
 
+    // if results myst be aggregated
+    // a group function is applied and then for each group the sum is calculated
+    my.prepareResults = function(data, resulttype) {
+        if(resulttype.type == "union") {
+            return data;
+        }
+        else if(resulttype.type == "sum") {
+            var groupBy = resulttype.groupBy;
+            var res = _.groupBy(data.hits, groupBy);
+            var ret = [];
+            _.each(res, function(group, iterator) {
+                var r = {};
+                r[groupBy] = iterator;
+                _.each(group, function(record){
+                    _.each(resulttype.fields, function(field, itField) {
+                        if(r[field])
+                            r[field] = r[field] + record[field];
+                        else
+                            r[field] = record[field];
+                    })
+                })
+                ret.push(r);
+            })
+            data.hits=ret;
+            return data;
+        }
+    }
 
     my.errorOnFetching = function() {
         return {
