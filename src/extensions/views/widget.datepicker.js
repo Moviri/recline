@@ -62,7 +62,7 @@ this.recline.View = this.recline.View || {};
                 var rangetype = view.daterange[data.daterangePreset];
 
                 value =   [
-                    {field: "date", value: [startDate, endDate]},
+                    {field: "date", value: [startDate.toLocaleString(), endDate.toLocaleString()]},
                     {field: "rangetype", value: [rangetype]}
                 ];
                 view.doActions(actions, value );
@@ -81,7 +81,7 @@ this.recline.View = this.recline.View || {};
                     var endDate= new Date(data.dr2to_millis);
                     if(startDate != null && endDate != null)
                     	value_compare = [
-                            {field: "date", value: [startDate, endDate]},
+                            {field: "date", value: [startDate.toLocaleString(), endDate.toLocaleString()]},
                             {field: "rangetype", value: [rangetype]}
                         ];
                 }
