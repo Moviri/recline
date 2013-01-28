@@ -50,6 +50,15 @@ this.recline.View = this.recline.View || {};
         render:function () {
             console.log("View.Slickgrid: render");
             var self = this;
+            
+            function isTrue(val)
+            {
+            	return isFinite(val) && val;
+            }
+            function isFalse(val)
+            {
+            	return !isFinite(val) || val == false;
+            }
 
             var options = {
                 enableCellNavigation:true,
@@ -59,6 +68,7 @@ this.recline.View = this.recline.View || {};
                 syncColumnCellResize:true,
                 forceFitColumns:this.state.get('fitColumns'),
                 useInnerChart:this.state.get('useInnerChart'),
+                useInnerChartScale:isTrue(this.state.get('useInnerChart')) && isFalse(this.state.get('hideInnerChartScale')),
                 innerChartMax:this.state.get('innerChartMax'),
                 useStripedStyle:this.state.get('useStripedStyle'),
                 useCondensedStyle:this.state.get('useCondensedStyle'),
@@ -68,6 +78,8 @@ this.recline.View = this.recline.View || {};
                 showPartitionedData:this.state.get('showPartitionedData'),
                 selectedCellFocus:this.state.get('selectedCellFocus')
             };
+            var optionsFixed = _.clone(options)
+            optionsFixed.useInnerChart = options.useInnerChartScale
 
             // We need all columns, even the hidden ones, to show on the column picker
             var columns = [];
@@ -219,7 +231,17 @@ this.recline.View = this.recline.View || {};
             // Order them if there is ordering info on the state
             if (columnsOrderToUse) {
                 visibleColumns = visibleColumns.sort(function (a, b) {
-                    return _.indexOf(columnsOrderToUse, a.id) > _.indexOf(columnsOrderToUse, b.id) ? 1 : -1;
+                	var posA = _.indexOf(columnsOrderToUse, a.id);
+                	var posB = _.indexOf(columnsOrderToUse, b.id);
+                	if (posA >= 0 && posB >= 0)
+                		return (posA > posB ? 1 : -1);
+                	// innerChart must always be last
+                	// lineNumberField must always be first
+                	else if (a.id == 'innerChart'  || b.id == 'lineNumberField') 
+                		return 1
+                	else if (b.id == 'innerChart' || a.id == 'lineNumberField' )
+                		return -1
+                	else return (posA < posB ? 1 : -1)
                 });
                 columns = columns.sort(function (a, b) {
                     return _.indexOf(columnsOrderToUse, a.id) > _.indexOf(columnsOrderToUse, b.id) ? 1 : -1;
@@ -424,7 +446,7 @@ this.recline.View = this.recline.View || {};
                     return { "selectable":false }
             }
 
-            this.grid = new Slick.Grid(this.el, data, visibleColumns, options);
+            this.grid = new Slick.Grid(this.el, data, visibleColumns, optionsFixed);
 
             var classesToAdd = ["s-table"];
             if (options.useHoverStyle)

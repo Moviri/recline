@@ -55,7 +55,7 @@ recline.Model.Query.prototype = $.extend(recline.Model.Query.prototype, {
 
     setFilter:function (filter) {
         if (filter["remove"]) {
-            this.removeFilterByField(filter.field);
+            this.removeFilterByFieldNoEvent(filter.field);
             delete filter["remove"];
         } else {
 

@@ -156,7 +156,12 @@ this.recline = this.recline || {};
                         }
                     });
                 });
-
+                // at this points all filter removals have already been parsed. 
+                // so: delete all "remove" flags from internal filter list 
+                _.each(data, function (f) {
+                    var currentFilter = filters[f.filter];
+                    delete currentFilter["remove"]
+                });
 
             },
 

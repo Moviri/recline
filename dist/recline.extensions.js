@@ -667,7 +667,7 @@ recline.Model.Query.prototype = $.extend(recline.Model.Query.prototype, {
 
     setFilter:function (filter) {
         if (filter["remove"]) {
-            this.removeFilterByField(filter.field);
+            this.removeFilterByFieldNoEvent(filter.field);
             delete filter["remove"];
         } else {
 
@@ -2053,7 +2053,12 @@ this.recline = this.recline || {};
                         }
                     });
                 });
-
+                // at this points all filter removals have already been parsed. 
+                // so: delete all "remove" flags from internal filter list 
+                _.each(data, function (f) {
+                    var currentFilter = filters[f.filter];
+                    delete currentFilter["remove"]
+                });
 
             },
 
@@ -3053,15 +3058,11 @@ this.recline.Data = this.recline.Data || {};
 
     // formatters define how data is rapresented in internal dataset
     my.FormattersMoviri = {
-        integer : function (e) { return parseInt(e); },
-        string  : function (e) {
-            if(e!=null)
-                return e.toString();
-            else
-                return null; },
+        integer : function (e) { return (isFinite(e) ? parseInt(e, 10) : 0);},
+        string  : function (e) { return (e ? e.toString() : null); }, 
         date    : function (e) { return new Date(parseInt(e)).valueOf() },
-        float   : function (e) { return parseFloat(e, 10); },
-        number  : function (e) { return parseFloat(e, 10); }
+        float   : function (e) { return (isFinite(e) ? parseFloat(e, 10) : 0);},
+        number  : function (e) { return (isFinite(e) ? parseFloat(e, 10) : 0);}
     };
 
     
@@ -6666,6 +6667,15 @@ this.recline.View = this.recline.View || {};
         render:function () {
             console.log("View.Slickgrid: render");
             var self = this;
+            
+            function isTrue(val)
+            {
+            	return isFinite(val) && val;
+            }
+            function isFalse(val)
+            {
+            	return !isFinite(val) || val == false;
+            }
 
             var options = {
                 enableCellNavigation:true,
@@ -6675,6 +6685,7 @@ this.recline.View = this.recline.View || {};
                 syncColumnCellResize:true,
                 forceFitColumns:this.state.get('fitColumns'),
                 useInnerChart:this.state.get('useInnerChart'),
+                useInnerChartScale:isTrue(this.state.get('useInnerChart')) && isFalse(this.state.get('hideInnerChartScale')),
                 innerChartMax:this.state.get('innerChartMax'),
                 useStripedStyle:this.state.get('useStripedStyle'),
                 useCondensedStyle:this.state.get('useCondensedStyle'),
@@ -6684,6 +6695,8 @@ this.recline.View = this.recline.View || {};
                 showPartitionedData:this.state.get('showPartitionedData'),
                 selectedCellFocus:this.state.get('selectedCellFocus')
             };
+            var optionsFixed = _.clone(options)
+            optionsFixed.useInnerChart = options.useInnerChartScale
 
             // We need all columns, even the hidden ones, to show on the column picker
             var columns = [];
@@ -6835,7 +6848,17 @@ this.recline.View = this.recline.View || {};
             // Order them if there is ordering info on the state
             if (columnsOrderToUse) {
                 visibleColumns = visibleColumns.sort(function (a, b) {
-                    return _.indexOf(columnsOrderToUse, a.id) > _.indexOf(columnsOrderToUse, b.id) ? 1 : -1;
+                	var posA = _.indexOf(columnsOrderToUse, a.id);
+                	var posB = _.indexOf(columnsOrderToUse, b.id);
+                	if (posA >= 0 && posB >= 0)
+                		return (posA > posB ? 1 : -1);
+                	// innerChart must always be last
+                	// lineNumberField must always be first
+                	else if (a.id == 'innerChart'  || b.id == 'lineNumberField') 
+                		return 1
+                	else if (b.id == 'innerChart' || a.id == 'lineNumberField' )
+                		return -1
+                	else return (posA < posB ? 1 : -1)
                 });
                 columns = columns.sort(function (a, b) {
                     return _.indexOf(columnsOrderToUse, a.id) > _.indexOf(columnsOrderToUse, b.id) ? 1 : -1;
@@ -7040,7 +7063,7 @@ this.recline.View = this.recline.View || {};
                     return { "selectable":false }
             }
 
-            this.grid = new Slick.Grid(this.el, data, visibleColumns, options);
+            this.grid = new Slick.Grid(this.el, data, visibleColumns, optionsFixed);
 
             var classesToAdd = ["s-table"];
             if (options.useHoverStyle)
