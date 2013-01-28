@@ -1763,7 +1763,15 @@ this.recline.View = this.recline.View || {};
                 var eventData = {};
                 if (values.length)
                 	eventData[fieldName] = values;
-                else eventData[fieldName] = [null];
+                else
+            	{
+                	if (currFilter.type == "term")
+                		eventData[fieldName] = [null];
+                	else if (currFilter.type == "list")
+                		eventData[fieldName] = null;
+                	else if (currFilter.type == "range")
+                		eventData[fieldName] = [null, null];
+            	}
 				
                 recline.ActionUtility.doAction(actions, eventType, eventData, actionType);
             }
