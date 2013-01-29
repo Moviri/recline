@@ -48,7 +48,7 @@ this.recline.View = this.recline.View || {};
         events:{
         },
         render:function () {
-            console.log("View.Slickgrid: render");
+            //console.log("View.Slickgrid: render");
             var self = this;
             
             function isTrue(val)
@@ -564,7 +564,7 @@ this.recline.View = this.recline.View || {};
             return this;
         },
         handleRequestOfRowSelection:function () {
-            console.log("handleRequestOfRowSelection")
+            //console.log("handleRequestOfRowSelection")
             this.discardSelectionEvents = true;
             var rowsToSelect = [];
             var myRecords = this.model.getRecords(this.resultType);

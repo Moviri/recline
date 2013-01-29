@@ -3899,7 +3899,7 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
                 var value = filter.field;
                 var start = parse(filter.start);
                 var stop = parse(filter.stop);
-                return (value + " lte " + stop + "," + value + " gte " + start);
+                return (value + " bw " + start + multivsep + stop);
 
             }, // field > start and field < end
             list:function list(filter) {
@@ -3907,7 +3907,7 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
                 var value = filter.field;
                 var list = filter.list;
 
-                var ret = value + " bw ";
+                var ret = value + " in ";
                 for (var i = 0; i < filter.list.length; i++) {
                     if (i > 0)
                         ret = ret + multivsep;
@@ -4599,7 +4599,7 @@ this.recline.View = this.recline.View || {};
         },
 
         render:function () {
-            console.log("View.Composed: render");
+            //console.log("View.Composed: render");
             var self = this;
             var graphid = "#" + this.uid;
 
@@ -5002,7 +5002,7 @@ this.recline.View = this.recline.View || {};
         },
 
         render:function () {
-            console.log("View.Indicator: render");
+            //console.log("View.Indicator: render");
 
             var self = this;
             var tmplData = {};
@@ -6690,7 +6690,7 @@ this.recline.View = this.recline.View || {};
         events:{
         },
         render:function () {
-            console.log("View.Slickgrid: render");
+            //console.log("View.Slickgrid: render");
             var self = this;
             
             function isTrue(val)
@@ -7206,7 +7206,7 @@ this.recline.View = this.recline.View || {};
             return this;
         },
         handleRequestOfRowSelection:function () {
-            console.log("handleRequestOfRowSelection")
+            //console.log("handleRequestOfRowSelection")
             this.discardSelectionEvents = true;
             var rowsToSelect = [];
             var myRecords = this.model.getRecords(this.resultType);

@@ -88,7 +88,7 @@ this.recline.View = this.recline.View || {};
         },
 
         render:function () {
-            console.log("View.Composed: render");
+            //console.log("View.Composed: render");
             var self = this;
             var graphid = "#" + this.uid;
 
