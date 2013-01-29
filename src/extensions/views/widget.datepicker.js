@@ -57,12 +57,12 @@ this.recline.View = this.recline.View || {};
         	var value = []
             var actions = view.getActionsForEvent("selection");
             if (actions.length > 0) {
-                var startDate= new Date(data.dr1from_millis);
-                var endDate= new Date(data.dr1to_millis);
+                var startDate= new Date(parseInt(data.dr1from_millis));
+                var endDate= new Date(parseInt(data.dr1to_millis));
                 var rangetype = view.daterange[data.daterangePreset];
 
                 value =   [
-                    {field: "date", value: [startDate.toLocaleString(), endDate.toLocaleString()]},
+                    {field: "date", value: [startDate.toString(), endDate.toString()]},
                     {field: "rangetype", value: [rangetype]}
                 ];
                 view.doActions(actions, value );
@@ -77,11 +77,11 @@ this.recline.View = this.recline.View || {};
                 value_compare = [{field: "date", value: [null, null]}];
 
                 if (data.comparisonEnabled) {
-                    var startDate= new Date(data.dr2from_millis);
-                    var endDate= new Date(data.dr2to_millis);
+                    var startDate= new Date(parseInt(data.dr2from_millis));
+                    var endDate= new Date(parseInt(data.dr2to_millis));
                     if(startDate != null && endDate != null)
                     	value_compare = [
-                            {field: "date", value: [startDate.toLocaleString(), endDate.toLocaleString()]},
+                            {field: "date", value: [startDate.toString(), endDate.toString()]},
                             {field: "rangetype", value: [rangetype]}
                         ];
                 }
@@ -302,6 +302,8 @@ this.recline.View = this.recline.View || {};
 			{
     			//console.log(currVal+ " is VALID!: "+d.toLocaleDateString())
         		var options = self.datepicker.data("DateRangesWidget").options
+//        		console.log("OPTIONS CURRENT")
+//        		console.log(options.current)
         		var values = options.values;
     			if (isMain)
 				{
@@ -309,14 +311,14 @@ this.recline.View = this.recline.View || {};
     				{
     					values.dr1from = currVal
                         values.dr1from_millis = d.getTime()
-                        $('.dr1.from_millis').val(d.toString());
+                        $('.dr1.from_millis').val(d.getTime());
     	    			$(".datepicker.selectableRange").data('datepicker').date[0] = d.getTime()
     				}
     				else
 					{
             			values.dr1to = currVal
                         values.dr1to_millis = d.getTime()
-                        $('.dr1.to_millis').val(d.toString());
+                        $('.dr1.to_millis').val(d.getTime());
     	    			$(".datepicker.selectableRange").data('datepicker').date[1] = d.getTime()
 					}
 				}
@@ -326,14 +328,14 @@ this.recline.View = this.recline.View || {};
     				{
     					values.dr2from = currVal
     	                values.dr2from_millis = d.getTime()
-                        $('.dr2.from_millis').val(d.toString());
+                        $('.dr2.from_millis').val(d.getTime());
     	    			$(".datepicker.selectableRange").data('datepicker').date[2] = d.getTime()
     				}
     				else
 					{
     	                values.dr2to = currVal
     	                values.dr2to_millis = d.getTime()
-                        $('.dr2.to_millis').val(d.toString());
+                        $('.dr2.to_millis').val(d.getTime());
     	    			$(".datepicker.selectableRange").data('datepicker').date[3] = d.getTime()
 					}
 				}
