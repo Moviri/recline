@@ -7505,6 +7505,9 @@ this.recline.View = this.recline.View || {};
             if (self.series.main && self.series.main.length && self.series.main[0].data && self.series.main[0].data.length)
         	{
             	self.graph = new xChart(state.type, self.series, '#' + self.uid, state.opts);
+            	if (state.interpolation)
+            		self.graph._options.interpolation = state.interpolation
+            		
                 this.el.find('div.xCharts-title-x').html(self.options.state.xAxisTitle)
 
                 // add Y-Axis title
@@ -7783,15 +7786,20 @@ this.recline.View = this.recline.View || {};
                     values:{
                         comparisonEnabled:false,
                         daterangePreset:"lastweeks",
-                        comparisonPreset:"custom"
+                        comparisonPreset:"previousperiod"
                     },
                     onChange: self.onChange(self)
                 });
             
             self.redraw();
             self.redrawCompare();
-            //self.datepicker.data("datepicker").options.weeklyMode = self.options.weeklyMode;
-            $(".datepicker.selectableRange").data('datepicker').weeklyMode = self.options.weeklyMode;
+            if (self.options.weeklyMode)
+        	{
+                var options = $(".datepicker.selectableRange").data('datepicker')
+                if (options)
+                	options.weeklyMode = self.options.weeklyMode;
+                else $(".datepicker.selectableRange").data('datepicker', 'weeklyMode', self.options.weeklyMode)
+        	}
         },
 
         redraw:function () {
@@ -7903,7 +7911,7 @@ this.recline.View = this.recline.View || {};
             if (dates)
         	{
 	            var period = dates[0];
-
+	            var values = self.datepicker.data("DateRangesWidget").options.values;
 	            if(this.options.compareModel) {
 	                var f = self.options.compareModel.queryState.getFilterByFieldName(self.options.compareFields.date)
 	                if(f && f.type == "range") {
@@ -7915,7 +7923,6 @@ this.recline.View = this.recline.View || {};
 	                    // check custom weeks/month
 	
 	                }
-	                var values = self.datepicker.data("DateRangesWidget").options.values;
 	
 	                if(period[2] && period[3]) {
 	                    values.comparisonEnabled = true;
@@ -7925,13 +7932,15 @@ this.recline.View = this.recline.View || {};
 	                    values.dr2to = self.retrieveDateStr(period[3]);
 	                    values.dr2to_millis = (new Date(period[3])).getTime();
 	                    $('.comparison-preset').val("custom")
-	                } else
+	                }
+	                else
 	                {
 	                    values.comparisonEnabled = false;
 	                    values.dr2from = "N/A";
 	                    values.dr2from_millis = "";
 	                    values.dr2to = "N/A";
 	                    values.dr2to_millis = "";
+	                    $('.comparison-preset').val("previousperiod")
 	                }
 	
 	                $('.date-ranges-picker').DatePickerSetDate(period, true);
@@ -7999,6 +8008,15 @@ this.recline.View = this.recline.View || {};
 	                    self.fullyInitialized = true;
 	            	}
 	            }
+	            else
+            	{
+                    values.comparisonEnabled = true;
+                    values.comparisonPreset = "previousperiod"
+                    $('.comparison-preset').val("previousperiod")
+                    $('.comparison-preset').prop("disabled", true)
+                	$('.enable-comparison').css("checked", "checked")
+                	$('.enable-comparison').change()
+            	}
             }
         },
         calculateMonday: function(dateStr) {
@@ -8032,8 +8050,7 @@ this.recline.View = this.recline.View || {};
 			{
     			//console.log(currVal+ " is VALID!: "+d.toLocaleDateString())
         		var options = self.datepicker.data("DateRangesWidget").options
-//        		console.log("OPTIONS CURRENT")
-//        		console.log(options.current)
+        		var datepickerOptions = $(".datepicker.selectableRange").data('datepicker')
         		var values = options.values;
     			if (isMain)
 				{
@@ -8042,15 +8059,17 @@ this.recline.View = this.recline.View || {};
     					values.dr1from = currVal
                         values.dr1from_millis = d.getTime()
                         $('.dr1.from_millis').val(d.getTime());
-    	    			$(".datepicker.selectableRange").data('datepicker').date[0] = d.getTime()
+    					datepickerOptions.date[0] = d.getTime()
     				}
     				else
 					{
             			values.dr1to = currVal
                         values.dr1to_millis = d.getTime()
                         $('.dr1.to_millis').val(d.getTime());
-    	    			$(".datepicker.selectableRange").data('datepicker').date[1] = d.getTime()
+            			datepickerOptions.date[1] = d.getTime()
 					}
+    				if (datepickerOptions.mode == 'tworanges')
+    					datepickerOptions.lastSel = 2
 				}
     			else
 				{
@@ -8059,16 +8078,20 @@ this.recline.View = this.recline.View || {};
     					values.dr2from = currVal
     	                values.dr2from_millis = d.getTime()
                         $('.dr2.from_millis').val(d.getTime());
-    	    			$(".datepicker.selectableRange").data('datepicker').date[2] = d.getTime()
+    					datepickerOptions.date[2] = d.getTime()
     				}
     				else
 					{
     	                values.dr2to = currVal
     	                values.dr2to_millis = d.getTime()
                         $('.dr2.to_millis').val(d.getTime());
-    	    			$(".datepicker.selectableRange").data('datepicker').date[3] = d.getTime()
+    	                datepickerOptions.date[3] = d.getTime()
 					}
+    				if (datepickerOptions.mode == 'tworanges')
+    					datepickerOptions.lastSel = 0
 				}
+    			// scroll month accordingly inside calendar section on the left
+    			datepickerOptions.current = d;
     			// this hack is used to force a refresh of the month calendar, since setmode calls fill() method
 				$('.date-ranges-picker').DatePickerSetMode($('.date-ranges-picker').DatePickerGetMode());
 			}
