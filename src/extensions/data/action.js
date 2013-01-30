@@ -79,7 +79,25 @@ this.recline = this.recline || {};
                 });
                 this._internalDoAction(params);
             },
-
+            doActionWithFacets:function (facetTerms, valueList, mapping, filterFieldName) {
+                var params = [];
+                mapping.forEach(function (mapp) {
+                    var values = [];
+                    //{srcField: "daydate", filter: "filter_daydate"}
+                    facetTerms.forEach(function (obj) {
+                    	obj.records.forEach(function(row) {
+                    		var filterFieldValue = row[filterFieldName]
+                    		if (_.contains(valueList, filterFieldValue)) 
+                    			values.push(row[mapp.srcField]);
+                    	});
+                    });
+                    params.push({
+                        filter:mapp.filter,
+                        value:values
+                    });
+                });
+                this._internalDoAction(params);
+            },
             doActionWithValues:function (valuesarray, mapping) {
                 var params = [];
                 mapping.forEach(function (mapp) {

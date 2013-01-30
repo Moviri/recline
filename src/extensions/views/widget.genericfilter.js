@@ -1604,8 +1604,19 @@ this.recline.View = this.recline.View || {};
                 var fieldId = $fieldSet.attr('data-filter-field');
                 var controlType = $fieldSet.attr('data-control-type');
                 var classToUse = "btn-info"
+                var currActiveFilter = this.findActiveFilterByField(fieldId, controlType);
                 if (controlType == "multibutton") {
-                    $target.toggleClass(classToUse);
+                	$target.toggleClass(classToUse);
+                	if (currActiveFilter.nullSelectionNotAllowed)
+            		{
+                		if ($fieldSet.find('div.btn-group button.' + classToUse).length == 0)
+            			{
+                			// too few selections
+                			// re-select the button then exit 
+                        	$target.toggleClass(classToUse);
+                			return;
+            			}
+            		}                
                 }
                 else if (controlType == "radiobuttons") {
                     // ensure one and only one selection is performed
@@ -1619,7 +1630,6 @@ this.recline.View = this.recline.View || {};
                 $fieldSet.find('div.btn-group button.' + classToUse).each(function () {
                     listaValori.push($(this).attr('val').valueOf()); // in case there's a date, convert it with valueOf
                 });
-                var currActiveFilter = this.findActiveFilterByField(fieldId, controlType);
                 currActiveFilter.userChanged = true;
                 if (controlType == "multibutton")
                     currActiveFilter.list = listaValori;
@@ -1760,20 +1770,23 @@ this.recline.View = this.recline.View || {};
             {
 
                 var actions = this.options.actions;
-                var eventData = {};
-                if (values.length)
-                	eventData[fieldName] = values;
-                else
-            	{
-                	if (currFilter.type == "term")
-                		eventData[fieldName] = [null];
-                	else if (currFilter.type == "list")
-                		eventData[fieldName] = null;
-                	else if (currFilter.type == "range")
-                		eventData[fieldName] = [null, null];
-            	}
-				
-                recline.ActionUtility.doAction(actions, eventType, eventData, actionType);
+                actions.forEach(function(currAction){
+                    currAction.action.doActionWithFacets(currFilter.facet.attributes.terms, values, currAction.mapping, fieldName);
+                });                
+//                var eventData = {};
+//                if (values.length)
+//                	eventData[fieldName] = values;
+//                else
+//            	{
+//                	if (currFilter.type == "term")
+//                		eventData[fieldName] = [null];
+//                	else if (currFilter.type == "list")
+//                		eventData[fieldName] = null;
+//                	else if (currFilter.type == "range")
+//                		eventData[fieldName] = [null, null];
+//            	}
+//				
+//                recline.ActionUtility.doAction(actions, eventType, eventData, actionType);
             }
         },
 
