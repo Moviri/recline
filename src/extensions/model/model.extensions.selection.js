@@ -57,6 +57,17 @@ recline.Model.Query.prototype = $.extend(recline.Model.Query.prototype, {
 
     },
 
+    getSelectionByFieldName:function (fieldName) {
+        var res = _.find(this.get('selections'), function (f) {
+            return f.field == fieldName;
+        });
+        if (res == -1)
+            return null;
+        else
+            return res;
+
+    },
+
 // ### addSelection
 //
 // Add a new selection (appended to the list of selections)

@@ -386,6 +386,22 @@ recline.Model.Query.prototype = $.extend(recline.Model.Query.prototype, {
 
         },
 
+        // a color schema is linked to the dataset but colors are not recalculated upon data/field reset
+        addStaticColorSchema: function(colorSchema, field) {
+            var self = this;
+            if (!self.attributes["colorSchema"])
+                self.attributes["colorSchema"] = [];
+
+            self.attributes["colorSchema"].push({schema:colorSchema, field:field});
+
+            self.setColorSchema();
+
+            self.fields.bind('reset', function () {
+                self.setColorSchema();
+            });
+
+        },
+
         _handleQueryResult:function () {
             var super_init = recline.Model.Dataset.prototype._handleQueryResult;
 
@@ -796,6 +812,17 @@ recline.Model.Query.prototype = $.extend(recline.Model.Query.prototype, {
 
         this.set({selections:[]}, {silent: true});
         return this.get('selections');
+
+    },
+
+    getSelectionByFieldName:function (fieldName) {
+        var res = _.find(this.get('selections'), function (f) {
+            return f.field == fieldName;
+        });
+        if (res == -1)
+            return null;
+        else
+            return res;
 
     },
 
@@ -2450,6 +2477,8 @@ this.recline.Data.ColorSchema = this.recline.Data.ColorSchema || {};
                 self._generateFromVariationDataset();
             }
         },
+
+
 
         setDataset:function (ds, field, type) {
             var self = this;
@@ -7529,7 +7558,7 @@ this.recline.View = this.recline.View || {};
              */
 
             _.each( series, function(d) {
-                var serie = {data:_.map(d.data, function(c) { return {x:c.x, y:c.y} })};
+                var serie = {color:d.color, data:_.map(d.data, function(c) { return {x:c.x, y:c.y} })};
 
                 data.main.push(serie);
             });

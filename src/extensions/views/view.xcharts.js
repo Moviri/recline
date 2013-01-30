@@ -155,7 +155,7 @@ this.recline.View = this.recline.View || {};
              */
 
             _.each( series, function(d) {
-                var serie = {data:_.map(d.data, function(c) { return {x:c.x, y:c.y} })};
+                var serie = {color:d.color, data:_.map(d.data, function(c) { return {x:c.x, y:c.y} })};
 
                 data.main.push(serie);
             });
