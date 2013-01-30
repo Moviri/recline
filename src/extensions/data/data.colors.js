@@ -64,6 +64,8 @@ this.recline.Data.ColorSchema = this.recline.Data.ColorSchema || {};
             }
         },
 
+
+
         setDataset:function (ds, field, type) {
             var self = this;
 

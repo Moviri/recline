@@ -13,6 +13,22 @@
 
         },
 
+        // a color schema is linked to the dataset but colors are not recalculated upon data/field reset
+        addStaticColorSchema: function(colorSchema, field) {
+            var self = this;
+            if (!self.attributes["colorSchema"])
+                self.attributes["colorSchema"] = [];
+
+            self.attributes["colorSchema"].push({schema:colorSchema, field:field});
+
+            self.setColorSchema();
+
+            self.fields.bind('reset', function () {
+                self.setColorSchema();
+            });
+
+        },
+
         _handleQueryResult:function () {
             var super_init = recline.Model.Dataset.prototype._handleQueryResult;
 
