@@ -7476,6 +7476,9 @@ this.recline.View = this.recline.View || {};
             if (self.series.main && self.series.main.length && self.series.main[0].data && self.series.main[0].data.length)
         	{
             	self.graph = new xChart(state.type, self.series, '#' + self.uid, state.opts);
+            	if (state.interpolation)
+            		self.graph._options.interpolation = state.interpolation
+            		
                 this.el.find('div.xCharts-title-x').html(self.options.state.xAxisTitle)
 
                 // add Y-Axis title
