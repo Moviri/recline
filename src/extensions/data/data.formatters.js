@@ -107,7 +107,7 @@ this.recline.Data = this.recline.Data || {};
 
 
             } else if(format === "currency_euro") {
-                return "€ " + val;
+                return "€ " + parseFloat(val.toFixed(2));
             }
 
             try {
