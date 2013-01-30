@@ -7660,7 +7660,7 @@ this.recline.View = this.recline.View || {};
         comparedateToChanged: false,
         initialize:function (options) {
             this.el = $(this.el);
-            _.bindAll(this, 'render', 'redraw', 'redrawCompare');
+            _.bindAll(this, 'render', 'redraw', 'redrawCompare', 'calculateMonday');
 
             if (this.model)
         	{
@@ -7757,11 +7757,12 @@ this.recline.View = this.recline.View || {};
                         comparisonPreset:"custom"
                     },
                     onChange: self.onChange(self)
-
                 });
-
+            
             self.redraw();
             self.redrawCompare();
+            //self.datepicker.data("datepicker").options.weeklyMode = self.options.weeklyMode;
+            $(".datepicker.selectableRange").data('datepicker').weeklyMode = self.options.weeklyMode;
         },
 
         redraw:function () {
@@ -7800,9 +7801,9 @@ this.recline.View = this.recline.View || {};
 	            }
 	            else {
 	                values.daterangePreset = "custom";
-	                values.dr1from = period[0].getDate() + '/' + (period[0].getMonth()+1) + '/' + period[0].getFullYear();
+	                values.dr1from = self.retrieveDateStr(period[0]);
 	                values.dr1from_millis = (new Date(period[0])).getTime();
-	                values.dr1to = period[1].getDate() + '/' + (period[1].getMonth()+1) + '/' + period[1].getFullYear();
+	                values.dr1to = self.retrieveDateStr(period[1]);
 	                values.dr1to_millis = (new Date(period[1])).getTime();
 	            }
 	
@@ -7829,14 +7830,36 @@ this.recline.View = this.recline.View || {};
 	                $('.dr1.from').bind("blur", function(e) {
 	                	if (self.maindateFromChanged)
 	            		{
-	                    	self.applyTextInputDateChange($(this).val(), self, true, true)
+	                		if (self.options.weeklyMode)
+                			{
+	                			var monday = self.calculateMonday($(this).val())
+	                			var sunday = self.calculateSundayFromMonday(monday)
+	                			var mondayDateStr = self.retrieveDateStr(monday)
+	                			var sundayDateStr = self.retrieveDateStr(sunday)
+	                			$('.dr1.from').val(mondayDateStr)
+	                			$('.dr1.to').val(sundayDateStr)	                			
+		                		self.applyTextInputDateChange(self.retrieveDateStr(monday), self, true, true)
+	                			self.applyTextInputDateChange(sundayDateStr, self, true, false)
+                			}
+	                		else self.applyTextInputDateChange($(this).val(), self, true, true)
 	                    	self.maindateFromChanged = false
 	            		}
 	                })
 	                $('.dr1.to').bind("blur", function(e) {
 	                	if (self.maindateToChanged)
 	            		{
-	    	            	self.applyTextInputDateChange($(this).val(), self, true, false)
+	                		if (self.options.weeklyMode)
+                			{
+	                			var monday = self.calculateMonday($(this).val())
+	                			var sunday = self.calculateSundayFromMonday(monday)
+	                			var mondayDateStr = self.retrieveDateStr(monday)
+	                			var sundayDateStr = self.retrieveDateStr(sunday)
+	                			$('.dr1.from').val(mondayDateStr)
+	                			$('.dr1.to').val(sundayDateStr)	                			
+	                			self.applyTextInputDateChange(mondayDateStr, self, true, true)
+	                			self.applyTextInputDateChange(sundayDateStr, self, true, false)
+                			}
+	    	            	else self.applyTextInputDateChange($(this).val(), self, true, false)
 	    	            	self.maindateToChanged = false
 	            		}
 	                })        
@@ -7868,9 +7891,9 @@ this.recline.View = this.recline.View || {};
 	                if(period[2] && period[3]) {
 	                    values.comparisonEnabled = true;
 	                    values.comparisonPreset = "custom"
-	                    values.dr2from = period[2].getDate() + '/' + (period[2].getMonth()+1) + '/' + period[2].getFullYear();
+	                    values.dr2from = self.retrieveDateStr(period[2]);
 	                    values.dr2from_millis = (new Date(period[2])).getTime();
-	                    values.dr2to = period[3].getDate() + '/' + (period[3].getMonth()+1) + '/' + period[3].getFullYear();
+	                    values.dr2to = self.retrieveDateStr(period[3]);
 	                    values.dr2to_millis = (new Date(period[3])).getTime();
 	                    $('.comparison-preset').val("custom")
 	                } else
@@ -7911,14 +7934,36 @@ this.recline.View = this.recline.View || {};
 	                    $('.dr2.from').bind("blur", function(e) {
 	                    	if (self.comparedateFromChanged)
 	                		{
-	                        	self.applyTextInputDateChange($(this).val(), self, false, true)
+		                		if (self.options.weeklyMode)
+	                			{
+		                			var monday = self.calculateMonday($(this).val())
+		                			var sunday = self.calculateSundayFromMonday(monday)
+		                			var mondayDateStr = self.retrieveDateStr(monday)
+		                			var sundayDateStr = self.retrieveDateStr(sunday)
+		                			$('.dr2.from').val(mondayDateStr)
+		                			$('.dr2.to').val(sundayDateStr)
+		                			self.applyTextInputDateChange(mondayDateStr, self, false, true)
+		                			self.applyTextInputDateChange(sundayDateStr, self, false, false)
+	                			}
+		                		else self.applyTextInputDateChange($(this).val(), self, false, true)
 	                        	self.comparedateFromChanged = false
 	                		}
 	                    })
 	                    $('.dr2.to').bind("blur", function(e) {
 	                    	if (self.comparedateToChanged)
 	                		{
-	        	            	self.applyTextInputDateChange($(this).val(), self, false, false)
+		                		if (self.options.weeklyMode)
+	                			{
+		                			var monday = self.calculateMonday($(this).val())
+		                			var sunday = self.calculateSundayFromMonday(monday)
+		                			var mondayDateStr = self.retrieveDateStr(monday)
+		                			var sundayDateStr = self.retrieveDateStr(sunday)
+		                			$('.dr2.from').val(mondayDateStr)
+		                			$('.dr2.to').val(sundayDateStr)
+		                			self.applyTextInputDateChange(mondayDateStr, self, false, true)
+		                			self.applyTextInputDateChange(sundayDateStr, self, false, false)
+	                			}
+		                		else self.applyTextInputDateChange($(this).val(), self, false, false)
 	        	            	self.comparedateToChanged = false
 	                		}
 	                    })
@@ -7927,16 +7972,28 @@ this.recline.View = this.recline.View || {};
 	            }
             }
         },
+        calculateMonday: function(dateStr) {
+        	var d = this.retrieveDMYDate(dateStr);
+			var day = d.getDay();
+			var diff = (day == 0 ? -6 : 1) - day; // adjust when day is sunday
+			return new Date(d.getTime()+diff*24*3600000);
+        },
+        calculateSundayFromMonday: function(monday) {
+    		return new Date(monday.getTime()+6*24*3600000);
+        },
         retrieveDMYDate: function(dateStr) {
 			// Expect input as d/m/y
 			var bits = dateStr.split('\/');
 			if (bits.length < 3)
 				return null;
 			
-			var d = new Date(bits[2], bits[1] - 1, bits[0]);
+			var d = new Date(bits[2], parseInt(bits[1]) - 1, bits[0]);
 			if (bits[2] >= 1970 && d && (d.getMonth() + 1) == bits[1] && d.getDate() == Number(bits[0]))
 				return d;
 			else return null;
+        },
+        retrieveDateStr: function(d) {
+        	return d.getDate() + '/' + (d.getMonth()+1) + '/' + d.getFullYear()
         },
         applyTextInputDateChange: function(currVal, self, isMain, isFrom)
         {

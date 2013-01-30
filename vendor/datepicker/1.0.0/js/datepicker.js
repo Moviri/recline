@@ -585,33 +585,47 @@
 				  case 'tworanges':
 					var mapping_other = [1, 0, 3, 2];
 					var mapping_first = [0, 0, 2, 2];
+					options.lastSel = options.lastSel+1-1; // force to num
 					var current = options.lastSel;
 					var other = mapping_other[options.lastSel];
 					var first = mapping_first[options.lastSel];
 					var second = first + 1;
-					
-                    if (current == first) {
-                      // first click: set to the start of the day
-                      options.date[first] = (tmp.setHours(0,0,0,0)).valueOf();
-                    }
-                    // get the very end of the day clicked
-                    val = (tmp.setHours(23,59,59,0)).valueOf();
-                    
-                    if (val < options.date[other]) {
-                      // second range click < first
-                      options.date[1] = options.date[0] + 86399000;  // starting date + 1 day
-                      options.date[0] = val - 86399000;  // minus 1 day
+					if (options.weeklyMode)
+					{
+						var day = tmp.getDay();
+						var diff = (day == 0 ? -6 : 1) - day;
+						var monday = new Date(tmp.getTime()+diff*24*3600000); // return closest monday
+						var sunday = new Date(monday.getTime()+6*24*3600000); // return next sunday 
+						changedRange = true;
+						options.date[first] = (monday.setHours(0,0,0,0)).valueOf();
+						options.date[second] = (sunday.setHours(23,59,59,999)).valueOf();
+		                var modulo = options.mode == 'range' ? 2 : 4;
+		                options.lastSel = (current + 2) % modulo;					}
+					else
+					{
+	                    if (current == first) {
+	                        // first click: set to the start of the day
+	                        options.date[first] = (tmp.setHours(0,0,0,0)).valueOf();
+	                      }
+	                      // get the very end of the day clicked
+	                      val = (tmp.setHours(23,59,59,0)).valueOf();
+	                      
+	                      if (val < options.date[other]) {
+	                        // second range click < first
+	                        options.date[1] = options.date[0] + 86399000;  // starting date + 1 day
+	                        options.date[0] = val - 86399000;  // minus 1 day
 
-                      options.date[second] = options.date[first] + 86399000;  // starting date + 1 day
-                      options.date[first] = val - 86399000;  // minus 1 day
-                    } else {
-                      // initial range click, or final range click >= first
-					  options.date[second] = val;  
-                    }
-                    options.lastSel = !options.lastSel;
-                    changedRange = !options.lastSel;
-					var modulo = options.mode == 'range' ? 2 : 4;
-                    options.lastSel = (current + 1) % modulo;
+	                        options.date[second] = options.date[first] + 86399000;  // starting date + 1 day
+	                        options.date[first] = val - 86399000;  // minus 1 day
+	                      } else {
+	                        // initial range click, or final range click >= first
+	  					  options.date[second] = val;  
+	                      }
+	                      options.lastSel = !options.lastSel;
+	                      changedRange = !options.lastSel;
+	  	                var modulo = options.mode == 'range' ? 2 : 4;
+		                options.lastSel = (current + 1) % modulo;
+					}
                     break;
                   default:
                     options.date = tmp.valueOf();
