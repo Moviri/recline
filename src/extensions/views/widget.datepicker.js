@@ -110,7 +110,7 @@ this.recline.View = this.recline.View || {};
                     values:{
                         comparisonEnabled:false,
                         daterangePreset:"lastweeks",
-                        comparisonPreset:"custom"
+                        comparisonPreset:"previousperiod"
                     },
                     onChange: self.onChange(self)
                 });
@@ -235,7 +235,7 @@ this.recline.View = this.recline.View || {};
             if (dates)
         	{
 	            var period = dates[0];
-
+	            var values = self.datepicker.data("DateRangesWidget").options.values;
 	            if(this.options.compareModel) {
 	                var f = self.options.compareModel.queryState.getFilterByFieldName(self.options.compareFields.date)
 	                if(f && f.type == "range") {
@@ -247,7 +247,6 @@ this.recline.View = this.recline.View || {};
 	                    // check custom weeks/month
 	
 	                }
-	                var values = self.datepicker.data("DateRangesWidget").options.values;
 	
 	                if(period[2] && period[3]) {
 	                    values.comparisonEnabled = true;
@@ -257,13 +256,15 @@ this.recline.View = this.recline.View || {};
 	                    values.dr2to = self.retrieveDateStr(period[3]);
 	                    values.dr2to_millis = (new Date(period[3])).getTime();
 	                    $('.comparison-preset').val("custom")
-	                } else
+	                }
+	                else
 	                {
 	                    values.comparisonEnabled = false;
 	                    values.dr2from = "N/A";
 	                    values.dr2from_millis = "";
 	                    values.dr2to = "N/A";
 	                    values.dr2to_millis = "";
+	                    $('.comparison-preset').val("previousperiod")
 	                }
 	
 	                $('.date-ranges-picker').DatePickerSetDate(period, true);
@@ -331,6 +332,15 @@ this.recline.View = this.recline.View || {};
 	                    self.fullyInitialized = true;
 	            	}
 	            }
+	            else
+            	{
+                    values.comparisonEnabled = true;
+                    values.comparisonPreset = "previousperiod"
+                    $('.comparison-preset').val("previousperiod")
+                    $('.comparison-preset').prop("disabled", true)
+                	$('.enable-comparison').css("checked", "checked")
+                	$('.enable-comparison').change()
+            	}
             }
         },
         calculateMonday: function(dateStr) {
