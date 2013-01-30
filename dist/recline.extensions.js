@@ -7764,8 +7764,13 @@ this.recline.View = this.recline.View || {};
             
             self.redraw();
             self.redrawCompare();
-            //self.datepicker.data("datepicker").options.weeklyMode = self.options.weeklyMode;
-            $(".datepicker.selectableRange").data('datepicker').weeklyMode = self.options.weeklyMode;
+            if (self.options.weeklyMode)
+        	{
+                var options = $(".datepicker.selectableRange").data('datepicker')
+                if (options)
+                	options.weeklyMode = self.options.weeklyMode;
+                else $(".datepicker.selectableRange").data('datepicker', 'weeklyMode', self.options.weeklyMode)
+        	}
         },
 
         redraw:function () {
