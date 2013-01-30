@@ -364,8 +364,7 @@ this.recline.View = this.recline.View || {};
 			{
     			//console.log(currVal+ " is VALID!: "+d.toLocaleDateString())
         		var options = self.datepicker.data("DateRangesWidget").options
-//        		console.log("OPTIONS CURRENT")
-//        		console.log(options.current)
+        		var datepickerOptions = $(".datepicker.selectableRange").data('datepicker')
         		var values = options.values;
     			if (isMain)
 				{
@@ -374,15 +373,17 @@ this.recline.View = this.recline.View || {};
     					values.dr1from = currVal
                         values.dr1from_millis = d.getTime()
                         $('.dr1.from_millis').val(d.getTime());
-    	    			$(".datepicker.selectableRange").data('datepicker').date[0] = d.getTime()
+    					datepickerOptions.date[0] = d.getTime()
     				}
     				else
 					{
             			values.dr1to = currVal
                         values.dr1to_millis = d.getTime()
                         $('.dr1.to_millis').val(d.getTime());
-    	    			$(".datepicker.selectableRange").data('datepicker').date[1] = d.getTime()
+            			datepickerOptions.date[1] = d.getTime()
 					}
+    				if (datepickerOptions.mode == 'tworanges')
+    					datepickerOptions.lastSel = 2
 				}
     			else
 				{
@@ -391,16 +392,20 @@ this.recline.View = this.recline.View || {};
     					values.dr2from = currVal
     	                values.dr2from_millis = d.getTime()
                         $('.dr2.from_millis').val(d.getTime());
-    	    			$(".datepicker.selectableRange").data('datepicker').date[2] = d.getTime()
+    					datepickerOptions.date[2] = d.getTime()
     				}
     				else
 					{
     	                values.dr2to = currVal
     	                values.dr2to_millis = d.getTime()
                         $('.dr2.to_millis').val(d.getTime());
-    	    			$(".datepicker.selectableRange").data('datepicker').date[3] = d.getTime()
+    	                datepickerOptions.date[3] = d.getTime()
 					}
+    				if (datepickerOptions.mode == 'tworanges')
+    					datepickerOptions.lastSel = 0
 				}
+    			// scroll month accordingly inside calendar section on the left
+    			datepickerOptions.current = d;
     			// this hack is used to force a refresh of the month calendar, since setmode calls fill() method
 				$('.date-ranges-picker').DatePickerSetMode($('.date-ranges-picker').DatePickerGetMode());
 			}

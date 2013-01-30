@@ -8011,8 +8011,8 @@ this.recline.View = this.recline.View || {};
 			{
     			//console.log(currVal+ " is VALID!: "+d.toLocaleDateString())
         		var options = self.datepicker.data("DateRangesWidget").options
-//        		console.log("OPTIONS CURRENT")
-//        		console.log(options.current)
+        		console.log("OPTIONS CURRENT")
+        		console.log(options.current)
         		var values = options.values;
     			if (isMain)
 				{
@@ -8030,6 +8030,7 @@ this.recline.View = this.recline.View || {};
                         $('.dr1.to_millis').val(d.getTime());
     	    			$(".datepicker.selectableRange").data('datepicker').date[1] = d.getTime()
 					}
+    				$(".datepicker.selectableRange").data('datepicker').lastSel = 2
 				}
     			else
 				{
@@ -8047,7 +8048,9 @@ this.recline.View = this.recline.View || {};
                         $('.dr2.to_millis').val(d.getTime());
     	    			$(".datepicker.selectableRange").data('datepicker').date[3] = d.getTime()
 					}
+    				$(".datepicker.selectableRange").data('datepicker').lastSel = 0
 				}
+    			$(".datepicker.selectableRange").data('datepicker').current = d;
     			// this hack is used to force a refresh of the month calendar, since setmode calls fill() method
 				$('.date-ranges-picker').DatePickerSetMode($('.date-ranges-picker').DatePickerGetMode());
 			}
