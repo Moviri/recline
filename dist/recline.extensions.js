@@ -7583,7 +7583,7 @@ this.recline.View = this.recline.View || {};
             var res = "";
             var i =0;
             _.each(self.series.main, function(d) {
-                res +=("<span class='xchart color" +i+"'>" + d.name + "</span>");
+                res +=("class='xchart color" +i+ "'" + d.name + "</br>");
                 i++;
             })
 
