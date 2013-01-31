@@ -3216,7 +3216,11 @@ this.recline.Data = this.recline.Data || {};
 
 
             } else if(format === "currency_euro") {
-                return "€ " + parseFloat(val.toFixed(2));
+                try {
+                    return "€ " + parseFloat(val.toFixed(2));
+                } catch(err) {
+                    return "N.A.";
+                }
             }
 
             try {
