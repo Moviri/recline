@@ -1138,7 +1138,7 @@ this.recline.Model.UnionDataset = this.recline.Model.UnionDataset || {};
             // derived fields are copyed by value
             //var derivedFieldsModel = _.filter(model.fields.models, function(f) { return f.deriver });
 
-            _.each(model.getRecords(), function (r) {
+            _.each(model.records.toJSON(), function (r) {
 
                 //_.each(derivedFieldsModel, function(f) {
                    // rec[f.id] = r.getFieldValue(f);
@@ -1150,7 +1150,7 @@ this.recline.Model.UnionDataset = this.recline.Model.UnionDataset || {};
             _.each(unionModel, function(p) {
                 //var derivedFieldsUnion = _.filter(p.model.fields.models, function(f) { return f.deriver });
 
-                _.each(p.model.getRecords(), function (r) {
+                _.each(p.model.records.toJSON(), function (r) {
 
                     //_.each(derivedFieldsUnion, function(f) {
                        // rec[f.id] = r.getFieldValue(f);
@@ -10275,13 +10275,15 @@ this.recline.View = this.recline.View || {};
 
     my.VisualSearch = Backbone.View.extend({
 
-        template:'<div id="search_box_container"></div><div id="search_query">&nbsp;</div>',
+        template:'<div id="search_box_container" id="{{uid}}"> </div><div id="search_query">&nbsp;</div>',
 
         initialize:function (options) {
             var self = this;
 
             this.el = $(this.el);
             _.bindAll(this, 'render', 'redraw');
+
+            this.uid = options.id || ("d3_" + new Date().getTime() + Math.floor(Math.random() * 10000)); // generating an unique id for the chart
 
             /*
             this.model.bind('change', self.render);
@@ -10297,12 +10299,8 @@ this.recline.View = this.recline.View || {};
         render:function () {
             var self = this;
 
-
-            var tmplData = {};
-            tmplData["viewId"] = self.uid;
-            var htmls = Mustache.render(this.template, tmplData);
-            $(this.el).html(htmls);
-
+            var out = Mustache.render(this.template, this);
+            this.el.html(out);
 
             return this;
         },

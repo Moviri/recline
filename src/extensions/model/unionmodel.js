@@ -144,7 +144,7 @@ this.recline.Model.UnionDataset = this.recline.Model.UnionDataset || {};
             // derived fields are copyed by value
             //var derivedFieldsModel = _.filter(model.fields.models, function(f) { return f.deriver });
 
-            _.each(model.getRecords(), function (r) {
+            _.each(model.records.toJSON(), function (r) {
 
                 //_.each(derivedFieldsModel, function(f) {
                    // rec[f.id] = r.getFieldValue(f);
@@ -156,7 +156,7 @@ this.recline.Model.UnionDataset = this.recline.Model.UnionDataset || {};
             _.each(unionModel, function(p) {
                 //var derivedFieldsUnion = _.filter(p.model.fields.models, function(f) { return f.deriver });
 
-                _.each(p.model.getRecords(), function (r) {
+                _.each(p.model.records.toJSON(), function (r) {
 
                     //_.each(derivedFieldsUnion, function(f) {
                        // rec[f.id] = r.getFieldValue(f);
