@@ -1848,7 +1848,7 @@ my.Field = Backbone.Model.extend({
     'number': function(val, field, doc) {
       var format = field.get('format');
       if (format === 'percentage') {
-        return val + 'xx';
+        return val + '%';
       }
       return val;
     },

@@ -176,9 +176,10 @@ this.recline.View = this.recline.View || {};
                 if (self.options.state.condensed == true && textField){
                 	if (self.options.maxLabelLength){ // TODO DOCUMENT the maxLabelLength option
                 		var fullText =  kpi[0].getFieldValue(textField);
-                		var truncatedText = fullText.substring(0, self.options.maxLabelLength);
+
                 		if ( fullText && fullText.length > self.options.maxLabelLength){
-                			tmplData["label"] = '<abbr title="' + fullText + '">'+truncatedText+'...</abbr>';	
+                            var truncatedText = fullText.substring(0, self.options.maxLabelLength);
+                            tmplData["label"] = '<abbr title="' + fullText + '">'+truncatedText+'...</abbr>';
                 		} else {
                 			tmplData["label"] = kpi[0].getFieldValue(textField);
                 		}                			
