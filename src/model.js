@@ -72,6 +72,16 @@ my.Dataset = Backbone.Model.extend({
 
       self.set(results.metadata);
       self.fields.reset(out.fields);
+
+        if (self.attributes.renderer) {
+
+            _.each(self.fields.models, function (f) {
+                f.renderer = self.attributes.renderer;
+            });
+
+        }
+        ;
+
       self.query()
         .done(function() {
           dfd.resolve(self);
@@ -418,7 +428,7 @@ my.Field = Backbone.Model.extend({
     'number': function(val, field, doc) {
       var format = field.get('format');
       if (format === 'percentage') {
-        return val + '%';
+        return val + 'xx';
       }
       return val;
     },

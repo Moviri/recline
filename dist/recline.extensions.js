@@ -465,7 +465,7 @@ recline.Model.Query.prototype = $.extend(recline.Model.Query.prototype, {
 
 
 }(jQuery));recline.Model.Dataset.prototype = $.extend(recline.Model.Dataset.prototype, {
-    fetch:function () {
+    /*fetch:function () {
         var super_init = recline.Model.Dataset.prototype.fetch;
         return function () {
             super_init.call(this);
@@ -481,7 +481,29 @@ recline.Model.Query.prototype = $.extend(recline.Model.Query.prototype, {
 
 
         }
-    }()
+    }()*/
+
+
+    initialize:function () {
+        var super_init = recline.Model.Dataset.prototype.initialize;
+        return function () {
+            super_init.call(this);
+            _.bindAll(this, 'applyRendererToFields');
+
+            this.fields.bind('reset', this.applyRendererToFields());
+        };
+    }(),
+
+    applyRendererToFields: function() {
+        var self = this;
+        if (self.attributes.renderer) {
+            _.each(self.fields.models, function (f) {
+                f.renderer = self.attributes.renderer;
+            });
+        }
+
+    }
+
 
 
 });
@@ -1198,7 +1220,9 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
             self.vModel = new my.Dataset(
                 {
                     backend: "Memory",
-                    records:[], fields: []});
+                    records:[], fields: [],
+                    renderer: self.attributes.renderer});
+
 
             self.fields = self.vModel.fields;
             self.records = self.vModel.records;
@@ -2824,6 +2848,7 @@ this.recline.Data.FieldsUtility = this.recline.Data.FieldsUtility || {};
                 if (tmp != null)
                     fields[i].label = tmp.label;
 
+
             }
 
         }
@@ -3173,7 +3198,7 @@ this.recline.Data = this.recline.Data || {};
 
         var r = my.Formatters.RenderersImpl[field.attributes.type];
         if(r==null) {
-            throw "No renderers defined for field type " + field.attributes.type;
+            throw "No custom renderers defined for field type " + field.attributes.type;
         }
 
         return r(val, field, doc);
@@ -3318,8 +3343,12 @@ this.recline.Data.SeriesUtility = this.recline.Data.SeriesUtility || {};
 
             var xfield = model.fields.get(groupField);
 
+        if (!xfield) {
+            throw "data.series.utility.CreateSeries: unable to find field [" + groupField + "] in model [" + model.id + "]";
+        }
 
-            var uniqueX = [];
+
+        var uniqueX = [];
             var sizeField;
             if (seriesAttr.sizeField) {
                 sizeField = model.fields.get(seriesAttr.sizeField);
@@ -3334,7 +3363,11 @@ this.recline.Data.SeriesUtility = this.recline.Data.SeriesUtility || {};
 
 
                 if (!fieldValue) {
-                    throw "data.series.utility.CreateSeries: unable to find field [" + seriesAttr.valuesField + "] in model"
+                    throw "data.series.utility.CreateSeries: unable to find field [" + seriesAttr.valuesField + "] in model [" + model.id + "]";
+                }
+
+                if (!seriesNameField) {
+                    throw "data.series.utility.CreateSeries: unable to find field [" + seriesAttr.seriesField + "] in model [" + model.id + "]";
                 }
 
 
@@ -6985,7 +7018,7 @@ this.recline.View = this.recline.View || {};
                 _.each(myRecords, function (doc) {
                     var row = {};
                     _.each(self.model.getFields(self.resultType).models, function (field) {
-                        row[field.id] = doc.getFieldValue(field);
+                        row[field.id] = doc.getFieldValueUnrendered(field);
                         if (field.id == innerChartSerie1Name || field.id == innerChartSerie2Name) {
                             var currVal = Math.abs(parseFloat(row[field.id]));
                             if (currVal > max)
@@ -7056,9 +7089,9 @@ this.recline.View = this.recline.View || {};
                                 });
                                 if (modelField) {
                                     if (rec) {
-                                        var formattedValue = rec.getFieldValue(modelField);
+                                        var formattedValue = rec.getFieldValueUnrendered(modelField);
                                         if (formattedValue)
-                                            row[measureFieldName + "_" + measureField.aggregation] = rec.getFieldValue(modelField);
+                                            row[measureFieldName + "_" + measureField.aggregation] = rec.getFieldValueUnrendered(modelField);
                                         else row[measureFieldName + "_" + measureField.aggregation] = 0;
                                     }
                                     else row[measureFieldName + "_" + measureField.aggregation] = 0;
@@ -7083,9 +7116,9 @@ this.recline.View = this.recline.View || {};
                                     return f.attributes.id == measureFieldName
                                 });
                                 if (modelField && rec) {
-                                    var formattedValue = rec.getFieldValue(modelField);
+                                    var formattedValue = rec.getFieldValueUnrendered(modelField);
                                     if (formattedValue)
-                                        row[measureFieldName] = "<b>" + rec.getFieldValue(modelField) + "</b>";
+                                        row[measureFieldName] = "<b>" + rec.getFieldValueUnrendered(modelField) + "</b>";
                                     else row[measureFieldName] = "<b>" + 0 + "</b>";
                                 }
                                 else row[measureFieldName] = "<b>" + 0 + "</b>";
@@ -7104,7 +7137,7 @@ this.recline.View = this.recline.View || {};
                     var row = {schema_colors:[]};
 
                     _.each(self.model.getFields(self.resultType).models, function (field) {
-                        row[field.id] = doc.getFieldValue(field);
+                        row[field.id] = doc.getFieldValueUnrendered(field);
                         if (innerChartSerie1Name && field.id == innerChartSerie1Name)
                             row.schema_colors[0] = doc.getFieldColor(field);
 
@@ -7138,7 +7171,7 @@ this.recline.View = this.recline.View || {};
                     var currTotal = options.showTotals[f];
                     var fieldObj = self.model.getField_byAggregationFunction("totals" + (currTotal.filtered ? "_filtered" : ""), currTotal.field, currTotal.aggregation);
                     if (typeof fieldObj != "undefined")
-                        options.totals[currTotal.field] = totalsRecord[0].getFieldValue(fieldObj);
+                        options.totals[currTotal.field] = totalsRecord[0].getFieldValueUnrendered(fieldObj);
                 }
             }
 
@@ -7583,7 +7616,7 @@ this.recline.View = this.recline.View || {};
             var res = "";
             var i =0;
             _.each(self.series.main, function(d) {
-                res +=("class='xchart color" +i+ "'" + d.name + "</br>");
+                res +=("class='xchart color" +i+ "' " + d.name + "</br>");
                 i++;
             })
 

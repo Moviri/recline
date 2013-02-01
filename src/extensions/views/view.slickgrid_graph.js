@@ -278,7 +278,7 @@ this.recline.View = this.recline.View || {};
                 _.each(myRecords, function (doc) {
                     var row = {};
                     _.each(self.model.getFields(self.resultType).models, function (field) {
-                        row[field.id] = doc.getFieldValue(field);
+                        row[field.id] = doc.getFieldValueUnrendered(field);
                         if (field.id == innerChartSerie1Name || field.id == innerChartSerie2Name) {
                             var currVal = Math.abs(parseFloat(row[field.id]));
                             if (currVal > max)
@@ -349,9 +349,9 @@ this.recline.View = this.recline.View || {};
                                 });
                                 if (modelField) {
                                     if (rec) {
-                                        var formattedValue = rec.getFieldValue(modelField);
+                                        var formattedValue = rec.getFieldValueUnrendered(modelField);
                                         if (formattedValue)
-                                            row[measureFieldName + "_" + measureField.aggregation] = rec.getFieldValue(modelField);
+                                            row[measureFieldName + "_" + measureField.aggregation] = rec.getFieldValueUnrendered(modelField);
                                         else row[measureFieldName + "_" + measureField.aggregation] = 0;
                                     }
                                     else row[measureFieldName + "_" + measureField.aggregation] = 0;
@@ -376,9 +376,9 @@ this.recline.View = this.recline.View || {};
                                     return f.attributes.id == measureFieldName
                                 });
                                 if (modelField && rec) {
-                                    var formattedValue = rec.getFieldValue(modelField);
+                                    var formattedValue = rec.getFieldValueUnrendered(modelField);
                                     if (formattedValue)
-                                        row[measureFieldName] = "<b>" + rec.getFieldValue(modelField) + "</b>";
+                                        row[measureFieldName] = "<b>" + rec.getFieldValueUnrendered(modelField) + "</b>";
                                     else row[measureFieldName] = "<b>" + 0 + "</b>";
                                 }
                                 else row[measureFieldName] = "<b>" + 0 + "</b>";
@@ -397,7 +397,7 @@ this.recline.View = this.recline.View || {};
                     var row = {schema_colors:[]};
 
                     _.each(self.model.getFields(self.resultType).models, function (field) {
-                        row[field.id] = doc.getFieldValue(field);
+                        row[field.id] = doc.getFieldValueUnrendered(field);
                         if (innerChartSerie1Name && field.id == innerChartSerie1Name)
                             row.schema_colors[0] = doc.getFieldColor(field);
 
@@ -431,7 +431,7 @@ this.recline.View = this.recline.View || {};
                     var currTotal = options.showTotals[f];
                     var fieldObj = self.model.getField_byAggregationFunction("totals" + (currTotal.filtered ? "_filtered" : ""), currTotal.field, currTotal.aggregation);
                     if (typeof fieldObj != "undefined")
-                        options.totals[currTotal.field] = totalsRecord[0].getFieldValue(fieldObj);
+                        options.totals[currTotal.field] = totalsRecord[0].getFieldValueUnrendered(fieldObj);
                 }
             }
 
