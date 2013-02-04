@@ -35,7 +35,7 @@ this.recline.Data.SeriesUtility = this.recline.Data.SeriesUtility || {};
                 selectionActive = true;
 
             var resultType = "filtered";
-            if (resultTypeValue !== null)
+            if (resultTypeValue)
                 resultType = resultTypeValue;
 
             var records = model.getRecords(resultType);  //self.model.records.models;
