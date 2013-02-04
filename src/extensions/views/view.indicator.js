@@ -132,8 +132,17 @@ templatePercentage:
 				 <div class="indicator-table"> \
 	                <div class="titlerow"><span class="title">{{{label}}}</span></div>    \
 	                <div class="descriptionrow"><span class="description"><small>{{description}}</small></span></div>    \
-	                <div class="shaperow"><div class="shape">{{{shape}}}</div><span class="value-cell"> <div style="white-space: nowrap"> {{value}} {{{compareShape}}}</div> </span></div>  \
-	                <div class="comparerow"><div class="comparelabel">{{percentageMsg}}<b>{{compareValue}}</b> (<b>{{compareWithValue}}</b>)</div></div>  \
+	                <div class="shaperow"> \
+						<div class="shape">{{{shape}}}</div> \
+						<span class="value-cell"> \
+							<div style="white-space: nowrap;"> \
+								<div style="float:left;font-size: 150%;">{{value}}</div> \
+								<div style="float:left;margin-left: 10px;text-align: left;width:40px;"> \
+									<div style="height:15px" >{{{compareShape}}}</div> \
+									<div style="font-size: 60%;color: #999;float: left;margin-top: -10px;">{{percentageMsg}}{{compareValue}}</div>\
+								</div> \
+							</div> </span> \
+					</div>  \
 	             </div>  \
 			</div>\
 	      </div> \
