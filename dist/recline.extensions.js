@@ -7080,7 +7080,9 @@ this.recline.View = this.recline.View || {};
                         }
                     });
                 });
-                max = adjustMax(max);
+                if (innerChartSerie2Name) // adjust max only for 2 series, not for 1
+                	max = adjustMax(max);
+                
                 options.innerChartMax = max;
             }
             var data = [];
@@ -7202,7 +7204,7 @@ this.recline.View = this.recline.View || {};
                     if (self.state.get('useInnerChart') == true && innerChartSerie1Name) {
                         if (innerChartSerie2Name)
                             row['innerChart'] = [ row[innerChartSerie1Name], row[innerChartSerie2Name], max ]; // twinbar for 2 series
-                        else row['innerChart'] = row[innerChartSerie1Name]; // percent bar for 1 series
+                        else row['innerChart'] = [ row[innerChartSerie1Name], max ]; // percent bar for 1 series
                     }
 
 

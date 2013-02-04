@@ -38,10 +38,11 @@
     }
   }
 
-  function PercentCompleteBarFormatter(row, cell, value, columnDef, dataContext) {
-    if (value == null || value === "") {
+  function PercentCompleteBarFormatter(row, cell, values, columnDef, dataContext) {
+    if (values == null || values === "") {
       return "";
     }
+    var value = 100 * values[0] / parseFloat(values[1]);
     var color;
     var colors = dataContext.schema_colors;
     if (colors)
