@@ -15,7 +15,9 @@
         "Checkmark": CheckmarkFormatter,
         "TwinBarFormatter": TwinBarFormatter,
         "FixedCellFormatter": FixedCellFormatter,
-        "DateFormatter": DateFormatter
+        "DateFormatter": DateFormatter,
+        "HtmlFormatter": HtmlFormatter,
+        "HtmlExtFormatter": HtmlExtFormatter
       }
     }
   });
@@ -87,4 +89,26 @@
   function CheckmarkFormatter(row, cell, value, columnDef, dataContext) {
     return value ? "<img src='../images/tick.png'>" : "";
   }
+  
+  function HtmlFormatter(row, cell, values, columnDef, dataContext) {
+	    if (values == null || values.length < 2)
+	        return "";
+	    
+	    var record = values[0] // must hold the record JSON attributes (record.attributes)
+	    var template = values[1]
+	    if (template)
+	    	return Mustache.render(template, record);
+	    else return "";
+  }
+  
+  function HtmlExtFormatter(row, cell, values, columnDef, dataContext) {
+	    if (values == null || values.length < 2)
+	        return "";
+	    
+	    var record = values[0]  // must be a record class instance
+	    var extFormula = values[1]
+	    
+      return extFormula(record);
+}
+  
 })(jQuery);
