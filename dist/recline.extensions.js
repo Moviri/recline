@@ -7615,13 +7615,17 @@ this.recline.View = this.recline.View || {};
         createLegend: function() {
             var self=this;
             var res = "";
+            var resStyle = "<style>";
             var i =0;
             _.each(self.series.main, function(d) {
-                res +=("class='xchart color" +i+ "' " + d.name + "</br>");
+                res +=("class='xchart color" +i+ "' " + d.name + " " + "</br>");
+                resStyle += "color"+i+":"  + d.color;
                 i++;
             })
 
-            self.options.state.legend.html(res);
+            resStyle +="</style>"
+            self.options.state.legend.append(res);
+            self.options.state.legend.append(resStyle);
 
         },
 
