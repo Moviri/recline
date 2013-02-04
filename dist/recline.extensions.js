@@ -5149,10 +5149,10 @@ templatePercentage:
 						<div class="shape">{{{shape}}}</div> \
 						<span class="value-cell"> \
 							<div style="white-space: nowrap;"> \
-								<div style="float:left;font-size: 150%;">{{value}}</div> \
-								<div style="float:left;margin-left: 10px;text-align: left;width:40px;"> \
-									<div style="height:15px" >{{{compareShape}}}</div> \
-									<div style="font-size: 60%;color: #999;float: left;margin-top: -10px;">{{percentageMsg}}{{compareValue}}</div>\
+								<div class="kpi_value">{{value}}</div> \
+								<div class="kpi_compare_shape_container"> \
+									<div class="kpi_compare_shape_shape" >{{{compareShape}}}</div> \
+									<div class="kpi_compare_shape_msg">{{percentageMsg}}{{compareValue}}</div>\
 								</div> \
 							</div> </span> \
 					</div>  \
