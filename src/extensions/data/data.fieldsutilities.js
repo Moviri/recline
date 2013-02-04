@@ -17,6 +17,7 @@ this.recline.Data.FieldsUtility = this.recline.Data.FieldsUtility || {};
                 if (tmp != null)
                     fields[i].label = tmp.label;
 
+
             }
 
         }

@@ -99,6 +99,10 @@ this.recline.View = this.recline.View || {};
             var self = this;
             var state = self.options.state;
             self.updateSeries();
+
+            if(state.legend)
+                self.createLegend();
+
             if (self.series.main && self.series.main.length && self.series.main[0].data && self.series.main[0].data.length)
         	{
             	self.graph = new xChart(state.type, self.series, '#' + self.uid, state.opts);
@@ -135,6 +139,19 @@ this.recline.View = this.recline.View || {};
             }
         },
 
+        createLegend: function() {
+            var self=this;
+            var res = "";
+            var i =0;
+            _.each(self.series.main, function(d) {
+                res +=("class='xchart color" +i+ "' " + d.name + "</br>");
+                i++;
+            })
+
+            self.options.state.legend.html(res);
+
+        },
+
         updateSeries: function() {
             var self = this;
             var state = self.options.state;
@@ -155,7 +172,7 @@ this.recline.View = this.recline.View || {};
              */
 
             _.each( series, function(d) {
-                var serie = {color:d.color, data:_.map(d.data, function(c) { return {x:c.x, y:c.y} })};
+                var serie = {color:d.color, name:d.name, data:_.map(d.data, function(c) { return {x:c.x, y:c.y} })};
 
                 data.main.push(serie);
             });

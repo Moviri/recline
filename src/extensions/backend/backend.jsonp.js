@@ -31,7 +31,7 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
 
 
         var data = buildRequestFromQuery(queryObj);
-        console.log("Querying jsonp backend for ");
+        console.log("Querying jsonp backend [" + dataset.id+"] for ");
         console.log(data);
         return requestJson(dataset, data, queryObj);
 

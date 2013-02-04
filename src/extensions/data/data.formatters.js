@@ -64,7 +64,7 @@ this.recline.Data = this.recline.Data || {};
 
         var r = my.Formatters.RenderersImpl[field.attributes.type];
         if(r==null) {
-            throw "No renderers defined for field type " + field.attributes.type;
+            throw "No custom renderers defined for field type " + field.attributes.type;
         }
 
         return r(val, field, doc);
@@ -107,7 +107,11 @@ this.recline.Data = this.recline.Data || {};
 
 
             } else if(format === "currency_euro") {
-                return "€ " + val;
+                try {
+                    return "€ " + parseFloat(val.toFixed(2));
+                } catch(err) {
+                    return "N.A.";
+                }
             }
 
             try {

@@ -42,8 +42,12 @@ this.recline.Data.SeriesUtility = this.recline.Data.SeriesUtility || {};
 
             var xfield = model.fields.get(groupField);
 
+        if (!xfield) {
+            throw "data.series.utility.CreateSeries: unable to find field [" + groupField + "] in model [" + model.id + "]";
+        }
 
-            var uniqueX = [];
+
+        var uniqueX = [];
             var sizeField;
             if (seriesAttr.sizeField) {
                 sizeField = model.fields.get(seriesAttr.sizeField);
@@ -58,7 +62,11 @@ this.recline.Data.SeriesUtility = this.recline.Data.SeriesUtility || {};
 
 
                 if (!fieldValue) {
-                    throw "data.series.utility.CreateSeries: unable to find field [" + seriesAttr.valuesField + "] in model"
+                    throw "data.series.utility.CreateSeries: unable to find field [" + seriesAttr.valuesField + "] in model [" + model.id + "]";
+                }
+
+                if (!seriesNameField) {
+                    throw "data.series.utility.CreateSeries: unable to find field [" + seriesAttr.seriesField + "] in model [" + model.id + "]";
                 }
 
 

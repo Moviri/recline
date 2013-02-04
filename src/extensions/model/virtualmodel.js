@@ -22,7 +22,9 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
             self.vModel = new my.Dataset(
                 {
                     backend: "Memory",
-                    records:[], fields: []});
+                    records:[], fields: [],
+                    renderer: self.attributes.renderer});
+
 
             self.fields = self.vModel.fields;
             self.records = self.vModel.records;
