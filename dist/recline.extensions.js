@@ -353,6 +353,11 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
         },
         toFullJSON:function (resultType) {
             return this.joinedModel.toFullJSON(resultType);
+        },
+        setColorSchema:function () {
+            if(this.attributes["colorSchema"])
+                this.joinedModel.attributes["colorSchema"] = this.attributes["colorSchema"];
+            return this.joinedModel.setColorSchema();
         }
 
     })
@@ -1189,6 +1194,11 @@ this.recline.Model.UnionDataset = this.recline.Model.UnionDataset || {};
         },
         toFullJSON:function (resultType) {
             return this.unionModel.toFullJSON(resultType);
+        },
+        setColorSchema:function () {
+            if(this.attributes["colorSchema"])
+                this.unionModel.attributes["colorSchema"] = this.attributes["colorSchema"];
+            return this.unionModel.setColorSchema();
         }
 
     })
@@ -2516,7 +2526,9 @@ this.recline.Data.ColorSchema = this.recline.Data.ColorSchema || {};
             self.attributes.dataset.dataset.fields.bind('reset', function () {
                 self.attributes.dataset.dataset.setColorSchema(self.attributes.dataset.type);
             });
-
+            self.attributes.dataset.dataset.fields.bind('add', function () {
+                self.attributes.dataset.dataset.setColorSchema(self.attributes.dataset.type);
+            });
             if (self.attributes.dataset.dataset.records.models.length > 0) {
                 self._generateFromDataset();
             }

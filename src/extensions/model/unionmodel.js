@@ -195,6 +195,11 @@ this.recline.Model.UnionDataset = this.recline.Model.UnionDataset || {};
         },
         toFullJSON:function (resultType) {
             return this.unionModel.toFullJSON(resultType);
+        },
+        setColorSchema:function () {
+            if(this.attributes["colorSchema"])
+                this.unionModel.attributes["colorSchema"] = this.attributes["colorSchema"];
+            return this.unionModel.setColorSchema();
         }
 
     })

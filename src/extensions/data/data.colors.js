@@ -46,7 +46,9 @@ this.recline.Data.ColorSchema = this.recline.Data.ColorSchema || {};
             self.attributes.dataset.dataset.fields.bind('reset', function () {
                 self.attributes.dataset.dataset.setColorSchema(self.attributes.dataset.type);
             });
-
+            self.attributes.dataset.dataset.fields.bind('add', function () {
+                self.attributes.dataset.dataset.setColorSchema(self.attributes.dataset.type);
+            });
             if (self.attributes.dataset.dataset.records.models.length > 0) {
                 self._generateFromDataset();
             }

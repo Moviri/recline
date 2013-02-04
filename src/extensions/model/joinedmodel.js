@@ -200,6 +200,11 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
         },
         toFullJSON:function (resultType) {
             return this.joinedModel.toFullJSON(resultType);
+        },
+        setColorSchema:function () {
+            if(this.attributes["colorSchema"])
+                this.joinedModel.attributes["colorSchema"] = this.attributes["colorSchema"];
+            return this.joinedModel.setColorSchema();
         }
 
     })
