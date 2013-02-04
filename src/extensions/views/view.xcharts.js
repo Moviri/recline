@@ -105,6 +105,9 @@ this.recline.View = this.recline.View || {};
 
             if (self.series.main && self.series.main.length && self.series.main[0].data && self.series.main[0].data.length)
         	{
+            	if (self.options.state.yAxisTitle)
+            		state.opts.paddingLeft = 90;  // accomodate space for y-axis title (original values was 60)
+            			
             	self.graph = new xChart(state.type, self.series, '#' + self.uid, state.opts);
             	if (state.interpolation)
             		self.graph._options.interpolation = state.interpolation
@@ -116,8 +119,8 @@ this.recline.View = this.recline.View || {};
             	{
                 	var fullHeight = self.graph._height + self.graph._options.axisPaddingTop + self.graph._options.axisPaddingBottom
             	
-	                self.graph._gScale.selectAll('g.axisY g.titleY').data([self.options.state.yAxisTitle]).enter()
-	                	.append('g').attr('class', 'titleY').attr('transform', 'translate(-30,'+fullHeight/2+') rotate(-90)')
+	                self.graph._g.selectAll('g.axisY g.titleY').data([self.options.state.yAxisTitle]).enter()
+	                	.append('g').attr('class', 'titleY').attr('transform', 'translate(-60,'+fullHeight/2+') rotate(-90)')
 	                	.append('text').attr('x', -3).attr('y', 0).attr('dy', ".32em").attr('text-anchor', "middle").text(function(d) { return d; });
             	}
             }
@@ -141,18 +144,34 @@ this.recline.View = this.recline.View || {};
 
         createLegend: function() {
             var self=this;
-            var res = "";
-            var resStyle = "<style>";
+            var res = $("<div/>");
             var i =0;
             _.each(self.series.main, function(d) {
-                res +=("class='xchart color" +i+ "' " + d.name + " " + "</br>");
-                resStyle += "color"+i+":"  + d.color;
+            	
+            	if (d.color){
+                	$("<style type='text/css'> " +
+                			".color"+i+"{ color:rgb("+d.color.rgb+");} " +
+                			".legendcolor"+i+"{ color:rgb("+d.color.rgb+"); background-color:rgb("+d.color.rgb+"); } " +
+                			".xchart .color"+i+" .fill { fill:rgba("+d.color.rgb+",0.1);} " +
+        					".xchart .color"+i+" .line { stroke:rgb("+d.color.rgb+");} " +    
+        					".xchart .color"+i+" rect, .xchart .color"+i+" circle { fill:rgb("+d.color.rgb+");} " +
+    					"</style>").appendTo("head");
+                	var legendItem = $('<div class="legend_item"/>');
+                	var name = $("<span/>");
+                	name.html(d.name);
+                	legendItem.append(name);
+                	var value = $('<div class="legend_item_value"/>');
+                	value.addClass("legendcolor"+i);
+                	legendItem.append(value);
+                	res.append(legendItem);
+            	} else {
+            		console.log('d.color not defined');
+            	}   
+            	
                 i++;
             })
 
-            resStyle +="</style>"
-            self.options.state.legend.append(res);
-            self.options.state.legend.append(resStyle);
+            self.options.state.legend.html(res);
 
         },
 

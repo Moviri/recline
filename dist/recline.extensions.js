@@ -3348,7 +3348,7 @@ this.recline.Data.SeriesUtility = this.recline.Data.SeriesUtility || {};
                 selectionActive = true;
 
             var resultType = "filtered";
-            if (resultTypeValue !== null)
+            if (resultTypeValue)
                 resultType = resultTypeValue;
 
             var records = model.getRecords(resultType);  //self.model.records.models;
@@ -5565,7 +5565,13 @@ this.recline.View = this.recline.View || {};
 
         template:'<div class="recline-graph"> \
       <div class="panel nvd3graph_{{viewId}}"style="display: block;"> \
-        <div id="nvd3chart_{{viewId}}"><svg class="bstrap"></svg></div>\
+        <div id="nvd3chart_{{viewId}}"><svg version="1.1" xmlns="http://www.w3.org/2000/svg" class="bstrap" width="{{width}}" height="{{height}}"> \
+        	  <defs> \
+		    	<marker id = "Circle" viewBox = "0 0 40 40" refX = "12" refY = "12" markerWidth = "6" markerHeight = "6" stroke = "white" stroke-width = "4" fill = "dodgerblue" orient = "auto"> \
+		    	<circle cx = "12" cy = "12" r = "12"/> \
+		    	</marker> \
+		      </defs> \
+        	</svg></div>\
       </div> \
     </div> ',
 
@@ -5615,8 +5621,14 @@ this.recline.View = this.recline.View || {};
 
             var tmplData = this.model.toTemplateJSON();
             tmplData["viewId"] = this.uid;
+            if (this.state.attributes.width)
+            	tmplData.width = this.state.attributes.width;
+
+            if (this.state.attributes.height)
+            	tmplData.height = this.state.attributes.height;
 
             delete this.chart;
+            
             
             if (tmplData.recordCount && tmplData.recordCount > 0)
             {
@@ -5690,6 +5702,8 @@ this.recline.View = this.recline.View || {};
 
             nv.addGraph(function () {
                 self.chart = self.getGraph[graphType](self);
+                var svgElem = self.el.find('#nvd3chart_' + self.uid+ ' svg')
+                var graphModel = self.getGraphModel(self, graphType)
                 
                 if (self.options.state.options.noTicksX)
                     self.chart.xAxis.tickFormat(function (d) { return ''; });                	
@@ -5700,13 +5714,17 @@ this.recline.View = this.recline.View || {};
             	{
                 	var leftOffset = 10;
                 	var topOffset = 0;
-                    console.log("Replacing original tooltips")
+                    //console.log("Replacing original tooltips")
                     
                     var xfield = self.model.fields.get(self.state.attributes.group);
                     var yfield = self.model.fields.get(self.state.attributes.series);
                     
-                    self.chart.multibar.dispatch.on('elementMouseover.tooltip', function(e) {
-                        var pos = {top: e.e.pageY, left: e.e.pageX}
+                    graphModel.dispatch.on('elementMouseover.tooltip', function(e) {
+                    	var pos;
+                    	if (e.e && e.e.pageY && e.e.pageX)
+                    		pos = {top: e.e.pageY, left: e.e.pageX}
+                    	else pos = {left: e.pos[0] + +svgElem.offset().left + 50, top: e.pos[1]+svgElem.offset().top}
+                    	
                         var values = { 
                         				x: self.getFormatter[xfield.get('type')](e.point.x),
                         				y: e.point.y,
@@ -5718,7 +5736,7 @@ this.recline.View = this.recline.View || {};
                         nv.tooltip.show([pos.left+leftOffset, pos.top+topOffset], content, (pos.left < self.el[0].offsetLeft + self.el.width()/2 ? 'w' : 'e'), null, self.el[0]);
                       });
                     
-                    self.chart.multibar.dispatch.on('elementMouseout.tooltip', function(e) {
+                    graphModel.dispatch.on('elementMouseout.tooltip', function(e) {
                     	nv.tooltip.cleanup();
                     });
             	}
@@ -5776,7 +5794,7 @@ this.recline.View = this.recline.View || {};
 	                $('#nvd3chart_' + viewId + '  svg').height(newH);
 	            }
             }
-            if (self.chart)
+            if (self.chart && self.chart.update)
             	self.chart.update(); // calls original 'update' function
         },
 
@@ -5851,8 +5869,9 @@ this.recline.View = this.recline.View || {};
             },
             showValues: function(chart, value) {
                 chart.showValues(value);
+            },
+            "customTooltips":function (chart, value) { 
             }
-
         },
 
 
@@ -5873,6 +5892,15 @@ this.recline.View = this.recline.View || {};
                     chart = view.chart;
                 else
                     chart = nv.models.lineChart();
+                view.setAxis("all", chart);
+                return chart;
+            },
+            "lineDottedChart":function (view) {
+                var chart;
+                if (view.chart != null)
+                    chart = view.chart;
+                else
+                    chart = nv.models.lineDottedChart();
                 view.setAxis("all", chart);
                 return chart;
             },
@@ -6116,7 +6144,32 @@ this.recline.View = this.recline.View || {};
             }
 
         },
-
+        getGraphModel: function(self, graphType) {
+        	switch(graphType) {
+        		
+            case "historicalBar":
+        	case "multiBarChart": 
+            case "multiBarWithBrushChart":
+            case "multiBarHorizontalChart":
+        		return self.chart.multibar;
+            case "lineChart":
+            case "lineDottedChart":
+            case "lineWithFocusChart":
+            case "linePlusBarChart":
+            case "cumulativeLineChart":
+            case "lineWithBrushChart":
+        		return self.chart.lines;
+            case "bulletChart":
+        		return self.chart.bullet;
+            case "scatterChart":
+        		return self.chart.scatter;
+            case "stackedAreaChart":
+            case "pieChart":
+        		return self.chart.pie;
+            case "discreteBarChart":
+        		return self.chart.discretebar;
+        	}
+        },
 
         doActions:function (actions, records) {
 
@@ -6168,7 +6221,7 @@ this.recline.View = this.recline.View || {};
                 selectionActive = true;
 
             var resultType = "filtered";
-            if(self.options.resultType !== null)
+            if(self.options.resultType)
                 resultType = self.options.resultType;
 
             var records = self.model.getRecords(resultType); 
@@ -7039,7 +7092,9 @@ this.recline.View = this.recline.View || {};
                         }
                     });
                 });
-                max = adjustMax(max);
+                if (innerChartSerie2Name) // adjust max only for 2 series, not for 1
+                	max = adjustMax(max);
+                
                 options.innerChartMax = max;
             }
             var data = [];
@@ -7161,7 +7216,7 @@ this.recline.View = this.recline.View || {};
                     if (self.state.get('useInnerChart') == true && innerChartSerie1Name) {
                         if (innerChartSerie2Name)
                             row['innerChart'] = [ row[innerChartSerie1Name], row[innerChartSerie2Name], max ]; // twinbar for 2 series
-                        else row['innerChart'] = row[innerChartSerie1Name]; // percent bar for 1 series
+                        else row['innerChart'] = [ row[innerChartSerie1Name], max ]; // percent bar for 1 series
                     }
 
 
@@ -7590,6 +7645,9 @@ this.recline.View = this.recline.View || {};
 
             if (self.series.main && self.series.main.length && self.series.main[0].data && self.series.main[0].data.length)
         	{
+            	if (self.options.state.yAxisTitle)
+            		state.opts.paddingLeft = 90;  // accomodate space for y-axis title (original values was 60)
+            			
             	self.graph = new xChart(state.type, self.series, '#' + self.uid, state.opts);
             	if (state.interpolation)
             		self.graph._options.interpolation = state.interpolation
@@ -7601,8 +7659,8 @@ this.recline.View = this.recline.View || {};
             	{
                 	var fullHeight = self.graph._height + self.graph._options.axisPaddingTop + self.graph._options.axisPaddingBottom
             	
-	                self.graph._gScale.selectAll('g.axisY g.titleY').data([self.options.state.yAxisTitle]).enter()
-	                	.append('g').attr('class', 'titleY').attr('transform', 'translate(-30,'+fullHeight/2+') rotate(-90)')
+	                self.graph._g.selectAll('g.axisY g.titleY').data([self.options.state.yAxisTitle]).enter()
+	                	.append('g').attr('class', 'titleY').attr('transform', 'translate(-60,'+fullHeight/2+') rotate(-90)')
 	                	.append('text').attr('x', -3).attr('y', 0).attr('dy', ".32em").attr('text-anchor', "middle").text(function(d) { return d; });
             	}
             }
