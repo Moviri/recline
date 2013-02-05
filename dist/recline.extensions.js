@@ -171,6 +171,7 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
             _.bindAll(this, 'generatefields');
 
             self.ds_fetched = [];
+            self.field_fetched = [];
 
             self.joinedModel = new my.Dataset({backend: "Memory", records:[], fields: [], renderer: self.attributes.renderer});
 
@@ -184,32 +185,54 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
                 this.get('initialState').setState(this);
             }
 
-            this.attributes.model.fields.bind('reset', this.generatefields);
-            this.attributes.model.fields.bind('add', this.generatefields);
+            this.attributes.model.fields.bind('reset', function() {
+                self.field_fetched.push("model");
+
+                console.log("joined query:done on ["+ self.attributes.model.id +"] dsFetched ["+self.allDsFetched(self.field_fetched)+"]");
+                if (self.allDsFetched(self.field_fetched))
+                    self.generatefields();
+            });
+            //this.attributes.model.fields.bind('add', this.generatefields);
 
             _.each(this.attributes.join, function(p) {
-                p.model.fields.bind('reset', self.generatefields);
-                p.model.fields.bind('add', self.generatefields);
+                p.model.fields.bind('reset', function() {
+                    if(!p.id)
+                        throw "joinedmodel: a model without id has been used in join. Unable to apply joined model";
+
+                    console.log("joined query:done on ["+ p.id +"] dsFetched ["+self.allDsFetched(self.field_fetched)+"]");
+                    self.field_fetched.push(p.model.id);
+
+                    if (self.allDsFetched(self.field_fetched))
+                        self.generatefields();
+
+                });
+                //p.model.fields.bind('add', self.generatefields);
             });
 
             this.attributes.model.bind('query:done', function () {
                 self.ds_fetched.push("model");
 
-                if (self.allDsFetched())
+                console.log("joined query:done on ["+ self.attributes.model.id +"] dsFetched ["+self.allDsFetched(self.ds_fetched)+"]");
+
+                if (self.allDsFetched(self.ds_fetched))
                     self.query();
             })
 
             _.each(this.attributes.join, function(p) {
 
                 p.model.bind('query:done', function () {
+                    if(!p.id)
+                        throw "joinedmodel: a model without id has been used in join. Unable to apply joined model";
+
+                    console.log("joined query:done on ["+ p.model.id +"] dsFetched ["+self.allDsFetched(self.ds_fetched)+"]");
                     self.ds_fetched.push(p.id);
 
-                    if (self.allDsFetched())
+                    if (self.allDsFetched(self.ds_fetched))
                         self.query();
                 });
 
                 p.model.queryState.bind('change', function () {
-                    if (self.allDsFetched())
+                    if (self.allDsFetched(self.ds_fetched))
                         self.query();
                 });
 
@@ -217,15 +240,15 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
 
         },
 
-        allDsFetched: function() {
+        allDsFetched: function(fetchedList) {
             var self=this;
             var ret= true;
 
-            if(!_.contains(self.ds_fetched, "model"))
+            if(!_.contains(fetchedList, "model"))
                 return false;
 
              _.each(self.attributes.join, function(p) {
-                 if(!_.contains(self.ds_fetched, p.id)) {
+                 if(!_.contains(fetchedList, p.id)) {
                      ret = false;
                  }
              });
@@ -251,7 +274,6 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
                 });
             });
 
-
             this.joinedModel.resetFields(tmpFields);
 
         },
@@ -267,10 +289,14 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
             var results = self.join();
 
             self.joinedModel.resetRecords(results);
+            if(self.fields.models.length == 0)
+                self.generatefields();
 
             self.joinedModel.fetch();
             self.recordCount = self.joinedModel.recordCount;
 
+            console.log("query done on joined ["+ self.attributes.model.id +"]");
+            console.log(_.map(self.fields.models, function(c) { return c.attributes.id }  ));
             self.trigger('query:done');
         },
 
@@ -589,10 +615,10 @@ recline.Model.Query.prototype = $.extend(recline.Model.Query.prototype, {
         });
     },
     resetRecords:function (records) {
-        this.set({records:records});
+        this.set({records:records}, {silent:true});
     },
     resetFields:function (fields) {
-        this.set({fields:fields});
+        this.set({fields:fields}, {silent: true});
     },
 
     getRecords:function (type) {
@@ -4767,6 +4793,7 @@ this.recline.View = this.recline.View || {};
 
         // if total is present i need to wait for both redraw events
         redrawSemaphore: function (type, self) {
+            console.log("called redraw semaphore for type ["+type+"]");
             if (!self.semaphore) {
                 self.semaphore = "";
             }
@@ -4783,7 +4810,7 @@ this.recline.View = this.recline.View || {};
                         self.semaphore = "";
                         self.redraw();
                     } else {
-                        self.semaphore = "model";
+                        self.semaphore = "totals";
                     }
                 }
             } else {
@@ -4863,11 +4890,14 @@ this.recline.View = this.recline.View || {};
                 var facets = this.model.getFacetByFieldId(self.options.groupBy);
                 var field = this.model.fields.get(self.options.groupBy);
 
+                if(!field)
+                    throw "ComposedView: unable to find groupBy field ["+ self.options.groupBy +"] in model ["+this.model.id+"]";
+
                 if (!facets) {
                     throw "ComposedView: no facet present for groupby field [" + self.options.groupBy + "]. Define a facet on the model before view render";
                 }
 
-                if (facets.attributes.terms.length == 0)
+                if (facets.attributes.terms.length == 0 && !self.options.modelTotals)
                     self.noData = new recline.View.NoDataMsg().create2();
 
                 else _.each(facets.attributes.terms, function (t) {
@@ -4896,28 +4926,8 @@ this.recline.View = this.recline.View || {};
                 })
 
 
-                if (self.options.totals) {
-                    var uid = (new Date().getTime() + Math.floor(Math.random() * 10000));
-                    _.each(self.addMeasuresToDimensionAllModel({id_dimension: uid}, self.options.measures, true), function (f) {
-                        self.dimensions.push(f);
-                    });
-
-
-                    _.each(self.dimensions, function (f, index) {
-                        f["getDimensionIDbyMeasureID"] = self.getViewFunction;
-                        self.dimensions[index] = f;
-                    })
-                }
 
             } else {
-                /*var field = this.model.fields.get(self.options.dimension);
-                 if(!field)
-                 throw("View.Composed: unable to find dimension field [" + self.options.dimension + "] on dataset")
-
-                 _.each(self.model.getRecords(self.options.resultType), function(r) {
-                 var uid = (new Date().getTime() + Math.floor(Math.random() * 10000)); // generating an unique id for the chart
-                 self.dimensions.push( self.addMeasuresToDimension({term: r.getFieldValue(field), id: uid}, field, r));
-                 });*/
                 var uid = (new Date().getTime() + Math.floor(Math.random() * 10000)); // generating an unique id for the chart
                 var dim;
 
@@ -4974,13 +4984,7 @@ this.recline.View = this.recline.View || {};
             // force a resize to ensure that contained object have the correct amount of width/height
             this.el.trigger('resize');
 
-            //var field = this.model.getFields();
-            //var records = _.map(this.options.model.getRecords(this.options.resultType.type), function(record) {
-            //    return record.getFieldValueUnrendered(field);
-            //});
 
-
-            //this.drawD3(records, "#" + this.uid);
         },
 
         attachViews: function () {

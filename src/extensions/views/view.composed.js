@@ -70,6 +70,7 @@ this.recline.View = this.recline.View || {};
 
         // if total is present i need to wait for both redraw events
         redrawSemaphore: function (type, self) {
+            console.log("called redraw semaphore for type ["+type+"]");
             if (!self.semaphore) {
                 self.semaphore = "";
             }
@@ -86,7 +87,7 @@ this.recline.View = this.recline.View || {};
                         self.semaphore = "";
                         self.redraw();
                     } else {
-                        self.semaphore = "model";
+                        self.semaphore = "totals";
                     }
                 }
             } else {
@@ -166,11 +167,14 @@ this.recline.View = this.recline.View || {};
                 var facets = this.model.getFacetByFieldId(self.options.groupBy);
                 var field = this.model.fields.get(self.options.groupBy);
 
+                if(!field)
+                    throw "ComposedView: unable to find groupBy field ["+ self.options.groupBy +"] in model ["+this.model.id+"]";
+
                 if (!facets) {
                     throw "ComposedView: no facet present for groupby field [" + self.options.groupBy + "]. Define a facet on the model before view render";
                 }
 
-                if (facets.attributes.terms.length == 0)
+                if (facets.attributes.terms.length == 0 && !self.options.modelTotals)
                     self.noData = new recline.View.NoDataMsg().create2();
 
                 else _.each(facets.attributes.terms, function (t) {
@@ -199,28 +203,8 @@ this.recline.View = this.recline.View || {};
                 })
 
 
-                if (self.options.totals) {
-                    var uid = (new Date().getTime() + Math.floor(Math.random() * 10000));
-                    _.each(self.addMeasuresToDimensionAllModel({id_dimension: uid}, self.options.measures, true), function (f) {
-                        self.dimensions.push(f);
-                    });
-
-
-                    _.each(self.dimensions, function (f, index) {
-                        f["getDimensionIDbyMeasureID"] = self.getViewFunction;
-                        self.dimensions[index] = f;
-                    })
-                }
 
             } else {
-                /*var field = this.model.fields.get(self.options.dimension);
-                 if(!field)
-                 throw("View.Composed: unable to find dimension field [" + self.options.dimension + "] on dataset")
-
-                 _.each(self.model.getRecords(self.options.resultType), function(r) {
-                 var uid = (new Date().getTime() + Math.floor(Math.random() * 10000)); // generating an unique id for the chart
-                 self.dimensions.push( self.addMeasuresToDimension({term: r.getFieldValue(field), id: uid}, field, r));
-                 });*/
                 var uid = (new Date().getTime() + Math.floor(Math.random() * 10000)); // generating an unique id for the chart
                 var dim;
 
@@ -277,13 +261,7 @@ this.recline.View = this.recline.View || {};
             // force a resize to ensure that contained object have the correct amount of width/height
             this.el.trigger('resize');
 
-            //var field = this.model.getFields();
-            //var records = _.map(this.options.model.getRecords(this.options.resultType.type), function(record) {
-            //    return record.getFieldValueUnrendered(field);
-            //});
 
-
-            //this.drawD3(records, "#" + this.uid);
         },
 
         attachViews: function () {
