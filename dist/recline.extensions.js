@@ -3303,10 +3303,10 @@ this.recline.Data = this.recline.Data || {};
         integer: function(val, field, doc) {
             var format = field.get('format');
             if(format === "currency_euro") {
-                return "â‚¬ " + val;
-            }
-
-            return val;
+               // return "â‚¬ " + val;
+            	return accounting.formatMoney(val, "eur ", 0, " ", "."); // €4,999.99
+            }           
+            return accounting.formatNumber(val, 0, " ");
         },
         date: function(val, field, doc) {
             var format = field.get('format');
@@ -3323,28 +3323,46 @@ this.recline.Data = this.recline.Data || {};
         },
         number: function(val, field, doc) {
             var format = field.get('format');
+            
             if (format === 'percentage') {
                 try {
-                    return parseFloat(val.toFixed(2)) + ' %';
+                    return accounting.formatNumber(val, 2, " ", ".") + '%';
                 } catch(err) {
-                    return "N.A.";
+                    return "-";
                 }
 
 
             } else if(format === "currency_euro") {
                 try {
-                    return "â‚¬ " + parseFloat(val.toFixed(2));
+                    return accounting.formatMoney(val, "eur ", 0, " ", "."); // €4,999.99
+                    // return "â‚¬ " + parseFloat(val.toFixed(2));
                 } catch(err) {
-                    return "N.A.";
+                    return "-";
+                }
+            } else if(format === "currency_euro_decimal") {
+                try {
+                    return accounting.formatMoney(val, "eur ", 2, " ", "."); // €4,999.99
+                    // return "â‚¬ " + parseFloat(val.toFixed(2));
+                } catch(err) {
+                    return "-";
+                }
+            }           
+            
+            else if(format === "integer") {
+                try {
+                	return accounting.formatNumber(val, 0, " ", ".");
+                } catch(err) {
+                    return "-";
                 }
             }
 
             try {
-                return parseFloat(val.toFixed(2));
+            	return accounting.formatNumber(val, 2, " ", ".");
+                // return parseFloat(val.toFixed(2));
             }
             catch(err) {
                 //console.log("Error in conferting val " + val + " toFixed");
-                return "N.A.";
+                return "-";
             }
 
 
@@ -4768,24 +4786,22 @@ this.recline.View = this.recline.View || {};
                 '</div>' +
                 '<div class="c_group c_body">' +
                 '{{#dimensions}}' +
-                '<div class="c_row">' +
-                '<div class="cell cell_name"><div class="title" style="float:left">{{term_desc}}</div><div class="shape" style="float:left">{{{shape}}}</div></div>' +
-                '{{#measures}}' +
-                '<div class="cell cell_graph" id="{{viewid}}"></div>' +
-                '{{/measures}}' +
-                '</div>' +
+	                '<div class="c_row">' +
+	                	'<div class="cell cell_name"><div class="title" style="float:left">{{term_desc}}</div><div class="shape" style="float:left">{{{shape}}}</div></div>' +
+	                	'{{#measures}}' +
+	                		'<div class="cell cell_graph" id="{{viewid}}"></div>' +
+	                	'{{/measures}}' +
+	                '</div>' +
                 '{{/dimensions}}' +
-                '</div>' +
-                '<div class="c_group c_totals">' +
-                '{{#dimensions_totals}}' +
-                '<div class="c_row">' +
-                '<div class="cell cell_name"><div class="title" style="float:left">{{term_desc}}</div><div class="shape" style="float:left">{{{shape}}}</div></div>' +
-                '{{#measures}}' +
-                '<div class="cell cell_graph" id="{{viewid}}"></div>' +
-                '{{/measures}}' +
-                '</div>' +
-                '{{/dimensions_totals}}' +
-                '</div>' +
+	                '<div class="c_row c_totals">' +
+		            	'{{#dimensions_totals}}' +
+		            		'<div class="cell cell_name"><div class="title" style="float:left">{{term_desc}}</div><div class="shape" style="float:left">{{{shape}}}</div></div>' +
+	            			'{{#measures}}' +
+	            				'<div class="cell cell_graph" id="{{viewid}}"></div>' +
+	            			'{{/measures}}' +	            		
+		            	'{{/dimensions_totals}}' +
+		            '</div>' +
+                '</div>' +                
                 '</div>' +
                 '</td></tr><tr><td>{{{noData}}}</td></tr></table>' +
                 '</div>'
@@ -7186,7 +7202,6 @@ this.recline.View = this.recline.View || {};
             // row = row index, cell = cell index, value = value, columnDef = column definition, dataContext = full row values
             var formatter = function (row, cell, value, columnDef, dataContext) {
                 var field = self.model.getFields(self.resultType).get(columnDef.id);
-                console.log(field);
                 if (field.renderer) {
                     return field.renderer(value, field, dataContext);
                 } else {
@@ -7329,6 +7344,10 @@ this.recline.View = this.recline.View || {};
             }
             var visibleColumns = [];
 
+            console.log("#### HIDDEN:");
+            console.log(self.state.get('hiddenColumns'));
+            
+            
             if (self.state.get('visibleColumns').length > 0) {
                 visibleColumns = columns.filter(function (column) {
                     return (_.indexOf(self.state.get('visibleColumns'), column.id) >= 0 || (options.showLineNumbers == true && column.id == 'lineNumberField'));

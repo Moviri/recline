@@ -45,24 +45,22 @@ this.recline.View = this.recline.View || {};
                 '</div>' +
                 '<div class="c_group c_body">' +
                 '{{#dimensions}}' +
-                '<div class="c_row">' +
-                '<div class="cell cell_name"><div class="title" style="float:left">{{term_desc}}</div><div class="shape" style="float:left">{{{shape}}}</div></div>' +
-                '{{#measures}}' +
-                '<div class="cell cell_graph" id="{{viewid}}"></div>' +
-                '{{/measures}}' +
-                '</div>' +
+	                '<div class="c_row">' +
+	                	'<div class="cell cell_name"><div class="title" style="float:left">{{term_desc}}</div><div class="shape" style="float:left">{{{shape}}}</div></div>' +
+	                	'{{#measures}}' +
+	                		'<div class="cell cell_graph" id="{{viewid}}"></div>' +
+	                	'{{/measures}}' +
+	                '</div>' +
                 '{{/dimensions}}' +
-                '</div>' +
-                '<div class="c_group c_totals">' +
-                '{{#dimensions_totals}}' +
-                '<div class="c_row">' +
-                '<div class="cell cell_name"><div class="title" style="float:left">{{term_desc}}</div><div class="shape" style="float:left">{{{shape}}}</div></div>' +
-                '{{#measures}}' +
-                '<div class="cell cell_graph" id="{{viewid}}"></div>' +
-                '{{/measures}}' +
-                '</div>' +
-                '{{/dimensions_totals}}' +
-                '</div>' +
+	                '<div class="c_row c_totals">' +
+		            	'{{#dimensions_totals}}' +
+		            		'<div class="cell cell_name"><div class="title" style="float:left">{{term_desc}}</div><div class="shape" style="float:left">{{{shape}}}</div></div>' +
+	            			'{{#measures}}' +
+	            				'<div class="cell cell_graph" id="{{viewid}}"></div>' +
+	            			'{{/measures}}' +	            		
+		            	'{{/dimensions_totals}}' +
+		            '</div>' +
+                '</div>' +                
                 '</div>' +
                 '</td></tr><tr><td>{{{noData}}}</td></tr></table>' +
                 '</div>'

@@ -232,6 +232,10 @@ this.recline.View = this.recline.View || {};
             }
             var visibleColumns = [];
 
+            console.log("#### HIDDEN:");
+            console.log(self.state.get('hiddenColumns'));
+            
+            
             if (self.state.get('visibleColumns').length > 0) {
                 visibleColumns = columns.filter(function (column) {
                     return (_.indexOf(self.state.get('visibleColumns'), column.id) >= 0 || (options.showLineNumbers == true && column.id == 'lineNumberField'));
