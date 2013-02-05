@@ -4717,7 +4717,7 @@ this.recline.View = this.recline.View || {};
                 '<div class="c_row"><div class="cell cell_empty"/>{{{noData}}}</div>' +
                 '{{#measures}}' +
                 '<div class="c_row">' +
-                '<div class="cell cell_title"><div><div class="rawhtml" style="vertical-align:middle;float:left">{{{rawhtml}}}</div><div style="vertical-align:middle;float:left"><div class="title">{{title}}</div><div class="subtitle">{{{subtitle}}}</div></div><div class="shape" style="vertical-align:middle;float:left">{{shape}}</div></div></div>' +
+                '<div class="cell cell_title"><div style="white-space:nowrap;"><div class="rawhtml" style="vertical-align:middle;float:left">{{{rawhtml}}}</div><div style="vertical-align:middle;float:left"><div class="title">{{title}}</div><div class="subtitle">{{{subtitle}}}</div></div><div class="shape" style="vertical-align:middle;float:left">{{shape}}</div></div></div>' +
                 '{{#dimensions}}' +
                 '<div class="cell cell_graph" id="{{#getDimensionIDbyMeasureID}}{{measure_id}}{{/getDimensionIDbyMeasureID}}" term="{{measure_id}}"></div>' +
                 '{{/dimensions}}' +
@@ -4735,7 +4735,7 @@ this.recline.View = this.recline.View || {};
                 '<div class="c_row">' +
                 '<div class="cell cell_empty"></div>' +
                 '{{#measures}}' +
-                '<div class="cell cell_title"><div><div class="rawhtml" style="vertical-align:middle;float:left">{{{rawhtml}}}</div><div style="float:left;vertical-align:middle"><div class="title">{{title}}</div><div class="subtitle">{{{subtitle}}}</div></div><div class="shape" style="float:left;vertical-align:middle">{{shape}}</div></div></div>' +
+                '<div class="cell cell_title"><div style="white-space:nowrap;"><div class="rawhtml" style="vertical-align:middle;float:left">{{{rawhtml}}}</div><div style="float:left;vertical-align:middle"><div class="title">{{title}}</div><div class="subtitle">{{{subtitle}}}</div></div><div class="shape" style="float:left;vertical-align:middle">{{shape}}</div></div></div>' +
                 '{{/measures}}' +
                 '</div>' +
                 '</div>' +
@@ -7168,7 +7168,8 @@ this.recline.View = this.recline.View || {};
                 showTotals:this.state.get('showTotals'),
                 showPartitionedData:this.state.get('showPartitionedData'),
                 selectedCellFocus:this.state.get('selectedCellFocus'),
-                customHtmlFormatters:this.state.get('customHtmlFormatters') 
+                customHtmlFormatters:this.state.get('customHtmlFormatters'), 
+                fieldFormatters:this.state.get('fieldFormatters')
             };
             var optionsFixed = _.clone(options)
             optionsFixed.useInnerChart = options.useInnerChartScale
@@ -7264,10 +7265,17 @@ this.recline.View = this.recline.View || {};
             		if (customFieldFormatInfo)
             			currFormatter = (customFieldFormatInfo.formula ? Slick.Formatters.HtmlExtFormatter : Slick.Formatters.HtmlFormatter)
         		}
+//            	var cssClass = "";
+//            	if (options.fieldFormatters){
+//            		var info = _.find(options.fieldFormatters, function(customField) { return customField.id == field.id; });
+//            		if (info)
+//            			cssClass = info.cssClass;            		
+//            	}
                 var column = {
                     id:field['id'],
                     name:field['label'],
                     field:field['id'],
+//                    cssClass: cssClass,
                     sortable:(options.showPartitionedData ? false : true),
                     minWidth:80,
                     formatter:currFormatter

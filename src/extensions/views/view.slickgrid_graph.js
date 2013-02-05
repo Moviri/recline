@@ -77,7 +77,8 @@ this.recline.View = this.recline.View || {};
                 showTotals:this.state.get('showTotals'),
                 showPartitionedData:this.state.get('showPartitionedData'),
                 selectedCellFocus:this.state.get('selectedCellFocus'),
-                customHtmlFormatters:this.state.get('customHtmlFormatters') 
+                customHtmlFormatters:this.state.get('customHtmlFormatters'), 
+                fieldFormatters:this.state.get('fieldFormatters')
             };
             var optionsFixed = _.clone(options)
             optionsFixed.useInnerChart = options.useInnerChartScale
@@ -173,10 +174,17 @@ this.recline.View = this.recline.View || {};
             		if (customFieldFormatInfo)
             			currFormatter = (customFieldFormatInfo.formula ? Slick.Formatters.HtmlExtFormatter : Slick.Formatters.HtmlFormatter)
         		}
+//            	var cssClass = "";
+//            	if (options.fieldFormatters){
+//            		var info = _.find(options.fieldFormatters, function(customField) { return customField.id == field.id; });
+//            		if (info)
+//            			cssClass = info.cssClass;            		
+//            	}
                 var column = {
                     id:field['id'],
                     name:field['label'],
                     field:field['id'],
+//                    cssClass: cssClass,
                     sortable:(options.showPartitionedData ? false : true),
                     minWidth:80,
                     formatter:currFormatter
