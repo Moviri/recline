@@ -79,7 +79,7 @@ this.recline.Data = this.recline.Data || {};
             var format = field.get('format');
             if(format === "currency_euro") {
                // return "â‚¬ " + val;
-            	return accounting.formatMoney(val, "EUR ", 0, " ", "."); // €4,999.99
+            	return accounting.formatMoney(val, { symbol: "â‚¬",  format: "%v %s", decimal : ".", thousand: " ", precision : 0 }); // €4,999.99
             }           
             return accounting.formatNumber(val, 0, " ");
         },
@@ -119,7 +119,8 @@ this.recline.Data = this.recline.Data || {};
                 }
             } else if(format === "currency_euro_decimal") {
                 try {
-                    return accounting.formatMoney(val, "EUR ", 2, " ", "."); // €4,999.99
+                	return accounting.formatMoney(val, { symbol: "â‚¬",  format: "%v %s", decimal : ".", thousand: " ", precision : 2 }); // €4,999.99
+                    
                     // return "â‚¬ " + parseFloat(val.toFixed(2));
                 } catch(err) {
                     return "-";
