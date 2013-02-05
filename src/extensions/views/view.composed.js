@@ -107,9 +107,7 @@ this.recline.View = this.recline.View || {};
             this.model.bind('query:done', function () {
                 self.redrawSemaphore("model", self)
             });
-            this.model.queryState.bind('selection:done', function () {
-                self.redrawSemaphore("model", self)
-            });
+
 
             if (this.options.modelTotals) {
                 this.options.modelTotals.bind('change', this.render);
@@ -119,9 +117,7 @@ this.recline.View = this.recline.View || {};
                 this.options.modelTotals.bind('query:done', function () {
                     self.redrawSemaphore("totals", self)
                 });
-                this.options.modelTotals.queryState.bind('selection:done', function () {
-                    self.redrawSemaphore("totals", self)
-                });
+
             }
 
             this.uid = options.id || ("composed_" + new Date().getTime() + Math.floor(Math.random() * 10000)); // generating an unique id for the chart

@@ -230,6 +230,7 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
                  }
              });
 
+
              return ret;
         },
 
@@ -4803,9 +4804,7 @@ this.recline.View = this.recline.View || {};
             this.model.bind('query:done', function () {
                 self.redrawSemaphore("model", self)
             });
-            this.model.queryState.bind('selection:done', function () {
-                self.redrawSemaphore("model", self)
-            });
+
 
             if (this.options.modelTotals) {
                 this.options.modelTotals.bind('change', this.render);
@@ -4815,9 +4814,7 @@ this.recline.View = this.recline.View || {};
                 this.options.modelTotals.bind('query:done', function () {
                     self.redrawSemaphore("totals", self)
                 });
-                this.options.modelTotals.queryState.bind('selection:done', function () {
-                    self.redrawSemaphore("totals", self)
-                });
+
             }
 
             this.uid = options.id || ("composed_" + new Date().getTime() + Math.floor(Math.random() * 10000)); // generating an unique id for the chart
@@ -10063,6 +10060,35 @@ this.recline.View = this.recline.View || {};
                             tmplData.filters[j].term = filter.term
                             tmplData.filters[j].start = filter.start
                             tmplData.filters[j].stop = filter.stop
+                            // ensures previous hierarchic_radiobutton selections are retained, if any (coming from the session cookie) [PART 1]
+                            if (tmplData.filters[j].controlType == "hierarchic_radiobuttons" && filter.type == "list"
+                            	&& filter.list && filter.list.length > 1)
+                        	{
+                            	var valueParts = filter.list[0].split(tmplData.filters[j].separator)
+                            	if (valueParts.length > 1)
+                        		{
+                                	var commonSelection = valueParts.splice(0, valueParts.length - 1).join(tmplData.filters[j].separator)
+                                	var lung = commonSelection.length
+                                	var allRecordsFound = true
+                                	var allRecords = self._sourceDataset.getRecords() 
+                                	for (var r in allRecords)
+                            		{
+                                		var record = allRecords[r]
+                                        var field = self._sourceDataset.fields.get(filter.field);
+                                        var currV = record.getFieldValue(field);
+                                        if (currV.substring(0, lung) === commonSelection)
+                                    	{
+                                        	if (!_.contains(filter.list, currV))
+                                    		{
+                                            	allRecordsFound = false;
+                                            	break;
+                                    		}
+                                    	}
+                            		}
+                                	if (allRecordsFound)
+                                		tmplData.filters[j].term = commonSelection
+                        		}
+                        	}
                         }
                     }
                 });
@@ -10107,6 +10133,21 @@ this.recline.View = this.recline.View || {};
 
             var out = Mustache.render(currTemplate, tmplData);
             this.el.html(out);
+            
+            // ensures previous hierarchic_radiobutton selections are retained, if any (coming from the session cookie) [PART 2]
+            _.each(tmplData.filters, function(currActiveFilter) {
+                if (currActiveFilter.controlType == "hierarchic_radiobuttons" && currActiveFilter.type == "list" 
+                	&& currActiveFilter.list && currActiveFilter.list.length > 1)
+            	{
+                    var flt;
+                    if (currActiveFilter.ctrlId)
+                    	flt = self.el.find("#"+currActiveFilter.ctrlId);
+                    else flt = this.el.find("div.filter");
+                    
+            		var currFilterCtrl = $(flt).find(".data-control-id");
+            		self.updateHierarchicRadiobuttons($(flt), currActiveFilter, $(currFilterCtrl));                		
+            	}
+            });
         },
 
         complementColor:function (c) {
@@ -10195,6 +10236,7 @@ this.recline.View = this.recline.View || {};
                     		if (divLev3.length > 0)
                     			divLev3[0].style.display="none"
                 		}
+                    	// must also send currSelectedValue to all models!!!!
                         this.doAction("onButtonsetClicked", fieldId, listaValori, "add", currActiveFilter);
             		}
                 	else
@@ -10204,8 +10246,11 @@ this.recline.View = this.recline.View || {};
                 			currActiveFilter.term = currActiveFilter.term.substring(0, currActiveFilter.term.length-1)
                 			
                 		// redraw the filter!!!
-                		// TODO: devi trovare flt giusto se ce n'è più di uno!!!
-	                    var flt = this.el.find("div.filter"); 
+	                    var flt;
+	                    if (currActiveFilter.ctrlId)
+	                    	flt = self.el.find("#"+currActiveFilter.ctrlId);
+	                    else flt = this.el.find("div.filter");
+	                    
 	            		var currFilterCtrl = $(flt).find(".data-control-id");
 	            		this.updateHierarchicRadiobuttons($(flt), currActiveFilter, $(currFilterCtrl));                		
                 		
@@ -10222,8 +10267,10 @@ this.recline.View = this.recline.View || {};
                             if (currV.indexOf(searchString) == 0)
                             	listaValori.push(currV)
                     	});
+                    	// must also send currSelectedValue to all models!!!!
                 		this.doAction("onButtonsetClicked", fieldId, listaValori, "add", currActiveFilter);
             		}
+                	
             	}
         	}
             else
@@ -10388,34 +10435,17 @@ this.recline.View = this.recline.View || {};
                     res.push(v.record);
               };
             });
-
-            // I'm using record (not facet) so I can pass it to actions
+            var actions = this.options.actions;
             if(res.length>0) {
-                var actions = self.options.actions;
+            	// I'm using record (not facet) so I can pass it to actions
                 actions.forEach(function(currAction){
                     currAction.action.doAction(res, currAction.mapping);
                 });
             } else
             {
-
-                var actions = this.options.actions;
                 actions.forEach(function(currAction){
                     currAction.action.doActionWithFacets(currFilter.facet.attributes.terms, values, currAction.mapping, fieldName);
                 });                
-//                var eventData = {};
-//                if (values.length)
-//                	eventData[fieldName] = values;
-//                else
-//            	{
-//                	if (currFilter.type == "term")
-//                		eventData[fieldName] = [null];
-//                	else if (currFilter.type == "list")
-//                		eventData[fieldName] = null;
-//                	else if (currFilter.type == "range")
-//                		eventData[fieldName] = [null, null];
-//            	}
-//				
-//                recline.ActionUtility.doAction(actions, eventType, eventData, actionType);
             }
         },
 
