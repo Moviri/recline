@@ -7178,6 +7178,7 @@ this.recline.View = this.recline.View || {};
             // row = row index, cell = cell index, value = value, columnDef = column definition, dataContext = full row values
             var formatter = function (row, cell, value, columnDef, dataContext) {
                 var field = self.model.getFields(self.resultType).get(columnDef.id);
+                console.log(field);
                 if (field.renderer) {
                     return field.renderer(value, field, dataContext);
                 } else {
@@ -7188,10 +7189,10 @@ this.recline.View = this.recline.View || {};
             if (options.showLineNumbers == true && myRecords.length > 0) {
                 var column = {
                     id:'lineNumberField',
-                    name:'#',
+                    name:'',
                     field:'lineNumberField',
                     sortable:(options.showPartitionedData ? false : true),
-                    maxWidth:80,
+                    maxWidth:40,
                     formatter:Slick.Formatters.FixedCellFormatter
                 };
                 columns.push(column);
