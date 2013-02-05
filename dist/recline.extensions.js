@@ -685,7 +685,7 @@ recline.Model.Query.prototype = $.extend(recline.Model.Query.prototype, {
         for (var j in filters) {
             if (filters[j].field === field) {
                 filters.splice(j, 1);
-                this.set({filters:filters});
+                this.set({filters:filters}, {silent: true});
             }
         }
     },
@@ -2255,12 +2255,13 @@ this.recline = this.recline || {};
                 list:function (filter, data) {
 
                 	if (data === null) {
-                        //null list
-                        filter["remove"] = true;
-                	}
-                	else if (data.length === 0) {
                         //empty list
                         filter["list"] = null;
+                	}
+                	else if (data.length === 0) {
+                        //null list
+                        filter["remove"] = true;
+                        filter["list"] = [];
                     } else {
                         filter["list"] = data;
                     }
@@ -3866,7 +3867,7 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
 
 
         var data = buildRequestFromQuery(queryObj);
-        console.log("Querying jsonp backend [" + dataset.id+"] for ");
+        console.log("Querying jsonp backend [" + (dataset.id ? dataset.id : dataset.url) +"] for ");
         console.log(data);
         return requestJson(dataset, data, queryObj);
 
@@ -3890,8 +3891,8 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
             if (results.results.length != 1 || results.results[0].status.code != 0) {
                 console.log("Error in fetching data: " + results.results[0].status.message + " Statuscode:[" + results.results[0].status.code + "] AdditionalInfo:[" + results.results[0].status.additionalInfo + "]");
                 dfd.reject(results.results[0].status);
-            } else
-                dfd.resolve(_handleJsonResult(results.results[0].result, queryObj));
+            } else 
+            	dfd.resolve(_handleJsonResult(results.results[0].result, queryObj));
         })
             .fail(function (arguments) {
                 dfd.reject(arguments);
@@ -4006,7 +4007,7 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
                 var list = filter.list;
 
                 var ret = value + " in ";
-                for (var i = 0; i < filter.list.length; i++) {
+                for (var i in list) {
                     if (i > 0)
                         ret = ret + multivsep;
 
@@ -4296,7 +4297,7 @@ this.recline.Backend.JsonpMemoryStore = this.recline.Backend.JsonpMemoryStore ||
                 var list = filter.list;
 
                 var ret = value + " bw ";
-                for (var i = 0; i < filter.list.length; i++) {
+                for (var i in filter.list) {
                     if (i > 0)
                         ret = ret + multivsep;
 

@@ -35,7 +35,7 @@ recline.Model.Query.prototype = $.extend(recline.Model.Query.prototype, {
         for (var j in filters) {
             if (filters[j].field === field) {
                 filters.splice(j, 1);
-                this.set({filters:filters});
+                this.set({filters:filters}, {silent: true});
             }
         }
     },
