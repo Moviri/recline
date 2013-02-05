@@ -5455,6 +5455,8 @@ this.recline.View = this.recline.View || {};
         template:'<div id="cartograph_{{viewId}}"></div> ',
 
         rendered: false,
+        mapWidth:undefined,
+        mapHeight:undefined,
 
         initialize:function (options) {
             var self = this;
@@ -5470,6 +5472,8 @@ this.recline.View = this.recline.View || {};
             this.model.queryState.bind('selection:done', this.redraw);
 
             this.uid = "" + new Date().getTime() + Math.floor(Math.random() * 10000); // generating an unique id for the chart
+            this.mapWidth = options.state.width // optional. May be undefined
+            this.mapHeight = options.state.height // optional. May be undefined
 
             this.unselectedColor = "#C0C0C0";
             if (this.options.state.unselectedColor)
@@ -5487,7 +5491,7 @@ this.recline.View = this.recline.View || {};
             var map_url = this.options.state["svgURI"];
             var layers = this.options.state["layers"];
 
-            self.map = $K.map('#cartograph_' + this.uid);
+            self.map = $K.map('#cartograph_' + this.uid, self.mapWidth, self.mapHeight);
             self.map.loadMap(map_url, function (m) {
                 _.each(layers, function (d) {
                     m.addLayer(d, self.getEventsForLayer(d));
