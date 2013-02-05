@@ -46,7 +46,9 @@ this.recline.Data.ColorSchema = this.recline.Data.ColorSchema || {};
             self.attributes.dataset.dataset.fields.bind('reset', function () {
                 self.attributes.dataset.dataset.setColorSchema(self.attributes.dataset.type);
             });
-
+            self.attributes.dataset.dataset.fields.bind('add', function () {
+                self.attributes.dataset.dataset.setColorSchema(self.attributes.dataset.type);
+            });
             if (self.attributes.dataset.dataset.records.models.length > 0) {
                 self._generateFromDataset();
             }
@@ -122,8 +124,9 @@ this.recline.Data.ColorSchema = this.recline.Data.ColorSchema || {};
                 case "scaleWithDistinctData":
                     self.schema = new chroma.ColorScale({
                         colors:this.attributes.colors,
-                        limits:this.limits["distinct"](data)
+                        limits: [0, 1]
                     });
+                     self.limitsMapping = this.limits["distinct"](data);
                     break;
                 case "fixedLimits":
                     self.schema = new chroma.ColorScale({
@@ -154,8 +157,11 @@ this.recline.Data.ColorSchema = this.recline.Data.ColorSchema || {};
             if (this.schema == null)
                 throw "data.colors.js: colorschema not yet initialized, datasource not fetched?"
 
-
-            return this.schema.getColor(recline.Data.Transform.getFieldHash(fieldValue));
+            var hashed = recline.Data.Transform.getFieldHash(fieldValue);
+            if(self.limitsMapping)
+                return this.schema.getColor( self.limitsMapping[hashed] );
+            else
+                return this.schema.getColor(hashed);
         },
 
         getTwoDimensionalColor:function (startingvalue, variation) {
@@ -223,12 +229,16 @@ this.recline.Data.ColorSchema = this.recline.Data.ColorSchema || {};
                 return limit;
             },
             distinct:function (data) {
-                var tmp = [];
-                _.each(_.uniq(data), function (d) {
-                    tmp.push(recline.Data.Transform.getFieldHash(d));
 
+                var i = 1;
+                var uniq = _.uniq(data);
+                var obj = {};
+                _.each(uniq, function (d) {
+
+                    obj[recline.Data.Transform.getFieldHash(d)] = i/uniq.length;
+                    i++;
                 });
-                return tmp;
+                return obj;
             }
 
         }

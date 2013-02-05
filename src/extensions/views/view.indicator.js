@@ -44,7 +44,8 @@ this.recline.View = this.recline.View || {};
                 if (condensed == true)
                 	template = templates.templateCondensed;
 
-                return {data:data, template:template, unrenderedValue: unrenderedValue, percentageMsg: " % variation: "};
+//                return {data:data, template:template, unrenderedValue: unrenderedValue, percentageMsg: " % variation: "};
+                return {data:data, template:template, unrenderedValue: unrenderedValue, percentageMsg: ""};
             },
             nocompare: function (kpi, compare, templates, condensed){
                 var template = templates.templateBase;
@@ -110,19 +111,34 @@ this.recline.View = this.recline.View || {};
         </div>'
 
 ,
-   templatePercentage:
-   '<div class="indicator"> \
-      <div class="panel indicator_{{viewId}}"> \
-        <div id="indicator_{{viewId}}"> \
-			 <table class="indicator-table"> \
-                <tr class="titlerow"><td></td><td class="title">{{{label}}}</td></tr>    \
-                <tr class="descriptionrow"><td></td><td class="description"><small>{{description}}</small></td></tr>    \
-                <tr class="shaperow"><td><div class="shape">{{{shape}}}</div><div class="compareshape">{{{compareShape}}}</div></td><td class="value-cell">{{value}}</td></tr>  \
-                <tr class="comparerow"><td></td><td class="comparelabel">{{percentageMsg}}<b>{{compareValue}}</b> (<b>{{compareWithValue}}</b>)</td></tr>  \
-             </table>  \
-		</div>\
-      </div> \
-    </div> '
+//   templatePercentage:
+//   '<div class="indicator"> \
+//      <div class="panel indicator_{{viewId}}"> \
+//        <div id="indicator_{{viewId}}"> \
+//			 <table class="indicator-table"> \
+//                <tr class="titlerow"><td></td><td class="title">{{{label}}}</td></tr>    \
+//                <tr class="descriptionrow"><td></td><td class="description"><small>{{description}}</small></td></tr>    \
+//                <tr class="shaperow"><td><div class="shape">{{{shape}}}</div><div class="compareshape">{{{compareShape}}}</div></td><td class="value-cell">{{value}}</td></tr>  \
+//                <tr class="comparerow"><td></td><td class="comparelabel">{{percentageMsg}}<b>{{compareValue}}</b> (<b>{{compareWithValue}}</b>)</td></tr>  \
+//             </table>  \
+//		</div>\
+//      </div> \
+//    </div> '
+		
+templatePercentage:
+	   '<div class="indicator"> \
+	      <div class="panel indicator_{{viewId}}"> \
+	        <div id="indicator_{{viewId}}"> \
+				 <div class="indicator-table"> \
+	                <div class="titlerow"><span class="title">{{{label}}}</span></div>    \
+	                <div class="descriptionrow"><span class="description"><small>{{description}}</small></span></div>    \
+	                <div class="shaperow"><div class="shape">{{{shape}}}</div><span class="value-cell"> <div style="white-space: nowrap"> {{value}} {{{compareShape}}}</div> </span></div>  \
+	                <div class="comparerow"><div class="comparelabel">{{percentageMsg}}<b>{{compareValue}}</b> (<b>{{compareWithValue}}</b>)</div></div>  \
+	             </div>  \
+			</div>\
+	      </div> \
+	    </div> '
+	
         },
         initialize:function (options) {
             var self = this;
