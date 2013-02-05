@@ -238,23 +238,26 @@ this.recline.View = this.recline.View || {};
                 selectionActive = true;
 
             var res = {};
-            _.each(records, function (d) {
-
-                if(_.contains(paths, d.getFieldValueUnrendered(srcShapef))) {
-                    var color = self.unselectedColor;
-                    if(selectionActive) {
-                        if(d.isRecordSelected())
-                            color = d.getFieldColor(srcValuef);
-                    } else {
-                            color = d.getFieldColor(srcValuef);
-                    }
-
-
-                    res[d.getFieldValueUnrendered(srcShapef)] =  {record: d, field: srcValuef, color: color, value:d.getFieldValueUnrendered(srcValuef) };
-
-                }
-            });
-
+            if (srcShapef && srcValuef)
+        	{
+	            _.each(records, function (d) {
+	
+	                if(_.contains(paths, d.getFieldValueUnrendered(srcShapef))) {
+	                    var color = self.unselectedColor;
+	                    if(selectionActive) {
+	                        if(d.isRecordSelected())
+	                            color = d.getFieldColor(srcValuef);
+	                    } else {
+	                            color = d.getFieldColor(srcValuef);
+	                    }
+	
+	
+	                    res[d.getFieldValueUnrendered(srcShapef)] =  {record: d, field: srcValuef, color: color, value:d.getFieldValueUnrendered(srcValuef) };
+	
+	                }
+	            });
+        	}
+            //else throw "Invalid model for map! Missing "+srcShapeField+" and/or "+srcValueField
             return res;
         },
         getRecordByValue:function (srcShapeField, value) {
