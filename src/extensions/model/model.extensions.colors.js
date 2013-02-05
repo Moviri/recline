@@ -21,9 +21,16 @@
 
             self.attributes["colorSchema"].push({schema:colorSchema, field:field});
 
-            self.setColorSchema();
+            if(self.fields.length > 0)
+                self.setColorSchema();
 
             self.fields.bind('reset', function () {
+                self.setColorSchema();
+            });
+            self.fields.bind('add', function () {
+                self.setColorSchema();
+            });
+            self.fields.bind('change', function () {
                 self.setColorSchema();
             });
 

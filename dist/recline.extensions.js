@@ -358,7 +358,27 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
             if(this.attributes["colorSchema"])
                 this.joinedModel.attributes["colorSchema"] = this.attributes["colorSchema"];
             return this.joinedModel.setColorSchema();
+        },
+        // a color schema is linked to the dataset but colors are not recalculated upon data/field reset
+        addStaticColorSchema: function(colorSchema, field) {
+            var self = this;
+            if (!self.attributes["colorSchema"])
+                self.attributes["colorSchema"] = [];
+
+            self.attributes["colorSchema"].push({schema:colorSchema, field:field});
+            this.joinedModel.attributes["colorSchema"] = this.attributes["colorSchema"];
+
+            self.setColorSchema();
+
+            self.fields.bind('reset', function () {
+                self.setColorSchema();
+            });
+            self.fields.bind('add', function () {
+                self.setColorSchema();
+            });
+
         }
+
 
     })
 
@@ -399,9 +419,16 @@ recline.Model.Query.prototype = $.extend(recline.Model.Query.prototype, {
 
             self.attributes["colorSchema"].push({schema:colorSchema, field:field});
 
-            self.setColorSchema();
+            if(self.fields.length > 0)
+                self.setColorSchema();
 
             self.fields.bind('reset', function () {
+                self.setColorSchema();
+            });
+            self.fields.bind('add', function () {
+                self.setColorSchema();
+            });
+            self.fields.bind('change', function () {
                 self.setColorSchema();
             });
 
@@ -7684,18 +7711,34 @@ this.recline.View = this.recline.View || {};
 
         createLegend: function() {
             var self=this;
-            var res = "";
-            var resStyle = "<style>";
+            var res = $("<div/>");
             var i =0;
             _.each(self.series.main, function(d) {
-                res +=("class='xchart color" +i+ "' " + d.name + " " + "</br>");
-                resStyle += "color"+i+":"  + d.color;
+            	
+            	if (d.color){
+                	$("<style type='text/css'> " +
+                			".color"+i+"{ color:rgb("+d.color.rgb+");} " +
+                			".legendcolor"+i+"{ color:rgb("+d.color.rgb+"); background-color:rgb("+d.color.rgb+"); } " +
+                			".xchart .color"+i+" .fill { fill:rgba("+d.color.rgb+",0.1);} " +
+        					".xchart .color"+i+" .line { stroke:rgb("+d.color.rgb+");} " +    
+        					".xchart .color"+i+" rect, .xchart .color"+i+" circle { fill:rgb("+d.color.rgb+");} " +
+    					"</style>").appendTo("head");
+                	var legendItem = $('<div class="legend_item"/>');
+                	var name = $("<span/>");
+                	name.html(d.name);
+                	legendItem.append(name);
+                	var value = $('<div class="legend_item_value"/>');
+                	value.addClass("legendcolor"+i);
+                	legendItem.append(value);
+                	res.append(legendItem);
+            	} else {
+            		console.log('d.color not defined');
+            	}   
+            	
                 i++;
             })
 
-            resStyle +="</style>"
-            self.options.state.legend.append(res);
-            self.options.state.legend.append(resStyle);
+            self.options.state.legend.html(res);
 
         },
 

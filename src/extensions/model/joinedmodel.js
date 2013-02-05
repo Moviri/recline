@@ -205,7 +205,27 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
             if(this.attributes["colorSchema"])
                 this.joinedModel.attributes["colorSchema"] = this.attributes["colorSchema"];
             return this.joinedModel.setColorSchema();
+        },
+        // a color schema is linked to the dataset but colors are not recalculated upon data/field reset
+        addStaticColorSchema: function(colorSchema, field) {
+            var self = this;
+            if (!self.attributes["colorSchema"])
+                self.attributes["colorSchema"] = [];
+
+            self.attributes["colorSchema"].push({schema:colorSchema, field:field});
+            this.joinedModel.attributes["colorSchema"] = this.attributes["colorSchema"];
+
+            self.setColorSchema();
+
+            self.fields.bind('reset', function () {
+                self.setColorSchema();
+            });
+            self.fields.bind('add', function () {
+                self.setColorSchema();
+            });
+
         }
+
 
     })
 
