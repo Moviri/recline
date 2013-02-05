@@ -3304,7 +3304,7 @@ this.recline.Data = this.recline.Data || {};
             var format = field.get('format');
             if(format === "currency_euro") {
                // return "â‚¬ " + val;
-            	return accounting.formatMoney(val, "eur ", 0, " ", "."); // €4,999.99
+            	return accounting.formatMoney(val, "EUR ", 0, " ", "."); // €4,999.99
             }           
             return accounting.formatNumber(val, 0, " ");
         },
@@ -3334,14 +3334,14 @@ this.recline.Data = this.recline.Data || {};
 
             } else if(format === "currency_euro") {
                 try {
-                    return accounting.formatMoney(val, "eur ", 0, " ", "."); // €4,999.99
+                    return accounting.formatMoney(val, "EUR ", 0, " ", "."); // €4,999.99
                     // return "â‚¬ " + parseFloat(val.toFixed(2));
                 } catch(err) {
                     return "-";
                 }
             } else if(format === "currency_euro_decimal") {
                 try {
-                    return accounting.formatMoney(val, "eur ", 2, " ", "."); // €4,999.99
+                    return accounting.formatMoney(val, "EUR ", 2, " ", "."); // €4,999.99
                     // return "â‚¬ " + parseFloat(val.toFixed(2));
                 } catch(err) {
                     return "-";
@@ -4762,7 +4762,7 @@ this.recline.View = this.recline.View || {};
                 '<div class="c_row"><div class="cell cell_empty"/>{{{noData}}}</div>' +
                 '{{#measures}}' +
                 '<div class="c_row">' +
-                '<div class="cell cell_title"><div style="white-space:nowrap;"><div class="rawhtml" style="vertical-align:middle;float:left">{{{rawhtml}}}</div><div style="vertical-align:middle;float:left"><div class="title">{{title}}</div><div class="subtitle">{{{subtitle}}}</div></div><div class="shape" style="vertical-align:middle;float:left">{{shape}}</div></div></div>' +
+                '<div class="cell cell_title"><div style="white-space:nowrap;"><div class="rawhtml" style="vertical-align:middle;float:left">{{{rawhtml}}}</div><div style="vertical-align:middle;float:left"><div class="title">{{{title}}}</div><div class="subtitle">{{{subtitle}}}</div></div><div class="shape" style="vertical-align:middle;float:left">{{shape}}</div></div></div>' +
                 '{{#dimensions}}' +
                 '<div class="cell cell_graph" id="{{#getDimensionIDbyMeasureID}}{{measure_id}}{{/getDimensionIDbyMeasureID}}" term="{{measure_id}}"></div>' +
                 '{{/dimensions}}' +
@@ -4780,7 +4780,8 @@ this.recline.View = this.recline.View || {};
                 '<div class="c_row">' +
                 '<div class="cell cell_empty"></div>' +
                 '{{#measures}}' +
-                '<div class="cell cell_title"><div style="white-space:nowrap;"><div class="rawhtml" style="vertical-align:middle;float:left">{{{rawhtml}}}</div><div style="float:left;vertical-align:middle"><div class="title">{{title}}</div><div class="subtitle">{{{subtitle}}}</div></div><div class="shape" style="float:left;vertical-align:middle">{{shape}}</div></div></div>' +
+          //      '<div class="cell cell_title"><div style="white-space:nowrap;"><div class="rawhtml" style="vertical-align:middle;float:left">{{{rawhtml}}}</div><div style="float:left;vertical-align:middle"><div class="title">{{{title}}}</div><div class="subtitle">{{{subtitle}}}</div></div><div class="shape" style="float:left;vertical-align:middle">{{shape}}</div></div></div>' +
+                '<div class="cell cell_title"><div style="white-space:nowrap;"><div class="rawhtml" style="vertical-align:middle;float:left">{{{rawhtml}}}</div><div style="float:left;vertical-align:middle"><div class="title"><a class="link_tooltip" href="#" data-toggle="tooltip" title="{{{subtitle}}}">{{{title}}}</a></div></div><div class="shape" style="float:left;vertical-align:middle">{{shape}}</div></div></div>' +
                 '{{/measures}}' +
                 '</div>' +
                 '</div>' +
@@ -5003,6 +5004,9 @@ this.recline.View = this.recline.View || {};
 
             this.attachViews();
 
+            if (self.options.postRender){
+            	self.options.postRender.call();
+            }            
             // force a resize to ensure that contained object have the correct amount of width/height
             this.el.trigger('resize');
 
@@ -7292,17 +7296,17 @@ this.recline.View = this.recline.View || {};
             		if (customFieldFormatInfo)
             			currFormatter = (customFieldFormatInfo.formula ? Slick.Formatters.HtmlExtFormatter : Slick.Formatters.HtmlFormatter)
         		}
-//            	var cssClass = "";
-//            	if (options.fieldFormatters){
-//            		var info = _.find(options.fieldFormatters, function(customField) { return customField.id == field.id; });
-//            		if (info)
-//            			cssClass = info.cssClass;            		
-//            	}
+            	var cssClass = "";
+            	if (options.fieldFormatters){
+            		var info = _.find(options.fieldFormatters, function(customField) { return customField.id == field.id; });
+            		if (info)
+            			cssClass = info.cssClass;            		
+            	}
                 var column = {
                     id:field['id'],
                     name:field['label'],
                     field:field['id'],
-//                    cssClass: cssClass,
+                    cssClass: cssClass,
                     sortable:(options.showPartitionedData ? false : true),
                     minWidth:80,
                     formatter:currFormatter
@@ -7349,11 +7353,6 @@ this.recline.View = this.recline.View || {};
                 });
             }
             var visibleColumns = [];
-
-            console.log("#### HIDDEN:");
-            console.log(self.state.get('hiddenColumns'));
-            
-            
             if (self.state.get('visibleColumns').length > 0) {
                 visibleColumns = columns.filter(function (column) {
                     return (_.indexOf(self.state.get('visibleColumns'), column.id) >= 0 || (options.showLineNumbers == true && column.id == 'lineNumberField'));
