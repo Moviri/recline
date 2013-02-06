@@ -466,7 +466,7 @@ this.recline.View = this.recline.View || {};
             		<g> \
             			{{^showValueLabels}} \
             			{{#totWidth}} \
-            			<path d="M0,0 L{{totWidth}},0 L{{totWidth}},{{totHeight}} L0,{{totHeight}} L0,0" style="stroke:grey; fill:none;"/> \
+            			<path d="M0,0 L{{totWidth}},0 L{{totWidth}},{{totHeight}} L0,{{totHeight}} L0,0" style="fill:none;"/> \
             			{{/totWidth}} \
             			{{#colorValues2}} \
             			<text width="{{width}}" fill="{{textColor}}" x="{{x}}" y="{{yplus30}}">{{val}}</text> \
@@ -1072,7 +1072,7 @@ this.recline.View = this.recline.View || {};
                 else
             	{
                     currActiveFilter.colorValues2 = [];
-                    currActiveFilter.lineHeight = 25;
+                    currActiveFilter.lineHeight = 20;
 
                 	currActiveFilter.minValue = currActiveFilter.tmpValues[0]
                 	currActiveFilter.maxValue = currActiveFilter.tmpValues[currActiveFilter.tmpValues.length-1]
@@ -1086,14 +1086,16 @@ this.recline.View = this.recline.View || {};
 	                currActiveFilter.totWidth2 = currActiveFilter.totWidth + (currActiveFilter.labelPosition == 'left' ? currActiveFilter.label.length * 10 : 10)
 	                currActiveFilter.totHeight = currActiveFilter.lineHeight;
 	                currActiveFilter.totHeight2 = currActiveFilter.totHeight + currActiveFilter.lineHeight;
-
 	                for (var i in currActiveFilter.tmpValues) {
 	                    var v = currActiveFilter.tmpValues[i];
 	                    var color = currActiveFilter.facet.attributes.terms[i].color;
 	                    // also set first and last label
 	                    if (i == 0 || i == currActiveFilter.tmpValues.length-1)
                     	{
-		                    ruler.innerHTML = v;
+	                    	if (!isNaN(v)){
+	                    		v = v.toFixed(2);	                    		
+	                    	}
+	                    	ruler.innerHTML = v;
 		                    var w = ruler.offsetWidth
 		                    currActiveFilter.colorValues2.push({width:w, color:color, val:v, x:(i==0 ? 2 : currActiveFilter.totWidth-w-2), y:0, yplus30:15, textColor:self.complementColor(color)});
                     	}
