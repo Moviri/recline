@@ -5453,7 +5453,9 @@ this.recline.View = this.recline.View || {};
                 <tr class="shaperow"> \
 	   				<td><div class="shape">{{{shape}}}</div> \
 	   				<div class="compareshape">{{{compareShape}}}</div> \
-	   				</td><td class="value-cell">{{value}}</td></tr>  \
+	   				</td><td class="value-cell"><div class="kpi_value">{{value}}</div></td>\
+	   				<td class="aftershape">{{{afterShape}}}</td> \
+	   			</tr> \
              </table>  \
 		</div>\
       </div> \
@@ -5469,7 +5471,8 @@ this.recline.View = this.recline.View || {};
 						{{#shape}} \
     	                <div class="shape" style="float:left">{{{shape}}}</div> \
     					{{/shape}} \
-        				<div class="value-cell" style="float:left">{{value}}</div> \
+        				<div class="value-cell" style="float:left"><div class="kpi_value">{{value}}</div></div> \
+    					<div class="aftershape" style="float:left">{{{afterShape}}}</div> \
     				</div> \
                     <div class="title">&nbsp;&nbsp;{{{label}}}</div>\
     			</div> \
@@ -5543,8 +5546,9 @@ this.recline.View = this.recline.View || {};
             else
                 field = self.model.getFields(self.options.state.kpi.type).get(self.options.state.kpi.field);
 
-            if (!field)
-                throw "View.Indicator: unable to find field [" + self.options.state.kpi.field + "] on model"
+            if (!field){
+            	throw "View.Indicator: unable to find field [" + self.options.state.kpi.field + "] on model"
+            }     
                 
             var textField = null;
             if (self.options.state.condensed == true && self.options.state.kpi.textField)
@@ -5597,38 +5601,43 @@ this.recline.View = this.recline.View || {};
                     else
                         compareWithField = self.options.model.getFields(self.options.state.compareWith.type).get(self.options.state.compareWith.field);
 
-                    if (!compareWithField)
-                        throw "View.Indicator: unable to find field [" + self.options.state.compareWith.field + "] on model"
+                    if (!compareWithField){
+                    	   throw "View.Indicator: unable to find field [" + self.options.state.compareWith.field + "] on model"	
+                    } 
+                	 tmplData["compareWithValue"] = compareWithRecord[0].getFieldValue(compareWithField);
+                     var compareWithValue = compareWithRecord[0].getFieldValueUnrendered(compareWithField);
 
+                     var compareValue;
 
-                    tmplData["compareWithValue"] = compareWithRecord[0].getFieldValue(compareWithField);
-                    var compareWithValue = compareWithRecord[0].getFieldValueUnrendered(compareWithField);
+                     var compareValue = self.compareType[self.options.state.compareWith.compareType](kpiValue, compareWithValue, self.templates, self.options.state.condensed, self.options.state.shapeAfter);
+                     if(!compareValue){
+                    	   throw "View.Indicator: unable to find compareType [" + self.options.state.compareWith.compareType + "]";	 
+                     }
+                	 tmplData["compareValue"] = compareValue.data;
 
-                    var compareValue;
+                     if(self.options.state.compareWith.shapes) {
+                         if(compareValue.unrenderedValue == 0)
+                             tmplData["compareShape"] = self.options.state.compareWith.shapes.constant;
+                         else if(compareValue.unrenderedValue > 0)
+                             tmplData["compareShape"] = self.options.state.compareWith.shapes.increase;
+                         else if(compareValue.unrenderedValue < 0)
+                             tmplData["compareShape"] = self.options.state.compareWith.shapes.decrease;
+                     }
 
-                    var compareValue = self.compareType[self.options.state.compareWith.compareType](kpiValue, compareWithValue, self.templates, self.options.state.condensed, self.options.state.shapeAfter);
-                    if(!compareValue)
-                        throw "View.Indicator: unable to find compareType [" + self.options.state.compareWith.compareType + "]";
-
-                    tmplData["compareValue"] = compareValue.data;
-
-                    if(self.options.state.compareWith.shapes) {
-                        if(compareValue.unrenderedValue == 0)
-                            tmplData["compareShape"] = self.options.state.compareWith.shapes.constant;
-                        else if(compareValue.unrenderedValue > 0)
-                            tmplData["compareShape"] = self.options.state.compareWith.shapes.increase;
-                        else if(compareValue.unrenderedValue < 0)
-                            tmplData["compareShape"] = self.options.state.compareWith.shapes.decrease;
-                    }
-
-                    if(compareValue.template)
-                        template = compareValue.template;
+                     if(compareValue.template)
+                         template = compareValue.template;	 
+                
                 }
             }
             if ((tmplData["shape"] == null || typeof tmplData["shape"] == "undefined") 
             	&& (tmplData["compareShape"] == null || typeof tmplData["compareShape"] == "undefined"))
             	tmplData["compareShape"] = " " // ensure the space is filled
 
+            if (this.options.showPercentageBar){
+            	tmplData["afterShape"] = "<div class='indicator-percent-complete-bar-background' style='float:left;'>"
+                    + "<span class='indicator-percent-complete-bar' style='width:" + tmplData["value"] + "'></span></div>"
+            }
+            
             if (this.options.state.description)
                 tmplData["description"] = this.options.state.description;
             
