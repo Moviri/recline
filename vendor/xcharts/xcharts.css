@@ -24,6 +24,9 @@
   fill: #666;
   font-size: 10px;
 }
+.xchart .axisX .tick {
+  stroke: #eeeeee;
+}
 .xchart .color0 .line {
   stroke: #3880aa;
 }

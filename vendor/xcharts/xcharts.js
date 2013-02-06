@@ -888,7 +888,8 @@ _.defaults(xChart.prototype, {
     xRules = d3.svg.axis()
       .scale(self.xScale)
       .ticks(xTicks)
-      .tickSize(-self._height)
+      //.tickSize(-self._height)
+      .tickSize(-10)
       .tickFormat(o.tickFormatX)
       .orient('bottom');
 
@@ -910,9 +911,9 @@ _.defaults(xChart.prototype, {
         return parseFloat(a[1], 10) - parseFloat(b[1], 10);
       });
       // removes duplicate labels!
-      var uniqueLabels = _.uniq(labels, true, function(currLabel) {
-      	return currLabel.lastChild.textContent;
-      })
+      var uniqueLabels = _.uniq(labels, true, function (currLabel) {
+        return currLabel.lastChild.textContent;
+      });
       var duplicatedLabelsToRemove = _.difference(labels, uniqueLabels)
       d3.selectAll(duplicatedLabelsToRemove).remove()
       labels = uniqueLabels;
