@@ -66,8 +66,8 @@ this.recline.View = this.recline.View || {};
                 options.state
             );
             this.state = new recline.Model.ObjectState(stateData);
-
-
+            if (this.options.state.options.loader)
+            	this.options.state.options.loader.bindChart(this);
         },
 
         changeDimensions: function() {
@@ -77,6 +77,7 @@ this.recline.View = this.recline.View || {};
 
         render:function () {
             var self = this;
+            self.trigger("chart:startDrawing")
 
             var tmplData = this.model.toTemplateJSON();
             tmplData["viewId"] = this.uid;
@@ -94,6 +95,7 @@ this.recline.View = this.recline.View || {};
                 var htmls = Mustache.render(this.template, tmplData);
                 $(this.el).html(htmls);
                 this.$graph = this.el.find('.panel.nvd3graph_' + tmplData["viewId"]);
+                self.trigger("chart:endDrawing")
                 return this;
             }
             else
@@ -107,6 +109,7 @@ this.recline.View = this.recline.View || {};
             	// display noData message and exit
             	svgElem.css("display", "none")
             	this.el.find('#nvd3chart_' + self.uid).width(width).height(height).append(new recline.View.NoDataMsg().create());
+                self.trigger("chart:endDrawing")
             	return this;
         	}
 
@@ -125,8 +128,9 @@ this.recline.View = this.recline.View || {};
         },
 
         redraw:function () {
-
             var self = this;
+            self.trigger("chart:startDrawing")
+            
             var svgElem = this.el.find('#nvd3chart_' + self.uid+ ' svg') 
         	svgElem.css("display", "block")
         	// get computed dimensions
@@ -148,6 +152,7 @@ this.recline.View = this.recline.View || {};
             	// display noData message and exit
             	svgElem.css("display", "none")
             	this.el.find('#nvd3chart_' + self.uid).width(width).height(height).append(new recline.View.NoDataMsg().create());
+                self.trigger("chart:endDrawing")
             	return null;
         	}
             var graphType = this.state.get("graphType");
@@ -168,7 +173,7 @@ this.recline.View = this.recline.View || {};
                     self.chart.xAxis.tickFormat(function (d) { return ''; });                	
                 if (self.options.state.options.noTicksY)
                     self.chart.yAxis.tickFormat(function (d) { return ''; });                	
-                	
+	
                 if (self.options.state.options.customTooltips)
             	{
                 	var leftOffset = 10;
@@ -219,7 +224,7 @@ this.recline.View = this.recline.View || {};
                     .call(self.chart);
 
                 nv.utils.windowResize(self.graphResize);
-                
+                self.trigger("chart:endDrawing")
 
                 //self.graphResize()
                 return  self.chart;
