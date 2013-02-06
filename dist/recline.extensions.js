@@ -1987,6 +1987,10 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
             return this.vModel.getFieldsSummary();
         },
 
+        addStaticColorSchema: function(colorSchema, field) {
+           return this.vModel.addStaticColorSchema(colorSchema, field);
+        },
+
         // Retrieve the list of partitioned field for the specified aggregated field
         getPartitionedFields:function (partitionedField, measureField) {
             //var field = this.fields.get(fieldName);
@@ -2590,7 +2594,7 @@ this.recline.Data.ColorSchema = this.recline.Data.ColorSchema || {};
         bindToDataset: function () {
             var self = this;
             self.attributes.dataset.dataset.records.bind('reset', function () {
-                //console.log("record reset Generate color for dataset " + self.attributes.dataset.id + " field " + self.attributes.dataset.field);
+                //  console.log("record reset Generate color for dataset " + self.attributes.dataset.id + " field " + self.attributes.dataset.field);
                 self._generateFromDataset();
             });
             self.attributes.dataset.dataset.fields.bind('reset', function () {
@@ -3613,7 +3617,8 @@ this.recline.Data.SeriesUtility = this.recline.Data.SeriesUtility || {};
             var series = [];
 
             var fillEmptyValuesWith = seriesAttr.fillEmptyValuesWith;
-
+            var requiredXValues = seriesAttr.requiredXValues;
+            
             var unselectedColor = "#C0C0C0";
             if (unselectedColorValue)
                 unselectedColor = unselectedColorValue;
@@ -3635,6 +3640,10 @@ this.recline.Data.SeriesUtility = this.recline.Data.SeriesUtility || {};
 
 
         var uniqueX = [];
+        if (requiredXValues != null){
+        	uniqueX = requiredXValues;
+        }
+        
             var sizeField;
             if (seriesAttr.sizeField) {
                 sizeField = model.fields.get(seriesAttr.sizeField);
