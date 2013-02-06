@@ -11670,7 +11670,7 @@ this.recline.View = this.recline.View || {};
     				{{#mapWidth}} width={{mapWidth}}{{/mapWidth}} \
     				{{#mapHeight}} height={{mapHeight}}{{/mapHeight}} \
     			  >Zoom</input>{{/showZoomCtrl}} \
-    			  <svg x="0" y="0" xmlns="http://www.w3.org/2000/svg" version="1.1"> \
+    			  <svg x="0" y="0" xmlns="http://www.w3.org/2000/svg" version="1.1" style="{{svgStyle}}"> \
     			  		<g class="regions"></g> \
     					<g class="regionLabels" pointer-events="none"></g> \
     					<g class="places" pointer-events="none"></g> \
@@ -11699,7 +11699,11 @@ this.recline.View = this.recline.View || {};
 
             this.mapWidth = this.options.state.width // optional. May be undefined
             this.mapHeight = this.options.state.height // optional. May be undefined
-            
+         
+            var svgCustomStyle = '';
+            if (this.options.state.svgStyle){
+            	svgCustomStyle = this.options.state.svgStyle;
+            } 
             if (this.mapWidth == null || typeof this.mapWidth == "undefined")
             	this.mapWidth = $(this.el).width()
             	
@@ -11710,7 +11714,7 @@ this.recline.View = this.recline.View || {};
             
             this.fieldLabels = this.options.state.fieldLabels;
 
-            var tmplData = {scale: this.scale,  mapWidth: this.mapWidth, mapHeight: this.mapHeight/*, showZoomCtrl: this.options.state.showZoomCtrl*/}
+            var tmplData = {scale: this.scale,  mapWidth: this.mapWidth, mapHeight: this.mapHeight, svgStyle: svgCustomStyle/*, showZoomCtrl: this.options.state.showZoomCtrl*/}
             var out = Mustache.render(this.template, tmplData);
             $(this.el).html(out);
             
