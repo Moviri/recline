@@ -8865,7 +8865,7 @@ this.recline.View = this.recline.View || {};
 
     my.GenericFilter = Backbone.View.extend({
         className:'recline-filter-editor well',
-        template:'<div class="filters" style="background-color:{{backgroundColor}}"> \
+        template:'<div class="filters" {{#backgroundColor}}style="background-color:{{backgroundColor}}"{{/backgroundColor}}> \
       <div class="form-stacked js-edit"> \
 	  	<div class="label label-info" style="display:{{titlePresent}}" > \
 		  	<h4>{{filterDialogTitle}}</h4> \
@@ -9419,6 +9419,7 @@ this.recline.View = this.recline.View || {};
 
             // not all filters required a source of data
             if (this._sourceDataset) {
+                this._sourceDataset.facets.bind('reset', this.render);
                 this._sourceDataset.bind('query:done', this.render);
                 this._sourceDataset.queryState.bind('selection:done', this.update);
             }
@@ -9663,6 +9664,9 @@ this.recline.View = this.recline.View || {};
                 throw("GenericFilter: Invalid control type " + currActiveFilter.controlType);
 
             if (filterTemplate.needFacetedField) {
+            	if (!self._sourceDataset.getRecords().length)
+            		return
+            		
                 currActiveFilter.facet = self._sourceDataset.getFacetByFieldId(currActiveFilter.field);
 
                 if (currActiveFilter.facet == null)
@@ -9860,10 +9864,12 @@ this.recline.View = this.recline.View || {};
                 }
                 var maxWidth = 250;
                 currActiveFilter.colorValues = [];
-                
-                
 
                 currActiveFilter.tmpValues = _.pluck(currActiveFilter.facet.attributes.terms, "term");
+                for (var jj in currActiveFilter.tmpValues)
+                	currActiveFilter.tmpValues[jj] = Math.floor(currActiveFilter.tmpValues[jj])
+                	
+                currActiveFilter.tmpValues = _.uniq(currActiveFilter.tmpValues)
 
                 var pixelW = 0;
                 // calculate needed pixel width for every string
@@ -10299,6 +10305,7 @@ this.recline.View = this.recline.View || {};
 
         render:function () {
             var self = this;
+            console.log("Render "+this._sourceDataset.id+" ["+this._sourceDataset.getRecords().length+"]")
             var tmplData = {filters:this.activeFilters};
             _.each(tmplData.filters, function (flt) {
                 flt.hrVisible = 'block';
@@ -11746,6 +11753,9 @@ this.recline.View = this.recline.View || {};
             
 	        d3v3.json(mapJson, function(error, map) {
 	        	self.mapObj = map
+	        	if (map == null || typeof map == "undefined")
+	        		return;
+	        	
 	        	self.regionNames = _.pluck(self.mapObj.objects[layer].geometries, 'id')   // build list of names for later use
 	        	
 	        	var regions = topojson.object(map, map.objects[layer]);
