@@ -461,17 +461,20 @@ recline.Model.Query.prototype = $.extend(recline.Model.Query.prototype, {
             var super_init = recline.Model.Dataset.prototype._handleQueryResult;
 
             return function (queryResult) {
-                //console.log("-----> " + this.id +  " HQR colors");
+
                 var self = this;
 
+                super_init.call(this, queryResult);
+
                 if (queryResult.facets) {
+
                     _.each(queryResult.facets, function (f, index) {
+                        console.log("generate colors facets for " + f.id);
                         recline.Data.ColorSchema.addColorsToTerms(f.id, f.terms, self.attributes.colorSchema);
                     });
-
-                    return super_init.call(this, queryResult);
-
                 }
+
+
             };
         }()
     });
@@ -1375,7 +1378,8 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
             var group = this.createDimensions(crossfilterData, dimensions);
             var results = this.reduce(group,dimensions,aggregatedFields,aggregationFunctions,partitions);
 
-                     this.updateStore(results, originalFields,dimensions,aggregationFunctions,aggregatedFields,partitions);
+            this.updateStore(results, originalFields,dimensions,aggregationFunctions,aggregatedFields,partitions);
+            this.trigger('query:done');
         },
 
         setDimensions:function (dimensions) {
@@ -1411,8 +1415,10 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
                         if (i > 0) {
                             tmp = tmp + "#";
                         }
-
+                       if(d[dimensions[i]])
                         tmp = tmp + d[dimensions[i]].valueOf();
+                       else
+                        tmp = tmp + "NULL";
                     }
                     return tmp;
                 });
@@ -1424,8 +1430,8 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
 
         reduce:function (group, dimensions, aggregatedFields, aggregationFunctions, partitions) {
 
-            if (aggregationFunctions == null || aggregationFunctions.length == 0)
-                throw("Error aggregationFunctions parameters is not set for virtual dataset ");
+            //if (aggregationFunctions == null || aggregationFunctions.length == 0)
+            //    throw("Error aggregationFunctions parameters is not set for virtual dataset ");
 
 
             var partitioning = false;
@@ -1518,7 +1524,8 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
 
                 for (j = 0; j < aggregationFunctions.length; j++) {
                     tmp[aggregationFunctions[j]] = {};
-                    this.recline.Data.Aggregations.initFunctions[aggregationFunctions[j]](tmp, aggregatedFields, partitions);
+
+                        this.recline.Data.Aggregations.initFunctions[aggregationFunctions[j]](tmp, aggregatedFields, partitions);
                 }
 
                 if (partitioning) {
@@ -1573,6 +1580,7 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
             this.clearUnfilteredTotals();
 
             self.vModel.fetch();
+            self.recordCount = self.vModel.recordCount;
 
         },
 
@@ -2582,6 +2590,7 @@ this.recline.Data.ColorSchema = this.recline.Data.ColorSchema || {};
         bindToDataset: function () {
             var self = this;
             self.attributes.dataset.dataset.records.bind('reset', function () {
+                console.log("record reset Generate color for dataset " + self.attributes.dataset.id + " field " + self.attributes.dataset.field);
                 self._generateFromDataset();
             });
             self.attributes.dataset.dataset.fields.bind('reset', function () {
@@ -6079,7 +6088,7 @@ this.recline.View = this.recline.View || {};
                 options.state
             );
             this.state = new recline.Model.ObjectState(stateData);
-            if (this.options.state.options.loader)
+            if (this.options.state.options && this.options.state.options.loader)
             	this.options.state.options.loader.bindChart(this);
         },
 
@@ -6102,29 +6111,13 @@ this.recline.View = this.recline.View || {};
 
             delete this.chart;
             
-            
-            if (tmplData.recordCount && tmplData.recordCount > 0)
-            {
+
                 var htmls = Mustache.render(this.template, tmplData);
                 $(this.el).html(htmls);
                 this.$graph = this.el.find('.panel.nvd3graph_' + tmplData["viewId"]);
                 self.trigger("chart:endDrawing")
                 return this;
-            }
-            else
-            {
-                var svgElem = this.el.find('#nvd3chart_' + self.uid+ ' svg') 
-            	svgElem.css("display", "block")
-            	// get computed dimensions
-            	var width = svgElem.width()
-            	var height = svgElem.height()
 
-            	// display noData message and exit
-            	svgElem.css("display", "none")
-            	this.el.find('#nvd3chart_' + self.uid).width(width).height(height).append(new recline.View.NoDataMsg().create());
-                self.trigger("chart:endDrawing")
-            	return this;
-        	}
 
 
         },
@@ -6143,6 +6136,21 @@ this.recline.View = this.recline.View || {};
         redraw:function () {
             var self = this;
             self.trigger("chart:startDrawing")
+
+            if (self.model.recordCount == 0)
+            {
+                var svgElem = this.el.find('#nvd3chart_' + self.uid+ ' svg')
+                svgElem.css("display", "block")
+                // get computed dimensions
+                var width = svgElem.width()
+                var height = svgElem.height()
+
+                // display noData message and exit
+                svgElem.css("display", "none")
+                this.el.find('#nvd3chart_' + self.uid).width(width).height(height).append(new recline.View.NoDataMsg().create());
+                self.trigger("chart:endDrawing")
+                return;
+            }
             
             var svgElem = this.el.find('#nvd3chart_' + self.uid+ ' svg') 
         	svgElem.css("display", "block")
@@ -6567,9 +6575,9 @@ this.recline.View = this.recline.View || {};
                 var options = {};
 
                 if (view.state.attributes.options) {
-                    if (view.state.attributes.options("trendlines"))
+                    if (view.state.attributes.options["trendlines"])
                         options["trendlines"] = view.state.attributes.options("trendlines");
-                    if (view.state.attributes.options("minmax"))
+                    if (view.state.attributes.options["minmax"])
                         options["minmax"] = view.state.attributes.options("minmax");
 
                 }
@@ -9312,12 +9320,23 @@ this.recline.View = this.recline.View || {};
 				<div style="float:left;padding-right:10px;height:{{lineHeight}}px;display:{{useLeftLabel}}"> \
 					<label style="line-height:{{lineHeight}}px">{{label}}</label> \
 				</div> \
-				<div style="width:{{totWidth}}px;height:{{totHeight}}px;display:inline"> \
+            	<div style="width:{{totWidth}}px;height:{{totHeight}}px;display:inline"> \
 					<svg height="{{totHeight}}" xmlns="http://www.w3.org/2000/svg"> \
+            		<g> \
 					{{#colorValues}} \
 				    	<rect width="{{width}}" height={{lineHeight}} fill="{{color}}" x="{{x}}" y={{y}}/> \
-						<text width="{{width}}" fill="{{textColor}}" x="{{x}}" y="{{yplus30}}">{{val}}</text> \
-					{{/colorValues}}\
+            			{{#showValueLabels}} \
+            			<text width="{{width}}" fill="{{textColor}}" x="{{x}}" y="{{yplus30}}">{{val}}</text> \
+            			{{/showValueLabels}} \
+            		{{/colorValues}}\
+            		</g> \
+            		<g> \
+            			{{^showValueLabels}} \
+            			{{#colorValues2}} \
+            			<text width="{{width}}" fill="{{textColor}}" x="{{x}}" y="{{yplus30}}">{{val}}</text> \
+            			{{/colorValues2}} \
+            			{{/showValueLabels}} \
+            		</g> \
 					</svg>		\
 				</div> \
 	    </fieldset> \
@@ -9419,7 +9438,7 @@ this.recline.View = this.recline.View || {};
 
             // not all filters required a source of data
             if (this._sourceDataset) {
-                this._sourceDataset.facets.bind('reset', this.render);
+                //this._sourceDataset.facets.bind('reset', this.render);
                 this._sourceDataset.bind('query:done', this.render);
                 this._sourceDataset.queryState.bind('selection:done', this.update);
             }
@@ -9854,6 +9873,13 @@ this.recline.View = this.recline.View || {};
                 }
             }
             else if (currActiveFilter.controlType == "color_legend") {
+            	if (typeof currActiveFilter.showValueLabels == "undefined")
+            		currActiveFilter.showValueLabels = true;
+            	
+                currActiveFilter.colorValues = [];
+
+                currActiveFilter.tmpValues = _.filter(_.pluck(currActiveFilter.facet.attributes.terms, "term"), function(val){ return typeof val != "undefined" && val != null; });
+                currActiveFilter.lineHeight = 40;
                 var ruler = document.getElementById("my_string_width_calculation_ruler");
                 if (typeof ruler == "undefined" || ruler == null) {
                     ruler = document.createElement("span");
@@ -9862,51 +9888,81 @@ this.recline.View = this.recline.View || {};
                     ruler.style.width = "auto";
                     document.body.appendChild(ruler);
                 }
-                var maxWidth = 250;
-                currActiveFilter.colorValues = [];
+                if (currActiveFilter.showValueLabels)
+            	{
+                    var maxWidth = 250;
+                    
+	                for (var jj in currActiveFilter.tmpValues)
+	                	currActiveFilter.tmpValues[jj] = Math.floor(currActiveFilter.tmpValues[jj])
+	                	
+	                currActiveFilter.tmpValues = _.uniq(currActiveFilter.tmpValues)
+	
+	                var pixelW = 0;
+	                // calculate needed pixel width for every string
+	                for (var i in currActiveFilter.tmpValues) {
+	                    var v = currActiveFilter.tmpValues[i];
+	                    ruler.innerHTML = v;
+	                    var w = ruler.offsetWidth
+	                    if (w > pixelW)
+	                        pixelW = w;
+	                }
+	                pixelW += 2;
+	
+	                // calculate needed row number and columns per row
+	                var maxColsPerRow = Math.floor(maxWidth / pixelW);
+	                var totRighe = Math.ceil(currActiveFilter.tmpValues.length / maxColsPerRow);
+	                var colsPerRow = Math.ceil(currActiveFilter.tmpValues.length / totRighe);
+	                currActiveFilter.totWidth = colsPerRow * pixelW;
+	                currActiveFilter.totWidth2 = currActiveFilter.totWidth + (currActiveFilter.labelPosition == 'left' ? currActiveFilter.label.length * 10 : 10)
+	                currActiveFilter.totHeight = totRighe * currActiveFilter.lineHeight;
+	                currActiveFilter.totHeight2 = currActiveFilter.totHeight + 40;
+	
+	                var riga = 0;
+	                var colonna = 0;
+	
+	                for (var i in currActiveFilter.tmpValues) {
+	                    var v = currActiveFilter.tmpValues[i];
+	                    var color = currActiveFilter.facet.attributes.terms[i].color;
+	                    if (colonna == colsPerRow) {
+	                        riga++;
+	                        colonna = 0;
+	                    }
+	                    currActiveFilter.colorValues.push({width:pixelW, color:color, textColor:self.complementColor(color),
+	                        val:v, x:pixelW * colonna, y:riga * currActiveFilter.lineHeight, yplus30:riga * currActiveFilter.lineHeight + 25 });
+	
+	                    colonna++;
+	                }
+            	}
+                else
+            	{
+                    currActiveFilter.colorValues2 = [];
 
-                currActiveFilter.tmpValues = _.pluck(currActiveFilter.facet.attributes.terms, "term");
-                for (var jj in currActiveFilter.tmpValues)
-                	currActiveFilter.tmpValues[jj] = Math.floor(currActiveFilter.tmpValues[jj])
+                	currActiveFilter.minValue = currActiveFilter.tmpValues[0]
+                	currActiveFilter.maxValue = currActiveFilter.tmpValues[currActiveFilter.tmpValues.length-1]
+                	//var colorSchema = self._sourceDataset.attributes.colorSchema[0].schema;
                 	
-                currActiveFilter.tmpValues = _.uniq(currActiveFilter.tmpValues)
+                	var maxWidth = self.el.width() || 250
+                	var colsPerRow = currActiveFilter.tmpValues.length
+                	var pixelW = Math.floor(maxWidth / colsPerRow)
+                	
+	                currActiveFilter.totWidth = colsPerRow * pixelW;
+	                currActiveFilter.totWidth2 = currActiveFilter.totWidth + (currActiveFilter.labelPosition == 'left' ? currActiveFilter.label.length * 10 : 10)
+	                currActiveFilter.totHeight = currActiveFilter.lineHeight;
+	                currActiveFilter.totHeight2 = currActiveFilter.totHeight + 40;
 
-                var pixelW = 0;
-                // calculate needed pixel width for every string
-                for (var i in currActiveFilter.tmpValues) {
-                    var v = currActiveFilter.tmpValues[i];
-                    ruler.innerHTML = v;
-                    var w = ruler.offsetWidth
-                    if (w > pixelW)
-                        pixelW = w;
-                }
-                pixelW += 2;
-                currActiveFilter.lineHeight = 40;
-
-                // calculate needed row number and columns per row
-                var maxColsPerRow = Math.floor(maxWidth / pixelW);
-                var totRighe = Math.ceil(currActiveFilter.tmpValues.length / maxColsPerRow);
-                var colsPerRow = Math.ceil(currActiveFilter.tmpValues.length / totRighe);
-                currActiveFilter.totWidth = colsPerRow * pixelW;
-                currActiveFilter.totWidth2 = currActiveFilter.totWidth + (currActiveFilter.labelPosition == 'left' ? currActiveFilter.label.length * 10 : 10)
-                currActiveFilter.totHeight = totRighe * currActiveFilter.lineHeight;
-                currActiveFilter.totHeight2 = currActiveFilter.totHeight + 40;
-
-                var riga = 0;
-                var colonna = 0;
-
-                for (var i in currActiveFilter.tmpValues) {
-                    var v = currActiveFilter.tmpValues[i];
-                    var color = currActiveFilter.facet.attributes.terms[i].color;
-                    if (colonna == colsPerRow) {
-                        riga++;
-                        colonna = 0;
-                    }
-                    currActiveFilter.colorValues.push({width:pixelW, color:color, textColor:self.complementColor(color),
-                        val:v, x:pixelW * colonna, y:riga * currActiveFilter.lineHeight, yplus30:riga * currActiveFilter.lineHeight + 25 });
-
-                    colonna++;
-                }
+	                for (var i in currActiveFilter.tmpValues) {
+	                    var v = currActiveFilter.tmpValues[i];
+	                    var color = currActiveFilter.facet.attributes.terms[i].color;
+	                    // also set first and last label
+	                    if (i == 0 || i == currActiveFilter.tmpValues.length-1)
+                    	{
+		                    ruler.innerHTML = v;
+		                    var w = ruler.offsetWidth
+		                    currActiveFilter.colorValues2.push({width:w, color:color, val:v, x:(i==0 ? 2 : currActiveFilter.totWidth-w-2), y:0, yplus30:25, textColor:self.complementColor(color)});
+                    	}
+	                    currActiveFilter.colorValues.push({width:pixelW, color:color, val:"", x:pixelW * i, y:0, yplus30:25 });
+	                }
+            	}
             }
             else if (currActiveFilter.controlType == "hierarchic_radiobuttons") {
                 var lev1Values = []

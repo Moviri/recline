@@ -116,7 +116,8 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
             var group = this.createDimensions(crossfilterData, dimensions);
             var results = this.reduce(group,dimensions,aggregatedFields,aggregationFunctions,partitions);
 
-                     this.updateStore(results, originalFields,dimensions,aggregationFunctions,aggregatedFields,partitions);
+            this.updateStore(results, originalFields,dimensions,aggregationFunctions,aggregatedFields,partitions);
+            this.trigger('query:done');
         },
 
         setDimensions:function (dimensions) {
@@ -152,8 +153,10 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
                         if (i > 0) {
                             tmp = tmp + "#";
                         }
-
+                       if(d[dimensions[i]])
                         tmp = tmp + d[dimensions[i]].valueOf();
+                       else
+                        tmp = tmp + "NULL";
                     }
                     return tmp;
                 });
@@ -165,8 +168,8 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
 
         reduce:function (group, dimensions, aggregatedFields, aggregationFunctions, partitions) {
 
-            if (aggregationFunctions == null || aggregationFunctions.length == 0)
-                throw("Error aggregationFunctions parameters is not set for virtual dataset ");
+            //if (aggregationFunctions == null || aggregationFunctions.length == 0)
+            //    throw("Error aggregationFunctions parameters is not set for virtual dataset ");
 
 
             var partitioning = false;
@@ -259,7 +262,8 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
 
                 for (j = 0; j < aggregationFunctions.length; j++) {
                     tmp[aggregationFunctions[j]] = {};
-                    this.recline.Data.Aggregations.initFunctions[aggregationFunctions[j]](tmp, aggregatedFields, partitions);
+
+                        this.recline.Data.Aggregations.initFunctions[aggregationFunctions[j]](tmp, aggregatedFields, partitions);
                 }
 
                 if (partitioning) {
@@ -314,6 +318,7 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
             this.clearUnfilteredTotals();
 
             self.vModel.fetch();
+            self.recordCount = self.vModel.recordCount;
 
         },
 

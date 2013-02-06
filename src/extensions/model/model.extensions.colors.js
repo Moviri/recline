@@ -41,17 +41,20 @@
             var super_init = recline.Model.Dataset.prototype._handleQueryResult;
 
             return function (queryResult) {
-                //console.log("-----> " + this.id +  " HQR colors");
+
                 var self = this;
 
+                super_init.call(this, queryResult);
+
                 if (queryResult.facets) {
+
                     _.each(queryResult.facets, function (f, index) {
+                        console.log("generate colors facets for " + f.id);
                         recline.Data.ColorSchema.addColorsToTerms(f.id, f.terms, self.attributes.colorSchema);
                     });
-
-                    return super_init.call(this, queryResult);
-
                 }
+
+
             };
         }()
     });
