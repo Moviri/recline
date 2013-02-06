@@ -236,6 +236,10 @@ this.recline.Data.ColorSchema = this.recline.Data.ColorSchema || {};
         limits: {
             minMax: function (data) {
                 var limit = [null, null];
+
+                if(data && data.length == 1) {
+                    limit = [0, data[0]];
+                } else {
                 _.each(data, function (d) {
                     if (limit[0] == null)    limit[0] = d;
                     else                    limit[0] = Math.min(limit[0], d);
@@ -243,6 +247,7 @@ this.recline.Data.ColorSchema = this.recline.Data.ColorSchema || {};
                     if (limit[1] == null)    limit[1] = d;
                     else                    limit[1] = Math.max(limit[1], d);
                 });
+                }
 
                 return limit;
             },
