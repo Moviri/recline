@@ -7958,26 +7958,31 @@ this.recline.View = this.recline.View || {};
 
             var $li, $input;
             for (var i = 0; i < columns.length; i++) {
-                $li = $('<li />').appendTo($menu);
-                $input = $('<input type="checkbox" />').data('column-id', columns[i].id).attr('id', 'slick-column-vis-' + columns[i].id);
-                columnCheckboxes.push($input);
-
-                if (grid.getColumnIndex(columns[i].id) != null) {
-                    $input.attr('checked', 'checked');
-                }
-                $input.appendTo($li);
-                $('<label />')
-                    .text(columns[i].name)
-                    .attr('for', 'slick-column-vis-' + columns[i].id)
-                    .appendTo($li);
+            	var colid = columns[i].id;
+            	if (colid.indexOf('ratioToReport') == -1 && colid.indexOf('ratioToMax') == -1 && colid.indexOf('dimension') == -1 && colid.indexOf('count') == -1){
+            		$li = $('<li />').appendTo($menu);
+                    $input = $('<input type="checkbox" />').data('column-id', columns[i].id).attr('id', 'slick-column-vis-' + columns[i].id).attr('style', 'float:left');
+                    columnCheckboxes.push($input);
+                    if (grid.getColumnIndex(columns[i].id) != null) {
+                        $input.attr('checked', 'checked');
+                    }
+                    $input.appendTo($li);
+                    $('<label />')
+                        .text(columns[i].name)
+                        .attr('for', 'slick-column-vis-' + columns[i].id)
+                        .attr('style', 'float:left;margin:0')
+                        .appendTo($li);
+                    $('<br/>').appendTo($li);               
+            	}
             }
             $('<li/>').addClass('divider').appendTo($menu);
             $li = $('<li />').data('option', 'autoresize').appendTo($menu);
-            $input = $('<input type="checkbox" />').data('option', 'autoresize').attr('id', 'slick-option-autoresize');
+            $input = $('<input type="checkbox" />').data('option', 'autoresize').attr('id', 'slick-option-autoresize').attr('style', 'float:left');;
             $input.appendTo($li);
             $('<label />')
                 .text('Force fit columns')
                 .attr('for', 'slick-option-autoresize')
+                .attr('style', 'float:left;margin:0')
                 .appendTo($li);
             if (grid.getOptions().forceFitColumns) {
                 $input.attr('checked', 'checked');

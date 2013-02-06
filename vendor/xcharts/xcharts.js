@@ -201,8 +201,8 @@ var _scales = {
 
     bars.enter().append('rect')
       .attr('width', 0)
-      .attr('rx', 3)
-      .attr('ry', 3)
+      .attr('rx', 0)
+      .attr('ry', 0)
       .attr('x', function (d) {
         return self.xScale(d.x) + (self.xScale2.rangeBand() / 2);
       })
@@ -403,7 +403,7 @@ var _scales = {
       .style('opacity', 0)
       .attr('cx', storage.lineX)
       .attr('cy', storage.lineY)
-      .attr('r', 3)
+      .attr('r', 2)
       .on('mouseover', callbacks.mouseover)
       .on('mouseout', callbacks.mouseout)
       .on('click', callbacks.click);
