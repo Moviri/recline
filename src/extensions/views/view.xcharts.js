@@ -31,12 +31,14 @@ this.recline.View = this.recline.View || {};
             this.yAxisTitle = options.state.yAxisTitle;
             if (options.state.loader)
             	options.state.loader.bindChart(this);
-            this.widths = options.state.widths;
+           if (options.state.widths){
+        	   this.widths = options.state.widths;   
+           } 
         },
 
         render:function (width) {
-            //console.log("View.xCharts: render");
-        	if (width){
+//            console.log("View.xCharts: render");
+            if (!isNaN(width)){
         		this.width = width;	
         	}
         	        	 
