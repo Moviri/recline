@@ -144,8 +144,6 @@ this.recline.Data.SeriesUtility = this.recline.Data.SeriesUtility || {};
 
                     var yfield;
                     if (seriesAttr.type == "byFieldName")
-                        yfield = model.fields.get(field.fieldName);
-                    else
                         yfield = model.fields.get(field);
 
                     var fixedColor;

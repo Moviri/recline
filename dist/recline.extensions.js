@@ -2742,8 +2742,11 @@ this.recline.Data.ColorSchema = this.recline.Data.ColorSchema || {};
                 var uniq = _.uniq(data);
                 var obj = {};
                 _.each(uniq, function (d) {
+                   if(uniq.length == 1)
+                       obj[recline.Data.Transform.getFieldHash(d)] = 0;
+                    else
+                       obj[recline.Data.Transform.getFieldHash(d)] = (i-1)/(uniq.length-1) ;
 
-                    obj[recline.Data.Transform.getFieldHash(d)] = i/uniq.length;
                     i++;
                 });
                 return obj;
@@ -3493,8 +3496,6 @@ this.recline.Data.SeriesUtility = this.recline.Data.SeriesUtility || {};
 
                     var yfield;
                     if (seriesAttr.type == "byFieldName")
-                        yfield = model.fields.get(field.fieldName);
-                    else
                         yfield = model.fields.get(field);
 
                     var fixedColor;
@@ -3774,10 +3775,10 @@ this.recline.Data.ShapeSchema = this.recline.Data.ShapeSchema || {};
 this.recline = this.recline || {};
 this.recline.Data = this.recline.Data || {};
 
-(function($, my) {
+(function ($, my) {
 // adapted from https://github.com/harthur/costco. heather rules
 
-my.StateManagement = {};
+    my.StateManagement = {};
 
 
     my.StateManagement.State = Backbone.Model.extend({
@@ -3787,65 +3788,65 @@ my.StateManagement = {};
 
         // ### initialize
         initialize:function () {
+            var self = this;
+
+            _.each(self.attributes.models, function (c) {
+                c.queryState.bind("change",
+                    self.setState(self.attributes.stateName))
+                c.queryState.bind("selection:change",
+                    self.setState(self.attributes.stateName))
+            });
+
+            var state = my.StateManagement.getState(self.attributes.stateName);
+
+            // ig a state is present apply it to all models
+            if (state) {
+                _.each(self.attributes.models, function (c) {
+                    _.each(state.filters, function (f) {
+                        c.queryState.setFilter(f);
+                    });
+                    _.each(state.selections, function (s) {
+                        c.queryState.setSelection(s);
+                    });
+
+
+                });
+            }
 
         },
 
-        setState: function(dataset) {
-            var self=this;
+
+        setState:function (stateName) {
+            var self = this;
+            var queryString = self.attributes;
             var filters;
             var selections;
 
-            if(this.attributes.fromQueryString) {
-                self.attributes.data = jQuery.deparam($.param.querystring());
-            }
 
-            if(this.attributes.useOnlyFields) {
-                filters = _.filter(self.attributes.data.filters, function(f) {
+            if (this.attributes.useOnlyFields) {
+                filters = _.filter(queryString.filters, function (f) {
                     return _.contains(self.attributes.useOnlyFields, f.field)
                 });
-                selections =_.filter(self.attributes.data.selections, function(f) {
+                selections = _.filter(queryString.selections, function (f) {
                     return _.contains(self.attributes.useOnlyFields, f.field)
                 });
             } else {
-                if(self.attributes.data) {
-                if(self.attributes.data.filters)
-                    filters = self.attributes.data.filters;
-
-                if(self.attributes.data.selections)
-                    selections = self.attributes.data.selections;
-                }
+                filters = queryString.filters;
+                selections = queryString.selections;
             }
 
-            _.each(filters, function(f) {
-                dataset.queryState.setFilter(f);
-            });
-
-            _.each(selections, function(f) {
-                dataset.queryState.setSelection(f);
-            });
-
-        }
-
-
-    });
-
-    my.StateManagement.getQueryString = function(objects) {
-        var state = this.getState(objects);
-        return decodeURIComponent($.param(state));
-    }
-
-
-my.StateManagement.getState = function(objects) {
-    var state = {filters: [], selections: []};
-    _.each(objects, function(o) {
-        if(o.queryState) {
-            _.each(o.queryState.get('filters'), function(f)     {state.filters.push(f)});
-            _.each(o.queryState.get('selections'), function(f)  {state.selections.push(f)});
+            $.cookie("recline.extensions.statemanagement." + stateName, JSON.stringify({filters:filters, selections:selections}));
         }
     });
 
-    return state;
-};
+
+    my.StateManagement.getState = function (name) {
+        var res = $.cookie("recline.extensions.statemanagement." + name);
+        if(res)
+         return JSON.parse(res);
+
+        return null;
+    };
 
 
 }(jQuery, this.recline.Data))
@@ -5144,8 +5145,17 @@ templatePercentage:
 				 <div class="indicator-table"> \
 	                <div class="titlerow"><span class="title">{{{label}}}</span></div>    \
 	                <div class="descriptionrow"><span class="description"><small>{{description}}</small></span></div>    \
-	                <div class="shaperow"><div class="shape">{{{shape}}}</div><span class="value-cell"> <div style="white-space: nowrap"> {{value}} {{{compareShape}}}</div> </span></div>  \
-	                <div class="comparerow"><div class="comparelabel">{{percentageMsg}}<b>{{compareValue}}</b> (<b>{{compareWithValue}}</b>)</div></div>  \
+	                <div class="shaperow"> \
+						<div class="shape">{{{shape}}}</div> \
+						<span class="value-cell"> \
+							<div style="white-space: nowrap;"> \
+								<div style="float:left;font-size: 150%;">{{value}}</div> \
+								<div style="float:left;margin-left: 10px;text-align: left;width:40px;"> \
+									<div style="height:15px" >{{{compareShape}}}</div> \
+									<div style="font-size: 60%;color: #999;float: left;margin-top: -10px;">{{percentageMsg}}{{compareValue}}</div>\
+								</div> \
+							</div> </span> \
+					</div>  \
 	             </div>  \
 			</div>\
 	      </div> \
