@@ -8128,9 +8128,8 @@ this.recline.View = this.recline.View || {};
         },
 
         render:function (width) {
-            console.log("View.xCharts: render");
-            console.log(width);
-        	if (!isNaN(width)){
+//            console.log("View.xCharts: render");
+            if (!isNaN(width)){
         		this.width = width;	
         	}
         	        	 
@@ -11178,7 +11177,7 @@ this.recline.View = this.recline.View || {};
                     options.each(function() {
                         selected += $(this).text() + ', ';
                     });
-                    return this.mainValue+' <small style="opacity:0.5">'+selected.substr(0, selected.length -2) + '</small> <b class="caret"></b>';
+                    return this.mainValue+' <span style="opacity:0.5">'+selected.substr(0, selected.length -2) + '</span> <b class="caret"></b>';
                 }
             }
 			
