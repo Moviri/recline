@@ -234,8 +234,11 @@ this.recline.Data.ColorSchema = this.recline.Data.ColorSchema || {};
                 var uniq = _.uniq(data);
                 var obj = {};
                 _.each(uniq, function (d) {
+                   if(uniq.length == 1)
+                       obj[recline.Data.Transform.getFieldHash(d)] = 0;
+                    else
+                       obj[recline.Data.Transform.getFieldHash(d)] = (i-1)/(uniq.length-1) ;
 
-                    obj[recline.Data.Transform.getFieldHash(d)] = i/uniq.length;
                     i++;
                 });
                 return obj;
