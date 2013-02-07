@@ -109,9 +109,24 @@ this.recline.View = this.recline.View || {};
                         if (startDate_compare != null && endDate_compare != null) {
                             value.push({field:"date_compare", value:[startDate_compare.toString(), endDate_compare.toString()]});
                             value.push({field:"rangetype_compare", value:[rangetype_compare]});
-
                         }
                     }
+//                    else
+//                	{
+//                    	// clear values for comparison dates or a redraw event may inadvertently restore them 
+//                        $('.dr2.from', view.datepicker).val("");
+//                        $('.dr2.to', view.datepicker).val("");
+//                        $('.dr2.from_millis', view.datepicker).val("");
+//                        $('.dr2.to_millis', view.datepicker).val("");
+//                        var values = view.datepicker.data("DateRangesWidget").options.values;
+//                        values.dr2from = null;
+//                        values.dr2from_millis = null;
+//                        values.dr2to = null;
+//                        values.dr2to_millis = null;
+//                        var datepickerOptions = $(".datepicker.selectableRange").data('datepicker')
+//                        datepickerOptions.date = datepickerOptions.date.slice(0, 2) 
+//                        $(".datepicker.selectableRange").data('datepicker', datepickerOptions)
+//                	}
                     view.doActions(actions, value);
                 }
 
@@ -255,7 +270,13 @@ this.recline.View = this.recline.View || {};
             if (dates) {
                 var period = dates[0];
                 var values = self.datepicker.data("DateRangesWidget").options.values;
-                if (this.options.compareModel) {
+                if (this.options.compareModel) 
+                {
+                	// If the datepicker is already initialized and a redraw event is issued, 
+                	// we must not recreate the compare dates if they already were disabled
+                	if (self.fullyInitialized && !values.comparisonEnabled)
+            			return;   
+
                     var f = self.options.compareModel.queryState.getFilterByFieldName(self.options.compareFields.date)
                     if (f && f.type == "range") {
                         period[2] = new Date(f.start);

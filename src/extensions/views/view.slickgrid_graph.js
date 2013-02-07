@@ -487,7 +487,7 @@ this.recline.View = this.recline.View || {};
 //    }
 
             this.grid.onSort.subscribe(function (e, args) {
-                var order = (args.sortAsc) ? 'asc' : 'desc';
+                var order = (args.sortAsc ? 'asc' : 'desc');
                 if (args.sortCol.sorted) {
                     // already ordered! switch ordering
                     if (args.sortCol.sorted == "asc")

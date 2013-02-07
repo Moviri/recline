@@ -31,7 +31,7 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
 
 
         var data = buildRequestFromQuery(queryObj);
-        console.log("Querying jsonp backend [" + dataset.id+"] for ");
+        console.log("Querying jsonp backend [" + (dataset.id ? dataset.id : dataset.url) +"] for ");
         console.log(data);
         return requestJson(dataset, data, queryObj);
 
@@ -55,8 +55,8 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
             if (results.results.length != 1 || results.results[0].status.code != 0) {
                 console.log("Error in fetching data: " + results.results[0].status.message + " Statuscode:[" + results.results[0].status.code + "] AdditionalInfo:[" + results.results[0].status.additionalInfo + "]");
                 dfd.reject(results.results[0].status);
-            } else
-                dfd.resolve(_handleJsonResult(results.results[0].result, queryObj));
+            } else 
+            	dfd.resolve(_handleJsonResult(results.results[0].result, queryObj));
         })
             .fail(function (arguments) {
                 dfd.reject(arguments);
@@ -171,7 +171,7 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
                 var list = filter.list;
 
                 var ret = value + " in ";
-                for (var i = 0; i < filter.list.length; i++) {
+                for (var i in list) {
                     if (i > 0)
                         ret = ret + multivsep;
 

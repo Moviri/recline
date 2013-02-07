@@ -293,12 +293,13 @@ this.recline = this.recline || {};
                 list:function (filter, data) {
 
                 	if (data === null) {
-                        //null list
-                        filter["remove"] = true;
-                	}
-                	else if (data.length === 0) {
                         //empty list
                         filter["list"] = null;
+                	}
+                	else if (data.length === 0) {
+                        //null list
+                        filter["remove"] = true;
+                        filter["list"] = [];
                     } else {
                         filter["list"] = data;
                     }

@@ -177,7 +177,7 @@ this.recline.Backend.JsonpMemoryStore = this.recline.Backend.JsonpMemoryStore ||
                 var list = filter.list;
 
                 var ret = value + " bw ";
-                for (var i = 0; i < filter.list.length; i++) {
+                for (var i in filter.list) {
                     if (i > 0)
                         ret = ret + multivsep;
 

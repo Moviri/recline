@@ -717,7 +717,7 @@ recline.Model.Query.prototype = $.extend(recline.Model.Query.prototype, {
         for (var j in filters) {
             if (filters[j].field === field) {
                 filters.splice(j, 1);
-                this.set({filters:filters});
+                this.set({filters:filters}, {silent: true});
             }
         }
     },
@@ -2292,12 +2292,13 @@ this.recline = this.recline || {};
                 list:function (filter, data) {
 
                 	if (data === null) {
-                        //null list
-                        filter["remove"] = true;
-                	}
-                	else if (data.length === 0) {
                         //empty list
                         filter["list"] = null;
+                	}
+                	else if (data.length === 0) {
+                        //null list
+                        filter["remove"] = true;
+                        filter["list"] = [];
                     } else {
                         filter["list"] = data;
                     }
@@ -3916,7 +3917,7 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
 
 
         var data = buildRequestFromQuery(queryObj);
-        console.log("Querying jsonp backend [" + dataset.id+"] for ");
+        console.log("Querying jsonp backend [" + (dataset.id ? dataset.id : dataset.url) +"] for ");
         console.log(data);
         return requestJson(dataset, data, queryObj);
 
@@ -3940,8 +3941,8 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
             if (results.results.length != 1 || results.results[0].status.code != 0) {
                 console.log("Error in fetching data: " + results.results[0].status.message + " Statuscode:[" + results.results[0].status.code + "] AdditionalInfo:[" + results.results[0].status.additionalInfo + "]");
                 dfd.reject(results.results[0].status);
-            } else
-                dfd.resolve(_handleJsonResult(results.results[0].result, queryObj));
+            } else 
+            	dfd.resolve(_handleJsonResult(results.results[0].result, queryObj));
         })
             .fail(function (arguments) {
                 dfd.reject(arguments);
@@ -4056,7 +4057,7 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
                 var list = filter.list;
 
                 var ret = value + " in ";
-                for (var i = 0; i < filter.list.length; i++) {
+                for (var i in list) {
                     if (i > 0)
                         ret = ret + multivsep;
 
@@ -4346,7 +4347,7 @@ this.recline.Backend.JsonpMemoryStore = this.recline.Backend.JsonpMemoryStore ||
                 var list = filter.list;
 
                 var ret = value + " bw ";
-                for (var i = 0; i < filter.list.length; i++) {
+                for (var i in filter.list) {
                     if (i > 0)
                         ret = ret + multivsep;
 
@@ -5058,7 +5059,8 @@ this.recline.View = this.recline.View || {};
                 if (condensed == true)
                 	template = templates.templateCondensed;
 
-                return {data:data, template:template, unrenderedValue: unrenderedValue, percentageMsg: " % variation: "};
+//                return {data:data, template:template, unrenderedValue: unrenderedValue, percentageMsg: " % variation: "};
+                return {data:data, template:template, unrenderedValue: unrenderedValue, percentageMsg: ""};
             },
             nocompare: function (kpi, compare, templates, condensed){
                 var template = templates.templateBase;
@@ -5124,19 +5126,34 @@ this.recline.View = this.recline.View || {};
         </div>'
 
 ,
-   templatePercentage:
-   '<div class="indicator"> \
-      <div class="panel indicator_{{viewId}}"> \
-        <div id="indicator_{{viewId}}"> \
-			 <table class="indicator-table"> \
-                <tr class="titlerow"><td></td><td class="title">{{{label}}}</td></tr>    \
-                <tr class="descriptionrow"><td></td><td class="description"><small>{{description}}</small></td></tr>    \
-                <tr class="shaperow"><td><div class="shape">{{{shape}}}</div><div class="compareshape">{{{compareShape}}}</div></td><td class="value-cell">{{value}}</td></tr>  \
-                <tr class="comparerow"><td></td><td class="comparelabel">{{percentageMsg}}<b>{{compareValue}}</b> (<b>{{compareWithValue}}</b>)</td></tr>  \
-             </table>  \
-		</div>\
-      </div> \
-    </div> '
+//   templatePercentage:
+//   '<div class="indicator"> \
+//      <div class="panel indicator_{{viewId}}"> \
+//        <div id="indicator_{{viewId}}"> \
+//			 <table class="indicator-table"> \
+//                <tr class="titlerow"><td></td><td class="title">{{{label}}}</td></tr>    \
+//                <tr class="descriptionrow"><td></td><td class="description"><small>{{description}}</small></td></tr>    \
+//                <tr class="shaperow"><td><div class="shape">{{{shape}}}</div><div class="compareshape">{{{compareShape}}}</div></td><td class="value-cell">{{value}}</td></tr>  \
+//                <tr class="comparerow"><td></td><td class="comparelabel">{{percentageMsg}}<b>{{compareValue}}</b> (<b>{{compareWithValue}}</b>)</td></tr>  \
+//             </table>  \
+//		</div>\
+//      </div> \
+//    </div> '
+		
+templatePercentage:
+	   '<div class="indicator"> \
+	      <div class="panel indicator_{{viewId}}"> \
+	        <div id="indicator_{{viewId}}"> \
+				 <div class="indicator-table"> \
+	                <div class="titlerow"><span class="title">{{{label}}}</span></div>    \
+	                <div class="descriptionrow"><span class="description"><small>{{description}}</small></span></div>    \
+	                <div class="shaperow"><div class="shape">{{{shape}}}</div><span class="value-cell"> <div style="white-space: nowrap"> {{value}} {{{compareShape}}}</div> </span></div>  \
+	                <div class="comparerow"><div class="comparelabel">{{percentageMsg}}<b>{{compareValue}}</b> (<b>{{compareWithValue}}</b>)</div></div>  \
+	             </div>  \
+			</div>\
+	      </div> \
+	    </div> '
+	
         },
         initialize:function (options) {
             var self = this;
@@ -5554,6 +5571,83 @@ this.recline.View = this.recline.View || {};
 (function ($, view) {
     "use strict";
 
+    view.Loader = Backbone.View.extend({
+    	divOver:  null,
+    	loaderCount : 0,
+        initialize:function (args) {
+            _.bindAll(this, 'render', 'incLoaderCount', 'decLoaderCount', 'bindDatasets', 'bindDataset', 'bindCharts', 'bindChart');
+        	this.divOver = $('<div/>');
+        	this.divOver.attr('style','display:none;opacity:0.7;background:#f9f9f9;position:absolute;top:0;z-index:100;width:100%;height:100%');
+        	this.datasets = args.datasets;
+        	this.charts = args.charts;
+        	this.baseurl = "/"
+        	if (args.baseurl)
+        		this.baseurl = args.baseurl;
+        	$(document.body).append(this.divOver);    
+        },
+        render:function () {
+        	$(document.body).append(this.htmlLoader.replace("{{baseurl}}", this.baseurl));
+        	this.divOver.show();
+        	this.bindDatasets(this.datasets);
+        	this.bindCharts(this.charts);
+        },
+    	htmlLoader : 
+    		'<div id="loadingImage" style="display:block"> \
+    			<div style="position:absolute;top:45%;left:45%;width:150px;height:80px;z-index:100"> \
+    				<p class="centered"> \
+    					<img src="{{baseurl}}images/ajax-loader-blue.gif" > \
+    				</p> \
+    			</div> \
+    		</div>',
+    	incLoaderCount : function() {
+    		this.loaderCount++;
+    		console.log("Start task - loaderCount = "+this.loaderCount)
+    		this.divOver.show();
+    		document.getElementById("loadingImage").style.display = "block"; 
+    	},
+    	decLoaderCount : function() { 
+    		var self = this;
+    		this.loaderCount--;
+    		console.log("End task - loaderCount = "+this.loaderCount)
+    		if (this.loaderCount <= 0) {
+    			//setTimeout(function() {
+    				document.getElementById("loadingImage").style.display = "none";
+    				self.divOver.hide();
+    			//}, 100)
+    			this.loaderCount = 0;
+    		}
+    	},
+    	bindDatasets: function(datasets) {
+    		var self = this;
+    		_.each(datasets, function (dataset) {
+    			dataset.bind('query:start', self.incLoaderCount);
+    			dataset.bind('query:done query:fail', self.decLoaderCount);
+    		});
+    	},
+    	
+    	bindDataset: function(dataset) {
+    		dataset.bind('query:start', this.incLoaderCount);
+    		dataset.bind('query:done query:fail', this.decLoaderCount);
+    	},
+    	bindCharts:function(charts) {
+    		var self = this;
+    		_.each(charts, function (chart) {
+    			chart.bind('chart:startDrawing', self.incLoaderCount);
+    			chart.bind('chart:endDrawing', self.decLoaderCount);
+    		});
+    	},
+    	bindChart:function(chart) {
+    		chart.bind('chart:startDrawing', this.incLoaderCount);
+    		chart.bind('chart:endDrawing', this.decLoaderCount);
+    	}    
+    });
+})(jQuery, recline.View);
+this.recline = this.recline || {};
+this.recline.View = this.recline.View || {};
+
+(function ($, view) {
+    "use strict";
+
     view.NoDataMsg = Backbone.View.extend({
     	templateP1:"<div class='noData' style='display:table;width:100%;height:100%;'>" +
     			"<p style='display:table-cell;width:100%;height:100%;margin-left: auto;margin-right: auto;text-align: center;margin-bottom: auto;margin-top: auto;vertical-align: middle;'>",
@@ -5645,8 +5739,8 @@ this.recline.View = this.recline.View || {};
                 options.state
             );
             this.state = new recline.Model.ObjectState(stateData);
-
-
+            if (this.options.state.options.loader)
+            	this.options.state.options.loader.bindChart(this);
         },
 
         changeDimensions: function() {
@@ -5656,6 +5750,7 @@ this.recline.View = this.recline.View || {};
 
         render:function () {
             var self = this;
+            self.trigger("chart:startDrawing")
 
             var tmplData = this.model.toTemplateJSON();
             tmplData["viewId"] = this.uid;
@@ -5673,6 +5768,7 @@ this.recline.View = this.recline.View || {};
                 var htmls = Mustache.render(this.template, tmplData);
                 $(this.el).html(htmls);
                 this.$graph = this.el.find('.panel.nvd3graph_' + tmplData["viewId"]);
+                self.trigger("chart:endDrawing")
                 return this;
             }
             else
@@ -5686,6 +5782,7 @@ this.recline.View = this.recline.View || {};
             	// display noData message and exit
             	svgElem.css("display", "none")
             	this.el.find('#nvd3chart_' + self.uid).width(width).height(height).append(new recline.View.NoDataMsg().create());
+                self.trigger("chart:endDrawing")
             	return this;
         	}
 
@@ -5704,8 +5801,9 @@ this.recline.View = this.recline.View || {};
         },
 
         redraw:function () {
-
             var self = this;
+            self.trigger("chart:startDrawing")
+            
             var svgElem = this.el.find('#nvd3chart_' + self.uid+ ' svg') 
         	svgElem.css("display", "block")
         	// get computed dimensions
@@ -5727,6 +5825,7 @@ this.recline.View = this.recline.View || {};
             	// display noData message and exit
             	svgElem.css("display", "none")
             	this.el.find('#nvd3chart_' + self.uid).width(width).height(height).append(new recline.View.NoDataMsg().create());
+                self.trigger("chart:endDrawing")
             	return null;
         	}
             var graphType = this.state.get("graphType");
@@ -5747,7 +5846,7 @@ this.recline.View = this.recline.View || {};
                     self.chart.xAxis.tickFormat(function (d) { return ''; });                	
                 if (self.options.state.options.noTicksY)
                     self.chart.yAxis.tickFormat(function (d) { return ''; });                	
-                	
+	
                 if (self.options.state.options.customTooltips)
             	{
                 	var leftOffset = 10;
@@ -5798,7 +5897,7 @@ this.recline.View = this.recline.View || {};
                     .call(self.chart);
 
                 nv.utils.windowResize(self.graphResize);
-                
+                self.trigger("chart:endDrawing")
 
                 //self.graphResize()
                 return  self.chart;
@@ -7331,7 +7430,7 @@ this.recline.View = this.recline.View || {};
 //    }
 
             this.grid.onSort.subscribe(function (e, args) {
-                var order = (args.sortAsc) ? 'asc' : 'desc';
+                var order = (args.sortAsc ? 'asc' : 'desc');
                 if (args.sortCol.sorted) {
                     // already ordered! switch ordering
                     if (args.sortCol.sorted == "asc")
@@ -7607,11 +7706,14 @@ this.recline.View = this.recline.View || {};
             this.width = options.state.width;
             this.xAxisTitle = options.state.xAxisTitle;
             this.yAxisTitle = options.state.yAxisTitle;
+            if (options.state.loader)
+            	options.state.loader.bindChart(this);
         },
 
         render:function () {
             //console.log("View.xCharts: render");
             var self = this;
+            self.trigger("chart:startDrawing")
 
             var graphid = "#" + this.uid;
             if (false/*self.graph*/)
@@ -7626,10 +7728,12 @@ this.recline.View = this.recline.View || {};
                 var out = Mustache.render(this.template, this);
                 this.el.html(out);
         	}
+            self.trigger("chart:endDrawing")
         },
 
         redraw:function () {
             var self = this;
+            self.trigger("chart:startDrawing")
 
             //console.log("View.xCharts: redraw");
 
@@ -7638,6 +7742,7 @@ this.recline.View = this.recline.View || {};
             else
                 self.renderGraph();
 
+            self.trigger("chart:endDrawing")
         },
 
         updateGraph:function () {
@@ -8000,9 +8105,24 @@ this.recline.View = this.recline.View || {};
                         if (startDate_compare != null && endDate_compare != null) {
                             value.push({field:"date_compare", value:[startDate_compare.toString(), endDate_compare.toString()]});
                             value.push({field:"rangetype_compare", value:[rangetype_compare]});
-
                         }
                     }
+//                    else
+//                	{
+//                    	// clear values for comparison dates or a redraw event may inadvertently restore them 
+//                        $('.dr2.from', view.datepicker).val("");
+//                        $('.dr2.to', view.datepicker).val("");
+//                        $('.dr2.from_millis', view.datepicker).val("");
+//                        $('.dr2.to_millis', view.datepicker).val("");
+//                        var values = view.datepicker.data("DateRangesWidget").options.values;
+//                        values.dr2from = null;
+//                        values.dr2from_millis = null;
+//                        values.dr2to = null;
+//                        values.dr2to_millis = null;
+//                        var datepickerOptions = $(".datepicker.selectableRange").data('datepicker')
+//                        datepickerOptions.date = datepickerOptions.date.slice(0, 2) 
+//                        $(".datepicker.selectableRange").data('datepicker', datepickerOptions)
+//                	}
                     view.doActions(actions, value);
                 }
 
@@ -8146,7 +8266,13 @@ this.recline.View = this.recline.View || {};
             if (dates) {
                 var period = dates[0];
                 var values = self.datepicker.data("DateRangesWidget").options.values;
-                if (this.options.compareModel) {
+                if (this.options.compareModel) 
+                {
+                	// If the datepicker is already initialized and a redraw event is issued, 
+                	// we must not recreate the compare dates if they already were disabled
+                	if (self.fullyInitialized && !values.comparisonEnabled)
+            			return;   
+
                     var f = self.options.compareModel.queryState.getFilterByFieldName(self.options.compareFields.date)
                     if (f && f.type == "range") {
                         period[2] = new Date(f.start);

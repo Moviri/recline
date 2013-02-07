@@ -29,11 +29,14 @@ this.recline.View = this.recline.View || {};
             this.width = options.state.width;
             this.xAxisTitle = options.state.xAxisTitle;
             this.yAxisTitle = options.state.yAxisTitle;
+            if (options.state.loader)
+            	options.state.loader.bindChart(this);
         },
 
         render:function () {
             //console.log("View.xCharts: render");
             var self = this;
+            self.trigger("chart:startDrawing")
 
             var graphid = "#" + this.uid;
             if (false/*self.graph*/)
@@ -48,10 +51,12 @@ this.recline.View = this.recline.View || {};
                 var out = Mustache.render(this.template, this);
                 this.el.html(out);
         	}
+            self.trigger("chart:endDrawing")
         },
 
         redraw:function () {
             var self = this;
+            self.trigger("chart:startDrawing")
 
             //console.log("View.xCharts: redraw");
 
@@ -60,6 +65,7 @@ this.recline.View = this.recline.View || {};
             else
                 self.renderGraph();
 
+            self.trigger("chart:endDrawing")
         },
 
         updateGraph:function () {
