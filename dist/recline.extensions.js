@@ -5598,14 +5598,14 @@ this.recline.View = this.recline.View || {};
     		</div>',
     	incLoaderCount : function() {
     		this.loaderCount++;
-    		console.log("Start task - loaderCount = "+this.loaderCount)
+    		//console.log("Start task - loaderCount = "+this.loaderCount)
     		this.divOver.show();
     		document.getElementById("loadingImage").style.display = "block"; 
     	},
     	decLoaderCount : function() { 
     		var self = this;
     		this.loaderCount--;
-    		console.log("End task - loaderCount = "+this.loaderCount)
+    		//console.log("End task - loaderCount = "+this.loaderCount)
     		if (this.loaderCount <= 0) {
     			//setTimeout(function() {
     				document.getElementById("loadingImage").style.display = "none";
@@ -7016,7 +7016,8 @@ this.recline.View = this.recline.View || {};
                 showLineNumbers:this.state.get('showLineNumbers'),
                 showTotals:this.state.get('showTotals'),
                 showPartitionedData:this.state.get('showPartitionedData'),
-                selectedCellFocus:this.state.get('selectedCellFocus')
+                selectedCellFocus:this.state.get('selectedCellFocus'),
+                customHtmlFormatters:this.state.get('customHtmlFormatters') 
             };
             var optionsFixed = _.clone(options)
             optionsFixed.useInnerChart = options.useInnerChartScale
@@ -7105,13 +7106,20 @@ this.recline.View = this.recline.View || {};
             }
 
             _.each(self.model.getFields(self.resultType).toJSON(), function (field) {
+            	var currFormatter = formatter;
+            	if (options.customHtmlFormatters && !options.showPartitionedData)
+        		{
+            		var customFieldFormatInfo = _.find(options.customHtmlFormatters, function(customField) { return customField.id == field.id; });
+            		if (customFieldFormatInfo)
+            			currFormatter = (customFieldFormatInfo.formula ? Slick.Formatters.HtmlExtFormatter : Slick.Formatters.HtmlFormatter)
+        		}
                 var column = {
                     id:field['id'],
                     name:field['label'],
                     field:field['id'],
                     sortable:(options.showPartitionedData ? false : true),
                     minWidth:80,
-                    formatter:formatter,
+                    formatter:currFormatter
                 };
                 if (self.model.queryState.attributes.sort) {
                     _.each(self.model.queryState.attributes.sort, function (sortCondition) {
@@ -7131,6 +7139,7 @@ this.recline.View = this.recline.View || {};
                 }
                 else columns.push(column);
             });
+            
             var innerChartSerie1Name = self.state.get('innerChartSerie1');
             var innerChartSerie2Name = self.state.get('innerChartSerie2');
 
@@ -7352,7 +7361,13 @@ this.recline.View = this.recline.View || {};
                             row['innerChart'] = [ row[innerChartSerie1Name], row[innerChartSerie2Name], max ]; // twinbar for 2 series
                         else row['innerChart'] = [ row[innerChartSerie1Name], max ]; // percent bar for 1 series
                     }
-
+                    if (options.customHtmlFormatters) {
+                        _.each(options.customHtmlFormatters, function (customField) {
+                        	if (customField.formula)
+                        		row[customField.id] = [ doc, customField.formula ];
+                        	else row[customField.id] = [ doc.attributes, customField.template ];
+                        });                    	
+                    }
 
                     data.push(row);
 
