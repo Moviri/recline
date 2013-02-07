@@ -55,9 +55,9 @@ this.recline.View = this.recline.View || {};
 	                '<div class="c_row c_totals">' +
 		            	'{{#dimensions_totals}}' +
 		            		'<div class="cell cell_name"><div class="title" style="float:left">{{term_desc}}</div><div class="shape" style="float:left">{{{shape}}}</div></div>' +
-	            			'{{#measures}}' +
+	            			'{{#measures_totals}}' +
 	            				'<div class="cell cell_graph" id="{{viewid}}"></div>' +
-	            			'{{/measures}}' +	            		
+	            			'{{/measures_totals}}' +
 		            	'{{/dimensions_totals}}' +
 		            '</div>' +
                 '</div>' +                
@@ -125,6 +125,10 @@ this.recline.View = this.recline.View || {};
 
             _.each(this.options.measures, function (m, index) {
                 self.options.measures[index]["measure_id"] = new Date().getTime() + Math.floor(Math.random() * 10000);
+            });
+
+            _.each(this.options.measuresTotals, function (m, index) {
+                self.options.measuresTotals[index]["measure_id"] = new Date().getTime() + Math.floor(Math.random() * 10000);
             });
 
 
@@ -231,7 +235,7 @@ this.recline.View = this.recline.View || {};
                     dim["term_desc"] = self.options.titleTotals;
                 }
 
-                _.each(self.options.measures, function (d) {
+                _.each(self.options.measuresTotals, function (d) {
 
                     var val = {
                         view: d.view,
@@ -247,6 +251,7 @@ this.recline.View = this.recline.View || {};
                 });
 
                 self.dimensions_totals = [dim];
+                self.measures_totals =data;
             }
 
 
