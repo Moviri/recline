@@ -70,6 +70,9 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
 
                 return self.totals_unfiltered.records.models;
             } else {
+            	if(self.needsTableCalculation && self.totals == null)
+                    self.rebuildTotals();
+            	
                 return self.vModel.getRecords(type);
             }
         },

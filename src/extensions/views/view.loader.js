@@ -34,14 +34,14 @@ this.recline.View = this.recline.View || {};
     		</div>',
     	incLoaderCount : function() {
     		this.loaderCount++;
-    		console.log("Start task - loaderCount = "+this.loaderCount)
+    		//console.log("Start task - loaderCount = "+this.loaderCount)
     		this.divOver.show();
     		document.getElementById("loadingImage").style.display = "block"; 
     	},
     	decLoaderCount : function() { 
     		var self = this;
     		this.loaderCount--;
-    		console.log("End task - loaderCount = "+this.loaderCount)
+    		//console.log("End task - loaderCount = "+this.loaderCount)
     		if (this.loaderCount <= 0) {
     			//setTimeout(function() {
     				document.getElementById("loadingImage").style.display = "none";
