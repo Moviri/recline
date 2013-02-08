@@ -18,6 +18,7 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
             _.bindAll(this, 'generatefields');
 
             self.ds_fetched = [];
+            self.field_fetched = [];
 
             self.joinedModel = new my.Dataset({backend: "Memory", records:[], fields: [], renderer: self.attributes.renderer});
 
@@ -31,32 +32,54 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
                 this.get('initialState').setState(this);
             }
 
-            this.attributes.model.fields.bind('reset', this.generatefields);
-            this.attributes.model.fields.bind('add', this.generatefields);
+            this.attributes.model.fields.bind('reset', function() {
+                self.field_fetched.push("model");
+
+                console.log("joined query:done on ["+ self.attributes.model.id +"] dsFetched ["+self.allDsFetched(self.field_fetched)+"]");
+                if (self.allDsFetched(self.field_fetched))
+                    self.generatefields();
+            });
+            //this.attributes.model.fields.bind('add', this.generatefields);
 
             _.each(this.attributes.join, function(p) {
-                p.model.fields.bind('reset', self.generatefields);
-                p.model.fields.bind('add', self.generatefields);
+                p.model.fields.bind('reset', function() {
+                    if(!p.id)
+                        throw "joinedmodel: a model without id has been used in join. Unable to apply joined model";
+
+                    console.log("joined query:done on ["+ p.id +"] dsFetched ["+self.allDsFetched(self.field_fetched)+"]");
+                    self.field_fetched.push(p.model.id);
+
+                    if (self.allDsFetched(self.field_fetched))
+                        self.generatefields();
+
+                });
+                //p.model.fields.bind('add', self.generatefields);
             });
 
             this.attributes.model.bind('query:done', function () {
                 self.ds_fetched.push("model");
 
-                if (self.allDsFetched())
+                console.log("joined query:done on ["+ self.attributes.model.id +"] dsFetched ["+self.allDsFetched(self.ds_fetched)+"]");
+
+                if (self.allDsFetched(self.ds_fetched))
                     self.query();
             })
 
             _.each(this.attributes.join, function(p) {
 
                 p.model.bind('query:done', function () {
+                    if(!p.id)
+                        throw "joinedmodel: a model without id has been used in join. Unable to apply joined model";
+
+                    console.log("joined query:done on ["+ p.model.id +"] dsFetched ["+self.allDsFetched(self.ds_fetched)+"]");
                     self.ds_fetched.push(p.id);
 
-                    if (self.allDsFetched())
+                    if (self.allDsFetched(self.ds_fetched))
                         self.query();
                 });
 
                 p.model.queryState.bind('change', function () {
-                    if (self.allDsFetched())
+                    if (self.allDsFetched(self.ds_fetched))
                         self.query();
                 });
 
@@ -64,15 +87,15 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
 
         },
 
-        allDsFetched: function() {
+        allDsFetched: function(fetchedList) {
             var self=this;
             var ret= true;
 
-            if(!_.contains(self.ds_fetched, "model"))
+            if(!_.contains(fetchedList, "model"))
                 return false;
 
              _.each(self.attributes.join, function(p) {
-                 if(!_.contains(self.ds_fetched, p.id)) {
+                 if(!_.contains(fetchedList, p.id)) {
                      ret = false;
                  }
              });
@@ -98,7 +121,6 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
                 });
             });
 
-
             this.joinedModel.resetFields(tmpFields);
 
         },
@@ -114,10 +136,14 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
             var results = self.join();
 
             self.joinedModel.resetRecords(results);
+            if(self.fields.models.length == 0)
+                self.generatefields();
 
             self.joinedModel.fetch();
             self.recordCount = self.joinedModel.recordCount;
 
+            console.log("query done on joined ["+ self.attributes.model.id +"]");
+            console.log(_.map(self.fields.models, function(c) { return c.attributes.id }  ));
             self.trigger('query:done');
         },
 
