@@ -115,21 +115,25 @@ this.recline.View = this.recline.View || {};
 
             var records = _.map(this.options.model.getRecords(type), function (record) {
                 xDomain = [
-                Math.min(xDomain[0], record.attributes[state.xField.field]),
-                Math.max(xDomain[1], record.attributes[state.xField.field])];
+                    Math.min(xDomain[0], record.attributes[state.xField.field]),
+                    Math.max(xDomain[1], record.attributes[state.xField.field])
+                ];
                 yDomain = [
-                Math.min(yDomain[0], record.attributes[state.yField.field]),
-                Math.max(yDomain[1], record.attributes[state.yField.field])];
+                    Math.min(yDomain[0], record.attributes[state.yField.field]),
+                    Math.max(yDomain[1], record.attributes[state.yField.field])
+                ];
                 sizeDomain = [
-                Math.min(sizeDomain[0], record.attributes[state.sizeField.field]),
-                Math.max(sizeDomain[1], record.attributes[state.sizeField.field])];
+                    Math.min(sizeDomain[0], record.attributes[state.sizeField.field]),
+                    Math.max(sizeDomain[1], record.attributes[state.sizeField.field])
+                ];
                 colorDomain = [
-                Math.min(colorDomain[0], record.attributes[state.colorField.field]),
-                Math.max(colorDomain[1], record.attributes[state.colorField.field])];
+                    Math.min(colorDomain[0], record.attributes[state.colorField.field]),
+                    Math.max(colorDomain[1], record.attributes[state.colorField.field])
+                ];
 
                 return {
                     "key": record.attributes[state.keyField.field],
-                    "color": record.attributes[state.colorField.field], //record.attributes[state.colorField.field],
+                    "color": record.attributes[state.colorField.field],//record.attributes[state.colorField.field],
                     "x": record.attributes[state.xField.field],
                     "size": record.attributes[state.sizeField.field],
                     "y": record.attributes[state.yField.field]
@@ -214,13 +218,13 @@ this.recline.View = this.recline.View || {};
                 .data(tickValues).enter().append("text")
                 .attr("class", "x label")
                 .attr("text-anchor", "end")
-                .attr("x", function (t, i) {
-                return (state.legend.width / (tickValues.length - 1)) * i + paddingAxis / 2;
-            })
-                .attr("y", state.legend.height / 2)
-                .text(function (t) {
-                return t;
-            });
+                .attr("x", function(t, i){
+                    return ((state.legend.width - paddingAxis) / (tickValues.length - 1)) * i + paddingAxis/2;
+                })
+                .attr("y", state.legend.height/2)
+                .text(function(t){
+                    return t;
+                });
 
 
 
