@@ -230,6 +230,7 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
                  }
              });
 
+
              return ret;
         },
 
@@ -2637,7 +2638,7 @@ this.recline.Data.ColorSchema = this.recline.Data.ColorSchema || {};
                         colors:this.attributes.colors,
                         limits: [0, 1]
                     });
-                     self.limitsMapping = this.limits["distinct"](data);
+                    self.limitsMapping = this.limits["distinct"](data, self.limitsMapping);
                     break;
                 case "fixedLimits":
                     self.schema = new chroma.ColorScale({
@@ -2665,14 +2666,24 @@ this.recline.Data.ColorSchema = this.recline.Data.ColorSchema || {};
 
         getColorFor:function (fieldValue) {
             var self = this;
-            if (this.schema == null)
+            if (this.schema == null && !self.attributes.defaultColor)
                 throw "data.colors.js: colorschema not yet initialized, datasource not fetched?"
 
             var hashed = recline.Data.Transform.getFieldHash(fieldValue);
-            if(self.limitsMapping)
-                return this.schema.getColor( self.limitsMapping[hashed] );
+
+            if(self.limitsMapping) {
+                if( self.limitsMapping[hashed] != null) {
+                    return this.schema.getColor( self.limitsMapping[hashed] );
+                } else {
+                       return chroma.hex(self.attributes.defaultColor);
+                }
+            }
             else
                 return this.schema.getColor(hashed);
+
+
+
+
         },
 
         getTwoDimensionalColor:function (startingvalue, variation) {
@@ -2700,7 +2711,7 @@ this.recline.Data.ColorSchema = this.recline.Data.ColorSchema || {};
         },
 
         getRecordsArray:function (dataset) {
-            var self = this;
+
             var ret = [];
 
             if (dataset.dataset.isFieldPartitioned && dataset.dataset.isFieldPartitioned(dataset.field)) {
@@ -2739,7 +2750,7 @@ this.recline.Data.ColorSchema = this.recline.Data.ColorSchema || {};
 
                 return limit;
             },
-            distinct:function (data) {
+            distinct:function (data, previousData) {
 
                 var i = 1;
                 var uniq = _.uniq(data);
@@ -4692,8 +4703,8 @@ this.recline.View = this.recline.View || {};
     "use strict";
 
     view.Composed = Backbone.View.extend({
-        templates:{
-            vertical:'<div id="{{uid}}">' +
+        templates: {
+            vertical: '<div id="{{uid}}">' +
                 '<div class="composedview_table">' +
                 '<div class="c_group c_header">' +
                 '<div class="c_row">' +
@@ -4718,7 +4729,7 @@ this.recline.View = this.recline.View || {};
                 '</div>' +
                 '</div>',
 
-            horizontal:'<div id="{{uid}}">' +
+            horizontal: '<div id="{{uid}}">' +
                 '<table><tr><td>' +
                 '<div class="composedview_table">' +
                 '<div class="c_group c_header">' +
@@ -4739,12 +4750,48 @@ this.recline.View = this.recline.View || {};
                 '</div>' +
                 '{{/dimensions}}' +
                 '</div>' +
+                '<div class="c_group c_totals">' +
+                '{{#dimensions_totals}}' +
+                '<div class="c_row">' +
+                '<div class="cell cell_name"><div class="title" style="float:left">{{term_desc}}</div><div class="shape" style="float:left">{{{shape}}}</div></div>' +
+                '{{#measures}}' +
+                '<div class="cell cell_graph" id="{{viewid}}"></div>' +
+                '{{/measures}}' +
+                '</div>' +
+                '{{/dimensions_totals}}' +
+                '</div>' +
                 '</div>' +
                 '</td></tr><tr><td>{{{noData}}}</td></tr></table>' +
                 '</div>'
         },
 
-        initialize:function (options) {
+        // if total is present i need to wait for both redraw events
+        redrawSemaphore: function (type, self) {
+            if (!self.semaphore) {
+                self.semaphore = "";
+            }
+            if (self.options.modelTotals) {
+                if (type == "model") {
+                    if (self.semaphore == "totals") {
+                        self.semaphore = "";
+                        self.redraw();
+                    } else {
+                        self.semaphore = "model";
+                    }
+                } else {
+                    if (self.semaphore == "model") {
+                        self.semaphore = "";
+                        self.redraw();
+                    } else {
+                        self.semaphore = "model";
+                    }
+                }
+            } else {
+                self.redraw();
+            }
+        },
+
+        initialize: function (options) {
             var self = this;
             this.el = $(this.el);
             _.bindAll(this, 'render', 'redraw');
@@ -4754,9 +4801,21 @@ this.recline.View = this.recline.View || {};
             this.model.fields.bind('reset', this.render);
             this.model.fields.bind('add', this.render);
 
-            this.model.bind('query:done', this.redraw);
-            this.model.queryState.bind('selection:done', this.redraw);
+            this.model.bind('query:done', function () {
+                self.redrawSemaphore("model", self)
+            });
 
+
+            if (this.options.modelTotals) {
+                this.options.modelTotals.bind('change', this.render);
+                this.options.modelTotals.fields.bind('reset', this.render);
+                this.options.modelTotals.fields.bind('add', this.render);
+
+                this.options.modelTotals.bind('query:done', function () {
+                    self.redrawSemaphore("totals", self)
+                });
+
+            }
 
             this.uid = options.id || ("composed_" + new Date().getTime() + Math.floor(Math.random() * 10000)); // generating an unique id for the chart
 
@@ -4773,7 +4832,7 @@ this.recline.View = this.recline.View || {};
 
         },
 
-        render:function () {
+        render: function () {
             //console.log("View.Composed: render");
             var self = this;
             var graphid = "#" + this.uid;
@@ -4783,7 +4842,7 @@ this.recline.View = this.recline.View || {};
 
         },
 
-        getViewFunction:function () {
+        getViewFunction: function () {
             return function (measureID) {
                 var measure = _.find(this.measures, function (f) {
                     return f.measure_id == measureID;
@@ -4792,8 +4851,9 @@ this.recline.View = this.recline.View || {};
             }
         },
 
-        redraw:function () {
+        redraw: function () {
             var self = this;
+
 
             self.dimensions = [ ];
             self.noData = "";
@@ -4820,7 +4880,7 @@ this.recline.View = this.recline.View || {};
                         else
                             term_desc = t.term;
 
-                        var dim = {term:t.term, term_desc:term_desc, id_dimension:uid, shape:t.shape};
+                        var dim = {term: t.term, term_desc: term_desc, id_dimension: uid, shape: t.shape};
 
                         dim["getDimensionIDbyMeasureID"] = function () {
                             return function (measureID) {
@@ -4838,7 +4898,7 @@ this.recline.View = this.recline.View || {};
 
                 if (self.options.totals) {
                     var uid = (new Date().getTime() + Math.floor(Math.random() * 10000));
-                    _.each(self.addMeasuresToDimensionAllModel({id_dimension:uid}, self.options.measures, true), function (f) {
+                    _.each(self.addMeasuresToDimensionAllModel({id_dimension: uid}, self.options.measures, true), function (f) {
                         self.dimensions.push(f);
                     });
 
@@ -4862,9 +4922,9 @@ this.recline.View = this.recline.View || {};
                 var dim;
 
                 if (self.options.type == "groupByRecord")
-                    dim = self.addMeasuresToDimension({id_dimension:uid});
+                    dim = self.addMeasuresToDimension({id_dimension: uid});
                 else
-                    dim = self.addMeasuresToDimensionAllModel({id_dimension:uid}, self.options.measures);
+                    dim = self.addMeasuresToDimensionAllModel({id_dimension: uid}, self.options.measures);
 
                 _.each(dim, function (f, index) {
                     f["getDimensionIDbyMeasureID"] = self.getViewFunction;
@@ -4874,6 +4934,31 @@ this.recline.View = this.recline.View || {};
                 self.dimensions = dim;
             }
             this.measures = this.options.measures;
+
+
+            if (self.options.modelTotals) {
+                var data = [];
+                var uid = (new Date().getTime() + Math.floor(Math.random() * 10000));
+                var dim = {id_dimension: uid, measures: data};
+
+                _.each(self.options.measures, function (d) {
+
+                    var val = {
+                        view: d.view,
+                        viewid: new Date().getTime() + Math.floor(Math.random() * 10000),
+                        measure_id: d.measure_id,
+                        props: d.props,
+                        dataset: self.options.modelTotals,
+                        title: d.title,
+                        subtitle: d.subtitle,
+                        rawhtml: d.rawhtml};
+                    data.push(val);
+
+                });
+
+                self.dimensions_totals = [dim];
+            }
+
 
             var tmpl = this.templates.vertical;
             if (this.options.template)
@@ -4898,11 +4983,29 @@ this.recline.View = this.recline.View || {};
             //this.drawD3(records, "#" + this.uid);
         },
 
-        attachViews:function () {
+        attachViews: function () {
             var self = this;
             self.views = []
 
             _.each(self.dimensions, function (dim) {
+                _.each(dim.measures, function (m) {
+                    var $el = $('#' + m.viewid);
+                    m.props["el"] = $el;
+                    m.props["model"] = m.dataset;
+                    var view = new recline.View[m.view](m.props);
+                    self.views.push(view);
+
+                    if (typeof(view.render) != 'undefined') {
+                        view.render();
+                    }
+                    if (typeof(view.redraw) != 'undefined') {
+                        view.redraw();
+                    }
+
+                })
+            })
+
+            _.each(self.dimensions_totals, function (dim) {
                 _.each(dim.measures, function (m) {
                     var $el = $('#' + m.viewid);
                     m.props["el"] = $el;
@@ -4924,14 +5027,14 @@ this.recline.View = this.recline.View || {};
         /*
          for each facet pass to the view a new model containing all rows with same facet value
          */
-        addFilteredMeasuresToDimension:function (currentRow, dimensionField) {
+        addFilteredMeasuresToDimension: function (currentRow, dimensionField) {
             var self = this;
 
             // dimension["data"] = [view]
             // a filtered dataset should be created on the original data and must be associated to the view
-            var filtereddataset = new recline.Model.FilteredDataset({dataset:self.model});
+            var filtereddataset = new recline.Model.FilteredDataset({dataset: self.model});
 
-            var filter = {field:dimensionField.get("id"), type:"term", term:currentRow.term, term_desc:currentRow.term, fieldType:dimensionField.get("type") };
+            var filter = {field: dimensionField.get("id"), type: "term", term: currentRow.term, term_desc: currentRow.term, fieldType: dimensionField.get("type") };
             filtereddataset.queryState.addFilter(filter);
             filtereddataset.query();
             // foreach measure we need to add a view do the dimension
@@ -4939,18 +5042,21 @@ this.recline.View = this.recline.View || {};
             var data = [];
             _.each(self.options.measures, function (d) {
                 var val = {
-                    view:d.view,
-                    viewid:new Date().getTime() + Math.floor(Math.random() * 10000),
-                    measure_id:d.measure_id,
-                    props:d.props,
-                    dataset:filtereddataset,
-                    title:d.title,
-                    subtitle:d.subtitle,
-                    rawhtml:d.rawhtml
+                    view: d.view,
+                    viewid: new Date().getTime() + Math.floor(Math.random() * 10000),
+                    measure_id: d.measure_id,
+                    props: d.props,
+                    dataset: filtereddataset,
+                    title: d.title,
+                    subtitle: d.subtitle,
+                    rawhtml: d.rawhtml
                 };
 
                 data.push(val);
+
+
             });
+
 
             currentRow["measures"] = data;
             return currentRow;
@@ -4961,7 +5067,7 @@ this.recline.View = this.recline.View || {};
          for each record pass to the view a new model containing only that row
          */
 
-        addMeasuresToDimension:function (currentRow) {
+        addMeasuresToDimension: function (currentRow) {
             var self = this;
             var ret = [];
 
@@ -4971,23 +5077,25 @@ this.recline.View = this.recline.View || {};
                 _.each(self.options.measures, function (d) {
 
 
-                    var model = new recline.Model.Dataset({ records:[r.toJSON()], fields:r.fields.toJSON(), renderer:self.model.attributes.renderer});
+                    var model = new recline.Model.Dataset({ records: [r.toJSON()], fields: r.fields.toJSON(), renderer: self.model.attributes.renderer});
 
                     var val = {
-                        view:d.view,
-                        viewid:new Date().getTime() + Math.floor(Math.random() * 10000),
-                        measure_id:d.measure_id,
-                        props:d.props,
-                        dataset:model,
-                        title:d.title,
-                        subtitle:d.subtitle,
-                        rawhtml:d.rawhtml};
+                        view: d.view,
+                        viewid: new Date().getTime() + Math.floor(Math.random() * 10000),
+                        measure_id: d.measure_id,
+                        props: d.props,
+                        dataset: model,
+                        title: d.title,
+                        subtitle: d.subtitle,
+                        rawhtml: d.rawhtml};
                     data.push(val);
 
+
                 });
-                var currentRec = {measures:data, id_dimension:currentRow.id_dimension};
+                var currentRec = {measures: data, id_dimension: currentRow.id_dimension};
                 ret.push(currentRec);
             });
+
 
             return ret;
 
@@ -4997,7 +5105,7 @@ this.recline.View = this.recline.View || {};
          pass to the view all the model
          */
 
-        addMeasuresToDimensionAllModel:function (currentRow, measures, totals) {
+        addMeasuresToDimensionAllModel: function (currentRow, measures, totals) {
             var self = this;
 
             var data = [];
@@ -5008,7 +5116,7 @@ this.recline.View = this.recline.View || {};
                 var props;
                 if (totals) {
                     view = d.totals.view;
-                    if(d.totals.props)
+                    if (d.totals.props)
                         props = d.totals.props;
                     else
                         props = {};
@@ -5020,15 +5128,17 @@ this.recline.View = this.recline.View || {};
 
 
                 var val = {
-                    view:view,
-                    viewid:new Date().getTime() + Math.floor(Math.random() * 10000),
-                    measure_id:d.measure_id,
-                    props:props,
-                    dataset:self.model,
-                    title:d.title,
-                    subtitle:d.subtitle,
-                    rawhtml:d.rawhtml};
+                    view: view,
+                    viewid: new Date().getTime() + Math.floor(Math.random() * 10000),
+                    measure_id: d.measure_id,
+                    props: props,
+                    dataset: self.model,
+                    title: d.title,
+                    subtitle: d.subtitle,
+                    rawhtml: d.rawhtml};
                 data.push(val);
+
+
             });
 
 

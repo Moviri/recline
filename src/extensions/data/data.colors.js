@@ -126,7 +126,7 @@ this.recline.Data.ColorSchema = this.recline.Data.ColorSchema || {};
                         colors:this.attributes.colors,
                         limits: [0, 1]
                     });
-                     self.limitsMapping = this.limits["distinct"](data);
+                    self.limitsMapping = this.limits["distinct"](data, self.limitsMapping);
                     break;
                 case "fixedLimits":
                     self.schema = new chroma.ColorScale({
@@ -154,14 +154,24 @@ this.recline.Data.ColorSchema = this.recline.Data.ColorSchema || {};
 
         getColorFor:function (fieldValue) {
             var self = this;
-            if (this.schema == null)
+            if (this.schema == null && !self.attributes.defaultColor)
                 throw "data.colors.js: colorschema not yet initialized, datasource not fetched?"
 
             var hashed = recline.Data.Transform.getFieldHash(fieldValue);
-            if(self.limitsMapping)
-                return this.schema.getColor( self.limitsMapping[hashed] );
+
+            if(self.limitsMapping) {
+                if( self.limitsMapping[hashed] != null) {
+                    return this.schema.getColor( self.limitsMapping[hashed] );
+                } else {
+                       return chroma.hex(self.attributes.defaultColor);
+                }
+            }
             else
                 return this.schema.getColor(hashed);
+
+
+
+
         },
 
         getTwoDimensionalColor:function (startingvalue, variation) {
@@ -189,7 +199,7 @@ this.recline.Data.ColorSchema = this.recline.Data.ColorSchema || {};
         },
 
         getRecordsArray:function (dataset) {
-            var self = this;
+
             var ret = [];
 
             if (dataset.dataset.isFieldPartitioned && dataset.dataset.isFieldPartitioned(dataset.field)) {
@@ -228,7 +238,7 @@ this.recline.Data.ColorSchema = this.recline.Data.ColorSchema || {};
 
                 return limit;
             },
-            distinct:function (data) {
+            distinct:function (data, previousData) {
 
                 var i = 1;
                 var uniq = _.uniq(data);
