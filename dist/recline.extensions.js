@@ -11764,8 +11764,6 @@ this.recline.View = this.recline.View || {};
             if (this.options.state.customTooltipTemplate) {
             	this.tooltipTemplate = this.options.state.customTooltipTemplate;
             }
-            
-            
             //render header & svg container
             var out = Mustache.render(this.template, this);
             this.el.html(out);
@@ -11849,6 +11847,9 @@ this.recline.View = this.recline.View || {};
 
             self.xAxisTitle = state.xAxisTitle;
             self.yAxisTitle = state.yAxisTitle;
+            self.colorTitle = state.colorField['label'];
+            self.sizeTitle = state.sizeField['label'];
+            
             self.graph = d3.select("#" + self.uid + "_graph");
 
             this.drawD3(records);
@@ -11996,35 +11997,18 @@ this.recline.View = this.recline.View || {};
 
 
             var handleMouseover = function (e) {
-            	console.log("handle mouse over");
-        		console.log(self);
-        		var mapOffset = $(self.el).position()
+            	var mapOffset = $(self.el).position()
         		var objRect = this.getBoundingClientRect();
         		var docRect = document.body.getBoundingClientRect()
                 var pos = {left: objRect.left+objRect.width/2, top: objRect.top+objRect.height/2 - docRect.top};
                 
-//        		var selectedKpi = self.getLabelFor(self.options.state.mapping[0].srcValueField)+':';
-//                var newXLabel = self.getLabelFor(self.options.state.mapping[0].srcShapeField)+':';
-//                var region = this.attributes.regionName.nodeValue;
-//                var selectedRecord = self.getRecordByValue(self.options.state.mapping[0].srcShapeField, region);
-//                var val = "N/A"
-//                if (selectedRecord)
-//            	{
-//                	var field = self.model.fields.get(self.options.state.mapping[0].srcValueField)
-//                	if (field)
-//                		val = selectedRecord.getFieldValue(field)
-//            	}
                 var values = { title: e.key, 
                 		dim1Label: self.xAxisTitle, dim1Value: e.x, 
                 		dim2Label: self.yAxisTitle, dim2Value: e.y,
-                		dim3Label: "color title", dim3Value: e.color,
-                		dim4Label: "size title", dim4Value: e.size  }
-                console.log(self.tooltipTemplate);
-                console.log(values);
+                		dim3Label: self.colorTitle, dim3Value: e.color,
+                		dim4Label: self.sizeTitle, dim4Value: e.size  }
                 var content = Mustache.render(self.tooltipTemplate, values);
                 var $mapElem = $(self.el)
-//                //console.log("Tooltip for "+region+" at "+pos.left+","+pos.top)
-//                //var gravity = (pos.left < $mapElem[0].offsetLeft + $mapElem.width()/2 ? 'w' : 'e');
                 var gravity = (pos.top < $mapElem[0].offsetTop + $mapElem.height()/2 ? 'n' : 's');
                 
                 nv.tooltip.show([pos.left, pos.top], content, gravity, null, $mapElem[0]);
