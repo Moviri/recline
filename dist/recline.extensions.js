@@ -4744,7 +4744,7 @@ this.recline.View = this.recline.View || {};
                 '<div class="c_row"><div class="cell cell_empty"/>{{{noData}}}</div>' +
                 '{{#measures}}' +
                 '<div class="c_row">' +
-                '<div class="cell cell_title"><div><div class="rawhtml" style="vertical-align:middle;float:left">{{{rawhtml}}}</div><div style="vertical-align:middle;float:left"><div class="title">{{title}}</div><div class="subtitle">{{{subtitle}}}</div></div><div class="shape" style="vertical-align:middle;float:left">{{shape}}</div></div></div>' +
+                '<div class="cell cell_title"><div style="white-space:nowrap;"><div class="rawhtml" style="vertical-align:middle;float:left">{{{rawhtml}}}</div><div style="vertical-align:middle;float:left"><div class="title">{{title}}</div><div class="subtitle">{{{subtitle}}}</div></div><div class="shape" style="vertical-align:middle;float:left">{{shape}}</div></div></div>' +
                 '{{#dimensions}}' +
                 '<div class="cell cell_graph" id="{{#getDimensionIDbyMeasureID}}{{measure_id}}{{/getDimensionIDbyMeasureID}}" term="{{measure_id}}"></div>' +
                 '{{/dimensions}}' +
@@ -4762,7 +4762,7 @@ this.recline.View = this.recline.View || {};
                 '<div class="c_row">' +
                 '<div class="cell cell_empty"></div>' +
                 '{{#measures}}' +
-                '<div class="cell cell_title"><div><div class="rawhtml" style="vertical-align:middle;float:left">{{{rawhtml}}}</div><div style="float:left;vertical-align:middle"><div class="title">{{title}}</div><div class="subtitle">{{{subtitle}}}</div></div><div class="shape" style="float:left;vertical-align:middle">{{shape}}</div></div></div>' +
+                '<div class="cell cell_title"><div style="white-space:nowrap;"><div class="rawhtml" style="vertical-align:middle;float:left">{{{rawhtml}}}</div><div style="float:left;vertical-align:middle"><div class="title">{{title}}</div><div class="subtitle">{{{subtitle}}}</div></div><div class="shape" style="float:left;vertical-align:middle">{{shape}}</div></div></div>' +
                 '{{/measures}}' +
                 '</div>' +
                 '</div>' +
@@ -5291,10 +5291,10 @@ templatePercentage:
 						<div class="shape">{{{shape}}}</div> \
 						<span class="value-cell"> \
 							<div style="white-space: nowrap;"> \
-								<div style="float:left;font-size: 150%;">{{value}}</div> \
-								<div style="float:left;margin-left: 10px;text-align: left;width:40px;"> \
-									<div style="height:15px" >{{{compareShape}}}</div> \
-									<div style="font-size: 60%;color: #999;float: left;margin-top: -10px;">{{percentageMsg}}{{compareValue}}</div>\
+								<div class="kpi_value">{{value}}</div> \
+								<div class="kpi_compare_shape_container"> \
+									<div class="kpi_compare_shape_shape" >{{{compareShape}}}</div> \
+									<div class="kpi_compare_shape_msg">{{percentageMsg}}{{compareValue}}</div>\
 								</div> \
 							</div> </span> \
 					</div>  \
@@ -7169,7 +7169,8 @@ this.recline.View = this.recline.View || {};
                 showTotals:this.state.get('showTotals'),
                 showPartitionedData:this.state.get('showPartitionedData'),
                 selectedCellFocus:this.state.get('selectedCellFocus'),
-                customHtmlFormatters:this.state.get('customHtmlFormatters') 
+                customHtmlFormatters:this.state.get('customHtmlFormatters'), 
+                fieldFormatters:this.state.get('fieldFormatters')
             };
             var optionsFixed = _.clone(options)
             optionsFixed.useInnerChart = options.useInnerChartScale
@@ -7265,10 +7266,17 @@ this.recline.View = this.recline.View || {};
             		if (customFieldFormatInfo)
             			currFormatter = (customFieldFormatInfo.formula ? Slick.Formatters.HtmlExtFormatter : Slick.Formatters.HtmlFormatter)
         		}
+//            	var cssClass = "";
+//            	if (options.fieldFormatters){
+//            		var info = _.find(options.fieldFormatters, function(customField) { return customField.id == field.id; });
+//            		if (info)
+//            			cssClass = info.cssClass;            		
+//            	}
                 var column = {
                     id:field['id'],
                     name:field['label'],
                     field:field['id'],
+//                    cssClass: cssClass,
                     sortable:(options.showPartitionedData ? false : true),
                     minWidth:80,
                     formatter:currFormatter
@@ -10056,6 +10064,35 @@ this.recline.View = this.recline.View || {};
                             tmplData.filters[j].term = filter.term
                             tmplData.filters[j].start = filter.start
                             tmplData.filters[j].stop = filter.stop
+                            // ensures previous hierarchic_radiobutton selections are retained, if any (coming from the session cookie) [PART 1]
+                            if (tmplData.filters[j].controlType == "hierarchic_radiobuttons" && filter.type == "list"
+                            	&& filter.list && filter.list.length > 1)
+                        	{
+                            	var valueParts = filter.list[0].split(tmplData.filters[j].separator)
+                            	if (valueParts.length > 1)
+                        		{
+                                	var commonSelection = valueParts.splice(0, valueParts.length - 1).join(tmplData.filters[j].separator)
+                                	var lung = commonSelection.length
+                                	var allRecordsFound = true
+                                	var allRecords = self._sourceDataset.getRecords() 
+                                	for (var r in allRecords)
+                            		{
+                                		var record = allRecords[r]
+                                        var field = self._sourceDataset.fields.get(filter.field);
+                                        var currV = record.getFieldValue(field);
+                                        if (currV.substring(0, lung) === commonSelection)
+                                    	{
+                                        	if (!_.contains(filter.list, currV))
+                                    		{
+                                            	allRecordsFound = false;
+                                            	break;
+                                    		}
+                                    	}
+                            		}
+                                	if (allRecordsFound)
+                                		tmplData.filters[j].term = commonSelection
+                        		}
+                        	}
                         }
                     }
                 });
@@ -10100,6 +10137,21 @@ this.recline.View = this.recline.View || {};
 
             var out = Mustache.render(currTemplate, tmplData);
             this.el.html(out);
+            
+            // ensures previous hierarchic_radiobutton selections are retained, if any (coming from the session cookie) [PART 2]
+            _.each(tmplData.filters, function(currActiveFilter) {
+                if (currActiveFilter.controlType == "hierarchic_radiobuttons" && currActiveFilter.type == "list" 
+                	&& currActiveFilter.list && currActiveFilter.list.length > 1)
+            	{
+                    var flt;
+                    if (currActiveFilter.ctrlId)
+                    	flt = self.el.find("#"+currActiveFilter.ctrlId);
+                    else flt = this.el.find("div.filter");
+                    
+            		var currFilterCtrl = $(flt).find(".data-control-id");
+            		self.updateHierarchicRadiobuttons($(flt), currActiveFilter, $(currFilterCtrl));                		
+            	}
+            });
         },
 
         complementColor:function (c) {
@@ -10188,6 +10240,7 @@ this.recline.View = this.recline.View || {};
                     		if (divLev3.length > 0)
                     			divLev3[0].style.display="none"
                 		}
+                    	// must also send currSelectedValue to all models!!!!
                         this.doAction("onButtonsetClicked", fieldId, listaValori, "add", currActiveFilter);
             		}
                 	else
@@ -10197,8 +10250,11 @@ this.recline.View = this.recline.View || {};
                 			currActiveFilter.term = currActiveFilter.term.substring(0, currActiveFilter.term.length-1)
                 			
                 		// redraw the filter!!!
-                		// TODO: devi trovare flt giusto se ce n'è più di uno!!!
-	                    var flt = this.el.find("div.filter"); 
+	                    var flt;
+	                    if (currActiveFilter.ctrlId)
+	                    	flt = self.el.find("#"+currActiveFilter.ctrlId);
+	                    else flt = this.el.find("div.filter");
+	                    
 	            		var currFilterCtrl = $(flt).find(".data-control-id");
 	            		this.updateHierarchicRadiobuttons($(flt), currActiveFilter, $(currFilterCtrl));                		
                 		
@@ -10215,8 +10271,10 @@ this.recline.View = this.recline.View || {};
                             if (currV.indexOf(searchString) == 0)
                             	listaValori.push(currV)
                     	});
+                    	// must also send currSelectedValue to all models!!!!
                 		this.doAction("onButtonsetClicked", fieldId, listaValori, "add", currActiveFilter);
             		}
+                	
             	}
         	}
             else
@@ -10381,34 +10439,17 @@ this.recline.View = this.recline.View || {};
                     res.push(v.record);
               };
             });
-
-            // I'm using record (not facet) so I can pass it to actions
+            var actions = this.options.actions;
             if(res.length>0) {
-                var actions = self.options.actions;
+            	// I'm using record (not facet) so I can pass it to actions
                 actions.forEach(function(currAction){
                     currAction.action.doAction(res, currAction.mapping);
                 });
             } else
             {
-
-                var actions = this.options.actions;
                 actions.forEach(function(currAction){
                     currAction.action.doActionWithFacets(currFilter.facet.attributes.terms, values, currAction.mapping, fieldName);
                 });                
-//                var eventData = {};
-//                if (values.length)
-//                	eventData[fieldName] = values;
-//                else
-//            	{
-//                	if (currFilter.type == "term")
-//                		eventData[fieldName] = [null];
-//                	else if (currFilter.type == "list")
-//                		eventData[fieldName] = null;
-//                	else if (currFilter.type == "range")
-//                		eventData[fieldName] = [null, null];
-//            	}
-//				
-//                recline.ActionUtility.doAction(actions, eventType, eventData, actionType);
             }
         },
 
