@@ -130,14 +130,12 @@ this.recline.Data.ColorSchema = this.recline.Data.ColorSchema || {};
                     });
                     break;
                 case "scaleWithDistinctData":
-                	console.log('scaleWithDistinctData');
-                    self.schema = new chroma.ColorScale({
+                	self.schema = new chroma.ColorScale({
                         colors: this.attributes.colors,
                         limits: [0, 1]
                     });
                     self.limitsMapping = this.limits["distinct"](data, self.oldLimitData);
                     self.oldLimitData =  data;
-                    console.log(self);
                     break;
                 case "fixedLimits":
                     self.schema = new chroma.ColorScale({
@@ -334,10 +332,13 @@ this.recline.Data.ColorSchema = this.recline.Data.ColorSchema || {};
                         uniq = [];
                      }
                     var uniq_old = _.uniq(data_old, true);
-                    console.log('unique');
-                    console.log(uniq);
-                    console.log('unique_old');
-                    console.log(uniq_old);
+                    if (uniq_old[0] == null){
+                    	uniq_old = [];
+                    }
+//                    console.log('unique');
+//                    console.log(uniq);
+//                    console.log('unique_old');
+//                    console.log(uniq_old);
                     var closeUO = sizeCache[arrayHash(uniq_old)] || closestSize(uniq_old.length);                    
                     var closeU = Math.max(closestSize(uniq.length), closeUO);
                     
@@ -439,8 +440,8 @@ this.recline.Data.ColorSchema = this.recline.Data.ColorSchema || {};
                     arrayCache[arrayHash(uniq)] = poss;
                     emptyCache[arrayHash(uniq)] = empty;
                     sizeCache[arrayHash(uniq)] = closeU;
-                    console.log('data colors returning: ');
-                    console.log(obj);
+//                    console.log('data colors returning: ');
+//                    console.log(obj);
                     return obj;
                 };
             }()
