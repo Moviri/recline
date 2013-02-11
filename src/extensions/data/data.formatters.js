@@ -117,9 +117,9 @@ this.recline.Data = this.recline.Data || {};
             var format = field.get('format');
             if(format === "currency_euro") {
                // return "€ " + val;
-            	return accounting.formatMoney(val, { symbol: "€",  format: "%v %s", decimal : ".", thousand: " ", precision : 0 }); // �4,999.99
+            	return accounting.formatMoney(val, { symbol: "€",  format: "%v %s", decimal : ".", thousand: ",", precision : 0 }); // �4,999.99
             }           
-            return accounting.formatNumber(val, 0, " ");
+            return accounting.formatNumber(val, 0, ",");
         },
         date: function(val, field, doc) {
             var format = field.get('format');
@@ -139,15 +139,21 @@ this.recline.Data = this.recline.Data || {};
             
             if (format === 'percentage') {
                 try {
-                    return accounting.formatNumber(val, 2, " ", ".") + '%';
+                    return accounting.formatNumber(val, 2, ",", ".") + '<small class="muted">%</small>';
                 } catch(err) {
                     return "-";
                 }
 
-
+                
+            } else if(format === "percentage_0to1") {
+            	 try {
+                     return accounting.formatNumber(val*100, 2, ",", ".") + '<small class="muted">%</small>';
+                 } catch(err) {
+                     return "-";
+                 }
             } else if(format === "currency_euro") {
                 try {
-                    return accounting.formatMoney(val, { symbol: "€",  format: "%v %s", decimal : ".", thousand: " ", precision : 0 }); // �4,999.99
+                    return accounting.formatMoney(val, { symbol: "",  format: "%v %s", decimal : ".", thousand: ",", precision : 0 }) + '<small class="muted">€</small>'; 
                  
                      
             		
@@ -157,24 +163,33 @@ this.recline.Data = this.recline.Data || {};
                 }
             } else if(format === "currency_euro_decimal") {
                 try {
-                	return accounting.formatMoney(val, { symbol: "€",  format: "%v %s", decimal : ".", thousand: " ", precision : 2 }); // �4,999.99
+                	return accounting.formatMoney(val, { symbol: "",  format: "%v %s", decimal : ".", thousand: ",", precision : 2 }) + '<small class="muted">€</small>';
                     
                     // return "€ " + parseFloat(val.toFixed(2));
                 } catch(err) {
                     return "-";
                 }
-            }           
-            
-            else if(format === "integer") {
+            }   else if (format === 'time') {
+            	var sec_numb    = parseInt(val);
+                var hours   = Math.floor(sec_numb / 3600);
+                var minutes = Math.floor((sec_numb - (hours * 3600)) / 60);
+                var seconds = sec_numb - (hours * 3600) - (minutes * 60);
+                if (hours   < 10) {hours   = "0"+hours;}
+                if (minutes < 10) {minutes = "0"+minutes;}
+                if (seconds < 10) {seconds = "0"+seconds;}
+                var time    = hours+':'+minutes+':'+seconds;
+                return time;
+               
+            }  else if(format === "integer") {
                 try {
-                	return accounting.formatNumber(val, 0, " ", ".");
+                	return accounting.formatNumber(val, 0, ",", ".");
                 } catch(err) {
                     return "-";
                 }
             }
 
             try {
-            	return accounting.formatNumber(val, 2, " ", ".");
+            	return accounting.formatNumber(val, 2, ",", ".");
                 // return parseFloat(val.toFixed(2));
             }
             catch(err) {
@@ -196,6 +211,16 @@ this.recline.Data = this.recline.Data || {};
                 }
             } else if (format == 'plain') {
                 return val;
+            } else if (format === 'time') {
+            	var sec_numb    = parseInt(val);
+                var hours   = Math.floor(sec_numb / 3600);
+                var minutes = Math.floor((sec_numb - (hours * 3600)) / 60);
+                var seconds = sec_numb - (hours * 3600) - (minutes * 60);
+                if (hours   < 10) {hours   = "0"+hours;}
+                if (minutes < 10) {minutes = "0"+minutes;}
+                if (seconds < 10) {seconds = "0"+seconds;}
+                var time    = hours+':'+minutes+':'+seconds;
+                return time;
             } else {
                 // as this is the default and default type is string may get things
                 // here that are not actually strings
