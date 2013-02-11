@@ -1381,7 +1381,7 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
         },
 
         initializeCrossfilter:function () {
-            console.log("initialize crossfilter");
+         //   console.log("initialize crossfilter");
             var aggregatedFields = this.attributes.aggregation.measures;
             var aggregationFunctions = this.attributes.aggregation.aggregationFunctions;
             var originalFields = this.attributes.dataset.fields;
@@ -6085,7 +6085,11 @@ this.recline.View = this.recline.View || {};
         	this.baseurl = "/"
         	if (args.baseurl)
         		this.baseurl = args.baseurl;
-        	$(document.body).append(this.divOver);    
+        	if (args.container != null){
+        		args.container.append(this.divOver);
+        	} else {
+        		$(document.body).append(this.divOver);        		
+        	}
         },
         render:function () {
         	$(document.body).append(this.htmlLoader.replace("{{baseurl}}", this.baseurl));
@@ -8291,7 +8295,7 @@ this.recline.View = this.recline.View || {};
         },
 
         render:function (width) {
-            console.log("View.xCharts: render");
+//            console.log("View.xCharts: render");
             if (!isNaN(width)){
         		this.width = width;	
         	}
@@ -8319,7 +8323,7 @@ this.recline.View = this.recline.View || {};
             var self = this;
             self.trigger("chart:startDrawing")
 
-            console.log("View.xCharts: redraw");
+//            console.log("View.xCharts: redraw");
 
             if (false /*self.graph*/)
                 self.updateGraph();
@@ -8463,7 +8467,6 @@ this.recline.View = this.recline.View || {};
 	            "}"+
            	"</script>").appendTo("head");		
             _.each(self.series.main, function(d) {
-            	console.log(d);
             	if (d.color){
                 	$("<style type='text/css'> " +
                 			".color"+i+"{ color:rgb("+d.color.rgb+");} " +

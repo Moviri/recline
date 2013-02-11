@@ -16,7 +16,11 @@ this.recline.View = this.recline.View || {};
         	this.baseurl = "/"
         	if (args.baseurl)
         		this.baseurl = args.baseurl;
-        	$(document.body).append(this.divOver);    
+        	if (args.container != null){
+        		args.container.append(this.divOver);
+        	} else {
+        		$(document.body).append(this.divOver);        		
+        	}
         },
         render:function () {
         	$(document.body).append(this.htmlLoader.replace("{{baseurl}}", this.baseurl));
