@@ -119,6 +119,8 @@ this.recline.View = this.recline.View || {};
                     self.redrawSemaphore("totals", self)
                 });
 
+
+
             }
 
             this.uid = options.id || ("composed_" + new Date().getTime() + Math.floor(Math.random() * 10000)); // generating an unique id for the chart
@@ -227,6 +229,10 @@ this.recline.View = this.recline.View || {};
                 var data = [];
                 var uid = (new Date().getTime() + Math.floor(Math.random() * 10000));
                 var dim = {id_dimension: uid, measures: data};
+
+                if(self.options.titleTotals) {
+                    dim["term_desc"] = self.options.titleTotals;
+                }
 
                 _.each(self.options.measures, function (d) {
 
