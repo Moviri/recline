@@ -10,7 +10,7 @@ this.recline.View = this.recline.View || {};
         initialize:function (args) {
             _.bindAll(this, 'render', 'incLoaderCount', 'decLoaderCount', 'bindDatasets', 'bindDataset', 'bindCharts', 'bindChart');
         	this.divOver = $('<div/>');
-        	this.divOver.attr('style','display:none;opacity:0.7;background:#f9f9f9;position:absolute;top:0;z-index:100;width:100%;height:100%');
+        	this.divOver.attr('style',args.style);
         	this.datasets = args.datasets;
         	this.charts = args.charts;
         	this.baseurl = "/"

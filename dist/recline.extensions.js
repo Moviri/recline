@@ -2897,11 +2897,14 @@ this.recline.Data.ColorSchema = this.recline.Data.ColorSchema || {};
                     else data_old = [];
 
                     var uniq = _.uniq(data, true);
+                    if (uniq[0] == null){
+                        uniq = [];
+                     }
                     var uniq_old = _.uniq(data_old, true);
-//                    console.log('unique');
-//                    console.log(uniq);
-//                    console.log('unique_old');
-//                    console.log(uniq_old);
+                    console.log('unique');
+                    console.log(uniq);
+                    console.log('unique_old');
+                    console.log(uniq_old);
                     var closeUO = sizeCache[arrayHash(uniq_old)] || closestSize(uniq_old.length);                    
                     var closeU = Math.max(closestSize(uniq.length), closeUO);
                     
@@ -3003,8 +3006,8 @@ this.recline.Data.ColorSchema = this.recline.Data.ColorSchema || {};
                     arrayCache[arrayHash(uniq)] = poss;
                     emptyCache[arrayHash(uniq)] = empty;
                     sizeCache[arrayHash(uniq)] = closeU;
-//                    console.log('data colors returning: ');
-//                    console.log(obj);
+                    console.log('data colors returning: ');
+                    console.log(obj);
                     return obj;
                 };
             }()
@@ -6075,7 +6078,7 @@ this.recline.View = this.recline.View || {};
         initialize:function (args) {
             _.bindAll(this, 'render', 'incLoaderCount', 'decLoaderCount', 'bindDatasets', 'bindDataset', 'bindCharts', 'bindChart');
         	this.divOver = $('<div/>');
-        	this.divOver.attr('style','display:none;opacity:0.7;background:#f9f9f9;position:absolute;top:0;z-index:100;width:100%;height:100%');
+        	this.divOver.attr('style',args.style);
         	this.datasets = args.datasets;
         	this.charts = args.charts;
         	this.baseurl = "/"

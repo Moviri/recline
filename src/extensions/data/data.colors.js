@@ -330,11 +330,14 @@ this.recline.Data.ColorSchema = this.recline.Data.ColorSchema || {};
                     else data_old = [];
 
                     var uniq = _.uniq(data, true);
+                    if (uniq[0] == null){
+                        uniq = [];
+                     }
                     var uniq_old = _.uniq(data_old, true);
-//                    console.log('unique');
-//                    console.log(uniq);
-//                    console.log('unique_old');
-//                    console.log(uniq_old);
+                    console.log('unique');
+                    console.log(uniq);
+                    console.log('unique_old');
+                    console.log(uniq_old);
                     var closeUO = sizeCache[arrayHash(uniq_old)] || closestSize(uniq_old.length);                    
                     var closeU = Math.max(closestSize(uniq.length), closeUO);
                     
@@ -436,8 +439,8 @@ this.recline.Data.ColorSchema = this.recline.Data.ColorSchema || {};
                     arrayCache[arrayHash(uniq)] = poss;
                     emptyCache[arrayHash(uniq)] = empty;
                     sizeCache[arrayHash(uniq)] = closeU;
-//                    console.log('data colors returning: ');
-//                    console.log(obj);
+                    console.log('data colors returning: ');
+                    console.log(obj);
                     return obj;
                 };
             }()
