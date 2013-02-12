@@ -232,8 +232,8 @@ this.recline.View = this.recline.View || {};
             }
             var visibleColumns = [];
 
-            console.log("#### HIDDEN:");
-            console.log(self.state.get('hiddenColumns'));
+            //console.log("#### HIDDEN:");
+            //console.log(self.state.get('hiddenColumns'));
             
             
             if (self.state.get('visibleColumns').length > 0) {

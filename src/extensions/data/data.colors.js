@@ -6,12 +6,12 @@ this.recline.Data.ColorSchema = this.recline.Data.ColorSchema || {};
 (function ($, my) {
 
     my.ColorSchema = Backbone.Model.extend({
-        constructor:function ColorSchema() {
+        constructor: function ColorSchema() {
             Backbone.Model.prototype.constructor.apply(this, arguments);
         },
 
         // ### initialize
-        initialize:function () {
+        initialize: function () {
             var self = this;
 
 
@@ -38,7 +38,7 @@ this.recline.Data.ColorSchema = this.recline.Data.ColorSchema || {};
         },
 
         // generate limits from dataset values
-        bindToDataset:function () {
+        bindToDataset: function () {
             var self = this;
             self.attributes.dataset.dataset.records.bind('reset', function () {
                 self._generateFromDataset();
@@ -54,7 +54,7 @@ this.recline.Data.ColorSchema = this.recline.Data.ColorSchema || {};
             }
         },
 
-        bindToVariationDataset:function () {
+        bindToVariationDataset: function () {
             var self = this;
             self.attributes.twoDimensionalVariation.dataset.dataset.records.bind('reset', function () {
                 self._generateFromVariationDataset();
@@ -67,8 +67,7 @@ this.recline.Data.ColorSchema = this.recline.Data.ColorSchema || {};
         },
 
 
-
-        setDataset:function (ds, field, type) {
+        setDataset: function (ds, field, type) {
             var self = this;
 
             if (!ds.attributes["colorSchema"])
@@ -77,13 +76,13 @@ this.recline.Data.ColorSchema = this.recline.Data.ColorSchema || {};
             // if I'm bounded to a fields name I don't need to refresh upon model update and I don't need to calculate limits on data
             if (self.attributes.fields) {
                 _.each(self.attributes.fields, function (s) {
-                    ds.attributes["colorSchema"].push({schema:self, field:s});
+                    ds.attributes["colorSchema"].push({schema: self, field: s});
                 });
             } else {
-                self.attributes.dataset = {dataset:ds, field:field, type:type};
+                self.attributes.dataset = {dataset: ds, field: field, type: type};
 
 
-                ds.attributes["colorSchema"].push({schema:self, field:field});
+                ds.attributes["colorSchema"].push({schema: self, field: field});
                 self.bindToDataset();
             }
 
@@ -92,46 +91,47 @@ this.recline.Data.ColorSchema = this.recline.Data.ColorSchema || {};
 
         },
 
-        setVariationDataset:function (ds, field) {
+        setVariationDataset: function (ds, field) {
             var self = this;
-            self.attributes["twoDimensionalVariation"] = {dataset:{dataset:ds, field:field} };
+            self.attributes["twoDimensionalVariation"] = {dataset: {dataset: ds, field: field} };
 
             self.bindToVariationDataset();
         },
 
-        _generateFromDataset:function () {
+        _generateFromDataset: function () {
             var self = this;
             var data = this.getRecordsArray(self.attributes.dataset);
             self._generateLimits(data);
 
         },
 
-        _generateFromVariationDataset:function () {
+        _generateFromVariationDataset: function () {
             var self = this;
             var data = this.getRecordsArray(self.attributes.twoDimensionalVariation.dataset);
             self._generateVariationLimits(data);
         },
 
-        _generateLimits:function (data) {
+        _generateLimits: function (data) {
             var self = this;
             switch (this.attributes.type) {
                 case "scaleWithDataMinMax":
                     self.schema = new chroma.ColorScale({
-                        colors:this.attributes.colors,
-                        limits:this.limits["minMax"](data)
+                        colors: this.attributes.colors,
+                        limits: this.limits["minMax"](data)
                     });
                     break;
                 case "scaleWithDistinctData":
                     self.schema = new chroma.ColorScale({
-                        colors:this.attributes.colors,
+                        colors: this.attributes.colors,
                         limits: [0, 1]
                     });
-                    self.limitsMapping = this.limits["distinct"](data, self.limitsMapping);
+                    self.limitsMapping = this.limits["distinct"](data, self.oldLimitData);
+                    self.oldLimitData =  data;
                     break;
                 case "fixedLimits":
                     self.schema = new chroma.ColorScale({
-                        colors:this.attributes.colors,
-                        limits:this.attributes.limits
+                        colors: this.attributes.colors,
+                        limits: this.attributes.limits
                     });
                     break;
                 default:
@@ -139,42 +139,46 @@ this.recline.Data.ColorSchema = this.recline.Data.ColorSchema || {};
             }
         },
 
-        getScaleType:function () {
+        getScaleType: function () {
             return this.attributes.type;
         },
 
-        getScaleLimits:function () {
+        getScaleLimits: function () {
             return this.schema.limits;
         },
 
-        _generateVariationLimits:function (data) {
+        _generateVariationLimits: function (data) {
             var self = this;
             self.variationLimits = this.limits["minMax"](data);
         },
 
-        getColorFor:function (fieldValue) {
+        getColorFor: function (fieldValue) {
             var self = this;
             if (this.schema == null && !self.attributes.defaultColor)
                 throw "data.colors.js: colorschema not yet initialized, datasource not fetched?"
 
-            var hashed = recline.Data.Transform.getFieldHash(fieldValue);
+            //var hashed = recline.Data.Transform.getFieldHash(fieldValue);
 
-            if(self.limitsMapping) {
-                if( self.limitsMapping[hashed] != null) {
-                    return this.schema.getColor( self.limitsMapping[hashed] );
+            if (self.limitsMapping) {
+                if (self.limitsMapping[fieldValue] != null) {
+                    return this.schema.getColor(self.limitsMapping[fieldValue]);
                 } else {
-                       return chroma.hex(self.attributes.defaultColor);
+                    return chroma.hex(self.attributes.defaultColor);
                 }
             }
-            else
-                return this.schema.getColor(hashed);
-
+            else {
+                if (self.schema) {
+                    return this.schema.getColor(fieldValue);
+                } else {
+                    return chroma.hex(self.attributes.defaultColor);
+                }
+            }
 
 
 
         },
 
-        getTwoDimensionalColor:function (startingvalue, variation) {
+        getTwoDimensionalColor: function (startingvalue, variation) {
             if (this.schema == null)
                 throw "data.colors.js: colorschema not yet initialized, datasource not fetched?"
 
@@ -189,16 +193,16 @@ this.recline.Data.ColorSchema = this.recline.Data.ColorSchema || {};
             var self = this;
 
             var tempSchema = new chroma.ColorScale({
-                colors:[self.getColorFor(startingvalue), endColor],
-                limits:self.variationLimits,
-                mode:'hsl'
+                colors: [self.getColorFor(startingvalue), endColor],
+                limits: self.variationLimits,
+                mode: 'hsl'
             });
 
             return tempSchema.getColor(variation);
 
         },
 
-        getRecordsArray:function (dataset) {
+        getRecordsArray: function (dataset) {
 
             var ret = [];
 
@@ -225,8 +229,8 @@ this.recline.Data.ColorSchema = this.recline.Data.ColorSchema || {};
         },
 
 
-        limits:{
-            minMax:function (data) {
+        limits: {
+            minMax: function (data) {
                 var limit = [null, null];
                 _.each(data, function (d) {
                     if (limit[0] == null)    limit[0] = d;
@@ -238,22 +242,164 @@ this.recline.Data.ColorSchema = this.recline.Data.ColorSchema || {};
 
                 return limit;
             },
-            distinct:function (data, previousData) {
+            distinct: function () {
 
-                var i = 1;
-                var uniq = _.uniq(data);
-                var obj = {};
-                _.each(uniq, function (d) {
-                   if(uniq.length == 1)
-                       obj[recline.Data.Transform.getFieldHash(d)] = 0;
-                    else
-                       obj[recline.Data.Transform.getFieldHash(d)] = (i-1)/(uniq.length-1) ;
 
-                    i++;
-                });
-                return obj;
-            }
+                var arrayHash = function (data) {
+                    var hash = 0,
+                        i, j, _char;
+                    if (data.length === 0) return hash;
+                    for (i = 0; i < data.length; i++) {
+                        for (j = 0; j < data[i].length; j++) {
+                            _char = data[i].charCodeAt(j);
+                            hash = ((hash << 5) - hash) + _char;
+                            hash = hash & hash; // Convert to 32bit integer
+                        }
+                    }
+                    return hash;
+                };
 
+                var closestSize = function () {
+                    var sizeCache = {};
+
+                    var nextSize = function (n) {
+                        return n + n - 1;
+                    };
+
+                    return function (size) {
+                        if (sizeCache[size]) {
+                            return sizeCache[size];
+                        } else {
+                            var n = 2;
+                            while (n < size) {
+                                n = nextSize(n);
+                            }
+                            sizeCache[size] = n;
+                            return n;
+                        }
+                    };
+                }();
+
+                var computePosition = function (i, length, max) {
+                    return (i) / (max - 1);
+                };
+
+                var arrayCache = {};
+                var emptyCache = {};
+
+                return function (data, data_old) {
+
+                    var obj = {};
+                    var poss = {};
+                    var empty = [];
+                    var i;
+
+                    if (data) data.sort(function (a, b) {
+                        if (a > b) return 1;
+                        if (b > a) return -1;
+                        return 0;
+                    });
+                    else data = [];
+
+                    if (data_old) data_old.sort(function (a, b) {
+                        if (a > b) return 1;
+                        if (b > a) return -1;
+                        return 0;
+                    });
+                    else data_old = [];
+
+                    var uniq = _.uniq(data, true);
+                    var uniq_old = _.uniq(data_old, true);
+
+                    var closeUO = closestSize(uniq_old.length);
+                    var closeU = Math.max(closestSize(uniq.length), closeUO);
+
+                    var hop = 0;
+                    if (closeU > closeUO) {
+                        hop = 1;
+                    }
+
+                    empty = (uniq_old.length) ? emptyCache[arrayHash(uniq_old)] : [];
+
+                    if (hop > 0 && uniq_old.length !== 0) {
+                        //nuove posizioni disponibili
+                        //quali? per ora gestisco solo hop=1
+                        for (i = 1; i < closeU; i = i + 2) empty.push(i);
+                    }
+
+                    if (uniq_old.length === 0) {
+                        i = 0;
+                        _.each(uniq, function (d) {
+                            if (closeU === 1) obj[d] = 0;
+                            else obj[d] = computePosition(i, uniq.length, closeU);
+                            poss[d] = i;
+                            i++;
+                        });
+                        for (i = uniq.length; i < closeU; i++) {
+                            empty.push(i);
+                        }
+                    } else {
+                        var j, pos;
+                        var controlj = 0,
+                            controli = 0;
+                        var old_poss = arrayCache[arrayHash(uniq_old)];
+                        i = 0;
+                        j = 0;
+
+                        while (!(controlj || controli)) {
+                            if (uniq[i] === uniq_old[j]) {
+                                i++;
+                                j++;
+                            } else if (uniq[i] < uniq_old[j]) {
+                                i++;
+                            } else {
+                                //elemento rimosso
+                                empty.push(j * Math.pow(2, hop));
+                                j++;
+                            }
+                            controlj = j >= uniq_old.length;
+                            controli = i >= uniq.length;
+                        }
+
+                        i = 0;
+                        j = 0;
+                        controlj = 0;
+                        controli = 0;
+                        while (!(controlj || controli)) {
+                            if (uniq[i] === uniq_old[j]) {
+                                pos = old_poss[uniq_old[j]] * Math.pow(2, hop);
+                                poss[uniq[i]] = pos;
+                                obj[uniq[i]] = computePosition(pos, uniq.length, closeU);
+                                i++;
+                                j++;
+                            } else if (uniq[i] < uniq_old[j]) {
+                                //nuovo elemento
+                                pos = empty.pop();
+                                poss[uniq[i]] = pos;
+                                obj[uniq[i]] = computePosition(pos, uniq.length, closeU);
+                                i++;
+                            } else {
+                                j++;
+                            }
+                            controlj = j >= uniq_old.length;
+                            controli = i >= uniq.length;
+                        }
+                        if (!controli) {
+                            for (; i < uniq.length; i++) {
+                                //nuovo elemento
+                                pos = empty.pop();
+                                poss[uniq[i]] = pos;
+                                obj[uniq[i]] = computePosition(pos, uniq.length, closeU);
+                            }
+                        }
+                    }
+
+                    arrayCache[arrayHash(uniq)] = poss;
+                    emptyCache[arrayHash(uniq)] = empty;
+
+                    return obj;
+                };
+            }()
         }
 
 

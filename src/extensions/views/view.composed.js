@@ -68,7 +68,7 @@ this.recline.View = this.recline.View || {};
 
         // if total is present i need to wait for both redraw events
         redrawSemaphore: function (type, self) {
-            console.log("called redraw semaphore for type ["+type+"]");
+
             if (!self.semaphore) {
                 self.semaphore = "";
             }
@@ -137,7 +137,6 @@ this.recline.View = this.recline.View || {};
         },
 
         render: function () {
-            //console.log("View.Composed: render");
             var self = this;
             var graphid = "#" + this.uid;
 
