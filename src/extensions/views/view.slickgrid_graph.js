@@ -174,17 +174,17 @@ this.recline.View = this.recline.View || {};
             		if (customFieldFormatInfo)
             			currFormatter = (customFieldFormatInfo.formula ? Slick.Formatters.HtmlExtFormatter : Slick.Formatters.HtmlFormatter)
         		}
-//            	var cssClass = "";
-//            	if (options.fieldFormatters){
-//            		var info = _.find(options.fieldFormatters, function(customField) { return customField.id == field.id; });
-//            		if (info)
-//            			cssClass = info.cssClass;            		
-//            	}
+            	var cssClass = "";
+            	if (options.fieldFormatters){
+            		var info = _.find(options.fieldFormatters, function(customField) { return customField.id == field.id; });
+            		if (info)
+            			cssClass = info.cssClass;            		
+            	}
                 var column = {
                     id:field['id'],
                     name:field['label'],
                     field:field['id'],
-//                    cssClass: cssClass,
+                    cssClass: cssClass,
                     sortable:(options.showPartitionedData ? false : true),
                     minWidth:80,
                     formatter:currFormatter
