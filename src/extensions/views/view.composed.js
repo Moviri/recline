@@ -380,6 +380,7 @@ this.recline.View = this.recline.View || {};
 
 
                     var model = new recline.Model.Dataset({ records: [r.toJSON()], fields: r.fields.toJSON(), renderer: self.model.attributes.renderer});
+                    model.fields = r.fields;
 
                     var val = {
                         view: d.view,

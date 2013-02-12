@@ -147,7 +147,12 @@ this.recline.Data = this.recline.Data || {};
                 
             } else if(format === "percentage_0to1") {
             	 try {
-                     return accounting.formatNumber(val*100, 2, ",", ".") + '<small class="muted">%</small>';
+            		 if (val > 1){ /***** FIXME: REMOVE *****/
+            			 return accounting.formatNumber(val, 2, ",", ".") + '<small class="muted">%</small>';
+            		 } else {
+            			 return accounting.formatNumber(val*100, 2, ",", ".") + '<small class="muted">%</small>';	 
+            		 }
+                     
                  } catch(err) {
                      return "-";
                  }
