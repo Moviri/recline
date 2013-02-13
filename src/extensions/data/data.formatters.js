@@ -78,10 +78,10 @@ this.recline.Data = this.recline.Data || {};
         integer: function(val, field, doc) {
             var format = field.get('format');
             if(format === "currency_euro") {
-                return "â‚¬ " + val;
-            }
-
-            return val;
+               // return "â‚¬ " + val;
+            	return accounting.formatMoney(val, "EUR ", 0, " ", "."); // €4,999.99
+            }           
+            return accounting.formatNumber(val, 0, " ");
         },
         date: function(val, field, doc) {
             var format = field.get('format');
@@ -98,28 +98,46 @@ this.recline.Data = this.recline.Data || {};
         },
         number: function(val, field, doc) {
             var format = field.get('format');
+            
             if (format === 'percentage') {
                 try {
-                    return parseFloat(val.toFixed(2)) + ' %';
+                    return accounting.formatNumber(val, 2, " ", ".") + '%';
                 } catch(err) {
-                    return "N.A.";
+                    return "-";
                 }
 
 
             } else if(format === "currency_euro") {
                 try {
-                    return "â‚¬ " + parseFloat(val.toFixed(2));
+                    return accounting.formatMoney(val, "EUR ", 0, " ", "."); // €4,999.99
+                    // return "â‚¬ " + parseFloat(val.toFixed(2));
                 } catch(err) {
-                    return "N.A.";
+                    return "-";
+                }
+            } else if(format === "currency_euro_decimal") {
+                try {
+                    return accounting.formatMoney(val, "EUR ", 2, " ", "."); // €4,999.99
+                    // return "â‚¬ " + parseFloat(val.toFixed(2));
+                } catch(err) {
+                    return "-";
+                }
+            }           
+            
+            else if(format === "integer") {
+                try {
+                	return accounting.formatNumber(val, 0, " ", ".");
+                } catch(err) {
+                    return "-";
                 }
             }
 
             try {
-                return parseFloat(val.toFixed(2));
+            	return accounting.formatNumber(val, 2, " ", ".");
+                // return parseFloat(val.toFixed(2));
             }
             catch(err) {
                 //console.log("Error in conferting val " + val + " toFixed");
-                return "N.A.";
+                return "-";
             }
 
 

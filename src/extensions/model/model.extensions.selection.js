@@ -83,7 +83,7 @@ recline.Model.Query.prototype = $.extend(recline.Model.Query.prototype, {
         }
         var selections = this.getSelections();
         selections.push(myselection);
-        this.trigger('change:selections');
+        this.trigger('selection:change');
     },
 
 
@@ -94,7 +94,7 @@ recline.Model.Query.prototype = $.extend(recline.Model.Query.prototype, {
         var selections = this.getSelections();
         selections.splice(selectionIndex, 1);
         this.set({selections:selections}, {silent: true});
-        this.trigger('change:selections');
+        this.trigger('selection:change');
     },
     removeSelectionByField:function (field) {
         var selections = this.getSelections();
@@ -121,6 +121,7 @@ recline.Model.Query.prototype = $.extend(recline.Model.Query.prototype, {
             if (!found)
                 s.push(filter);
         }
+        this.trigger('selection:change');
     },
 
     isSelected:function () {

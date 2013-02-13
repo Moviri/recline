@@ -21,7 +21,7 @@ this.recline.View = this.recline.View || {};
                 '<div class="c_row"><div class="cell cell_empty"/>{{{noData}}}</div>' +
                 '{{#measures}}' +
                 '<div class="c_row">' +
-                '<div class="cell cell_title"><div style="white-space:nowrap;"><div class="rawhtml" style="vertical-align:middle;float:left">{{{rawhtml}}}</div><div style="vertical-align:middle;float:left"><div class="title">{{title}}</div><div class="subtitle">{{{subtitle}}}</div></div><div class="shape" style="vertical-align:middle;float:left">{{shape}}</div></div></div>' +
+                '<div class="cell cell_title"><div style="white-space:nowrap;"><div class="rawhtml" style="vertical-align:middle;float:left">{{{rawhtml}}}</div><div style="vertical-align:middle;float:left"><div class="title">{{{title}}}</div><div class="subtitle">{{{subtitle}}}</div></div><div class="shape" style="vertical-align:middle;float:left">{{shape}}</div></div></div>' +
                 '{{#dimensions}}' +
                 '<div class="cell cell_graph" id="{{#getDimensionIDbyMeasureID}}{{measure_id}}{{/getDimensionIDbyMeasureID}}" term="{{measure_id}}"></div>' +
                 '{{/dimensions}}' +
@@ -39,30 +39,29 @@ this.recline.View = this.recline.View || {};
                 '<div class="c_row">' +
                 '<div class="cell cell_empty"></div>' +
                 '{{#measures}}' +
-                '<div class="cell cell_title"><div style="white-space:nowrap;"><div class="rawhtml" style="vertical-align:middle;float:left">{{{rawhtml}}}</div><div style="float:left;vertical-align:middle"><div class="title">{{title}}</div><div class="subtitle">{{{subtitle}}}</div></div><div class="shape" style="float:left;vertical-align:middle">{{shape}}</div></div></div>' +
+          //      '<div class="cell cell_title"><div style="white-space:nowrap;"><div class="rawhtml" style="vertical-align:middle;float:left">{{{rawhtml}}}</div><div style="float:left;vertical-align:middle"><div class="title">{{{title}}}</div><div class="subtitle">{{{subtitle}}}</div></div><div class="shape" style="float:left;vertical-align:middle">{{shape}}</div></div></div>' +
+                '<div class="cell cell_title"><div style="white-space:nowrap;"><div class="rawhtml" style="vertical-align:middle;float:left">{{{rawhtml}}}</div><div style="float:left;vertical-align:middle"><div class="title"><a class="link_tooltip" href="#" data-toggle="tooltip" title="{{{subtitle}}}">{{{title}}}</a></div></div><div class="shape" style="float:left;vertical-align:middle">{{shape}}</div></div></div>' +
                 '{{/measures}}' +
                 '</div>' +
                 '</div>' +
                 '<div class="c_group c_body">' +
                 '{{#dimensions}}' +
-                '<div class="c_row">' +
-                '<div class="cell cell_name"><div class="title" style="float:left">{{term_desc}}</div><div class="shape" style="float:left">{{{shape}}}</div></div>' +
-                '{{#measures}}' +
-                '<div class="cell cell_graph" id="{{viewid}}"></div>' +
-                '{{/measures}}' +
-                '</div>' +
+	                '<div class="c_row">' +
+	                	'<div class="cell cell_name"><div class="title" style="float:left">{{term_desc}}</div><div class="shape" style="float:left">{{{shape}}}</div></div>' +
+	                	'{{#measures}}' +
+	                		'<div class="cell cell_graph" id="{{viewid}}"></div>' +
+	                	'{{/measures}}' +
+	                '</div>' +
                 '{{/dimensions}}' +
-                '</div>' +
-                '<div class="c_group c_totals">' +
-                '{{#dimensions_totals}}' +
-                '<div class="c_row">' +
-                '<div class="cell cell_name"><div class="title" style="float:left">{{term_desc}}</div><div class="shape" style="float:left">{{{shape}}}</div></div>' +
-                '{{#measures}}' +
-                '<div class="cell cell_graph" id="{{viewid}}"></div>' +
-                '{{/measures}}' +
-                '</div>' +
-                '{{/dimensions_totals}}' +
-                '</div>' +
+	                '<div class="c_row c_totals">' +
+		            	'{{#dimensions_totals}}' +
+		            		'<div class="cell cell_name"><div class="title" style="float:left">{{term_desc}}</div><div class="shape" style="float:left">{{{shape}}}</div></div>' +
+	            			'{{#measures}}' +
+	            				'<div class="cell cell_graph" id="{{viewid}}"></div>' +
+	            			'{{/measures}}' +	            		
+		            	'{{/dimensions_totals}}' +
+		            '</div>' +
+                '</div>' +                
                 '</div>' +
                 '</td></tr><tr><td>{{{noData}}}</td></tr></table>' +
                 '</div>'
@@ -70,7 +69,7 @@ this.recline.View = this.recline.View || {};
 
         // if total is present i need to wait for both redraw events
         redrawSemaphore: function (type, self) {
-            console.log("called redraw semaphore for type ["+type+"]");
+
             if (!self.semaphore) {
                 self.semaphore = "";
             }
@@ -119,6 +118,8 @@ this.recline.View = this.recline.View || {};
                     self.redrawSemaphore("totals", self)
                 });
 
+
+
             }
 
             this.uid = options.id || ("composed_" + new Date().getTime() + Math.floor(Math.random() * 10000)); // generating an unique id for the chart
@@ -137,7 +138,6 @@ this.recline.View = this.recline.View || {};
         },
 
         render: function () {
-            //console.log("View.Composed: render");
             var self = this;
             var graphid = "#" + this.uid;
 
@@ -228,6 +228,10 @@ this.recline.View = this.recline.View || {};
                 var uid = (new Date().getTime() + Math.floor(Math.random() * 10000));
                 var dim = {id_dimension: uid, measures: data};
 
+                if(self.options.titleTotals) {
+                    dim["term_desc"] = self.options.titleTotals;
+                }
+
                 _.each(self.options.measures, function (d) {
 
                     var val = {
@@ -258,6 +262,9 @@ this.recline.View = this.recline.View || {};
 
             this.attachViews();
 
+            if (self.options.postRender){
+            	self.options.postRender.call();
+            }            
             // force a resize to ensure that contained object have the correct amount of width/height
             this.el.trigger('resize');
 

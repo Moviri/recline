@@ -35,7 +35,6 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
             this.attributes.model.fields.bind('reset', function() {
                 self.field_fetched.push("model");
 
-                console.log("joined query:done on ["+ self.attributes.model.id +"] dsFetched ["+self.allDsFetched(self.field_fetched)+"]");
                 if (self.allDsFetched(self.field_fetched))
                     self.generatefields();
             });
@@ -46,7 +45,6 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
                     if(!p.id)
                         throw "joinedmodel: a model without id has been used in join. Unable to apply joined model";
 
-                    console.log("joined query:done on ["+ p.id +"] dsFetched ["+self.allDsFetched(self.field_fetched)+"]");
                     self.field_fetched.push(p.model.id);
 
                     if (self.allDsFetched(self.field_fetched))
@@ -59,7 +57,6 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
             this.attributes.model.bind('query:done', function () {
                 self.ds_fetched.push("model");
 
-                console.log("joined query:done on ["+ self.attributes.model.id +"] dsFetched ["+self.allDsFetched(self.ds_fetched)+"]");
 
                 if (self.allDsFetched(self.ds_fetched))
                     self.query();
@@ -71,7 +68,6 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
                     if(!p.id)
                         throw "joinedmodel: a model without id has been used in join. Unable to apply joined model";
 
-                    console.log("joined query:done on ["+ p.model.id +"] dsFetched ["+self.allDsFetched(self.ds_fetched)+"]");
                     self.ds_fetched.push(p.id);
 
                     if (self.allDsFetched(self.ds_fetched))
@@ -142,8 +138,7 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
             self.joinedModel.fetch();
             self.recordCount = self.joinedModel.recordCount;
 
-            console.log("query done on joined ["+ self.attributes.model.id +"]");
-            console.log(_.map(self.fields.models, function(c) { return c.attributes.id }  ));
+
             self.trigger('query:done');
         },
 
