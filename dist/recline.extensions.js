@@ -7850,7 +7850,7 @@ this.recline.View = this.recline.View || {};
             }
 
             resizeSlickGrid();
-            nv.utils.windowResize(resizeSlickGrid);
+            //nv.utils.windowResize(resizeSlickGrid);
             this.handleRequestOfRowSelection();
 
             return this;
@@ -8084,7 +8084,7 @@ this.recline.View = this.recline.View || {};
 
             //console.log("View.xCharts: redraw");
 
-            if (false/*self.graph*/)
+            if (false /*self.graph*/)
                 self.updateGraph();
             else
                 self.renderGraph();
@@ -8099,8 +8099,19 @@ this.recline.View = this.recline.View || {};
             
             if (self.series.main && self.series.main.length && self.series.main[0].data && self.series.main[0].data.length)
         	{
-            	self.graph.setData(self.series);
-                this.el.find('div.xCharts-title-x').html(self.options.state.xAxisTitle)
+            	this.el.find('div.xCharts-title-x').html(self.options.state.xAxisTitle)
+                var state =  self.options.state;
+                self.updateState(state);
+                self.graph._options = state.opts;
+
+                self.graph.setData(self.series);
+                self.updateOptions();
+
+                self.graph.setType(state.type);
+
+                if(state.legend)
+                    self.createLegend();
+
         	}
             else
         	{
@@ -8123,36 +8134,55 @@ this.recline.View = this.recline.View || {};
         	}
         },
 
+        updateState: function(state) {
+            var self=this;
+
+            if (self.options.state.yAxisTitle)
+                state.opts.paddingLeft = 90;  // accomodate space for y-axis title (original values was 60)
+        },
+
+        updateOptions: function() {
+            var self=this;
+            this.el.find('div.xCharts-title-x').html(self.options.state.xAxisTitle)
+
+            // add Y-Axis title
+            if (self.options.state.yAxisTitle)
+            {
+                var fullHeight = self.graph._height + self.graph._options.axisPaddingTop + self.graph._options.axisPaddingBottom
+
+                self.graph._g.selectAll('g.axisY g.titleY').data([self.options.state.yAxisTitle]).enter()
+                    .append('g').attr('class', 'titleY').attr('transform', 'translate(-60,'+fullHeight/2+') rotate(-90)')
+                    .append('text').attr('x', -3).attr('y', 0).attr('dy', ".32em").attr('text-anchor', "middle").text(function(d) { return d; });
+            }
+        },
+
         renderGraph:function () {
             //console.log("View.xCharts: renderGraph");
-            this.el.find('figure').html("")
+
             var self = this;
             var state = self.options.state;
             self.updateSeries();
 
+
             if(state.legend)
                 self.createLegend();
 
+
             if (self.series.main && self.series.main.length && self.series.main[0].data && self.series.main[0].data.length)
         	{
-            	if (self.options.state.yAxisTitle)
-            		state.opts.paddingLeft = 90;  // accomodate space for y-axis title (original values was 60)
-            			
-            	self.graph = new xChart(state.type, self.series, '#' + self.uid, state.opts);
-            	if (state.interpolation)
-            		self.graph._options.interpolation = state.interpolation
-            		
-                this.el.find('div.xCharts-title-x').html(self.options.state.xAxisTitle)
 
-                // add Y-Axis title
-                if (self.options.state.yAxisTitle)
-            	{
-                	var fullHeight = self.graph._height + self.graph._options.axisPaddingTop + self.graph._options.axisPaddingBottom
-            	
-	                self.graph._g.selectAll('g.axisY g.titleY').data([self.options.state.yAxisTitle]).enter()
-	                	.append('g').attr('class', 'titleY').attr('transform', 'translate(-60,'+fullHeight/2+') rotate(-90)')
-	                	.append('text').attr('x', -3).attr('y', 0).attr('dy', ".32em").attr('text-anchor', "middle").text(function(d) { return d; });
-            	}
+
+
+
+                    self.updateState(state);
+
+                    self.graph = new xChart(state.type, self.series, '#' + self.uid, state.opts);
+
+                    if (state.interpolation)
+                        self.graph._options.interpolation = state.interpolation
+
+                    self.updateOptions();
+
             }
             else
             {

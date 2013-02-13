@@ -587,7 +587,7 @@ this.recline.View = this.recline.View || {};
             }
 
             resizeSlickGrid();
-            nv.utils.windowResize(resizeSlickGrid);
+            //nv.utils.windowResize(resizeSlickGrid);
             this.handleRequestOfRowSelection();
 
             return this;
