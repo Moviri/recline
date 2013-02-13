@@ -8099,6 +8099,8 @@ this.recline.View = this.recline.View || {};
             
             if (self.series.main && self.series.main.length && self.series.main[0].data && self.series.main[0].data.length)
         	{
+            	this.el.find('figure div.noData').remove()
+            	
             	this.el.find('div.xCharts-title-x').html(self.options.state.xAxisTitle)
                 var state =  self.options.state;
                 self.updateState(state);
@@ -8170,10 +8172,9 @@ this.recline.View = this.recline.View || {};
 
             if (self.series.main && self.series.main.length && self.series.main[0].data && self.series.main[0].data.length)
         	{
-
-
-
-
+            		self.el.find('figure div.noData').remove() // remove no data msg (if any) 
+            		self.el.find('figure svg g').remove() // remove previous graph (if any)
+            		
                     self.updateState(state);
 
                     self.graph = new xChart(state.type, self.series, '#' + self.uid, state.opts);
