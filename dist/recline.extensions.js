@@ -11707,6 +11707,8 @@ this.recline.View = this.recline.View || {};
 		        	    .attr("dx", ".8em")
 		        	    .text(function(d) { return d.properties.name; });
 	        	}
+	        	if (randomColors == null || typeof randomColors == "undefined")
+	        		self.redraw(); // apply color schema colors if present
 	        });
 	        this.rendered = true;
             return this;
