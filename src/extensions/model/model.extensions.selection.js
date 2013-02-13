@@ -121,6 +121,7 @@ recline.Model.Query.prototype = $.extend(recline.Model.Query.prototype, {
             if (!found)
                 s.push(filter);
         }
+        this.trigger('selection:change');
     },
 
     isSelected:function () {
