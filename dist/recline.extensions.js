@@ -11555,7 +11555,7 @@ this.recline.View = this.recline.View || {};
             if (this.options.state.unselectedColor)
                 this.unselectedColor = this.options.state.unselectedColor;
 
-            this.svg = d3.select(this.el).append("svg")
+            this.svg = d3v3.select(this.el).append("svg")
 
             if (this.mapWidth == null || typeof this.mapWidth == "undefined")
             	this.mapWidth = $(this.el).width()
@@ -11586,7 +11586,7 @@ this.recline.View = this.recline.View || {};
         		});
         		$(this).attr("class", $(this).attr("class")+" selected")
         		
-        		d3.event.preventDefault();
+        		d3v3.event.preventDefault();
         	}
             var hoverFunction = function() {/*console.log("HOVERING "+this.attributes.regionName.nodeValue)*/}
             
@@ -11640,19 +11640,19 @@ this.recline.View = this.recline.View || {};
             	}
         	}
             
-	        d3.json(mapJson, function(error, map) {
+	        d3v3.json(mapJson, function(error, map) {
 	        	self.mapObj = map
 	        	self.regionNames = _.pluck(self.mapObj.objects[layer].geometries, 'id')   // build list of names for later use
 	        	
 	        	var regions = topojson.object(map, map.objects[layer]);
 	
-	        	var projection = d3.geo.mercator()
+	        	var projection = d3v3.geo.mercator()
 	        		.center(self.options.state["center"])
 	        		.rotate(rotation)
 	        		.scale(self.options.state["scale"])
 	        		.translate([self.mapWidth / 2, self.mapHeight / 2]);
 	        	
-	        	var path = d3.geo.path().projection(projection);
+	        	var path = d3v3.geo.path().projection(projection);
 	        	
 	        	var assignColors = function() {
 	        		return self.unselectedColor;
