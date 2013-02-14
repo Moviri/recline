@@ -694,7 +694,8 @@ this.recline.Backend.Memory = this.recline.Backend.Memory || {};
           results.reverse();
         }
       });
-        results = recline.Data.Filters.applyFiltersOnData(queryObj.filters, results, this.fields);
+        var facets = recline.Data.Faceting.computeFacets(results, queryObj);
+
 
         var out = {
         total: results.length,
