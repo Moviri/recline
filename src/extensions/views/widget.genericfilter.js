@@ -385,14 +385,18 @@ this.recline.View = this.recline.View || {};
               	</div> \
         		{{#useLevel2}} \
 	    			<div class="btn-group level2" level="2" style="float:left;display:{{showLevel2}}"> \
+     		{{#useAllButton}} \
         	 			<button class="btn btn-mini grouped-button {{all2Selected}}" val="">All</button> \
+     		{{/useAllButton}} \
 			            {{#valuesLev2}} \
 	            			<button class="btn btn-mini grouped-button {{selected}}" val="{{value}}" {{tooltip}}>{{{val}}}</button> \
 			            {{/valuesLev2}} \
 	            	</div> \
             		{{#useLevel3}} \
 		    			<div class="btn-group level3" level="3" style="float:left;display:{{showLevel3}}"> \
+      		{{#useAllButton}} \
 	            			<button class="btn btn-mini grouped-button {{all3Selected}}" val="">All</button> \
+     		{{/useAllButton}} \
 				            {{#valuesLev3}} \
 			        			<button class="btn btn-mini grouped-button {{selected}}" val="{{value}}" {{tooltip}}>{{{val}}}</button> \
 				            {{/valuesLev3}} \
@@ -615,7 +619,6 @@ this.recline.View = this.recline.View || {};
                     if (currActiveFilter.userChanged) {
                         // skip the filter that triggered the change
                         currActiveFilter.userChanged = undefined;
-                        console.log("userChanged UNDEFINED")
                         return;
                     }
                     switch (currActiveFilter.controlType) {
@@ -1041,8 +1044,6 @@ this.recline.View = this.recline.View || {};
                 }
             }
             else if (currActiveFilter.controlType == "hierarchic_radiobuttons") {
-            	console.log("createSingleFilter Hierarchic radiobuttons " + currActiveFilter.field)
-
                 var lev1Values = []
                 var fullLevelValues = []
                 var totLevels = 1;
@@ -1529,7 +1530,6 @@ this.recline.View = this.recline.View || {};
             else return "black";
         },
         onButtonsetClicked:function (e) {
-        	console.log("onButtonSet clicked")
             e.preventDefault();
             var self = this;
             var $target = $(e.currentTarget);
@@ -1565,7 +1565,6 @@ this.recline.View = this.recline.View || {};
                 	listaValori.push(prefix.substring(0, prefix.length-1))
                 	
                 currActiveFilter.userChanged = true;
-                console.log("userChanged TRUE")
 
                 if (listaValori.length == 1 && listaValori[0] == "All" && !currActiveFilter.noAllButton) {
                     listaValori = [];
@@ -2053,7 +2052,6 @@ this.recline.View = this.recline.View || {};
             currFilter.term = undefined;
             currFilter.value = [];
             currFilter.userChanged = undefined;
-            console.log("userChanged UNDEFINED")
 
             if (currFilter.controlType == "list" || currFilter.controlType == "month_week_calendar") {
                 $table = $target.parent().parent().find(".table")
