@@ -30,7 +30,7 @@ this.recline.View = this.recline.View || {};
             if (this.options.state.unselectedColor)
                 this.unselectedColor = this.options.state.unselectedColor;
 
-            this.svg = d3v3.select(this.el).append("svg")
+            this.svg = d3v3.select(this.el).append("svg").attr("x","0").attr("y","0").attr("xmlns","http://www.w3.org/2000/svg").attr("version","1.1")
 
             if (this.mapWidth == null || typeof this.mapWidth == "undefined")
             	this.mapWidth = $(this.el).width()
