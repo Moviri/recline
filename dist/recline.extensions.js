@@ -3476,7 +3476,10 @@ this.recline.Data = this.recline.Data || {};
 
             } else if(format === "currency_euro") {
                 try {
-                    return accounting.formatMoney(val, "EUR ", 0, " ", "."); // €4,999.99
+                    return accounting.formatMoney(val, { symbol: "â‚¬",  format: "%v %s", decimal : ".", thousand: " ", precision : 0 }); // €4,999.99
+                 
+                     
+            		
                     // return "â‚¬ " + parseFloat(val.toFixed(2));
                 } catch(err) {
                     return "-";
