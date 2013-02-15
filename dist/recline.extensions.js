@@ -11745,16 +11745,8 @@ this.recline.View = this.recline.View || {};
         },
 
         redraw:function () {
-        	console.log("redraw called")
             var self = this;
         	
-            var resultType = "filtered";
-            if (self.options.useFilteredData !== null && self.options.useFilteredData === false)
-                resultType = "original";
-
-            var records = self.model.getRecords(resultType);  //self.model.records.models;
-            console.log("Tot records in model: "+records.length)
-            
             if(!self.rendered || !self.mapObj)
                 return;
             
