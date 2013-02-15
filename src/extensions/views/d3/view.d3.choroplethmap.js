@@ -194,6 +194,7 @@ this.recline.View = this.recline.View || {};
 			            .attr("dy", ".35em")
 			        	.on("click", clickFunction)
 			        	.on("mouseover", hoverFunction)
+			        	.on("mouseout", mouseout)
 			            .text(function(d) { return d.id; });
             	}
 	        	
@@ -281,10 +282,13 @@ this.recline.View = this.recline.View || {};
 	                    if(selectionActive) {
 	                        if(d.isRecordSelected())
 	                            color = d.getFieldColor(srcValuef);
-	                    } else {
-	                            color = d.getFieldColor(srcValuef);
 	                    }
-	
+	                    else 
+	                    {
+	                    	var newColor = d.getFieldColor(srcValuef);
+	                        if (newColor != null) 
+	                        	color = newColor; 
+	                    }
 	
 	                    res[d.getFieldValueUnrendered(srcShapef)] =  {record: d, field: srcValuef, color: color, value:d.getFieldValueUnrendered(srcValuef) };
 	
