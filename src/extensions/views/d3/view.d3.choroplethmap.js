@@ -152,8 +152,13 @@ this.recline.View = this.recline.View || {};
 	        	// draw region names
 	            if (showRegionNames)
             	{
+	            	var minArea = self.options.state["minRegionArea"] || 6 
+	            	var onlyBigRegions = {
+	            							geometries: _.filter(map.objects[layer].geometries, function(r) { return r.properties.Shape_Area > minArea}),
+	            							type: "GeometryCollection"
+	            						}
 		        	self.svg.selectAll(".region-label")
-			            .data(topojson.object(map, map.objects[layer]).geometries)
+			            .data(topojson.object(map, onlyBigRegions).geometries)
 			            .enter().append("text")
 			            .attr("class", function(d) { return "region-label " + toAscii(d.id); })
 			            .attr("transform", function(d) { return "translate(" + path.centroid(d) + ")"; })
@@ -190,7 +195,16 @@ this.recline.View = this.recline.View || {};
         },
 
         redraw:function () {
+        	console.log("redraw called")
             var self = this;
+        	
+            var resultType = "filtered";
+            if (self.options.useFilteredData !== null && self.options.useFilteredData === false)
+                resultType = "original";
+
+            var records = self.model.getRecords(resultType);  //self.model.records.models;
+            console.log("Tot records in model: "+records.length)
+            
             if(!self.rendered || !self.mapObj)
                 return;
             
