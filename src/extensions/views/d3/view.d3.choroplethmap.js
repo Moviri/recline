@@ -100,6 +100,32 @@ this.recline.View = this.recline.View || {};
     					})
             		}
             	}
+                var handleMouseover = function () {}
+                
+                if (self.options.state.customTooltipTemplate)
+                	handleMouseover = function () {
+                		
+    	                var pos = $(this).offset();
+    	                var selectedKpi = self.options.state.mapping[0].srcValueField;
+    	                var newXLabel = self.options.state.mapping[0].srcShapeField+':';
+    	                var region = this.attributes.regionName.nodeValue;
+    	                var selectedRecord = self.getRecordByValue(self.options.state.mapping[0].srcShapeField, region);
+    	                var val = "N/A"
+    	                if (selectedRecord)
+                    	{
+    	                	var field = self.model.fields.get(selectedKpi)
+    	                	if (field)
+    	                		val = selectedRecord.getFieldValue(field)
+                    	}
+    	                var values = { x: region, y: val, xLabel: newXLabel, yLabel: /*kpis[*/selectedKpi/*].subtitle*/+':' }
+    	                var content = Mustache.render(self.options.state.customTooltipTemplate, values);
+    	                var $mapElem = $(self.el)
+    	                nv.tooltip.cleanup();  // delete last tooltip if present
+    	                nv.tooltip.show([pos.left /*+ leftOffset*/, pos.top/*+topOffset*/], content, (pos.left < $mapElem[0].offsetLeft + $mapElem.width()/2 ? 'w' : 'e'), null, $mapElem[0]);
+    	            };
+                var mouseout = function () {
+                	nv.tooltip.cleanup();
+                }
                 if (hoverActions.length)
             	{
                     hoverFunction = function() {
@@ -113,6 +139,7 @@ this.recline.View = this.recline.View || {};
     					})
             		}
             	}
+                else hoverFunction = handleMouseover
         	}
             
 	        d3v3.json(mapJson, function(error, map) {
@@ -144,6 +171,7 @@ this.recline.View = this.recline.View || {};
 		        	.enter().append("path")
 		        	.on("click", clickFunction)
 		        	.on("mouseover", hoverFunction)
+		        	.on("mouseout", mouseout)
 		            .attr("class", function(d) { return "region " + toAscii(d.id); })
 		            .attr("regionName", function(d) { return d.id; })
 		        	.attr("fill", assignColors)
