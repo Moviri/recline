@@ -223,7 +223,8 @@ this.recline.Data.ColorSchema = this.recline.Data.ColorSchema || {};
                 var fields = dataset.dataset.getPartitionedFields(dataset.field);
                 _.each(dataset.dataset.getRecords(dataset.type), function (d) {
                     _.each(fields, function (field) {
-                        ret.push(d.attributes[field.id]);
+                    	ret.push(d.getFieldValueUnrendered(field)); 
+                    	//ret.push(d.attributes[field.id]);
                     });
                 });
             }
@@ -232,7 +233,9 @@ this.recline.Data.ColorSchema = this.recline.Data.ColorSchema || {};
 
                 _.each(dataset.dataset.getRecords(dataset.type), function (d) {
                     _.each(fields, function (field) {
-                        ret.push(d.attributes[field]);
+                    	var f = d.fields.get(field);
+                    	ret.push(d.getFieldValueUnrendered(f));
+                    	//ret.push(d.attributes[field]);
                     });
                 });
             }
@@ -440,8 +443,6 @@ this.recline.Data.ColorSchema = this.recline.Data.ColorSchema || {};
                     arrayCache[arrayHash(uniq)] = poss;
                     emptyCache[arrayHash(uniq)] = empty;
                     sizeCache[arrayHash(uniq)] = closeU;
-//                    console.log('data colors returning: ');
-//                    console.log(obj);
                     return obj;
                 };
             }()
