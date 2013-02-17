@@ -205,7 +205,18 @@
          *         disabled: if true, date cell will be disabled
          *         className: css class name to add to the cell
          */
-        onRenderCell: function() { return {} },
+        onRenderCell: function(el, date) { 
+        	var res = {};
+        	var now = new Date();
+        	now.setHours(0);
+        	now.setMinutes(0);
+        	now.setSeconds(0);
+        	now.setMilliseconds(0);
+        	if (date >= now){
+        		res.disabled = true;
+        	}
+        	return res;
+        },
         /* 
          * Callback, invoked when a date is selected, with 'this' referring to
          * the HTMLElement that DatePicker was invoked upon.

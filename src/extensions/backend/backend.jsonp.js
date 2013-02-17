@@ -226,8 +226,11 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
 
 
         var outdata = {};
-        if (data.length > 0)
-            outdata["filters"] = data.toString();
+        if (data.length > 0){
+            // outdata["filters"] = data.toString();
+        	outdata["filtersep"] = "!==!";
+        	outdata["filters"] = data.join('!==!');
+        }
 
         if (res.length > 0)
             outdata["orderby"] = res;
