@@ -739,7 +739,11 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
         },
 
         isFieldPartitioned:function (fieldName, type) {
-            return  this.getFields(type).get(fieldName).attributes.aggregationFunction
+            var field = this.getFields(type).get(fieldName);
+            if(!field)
+                throw("Virtualmodel.js: isFieldPartitioned: unable to find field [" + fieldName + "] in virtualmodel [" + this.id +"]");
+
+            return  field.attributes.aggregationFunction
                 && this.attributes.aggregation.partitions;
         },
 
