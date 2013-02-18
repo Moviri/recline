@@ -3450,7 +3450,7 @@ this.recline.Data = this.recline.Data || {};
             var format = field.get('format');
             if(format === "currency_euro") {
                // return "â‚¬ " + val;
-            	return accounting.formatMoney(val, "EUR ", 0, " ", "."); // €4,999.99
+            	return accounting.formatMoney(val, { symbol: "â‚¬",  format: "%v %s", decimal : ".", thousand: " ", precision : 0 }); // €4,999.99
             }           
             return accounting.formatNumber(val, 0, " ");
         },
@@ -3480,14 +3480,18 @@ this.recline.Data = this.recline.Data || {};
 
             } else if(format === "currency_euro") {
                 try {
-                    return accounting.formatMoney(val, "EUR ", 0, " ", "."); // €4,999.99
+                    return accounting.formatMoney(val, { symbol: "â‚¬",  format: "%v %s", decimal : ".", thousand: " ", precision : 0 }); // €4,999.99
+                 
+                     
+            		
                     // return "â‚¬ " + parseFloat(val.toFixed(2));
                 } catch(err) {
                     return "-";
                 }
             } else if(format === "currency_euro_decimal") {
                 try {
-                    return accounting.formatMoney(val, "EUR ", 2, " ", "."); // €4,999.99
+                	return accounting.formatMoney(val, { symbol: "â‚¬",  format: "%v %s", decimal : ".", thousand: " ", precision : 2 }); // €4,999.99
+                    
                     // return "â‚¬ " + parseFloat(val.toFixed(2));
                 } catch(err) {
                     return "-";
@@ -8103,6 +8107,8 @@ this.recline.View = this.recline.View || {};
             
             if (self.series.main && self.series.main.length && self.series.main[0].data && self.series.main[0].data.length)
         	{
+            	this.el.find('figure div.noData').remove()
+            	
             	this.el.find('div.xCharts-title-x').html(self.options.state.xAxisTitle)
                 var state =  self.options.state;
                 self.updateState(state);
@@ -8174,10 +8180,9 @@ this.recline.View = this.recline.View || {};
 
             if (self.series.main && self.series.main.length && self.series.main[0].data && self.series.main[0].data.length)
         	{
-
-
-
-
+            		self.el.find('figure div.noData').remove() // remove no data msg (if any) 
+            		self.el.find('figure svg g').remove() // remove previous graph (if any)
+            		
                     self.updateState(state);
 
                     self.graph = new xChart(state.type, self.series, '#' + self.uid, state.opts);
@@ -9224,14 +9229,18 @@ this.recline.View = this.recline.View || {};
               	</div> \
         		{{#useLevel2}} \
 	    			<div class="btn-group level2" level="2" style="float:left;display:{{showLevel2}}"> \
-	            		<button class="btn btn-mini grouped-button {{all2Selected}}" val="">All</button> \
+     		{{#useAllButton}} \
+        	 			<button class="btn btn-mini grouped-button {{all2Selected}}" val="">All</button> \
+     		{{/useAllButton}} \
 			            {{#valuesLev2}} \
 	            			<button class="btn btn-mini grouped-button {{selected}}" val="{{value}}" {{tooltip}}>{{{val}}}</button> \
 			            {{/valuesLev2}} \
 	            	</div> \
             		{{#useLevel3}} \
 		    			<div class="btn-group level3" level="3" style="float:left;display:{{showLevel3}}"> \
+      		{{#useAllButton}} \
 	            			<button class="btn btn-mini grouped-button {{all3Selected}}" val="">All</button> \
+     		{{/useAllButton}} \
 				            {{#valuesLev3}} \
 			        			<button class="btn btn-mini grouped-button {{selected}}" val="{{value}}" {{tooltip}}>{{{val}}}</button> \
 				            {{/valuesLev3}} \
@@ -9366,6 +9375,7 @@ this.recline.View = this.recline.View || {};
             _.bindAll(this, 'updateLegend');
             _.bindAll(this, 'updateMultibutton');
             _.bindAll(this, 'redrawGenericControl');
+            _.bindAll(this, 'fixHierarchicRadiobuttonsSelections');
 
             this._sourceDataset = args.sourceDataset;
             this.uid = args.id || Math.floor(Math.random() * 100000); // unique id of the view containing all filters
@@ -9427,6 +9437,7 @@ this.recline.View = this.recline.View || {};
                         self.activeFilters[j].term = filter.term
                         self.activeFilters[j].start = filter.start
                         self.activeFilters[j].stop = filter.stop
+                        self.fixHierarchicRadiobuttonsSelections(self.activeFilters[j])
                     }
                 }
             });
@@ -9804,7 +9815,7 @@ this.recline.View = this.recline.View || {};
                     }
             }
             else if (currActiveFilter.controlType == "legend") {
-                // OLD code, somehow working but wrong
+                // this code somehow works but it's not correct
                 currActiveFilter.tmpValues = _.pluck(currActiveFilter.facet.attributes.terms, "term");
 
                 if (typeof currActiveFilter.origLegend == "undefined") {
@@ -9822,25 +9833,6 @@ this.recline.View = this.recline.View || {};
 
                     currActiveFilter.values.push({val:v, notSelected:notSelected, color:currActiveFilter.facet.attributes.terms[i].color, count:currActiveFilter.facet.attributes.terms[i].count});
                 }
-
-// 			NEW code. Will work when facet will be returned correctly even after filtering
-//		  currActiveFilter.tmpValues = _.pluck(currActiveFilter.facet.attributes.terms, "term");
-//		  for (var v in currActiveFilter.tmpValues)
-//		  {
-//				var color;
-//				var currTerm = _.find(currActiveFilter.facet.attributes.terms, function(currT) { return currT.term == v; });
-//				if (typeof currTerm != "undefined" && currTerm != null)
-//				{
-//					color = currTerm.color;
-//					count = currTerm.count;
-//				}
-//				var notSelected = "";
-//				var legendSelection = currActiveFilter.legend;
-//				if (typeof legendSelection == "undefined" || legendSelection == null || legendSelection.indexOf(v) < 0)
-//					notSelected = "not-selected";
-//				
-//				currActiveFilter.values.push({val: v, notSelected: notSelected, color: color, count: count});
-//		  }		  
             }
             else if (currActiveFilter.controlType == "color_legend") {
                 var ruler = document.getElementById("my_string_width_calculation_ruler");
@@ -10255,6 +10247,40 @@ this.recline.View = this.recline.View || {};
 
             return Mustache.render(self.filterTemplates[currActiveFilter.controlType], currActiveFilter);
         },
+        fixHierarchicRadiobuttonsSelections:function(filter) {
+        	var self = this;
+            // ensures previous hierarchic_radiobutton selections are retained, if any (coming from the session cookie) [PART 1]
+            if (filter.controlType == "hierarchic_radiobuttons" && filter.type == "list"
+            	&& filter.list && filter.list.length > 1)
+        	{
+            	var valueParts = filter.list[0].split(filter.separator)
+            	if (valueParts.length > 1)
+        		{
+                	var commonSelection = valueParts.splice(0, valueParts.length - 1).join(filter.separator)
+                	var lung = commonSelection.length
+                	var allRecordsFound = true
+                	var allRecords = self._sourceDataset.getRecords() 
+                	for (var r in allRecords)
+            		{
+                		var record = allRecords[r]
+                        var field = self._sourceDataset.fields.get(filter.field);
+                        var currV = record.getFieldValue(field);
+                        if (currV.substring(0, lung) === commonSelection)
+                    	{
+                        	if (!_.contains(filter.list, currV))
+                    		{
+                            	allRecordsFound = false;
+                            	break;
+                    		}
+                    	}
+            		}
+                	if (allRecordsFound)
+                		filter.term = commonSelection
+        		}
+        	}
+        	
+        },
+        
 
         render:function () {
             var self = this;
@@ -10273,35 +10299,7 @@ this.recline.View = this.recline.View || {};
                             tmplData.filters[j].term = filter.term
                             tmplData.filters[j].start = filter.start
                             tmplData.filters[j].stop = filter.stop
-                            // ensures previous hierarchic_radiobutton selections are retained, if any (coming from the session cookie) [PART 1]
-                            if (tmplData.filters[j].controlType == "hierarchic_radiobuttons" && filter.type == "list"
-                            	&& filter.list && filter.list.length > 1)
-                        	{
-                            	var valueParts = filter.list[0].split(tmplData.filters[j].separator)
-                            	if (valueParts.length > 1)
-                        		{
-                                	var commonSelection = valueParts.splice(0, valueParts.length - 1).join(tmplData.filters[j].separator)
-                                	var lung = commonSelection.length
-                                	var allRecordsFound = true
-                                	var allRecords = self._sourceDataset.getRecords() 
-                                	for (var r in allRecords)
-                            		{
-                                		var record = allRecords[r]
-                                        var field = self._sourceDataset.fields.get(filter.field);
-                                        var currV = record.getFieldValue(field);
-                                        if (currV.substring(0, lung) === commonSelection)
-                                    	{
-                                        	if (!_.contains(filter.list, currV))
-                                    		{
-                                            	allRecordsFound = false;
-                                            	break;
-                                    		}
-                                    	}
-                            		}
-                                	if (allRecordsFound)
-                                		tmplData.filters[j].term = commonSelection
-                        		}
-                        	}
+                            self.fixHierarchicRadiobuttonsSelections(tmplData.filters[j])
                         }
                     }
                 });
@@ -10411,6 +10409,7 @@ this.recline.View = this.recline.View || {};
                 	listaValori.push(prefix.substring(0, prefix.length-1))
                 	
                 currActiveFilter.userChanged = true;
+
                 if (listaValori.length == 1 && listaValori[0] == "All" && !currActiveFilter.noAllButton) {
                     listaValori = [];
                     currActiveFilter.term = "";
@@ -11589,7 +11588,7 @@ this.recline.View = this.recline.View || {};
             if (this.options.state.unselectedColor)
                 this.unselectedColor = this.options.state.unselectedColor;
 
-            this.svg = d3.select(this.el).append("svg")
+            this.svg = d3v3.select(this.el).append("svg").attr("x","0").attr("y","0").attr("xmlns","http://www.w3.org/2000/svg").attr("version","1.1")
 
             if (this.mapWidth == null || typeof this.mapWidth == "undefined")
             	this.mapWidth = $(this.el).width()
@@ -11620,7 +11619,7 @@ this.recline.View = this.recline.View || {};
         		});
         		$(this).attr("class", $(this).attr("class")+" selected")
         		
-        		d3.event.preventDefault();
+        		d3v3.event.preventDefault();
         	}
             var hoverFunction = function() {/*console.log("HOVERING "+this.attributes.regionName.nodeValue)*/}
             
@@ -11659,6 +11658,32 @@ this.recline.View = this.recline.View || {};
     					})
             		}
             	}
+                var handleMouseover = function () {}
+                
+                if (self.options.state.customTooltipTemplate)
+                	handleMouseover = function () {
+                		
+    	                var pos = $(this).offset();
+    	                var selectedKpi = self.options.state.mapping[0].srcValueField;
+    	                var newXLabel = self.options.state.mapping[0].srcShapeField+':';
+    	                var region = this.attributes.regionName.nodeValue;
+    	                var selectedRecord = self.getRecordByValue(self.options.state.mapping[0].srcShapeField, region);
+    	                var val = "N/A"
+    	                if (selectedRecord)
+                    	{
+    	                	var field = self.model.fields.get(selectedKpi)
+    	                	if (field)
+    	                		val = selectedRecord.getFieldValue(field)
+                    	}
+    	                var values = { x: region, y: val, xLabel: newXLabel, yLabel: /*kpis[*/selectedKpi/*].subtitle*/+':' }
+    	                var content = Mustache.render(self.options.state.customTooltipTemplate, values);
+    	                var $mapElem = $(self.el)
+    	                nv.tooltip.cleanup();  // delete last tooltip if present
+    	                nv.tooltip.show([pos.left /*+ leftOffset*/, pos.top/*+topOffset*/], content, (pos.left < $mapElem[0].offsetLeft + $mapElem.width()/2 ? 'w' : 'e'), null, $mapElem[0]);
+    	            };
+                var mouseout = function () {
+                	nv.tooltip.cleanup();
+                }
                 if (hoverActions.length)
             	{
                     hoverFunction = function() {
@@ -11672,21 +11697,22 @@ this.recline.View = this.recline.View || {};
     					})
             		}
             	}
+                else hoverFunction = handleMouseover
         	}
             
-	        d3.json(mapJson, function(error, map) {
+	        d3v3.json(mapJson, function(error, map) {
 	        	self.mapObj = map
 	        	self.regionNames = _.pluck(self.mapObj.objects[layer].geometries, 'id')   // build list of names for later use
 	        	
 	        	var regions = topojson.object(map, map.objects[layer]);
 	
-	        	var projection = d3.geo.mercator()
+	        	var projection = d3v3.geo.mercator()
 	        		.center(self.options.state["center"])
 	        		.rotate(rotation)
 	        		.scale(self.options.state["scale"])
 	        		.translate([self.mapWidth / 2, self.mapHeight / 2]);
 	        	
-	        	var path = d3.geo.path().projection(projection);
+	        	var path = d3v3.geo.path().projection(projection);
 	        	
 	        	var assignColors = function() {
 	        		return self.unselectedColor;
@@ -11703,6 +11729,7 @@ this.recline.View = this.recline.View || {};
 		        	.enter().append("path")
 		        	.on("click", clickFunction)
 		        	.on("mouseover", hoverFunction)
+		        	.on("mouseout", mouseout)
 		            .attr("class", function(d) { return "region " + toAscii(d.id); })
 		            .attr("regionName", function(d) { return d.id; })
 		        	.attr("fill", assignColors)
@@ -11711,8 +11738,13 @@ this.recline.View = this.recline.View || {};
 	        	// draw region names
 	            if (showRegionNames)
             	{
+	            	var minArea = self.options.state["minRegionArea"] || 6 
+	            	var onlyBigRegions = {
+	            							geometries: _.filter(map.objects[layer].geometries, function(r) { return r.properties.Shape_Area > minArea}),
+	            							type: "GeometryCollection"
+	            						}
 		        	self.svg.selectAll(".region-label")
-			            .data(topojson.object(map, map.objects[layer]).geometries)
+			            .data(topojson.object(map, onlyBigRegions).geometries)
 			            .enter().append("text")
 			            .attr("class", function(d) { return "region-label " + toAscii(d.id); })
 			            .attr("transform", function(d) { return "translate(" + path.centroid(d) + ")"; })
@@ -11720,6 +11752,7 @@ this.recline.View = this.recline.View || {};
 			            .attr("dy", ".35em")
 			        	.on("click", clickFunction)
 			        	.on("mouseover", hoverFunction)
+			        	.on("mouseout", mouseout)
 			            .text(function(d) { return d.id; });
             	}
 	        	
@@ -11750,6 +11783,7 @@ this.recline.View = this.recline.View || {};
 
         redraw:function () {
             var self = this;
+        	
             if(!self.rendered || !self.mapObj)
                 return;
             
@@ -11797,23 +11831,29 @@ this.recline.View = this.recline.View || {};
                 selectionActive = true;
 
             var res = {};
-            _.each(records, function (d) {
-
-                if(_.contains(paths, d.getFieldValueUnrendered(srcShapef))) {
-                    var color = self.unselectedColor;
-                    if(selectionActive) {
-                        if(d.isRecordSelected())
-                            color = d.getFieldColor(srcValuef);
-                    } else {
-                            color = d.getFieldColor(srcValuef);
-                    }
-
-
-                    res[d.getFieldValueUnrendered(srcShapef)] =  {record: d, field: srcValuef, color: color, value:d.getFieldValueUnrendered(srcValuef) };
-
-                }
-            });
-
+            if (srcShapef && srcValuef)
+        	{
+	            _.each(records, function (d) {
+	
+	                if(_.contains(paths, d.getFieldValueUnrendered(srcShapef))) {
+	                    var color = self.unselectedColor;
+	                    if(selectionActive) {
+	                        if(d.isRecordSelected())
+	                            color = d.getFieldColor(srcValuef);
+	                    }
+	                    else 
+	                    {
+	                    	var newColor = d.getFieldColor(srcValuef);
+	                        if (newColor != null) 
+	                        	color = newColor; 
+	                    }
+	
+	                    res[d.getFieldValueUnrendered(srcShapef)] =  {record: d, field: srcValuef, color: color, value:d.getFieldValueUnrendered(srcValuef) };
+	
+	                }
+	            });
+        	}
+            //else throw "Invalid model for map! Missing "+srcShapeField+" and/or "+srcValueField
             return res;
         },
         getRecordByValue:function (srcShapeField, value) {

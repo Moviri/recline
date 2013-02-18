@@ -30,7 +30,7 @@ this.recline.View = this.recline.View || {};
             if (this.options.state.unselectedColor)
                 this.unselectedColor = this.options.state.unselectedColor;
 
-            this.svg = d3.select(this.el).append("svg")
+            this.svg = d3v3.select(this.el).append("svg").attr("x","0").attr("y","0").attr("xmlns","http://www.w3.org/2000/svg").attr("version","1.1")
 
             if (this.mapWidth == null || typeof this.mapWidth == "undefined")
             	this.mapWidth = $(this.el).width()
@@ -61,7 +61,7 @@ this.recline.View = this.recline.View || {};
         		});
         		$(this).attr("class", $(this).attr("class")+" selected")
         		
-        		d3.event.preventDefault();
+        		d3v3.event.preventDefault();
         	}
             var hoverFunction = function() {/*console.log("HOVERING "+this.attributes.regionName.nodeValue)*/}
             
@@ -100,6 +100,32 @@ this.recline.View = this.recline.View || {};
     					})
             		}
             	}
+                var handleMouseover = function () {}
+                
+                if (self.options.state.customTooltipTemplate)
+                	handleMouseover = function () {
+                		
+    	                var pos = $(this).offset();
+    	                var selectedKpi = self.options.state.mapping[0].srcValueField;
+    	                var newXLabel = self.options.state.mapping[0].srcShapeField+':';
+    	                var region = this.attributes.regionName.nodeValue;
+    	                var selectedRecord = self.getRecordByValue(self.options.state.mapping[0].srcShapeField, region);
+    	                var val = "N/A"
+    	                if (selectedRecord)
+                    	{
+    	                	var field = self.model.fields.get(selectedKpi)
+    	                	if (field)
+    	                		val = selectedRecord.getFieldValue(field)
+                    	}
+    	                var values = { x: region, y: val, xLabel: newXLabel, yLabel: /*kpis[*/selectedKpi/*].subtitle*/+':' }
+    	                var content = Mustache.render(self.options.state.customTooltipTemplate, values);
+    	                var $mapElem = $(self.el)
+    	                nv.tooltip.cleanup();  // delete last tooltip if present
+    	                nv.tooltip.show([pos.left /*+ leftOffset*/, pos.top/*+topOffset*/], content, (pos.left < $mapElem[0].offsetLeft + $mapElem.width()/2 ? 'w' : 'e'), null, $mapElem[0]);
+    	            };
+                var mouseout = function () {
+                	nv.tooltip.cleanup();
+                }
                 if (hoverActions.length)
             	{
                     hoverFunction = function() {
@@ -113,21 +139,22 @@ this.recline.View = this.recline.View || {};
     					})
             		}
             	}
+                else hoverFunction = handleMouseover
         	}
             
-	        d3.json(mapJson, function(error, map) {
+	        d3v3.json(mapJson, function(error, map) {
 	        	self.mapObj = map
 	        	self.regionNames = _.pluck(self.mapObj.objects[layer].geometries, 'id')   // build list of names for later use
 	        	
 	        	var regions = topojson.object(map, map.objects[layer]);
 	
-	        	var projection = d3.geo.mercator()
+	        	var projection = d3v3.geo.mercator()
 	        		.center(self.options.state["center"])
 	        		.rotate(rotation)
 	        		.scale(self.options.state["scale"])
 	        		.translate([self.mapWidth / 2, self.mapHeight / 2]);
 	        	
-	        	var path = d3.geo.path().projection(projection);
+	        	var path = d3v3.geo.path().projection(projection);
 	        	
 	        	var assignColors = function() {
 	        		return self.unselectedColor;
@@ -144,6 +171,7 @@ this.recline.View = this.recline.View || {};
 		        	.enter().append("path")
 		        	.on("click", clickFunction)
 		        	.on("mouseover", hoverFunction)
+		        	.on("mouseout", mouseout)
 		            .attr("class", function(d) { return "region " + toAscii(d.id); })
 		            .attr("regionName", function(d) { return d.id; })
 		        	.attr("fill", assignColors)
@@ -152,8 +180,13 @@ this.recline.View = this.recline.View || {};
 	        	// draw region names
 	            if (showRegionNames)
             	{
+	            	var minArea = self.options.state["minRegionArea"] || 6 
+	            	var onlyBigRegions = {
+	            							geometries: _.filter(map.objects[layer].geometries, function(r) { return r.properties.Shape_Area > minArea}),
+	            							type: "GeometryCollection"
+	            						}
 		        	self.svg.selectAll(".region-label")
-			            .data(topojson.object(map, map.objects[layer]).geometries)
+			            .data(topojson.object(map, onlyBigRegions).geometries)
 			            .enter().append("text")
 			            .attr("class", function(d) { return "region-label " + toAscii(d.id); })
 			            .attr("transform", function(d) { return "translate(" + path.centroid(d) + ")"; })
@@ -161,6 +194,7 @@ this.recline.View = this.recline.View || {};
 			            .attr("dy", ".35em")
 			        	.on("click", clickFunction)
 			        	.on("mouseover", hoverFunction)
+			        	.on("mouseout", mouseout)
 			            .text(function(d) { return d.id; });
             	}
 	        	
@@ -191,6 +225,7 @@ this.recline.View = this.recline.View || {};
 
         redraw:function () {
             var self = this;
+        	
             if(!self.rendered || !self.mapObj)
                 return;
             
@@ -238,23 +273,29 @@ this.recline.View = this.recline.View || {};
                 selectionActive = true;
 
             var res = {};
-            _.each(records, function (d) {
-
-                if(_.contains(paths, d.getFieldValueUnrendered(srcShapef))) {
-                    var color = self.unselectedColor;
-                    if(selectionActive) {
-                        if(d.isRecordSelected())
-                            color = d.getFieldColor(srcValuef);
-                    } else {
-                            color = d.getFieldColor(srcValuef);
-                    }
-
-
-                    res[d.getFieldValueUnrendered(srcShapef)] =  {record: d, field: srcValuef, color: color, value:d.getFieldValueUnrendered(srcValuef) };
-
-                }
-            });
-
+            if (srcShapef && srcValuef)
+        	{
+	            _.each(records, function (d) {
+	
+	                if(_.contains(paths, d.getFieldValueUnrendered(srcShapef))) {
+	                    var color = self.unselectedColor;
+	                    if(selectionActive) {
+	                        if(d.isRecordSelected())
+	                            color = d.getFieldColor(srcValuef);
+	                    }
+	                    else 
+	                    {
+	                    	var newColor = d.getFieldColor(srcValuef);
+	                        if (newColor != null) 
+	                        	color = newColor; 
+	                    }
+	
+	                    res[d.getFieldValueUnrendered(srcShapef)] =  {record: d, field: srcValuef, color: color, value:d.getFieldValueUnrendered(srcValuef) };
+	
+	                }
+	            });
+        	}
+            //else throw "Invalid model for map! Missing "+srcShapeField+" and/or "+srcValueField
             return res;
         },
         getRecordByValue:function (srcShapeField, value) {

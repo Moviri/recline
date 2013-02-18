@@ -385,14 +385,18 @@ this.recline.View = this.recline.View || {};
               	</div> \
         		{{#useLevel2}} \
 	    			<div class="btn-group level2" level="2" style="float:left;display:{{showLevel2}}"> \
-	            		<button class="btn btn-mini grouped-button {{all2Selected}}" val="">All</button> \
+     		{{#useAllButton}} \
+        	 			<button class="btn btn-mini grouped-button {{all2Selected}}" val="">All</button> \
+     		{{/useAllButton}} \
 			            {{#valuesLev2}} \
 	            			<button class="btn btn-mini grouped-button {{selected}}" val="{{value}}" {{tooltip}}>{{{val}}}</button> \
 			            {{/valuesLev2}} \
 	            	</div> \
             		{{#useLevel3}} \
 		    			<div class="btn-group level3" level="3" style="float:left;display:{{showLevel3}}"> \
+      		{{#useAllButton}} \
 	            			<button class="btn btn-mini grouped-button {{all3Selected}}" val="">All</button> \
+     		{{/useAllButton}} \
 				            {{#valuesLev3}} \
 			        			<button class="btn btn-mini grouped-button {{selected}}" val="{{value}}" {{tooltip}}>{{{val}}}</button> \
 				            {{/valuesLev3}} \
@@ -527,6 +531,7 @@ this.recline.View = this.recline.View || {};
             _.bindAll(this, 'updateLegend');
             _.bindAll(this, 'updateMultibutton');
             _.bindAll(this, 'redrawGenericControl');
+            _.bindAll(this, 'fixHierarchicRadiobuttonsSelections');
 
             this._sourceDataset = args.sourceDataset;
             this.uid = args.id || Math.floor(Math.random() * 100000); // unique id of the view containing all filters
@@ -588,6 +593,7 @@ this.recline.View = this.recline.View || {};
                         self.activeFilters[j].term = filter.term
                         self.activeFilters[j].start = filter.start
                         self.activeFilters[j].stop = filter.stop
+                        self.fixHierarchicRadiobuttonsSelections(self.activeFilters[j])
                     }
                 }
             });
@@ -965,7 +971,7 @@ this.recline.View = this.recline.View || {};
                     }
             }
             else if (currActiveFilter.controlType == "legend") {
-                // OLD code, somehow working but wrong
+                // this code somehow works but it's not correct
                 currActiveFilter.tmpValues = _.pluck(currActiveFilter.facet.attributes.terms, "term");
 
                 if (typeof currActiveFilter.origLegend == "undefined") {
@@ -983,25 +989,6 @@ this.recline.View = this.recline.View || {};
 
                     currActiveFilter.values.push({val:v, notSelected:notSelected, color:currActiveFilter.facet.attributes.terms[i].color, count:currActiveFilter.facet.attributes.terms[i].count});
                 }
-
-// 			NEW code. Will work when facet will be returned correctly even after filtering
-//		  currActiveFilter.tmpValues = _.pluck(currActiveFilter.facet.attributes.terms, "term");
-//		  for (var v in currActiveFilter.tmpValues)
-//		  {
-//				var color;
-//				var currTerm = _.find(currActiveFilter.facet.attributes.terms, function(currT) { return currT.term == v; });
-//				if (typeof currTerm != "undefined" && currTerm != null)
-//				{
-//					color = currTerm.color;
-//					count = currTerm.count;
-//				}
-//				var notSelected = "";
-//				var legendSelection = currActiveFilter.legend;
-//				if (typeof legendSelection == "undefined" || legendSelection == null || legendSelection.indexOf(v) < 0)
-//					notSelected = "not-selected";
-//				
-//				currActiveFilter.values.push({val: v, notSelected: notSelected, color: color, count: count});
-//		  }		  
             }
             else if (currActiveFilter.controlType == "color_legend") {
                 var ruler = document.getElementById("my_string_width_calculation_ruler");
@@ -1416,6 +1403,40 @@ this.recline.View = this.recline.View || {};
 
             return Mustache.render(self.filterTemplates[currActiveFilter.controlType], currActiveFilter);
         },
+        fixHierarchicRadiobuttonsSelections:function(filter) {
+        	var self = this;
+            // ensures previous hierarchic_radiobutton selections are retained, if any (coming from the session cookie) [PART 1]
+            if (filter.controlType == "hierarchic_radiobuttons" && filter.type == "list"
+            	&& filter.list && filter.list.length > 1)
+        	{
+            	var valueParts = filter.list[0].split(filter.separator)
+            	if (valueParts.length > 1)
+        		{
+                	var commonSelection = valueParts.splice(0, valueParts.length - 1).join(filter.separator)
+                	var lung = commonSelection.length
+                	var allRecordsFound = true
+                	var allRecords = self._sourceDataset.getRecords() 
+                	for (var r in allRecords)
+            		{
+                		var record = allRecords[r]
+                        var field = self._sourceDataset.fields.get(filter.field);
+                        var currV = record.getFieldValue(field);
+                        if (currV.substring(0, lung) === commonSelection)
+                    	{
+                        	if (!_.contains(filter.list, currV))
+                    		{
+                            	allRecordsFound = false;
+                            	break;
+                    		}
+                    	}
+            		}
+                	if (allRecordsFound)
+                		filter.term = commonSelection
+        		}
+        	}
+        	
+        },
+        
 
         render:function () {
             var self = this;
@@ -1434,35 +1455,7 @@ this.recline.View = this.recline.View || {};
                             tmplData.filters[j].term = filter.term
                             tmplData.filters[j].start = filter.start
                             tmplData.filters[j].stop = filter.stop
-                            // ensures previous hierarchic_radiobutton selections are retained, if any (coming from the session cookie) [PART 1]
-                            if (tmplData.filters[j].controlType == "hierarchic_radiobuttons" && filter.type == "list"
-                            	&& filter.list && filter.list.length > 1)
-                        	{
-                            	var valueParts = filter.list[0].split(tmplData.filters[j].separator)
-                            	if (valueParts.length > 1)
-                        		{
-                                	var commonSelection = valueParts.splice(0, valueParts.length - 1).join(tmplData.filters[j].separator)
-                                	var lung = commonSelection.length
-                                	var allRecordsFound = true
-                                	var allRecords = self._sourceDataset.getRecords() 
-                                	for (var r in allRecords)
-                            		{
-                                		var record = allRecords[r]
-                                        var field = self._sourceDataset.fields.get(filter.field);
-                                        var currV = record.getFieldValue(field);
-                                        if (currV.substring(0, lung) === commonSelection)
-                                    	{
-                                        	if (!_.contains(filter.list, currV))
-                                    		{
-                                            	allRecordsFound = false;
-                                            	break;
-                                    		}
-                                    	}
-                            		}
-                                	if (allRecordsFound)
-                                		tmplData.filters[j].term = commonSelection
-                        		}
-                        	}
+                            self.fixHierarchicRadiobuttonsSelections(tmplData.filters[j])
                         }
                     }
                 });
@@ -1572,6 +1565,7 @@ this.recline.View = this.recline.View || {};
                 	listaValori.push(prefix.substring(0, prefix.length-1))
                 	
                 currActiveFilter.userChanged = true;
+
                 if (listaValori.length == 1 && listaValori[0] == "All" && !currActiveFilter.noAllButton) {
                     listaValori = [];
                     currActiveFilter.term = "";
