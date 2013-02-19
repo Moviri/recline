@@ -173,6 +173,9 @@ this.recline.View = this.recline.View || {};
             
 	        d3v3.json(mapJson, function(error, map) {
 	        	self.mapObj = map
+	        	if (map == null || typeof map == "undefined")
+	        		return;
+	        	
 	        	self.regionNames = _.pluck(self.mapObj.objects[layer].geometries, 'id')   // build list of names for later use
 	        	
 	        	var regions = topojson.object(map, map.objects[layer]);
