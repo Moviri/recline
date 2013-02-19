@@ -4950,7 +4950,6 @@ this.recline.View = this.recline.View || {};
                 '<div class="c_row">' +
                 '<div class="cell cell_empty"></div>' +
                 '{{#measures}}' +
-          //      '<div class="cell cell_title"><div style="white-space:nowrap;"><div class="rawhtml" style="vertical-align:middle;float:left">{{{rawhtml}}}</div><div style="float:left;vertical-align:middle"><div class="title">{{{title}}}</div><div class="subtitle">{{{subtitle}}}</div></div><div class="shape" style="float:left;vertical-align:middle">{{shape}}</div></div></div>' +
                 '<div class="cell cell_title"><div style="white-space:nowrap;"><div class="rawhtml" style="vertical-align:middle;float:left">{{{rawhtml}}}</div><div style="float:left;vertical-align:middle"><div class="title"><a class="link_tooltip" href="#" data-toggle="tooltip" title="{{{subtitle}}}">{{{title}}}</a></div></div><div class="shape" style="float:left;vertical-align:middle">{{shape}}</div></div></div>' +
                 '{{/measures}}' +
                 '</div>' +
@@ -5376,31 +5375,43 @@ this.recline.View = this.recline.View || {};
 
         compareType:{
             self:this,
-            percentage:function (kpi, compare, templates, condensed) {
+            percentage:function (kpi, compare, templates, condensed, shapeAfter) {
                 var tmpField = new recline.Model.Field({type:"number", format:"percentage"});
                 var unrenderedValue = kpi / compare * 100;
                 var data = recline.Data.Formatters.Renderers(unrenderedValue, tmpField);
                 var template = templates.templatePercentage;
-                if (condensed == true)
-                	template = templates.templateCondensed;
-                
+                if (condensed == true){
+                	if (shapeAfter == true){
+                		template = templates.templateCondensedShapeAfter;
+                	} else {
+                		template = templates.templateCondensed;	
+                	}                	
+                }
                 return {data:data, template:template, unrenderedValue: unrenderedValue, percentageMsg: " % of total: "};
             },
-            percentageVariation:function (kpi, compare, templates, condensed) {
+            percentageVariation:function (kpi, compare, templates, condensed, shapeAfter) {
                 var tmpField = new recline.Model.Field({type:"number", format:"percentage"});
                 var unrenderedValue = (kpi-compare) / compare * 100;
                 var data = recline.Data.Formatters.Renderers( unrenderedValue, tmpField);
                 var template = templates.templatePercentage;
-                if (condensed == true)
-                	template = templates.templateCondensed;
-
-//                return {data:data, template:template, unrenderedValue: unrenderedValue, percentageMsg: " % variation: "};
+                if (condensed == true){
+                	if (shapeAfter == true){
+                		template = templates.templateCondensedShapeAfter;
+                	} else {
+                		template = templates.templateCondensed;	
+                	} 
+                }	
                 return {data:data, template:template, unrenderedValue: unrenderedValue, percentageMsg: ""};
             },
-            nocompare: function (kpi, compare, templates, condensed){
+            nocompare: function (kpi, compare, templates, condensed, shapeAfter){
                 var template = templates.templateBase;
-                if (condensed == true)
-                	template = templates.templateCondensed;
+                if (condensed == true){
+                	if (shapeAfter == true){
+                		template = templates.templateCondensedShapeAfter;
+                	} else {
+                		template = templates.templateCondensed;	
+                	}                	
+                }
             	
                 return {data:null, template:template, unrenderedValue:null};
             }
@@ -5424,24 +5435,6 @@ this.recline.View = this.recline.View || {};
 		</div>\
       </div> \
     </div> ',
-    templateBaseCondensed_old:
-	'<div class="indicator " style="width:100%;"> \
-	    <div class="panel indicator_{{viewId}}" style="width:100%;"> \
-    		<div id="indicator_{{viewId}}" class="indicator-container well" style="width:85%;"> \
-    			<div style="width:100%;margin-left:5px"> \
-	                <div class="value-cell" style="float:left">{{value}}</div> \
-    				{{#compareShape}} \
-					<div class="compareshape" style="float:right">{{{compareShape}}}</div> \
-    				{{/compareShape}} \
-	   				{{#shape}} \
-	                <div class="shape" style="float:right">{{{shape}}}</div> \
-	   				{{/shape}} \
-				</div> \
-    			<div style="width:100%;padding-top:10px"><hr></div> \
-                <div style="text-align:justify;width:100%;margin-right:8px" class="title">{{{label}}}</div>\
-			</div> \
-	    </div> \
-    </div>',
     templateCondensed:
         '<div class="indicator round-border-dark" > \
     	    <div class="panel indicator_{{viewId}}" > \
@@ -5458,24 +5451,25 @@ this.recline.View = this.recline.View || {};
                     <div class="title">&nbsp;&nbsp;{{{label}}}</div>\
     			</div> \
     	    </div> \
-        </div>'
-
-,
-//   templatePercentage:
-//   '<div class="indicator"> \
-//      <div class="panel indicator_{{viewId}}"> \
-//        <div id="indicator_{{viewId}}"> \
-//			 <table class="indicator-table"> \
-//                <tr class="titlerow"><td></td><td class="title">{{{label}}}</td></tr>    \
-//                <tr class="descriptionrow"><td></td><td class="description"><small>{{description}}</small></td></tr>    \
-//                <tr class="shaperow"><td><div class="shape">{{{shape}}}</div><div class="compareshape">{{{compareShape}}}</div></td><td class="value-cell">{{value}}</td></tr>  \
-//                <tr class="comparerow"><td></td><td class="comparelabel">{{percentageMsg}}<b>{{compareValue}}</b> (<b>{{compareWithValue}}</b>)</td></tr>  \
-//             </table>  \
-//		</div>\
-//      </div> \
-//    </div> '
-		
-templatePercentage:
+        </div>',
+    templateCondensedShapeAfter:
+        '<div class="indicator round-border-dark" > \
+    	    <div class="panel indicator_{{viewId}}" > \
+    			<div class="title">{{{label}}}</div>\
+        		<div id="indicator_{{viewId}}" class="indicator-container" style="float:left"> \
+			    	<div class="round-border" style="float:left;margin:2px 2px 0px 2px"> \
+					{{#compareShape}} \
+					<div class="compareshape" style="float:left">{{{compareShape}}}</div> \
+					{{/compareShape}} \
+					{{#shape}} \
+			        <div class="shape" style="float:left">{{{shape}}}</div> \
+					{{/shape}} \
+					<div class="value-cell" style="float:left">{{value}}</div> \
+				</div> \
+    			</div> \
+    	    </div> \
+        </div>',
+	templatePercentage:
 	   '<div class="indicator"> \
 	      <div class="panel indicator_{{viewId}}"> \
 	        <div id="indicator_{{viewId}}"> \
@@ -5589,7 +5583,7 @@ templatePercentage:
 
                     var compareValue;
 
-                    var compareValue = self.compareType[self.options.state.compareWith.compareType](kpiValue, compareWithValue, self.templates, self.options.state.condensed);
+                    var compareValue = self.compareType[self.options.state.compareWith.compareType](kpiValue, compareWithValue, self.templates, self.options.state.condensed, self.options.state.shapeAfter);
                     if(!compareValue)
                         throw "View.Indicator: unable to find compareType [" + self.options.state.compareWith.compareType + "]";
 
