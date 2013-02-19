@@ -423,6 +423,7 @@ recline.Model.Query.prototype = $.extend(recline.Model.Query.prototype, {
     recline.Model.Dataset.prototype = $.extend(recline.Model.Dataset.prototype, {
         setColorSchema:function () {
             var self = this;
+
             _.each(self.attributes.colorSchema, function (d) {
                 var field = _.find(self.fields.models, function (f) {
                     return d.field === f.id
@@ -1942,6 +1943,8 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
         },
 
         setColorSchema:function (type) {
+            if(this.attributes["colorSchema"])
+                 this.vModel.attributes["colorSchema"] = this.attributes["colorSchema"];
             return this.vModel.setColorSchema(type);
 
         },
@@ -2741,6 +2744,10 @@ this.recline.Data.ColorSchema = this.recline.Data.ColorSchema || {};
         },
 
         getRecordsArray: function (dataset) {
+
+            // if the field is not present in the dataset don't recalculate colors
+            if(!dataset.dataset.fields.get(dataset.field))
+                return;
 
             var ret = [];
 
@@ -8185,10 +8192,12 @@ this.recline.View = this.recline.View || {};
             		
                     self.updateState(state);
 
+                if (state.interpolation)
+                    state.opts.interpolation = state.interpolation;
+
                     self.graph = new xChart(state.type, self.series, '#' + self.uid, state.opts);
 
-                    if (state.interpolation)
-                        self.graph._options.interpolation = state.interpolation
+
 
                     self.updateOptions();
 

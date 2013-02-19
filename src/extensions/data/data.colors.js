@@ -204,6 +204,10 @@ this.recline.Data.ColorSchema = this.recline.Data.ColorSchema || {};
 
         getRecordsArray: function (dataset) {
 
+            // if the field is not present in the dataset don't recalculate colors
+            if(!dataset.dataset.fields.get(dataset.field))
+                return;
+
             var ret = [];
 
             if (dataset.dataset.isFieldPartitioned && dataset.dataset.isFieldPartitioned(dataset.field)) {

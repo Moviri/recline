@@ -153,10 +153,12 @@ this.recline.View = this.recline.View || {};
             		
                     self.updateState(state);
 
+                if (state.interpolation)
+                    state.opts.interpolation = state.interpolation;
+
                     self.graph = new xChart(state.type, self.series, '#' + self.uid, state.opts);
 
-                    if (state.interpolation)
-                        self.graph._options.interpolation = state.interpolation
+
 
                     self.updateOptions();
 

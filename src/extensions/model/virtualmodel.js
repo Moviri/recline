@@ -684,6 +684,8 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
         },
 
         setColorSchema:function (type) {
+            if(this.attributes["colorSchema"])
+                 this.vModel.attributes["colorSchema"] = this.attributes["colorSchema"];
             return this.vModel.setColorSchema(type);
 
         },
