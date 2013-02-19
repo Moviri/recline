@@ -227,10 +227,6 @@ this.recline.View = this.recline.View || {};
                 yScale: state.yScale
             };
 
-            /* series is:
-                [ color: , name: , data[ [record:, x:, x_formatted:, y:, y_formatted: ] ]
-             */
-
             _.each( series, function(d) {
                 var serie = {color:d.color, name:d.name, data:_.map(d.data, function(c) { return {x:c.x, y:c.y, x_formatted: c.x_formatted, y_formatted: c.y_formatted} })};
 
