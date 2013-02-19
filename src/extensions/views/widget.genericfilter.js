@@ -2004,7 +2004,7 @@ this.recline.View = this.recline.View || {};
             if (typeof newFilter.fieldType == 'undefined')
                 newFilter.fieldType = this.getFieldType(newFilter.field)
 
-            if (newFilter.controlType == "radiobuttons")
+            if (newFilter.controlType == "radiobuttons" || newFilter.controlType == "hierarchic_radiobuttons")
         	{
             	if (newFilter.noAllButton && newFilter.noAllButton == true)
             		newFilter.useAllButton = false 

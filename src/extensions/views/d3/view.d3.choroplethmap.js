@@ -8,10 +8,22 @@ this.recline.View = this.recline.View || {};
 
     my.D3ChoroplethMap = Backbone.View.extend({
     	rendered: false,
+    	template:'{{#showZoomCtrl}}<input type="range" id="mapZoomCtrl" step="500" min="0" max="30000" value="{{scale}}" \
+    				{{#mapWidth}} width={{mapWidth}}{{/mapWidth}} \
+    				{{#mapHeight}} height={{mapHeight}}{{/mapHeight}} \
+    			  >Zoom</input>{{/showZoomCtrl}} \
+    			  <svg x="0" y="0" xmlns="http://www.w3.org/2000/svg" version="1.1"> \
+    			  		<g class="regions"></g> \
+    					<g class="regionLabels" pointer-events="none"></g> \
+    					<g class="places" pointer-events="none"></g> \
+    				</svg>',
+        events: {
+        	'change #mapZoomCtrl':'onZoomChanged',
+        },    			  
         initialize:function (options) {
             var self = this;
 
-            _.bindAll(this, 'render', 'redraw', 'getRecordByValue', 'getActionsForEvent');
+            _.bindAll(this, 'render', 'redraw', 'getRecordByValue', 'getActionsForEvent', 'onZoomChanged', 'getLabelFor');
 
             this.model.bind('change', self.render);
             this.model.fields.bind('reset', self.render);
@@ -22,24 +34,35 @@ this.recline.View = this.recline.View || {};
 
             this.uid = "" + new Date().getTime() + Math.floor(Math.random() * 10000); // generating an unique id for the map
             this.el = options.el;
-
-            this.mapWidth = options.state.width // optional. May be undefined
-            this.mapHeight = options.state.height // optional. May be undefined
-
+            
             this.unselectedColor = "#C0C0C0";
             if (this.options.state.unselectedColor)
                 this.unselectedColor = this.options.state.unselectedColor;
 
-            this.svg = d3v3.select(this.el).append("svg").attr("x","0").attr("y","0").attr("xmlns","http://www.w3.org/2000/svg").attr("version","1.1")
-
+            this.mapWidth = this.options.state.width // optional. May be undefined
+            this.mapHeight = this.options.state.height // optional. May be undefined
+            
             if (this.mapWidth == null || typeof this.mapWidth == "undefined")
             	this.mapWidth = $(this.el).width()
             	
             if (this.mapHeight == null || typeof this.mapHeight == "undefined")
             	this.mapHeight = $(this.el).height()
+            	
+            this.scale = this.options.state.scale
+            
+            this.fieldLabels = this.options.state.fieldLabels;
 
-           	this.svg.attr("width", this.mapWidth)
-            this.svg.attr("height", this.mapHeight)
+            var tmplData = {scale: this.scale,  mapWidth: this.mapWidth, mapHeight: this.mapHeight/*, showZoomCtrl: this.options.state.showZoomCtrl*/}
+            var out = Mustache.render(this.template, tmplData);
+            $(this.el).html(out);
+            
+            this.svg = d3v3.select(this.el+" svg")
+        },
+        getLabelFor: function(fieldName) {
+        	if (this.fieldLabels && this.fieldLabels[fieldName])
+        		return this.fieldLabels[fieldName]
+        	
+        	return fieldName;
         },
 
         render:function () {
@@ -103,25 +126,31 @@ this.recline.View = this.recline.View || {};
                 var handleMouseover = function () {}
                 
                 if (self.options.state.customTooltipTemplate)
-                	handleMouseover = function () {
-                		
-    	                var pos = $(this).offset();
-    	                var selectedKpi = self.options.state.mapping[0].srcValueField;
-    	                var newXLabel = self.options.state.mapping[0].srcShapeField+':';
+                	handleMouseover = function (e) {
+                		//console.log(e)
+                		var mapOffset = $(self.el).position()
+                		var objRect = this.getBoundingClientRect();
+                		var docRect = document.body.getBoundingClientRect()
+    	                var pos = {left: objRect.left+objRect.width/2, top: objRect.top+objRect.height/2 - docRect.top};
+    	                var selectedKpi = self.getLabelFor(self.options.state.mapping[0].srcValueField)+':';
+    	                var newXLabel = self.getLabelFor(self.options.state.mapping[0].srcShapeField)+':';
     	                var region = this.attributes.regionName.nodeValue;
     	                var selectedRecord = self.getRecordByValue(self.options.state.mapping[0].srcShapeField, region);
     	                var val = "N/A"
     	                if (selectedRecord)
                     	{
-    	                	var field = self.model.fields.get(selectedKpi)
+    	                	var field = self.model.fields.get(self.options.state.mapping[0].srcValueField)
     	                	if (field)
     	                		val = selectedRecord.getFieldValue(field)
                     	}
-    	                var values = { x: region, y: val, xLabel: newXLabel, yLabel: /*kpis[*/selectedKpi/*].subtitle*/+':' }
+    	                var values = { x: region, y: val, xLabel: newXLabel, yLabel: selectedKpi }
     	                var content = Mustache.render(self.options.state.customTooltipTemplate, values);
     	                var $mapElem = $(self.el)
-    	                nv.tooltip.cleanup();  // delete last tooltip if present
-    	                nv.tooltip.show([pos.left /*+ leftOffset*/, pos.top/*+topOffset*/], content, (pos.left < $mapElem[0].offsetLeft + $mapElem.width()/2 ? 'w' : 'e'), null, $mapElem[0]);
+    	                //console.log("Tooltip for "+region+" at "+pos.left+","+pos.top)
+    	                //var gravity = (pos.left < $mapElem[0].offsetLeft + $mapElem.width()/2 ? 'w' : 'e');
+    	                var gravity = (pos.top < $mapElem[0].offsetTop + $mapElem.height()/2 ? 'n' : 's');
+    	                
+    	                nv.tooltip.show([pos.left, pos.top], content, gravity, null, $mapElem[0]);
     	            };
                 var mouseout = function () {
                 	nv.tooltip.cleanup();
@@ -151,7 +180,7 @@ this.recline.View = this.recline.View || {};
 	        	var projection = d3v3.geo.mercator()
 	        		.center(self.options.state["center"])
 	        		.rotate(rotation)
-	        		.scale(self.options.state["scale"])
+	        		.scale(self.scale)
 	        		.translate([self.mapWidth / 2, self.mapHeight / 2]);
 	        	
 	        	var path = d3v3.geo.path().projection(projection);
@@ -166,7 +195,7 @@ this.recline.View = this.recline.View || {};
 		        		return "#"+c+h+c+h+c+h; 
 	        	}
 	        	// draw regions
-	        	self.svg.selectAll(".region")
+	        	self.svg.select("g.regions").selectAll(".region")
 		            .data(regions.geometries)
 		        	.enter().append("path")
 		        	.on("click", clickFunction)
@@ -185,29 +214,26 @@ this.recline.View = this.recline.View || {};
 	            							geometries: _.filter(map.objects[layer].geometries, function(r) { return r.properties.Shape_Area > minArea}),
 	            							type: "GeometryCollection"
 	            						}
-		        	self.svg.selectAll(".region-label")
+	            	self.svg.select("g.regionLabels").selectAll(".region-label")
 			            .data(topojson.object(map, onlyBigRegions).geometries)
 			            .enter().append("text")
 			            .attr("class", function(d) { return "region-label " + toAscii(d.id); })
 			            .attr("transform", function(d) { return "translate(" + path.centroid(d) + ")"; })
 			            .attr("regionName", function(d) { return d.id; })
 			            .attr("dy", ".35em")
-			        	.on("click", clickFunction)
-			        	.on("mouseover", hoverFunction)
-			        	.on("mouseout", mouseout)
 			            .text(function(d) { return d.id; });
             	}
 	        	
 	        	if (map.objects.cities && showCities)
 	        	{
 	        		// draw circles for cities
-	        		self.svg.append("path")
+	        		self.svg.select("g.places").append("path")
 		        	    .datum(topojson.object(map, map.objects.cities))
 		        	    .attr("d", path)
 		        	    .attr("class", "place");
 	        		
 	        		// draw city names
-	        		self.svg.selectAll(".place-label")
+	        		self.svg.select("g.places").selectAll(".place-label")
 		        	    .data(topojson.object(map, map.objects.cities).geometries)
 		        		.enter().append("text")
 		        	    .attr("class", "place-label")
@@ -218,8 +244,9 @@ this.recline.View = this.recline.View || {};
 	        	}
 	        	if (randomColors == null || typeof randomColors == "undefined")
 	        		self.redraw(); // apply color schema colors if present
+	        	
+		        self.rendered = true;
 	        });
-	        this.rendered = true;
             return this;
         },
 
@@ -254,7 +281,14 @@ this.recline.View = this.recline.View || {};
 
 
         },
-
+        onZoomChanged: function(e) {
+            var $target = $(e.currentTarget);
+            this.scale = $target.val;
+            // WORK IN PROGRESS. NOT IMPLEMENTED
+            //$(this.el).find("svg path").remove();
+            //$(this.el).find("svg text").remove();
+            //this.render();
+        },
 
         // todo this is not efficient, a list of data should be built before and used as a filter
         // to avoid arrayscan
