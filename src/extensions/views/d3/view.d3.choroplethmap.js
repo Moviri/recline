@@ -23,7 +23,7 @@ this.recline.View = this.recline.View || {};
         initialize:function (options) {
             var self = this;
 
-            _.bindAll(this, 'render', 'redraw', 'getRecordByValue', 'getActionsForEvent', 'onZoomChanged');
+            _.bindAll(this, 'render', 'redraw', 'getRecordByValue', 'getActionsForEvent', 'onZoomChanged', 'getLabelFor');
 
             this.model.bind('change', self.render);
             this.model.fields.bind('reset', self.render);
@@ -49,12 +49,20 @@ this.recline.View = this.recline.View || {};
             	this.mapHeight = $(this.el).height()
             	
             this.scale = this.options.state.scale
+            
+            this.fieldLabels = this.options.state.fieldLabels;
 
             var tmplData = {scale: this.scale,  mapWidth: this.mapWidth, mapHeight: this.mapHeight/*, showZoomCtrl: this.options.state.showZoomCtrl*/}
             var out = Mustache.render(this.template, tmplData);
             $(this.el).html(out);
             
             this.svg = d3v3.select(this.el+" svg")
+        },
+        getLabelFor: function(fieldName) {
+        	if (this.fieldLabels && this.fieldLabels[fieldName])
+        		return this.fieldLabels[fieldName]
+        	
+        	return fieldName;
         },
 
         render:function () {
@@ -124,8 +132,8 @@ this.recline.View = this.recline.View || {};
                 		var objRect = this.getBoundingClientRect();
                 		var docRect = document.body.getBoundingClientRect()
     	                var pos = {left: objRect.left+objRect.width/2, top: objRect.top+objRect.height/2 - docRect.top};
-    	                var selectedKpi = self.options.state.mapping[0].srcValueField;
-    	                var newXLabel = self.options.state.mapping[0].srcShapeField+':';
+    	                var selectedKpi = self.getLabelFor(self.options.state.mapping[0].srcValueField)+':';
+    	                var newXLabel = self.getLabelFor(self.options.state.mapping[0].srcShapeField)+':';
     	                var region = this.attributes.regionName.nodeValue;
     	                var selectedRecord = self.getRecordByValue(self.options.state.mapping[0].srcShapeField, region);
     	                var val = "N/A"
@@ -135,7 +143,7 @@ this.recline.View = this.recline.View || {};
     	                	if (field)
     	                		val = selectedRecord.getFieldValue(field)
                     	}
-    	                var values = { x: region, y: val, xLabel: newXLabel, yLabel: /*kpis[*/selectedKpi/*].subtitle*/+':' }
+    	                var values = { x: region, y: val, xLabel: newXLabel, yLabel: selectedKpi }
     	                var content = Mustache.render(self.options.state.customTooltipTemplate, values);
     	                var $mapElem = $(self.el)
     	                //console.log("Tooltip for "+region+" at "+pos.left+","+pos.top)
