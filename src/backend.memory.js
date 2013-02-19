@@ -66,12 +66,12 @@ this.recline.Backend.Memory = this.recline.Backend.Memory || {};
                 var start = queryObj.from || 0;
                 var results = this.records;
 
-                console.log("--->> memory before filters --> " + results.length) ;
+
 
                 results = recline.Data.Filters.applyFiltersOnData(queryObj.filters, results, this.fields);
                 results = this._applyFreeTextQuery(results, queryObj);
 
-                console.log("--->> memory after filters --> " + results.length) ;
+
 
                 // TODO: this is not complete sorting!
                 // What's wrong is we sort on the *last* entry in the sort list if there are multiple sort criteria
@@ -85,15 +85,15 @@ this.recline.Backend.Memory = this.recline.Backend.Memory || {};
                         results.reverse();
                     }
                 });
-                console.log("--->> memory after sort --> " + results.length) ;
+
                 var facets = recline.Data.Faceting.computeFacets(results, queryObj);
-                console.log("--->> memory after facets --> " + results.length) ;
+
                 var out = {
                     total:results.length,
                     hits:results.slice(start, start + numRows),
                     facets:facets
                 };
-                console.log("--->> memory end --> " + results.length) ;
+
                 dfd.resolve(out);
                 return dfd.promise();
             };
