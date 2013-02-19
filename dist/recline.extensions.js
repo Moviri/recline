@@ -2778,7 +2778,7 @@ this.recline.Data.ColorSchema = this.recline.Data.ColorSchema || {};
             minMax: function (data) {
                 var limit = [null, null];
 
-                if(data.length == 1) {
+                if(data && data.length == 1) {
                     limit = [0, data[0]];
                 } else {
                 _.each(data, function (d) {
