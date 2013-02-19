@@ -5,7 +5,7 @@ this.recline.Data = this.recline.Data || {};
 
 
 my.Faceting = {};
-    my.Faceting.computeFacets = function (records, queryObj) {
+    my.Faceting.computeFacets = function (records_in, queryObj) {
         var self = this;
         var facetResults = {};
         if (!queryObj.facets) {
@@ -18,13 +18,19 @@ my.Faceting = {};
 
         });
         // faceting
-        _.each(records, function (doc) {
+        _.each(records_in, function (doc) {
             _.each(queryObj.facets, function (query, facetId) {
                 var fieldId = query.terms.field;
                 var val = doc[fieldId];
                 var tmp = facetResults[facetId];
                 if (val) {
-                    tmp.termsall[val] = tmp.termsall[val] ? {count:tmp.termsall[val].count + 1, value:val, records: records.push(doc)} : {count:1, value:val, records: [doc]};
+                    if( tmp.termsall[val] ) {
+                        tmp.termsall[val].records.push(doc);
+                        tmp.termsall[val] = {count: tmp.termsall[val].count + 1};
+                    } else {
+                        tmp.termsall[val] =  {count:1, value:val, records: [doc]};
+                    }
+
                 } else {
                     tmp.missing = tmp.missing + 1;
                 }

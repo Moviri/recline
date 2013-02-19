@@ -1375,7 +1375,7 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
             var group = this.createDimensions(crossfilterData, dimensions);
             var results = this.reduce(group,dimensions,aggregatedFields,aggregationFunctions,partitions);
 
-
+            console.log("------>> Crossfilter results size ---> " + results.reducedResult.length);
 
             this.updateStore(results, originalFields,dimensions,aggregationFunctions,aggregatedFields,partitions);
         },
@@ -1567,6 +1567,8 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
 
             self.vModel.resetFields(fields);
             self.vModel.resetRecords(result);
+
+            console.log("-----> vModel reset records -->>> " + result.length  );
 
             recline.Data.FieldsUtility.setFieldsAttributes(fields, self);
 
@@ -2981,7 +2983,7 @@ this.recline.Data = this.recline.Data || {};
 
 
 my.Faceting = {};
-    my.Faceting.computeFacets = function (records, queryObj) {
+    my.Faceting.computeFacets = function (records_in, queryObj) {
         var self = this;
         var facetResults = {};
         if (!queryObj.facets) {
@@ -2994,13 +2996,19 @@ my.Faceting = {};
 
         });
         // faceting
-        _.each(records, function (doc) {
+        _.each(records_in, function (doc) {
             _.each(queryObj.facets, function (query, facetId) {
                 var fieldId = query.terms.field;
                 var val = doc[fieldId];
                 var tmp = facetResults[facetId];
                 if (val) {
-                    tmp.termsall[val] = tmp.termsall[val] ? {count:tmp.termsall[val].count + 1, value:val, records: records.push(doc)} : {count:1, value:val, records: [doc]};
+                    if( tmp.termsall[val] ) {
+                        tmp.termsall[val].records.push(doc);
+                        tmp.termsall[val] = {count: tmp.termsall[val].count + 1};
+                    } else {
+                        tmp.termsall[val] =  {count:1, value:val, records: [doc]};
+                    }
+
                 } else {
                     tmp.missing = tmp.missing + 1;
                 }

@@ -116,7 +116,7 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
             var group = this.createDimensions(crossfilterData, dimensions);
             var results = this.reduce(group,dimensions,aggregatedFields,aggregationFunctions,partitions);
 
-
+            console.log("------>> Crossfilter results size ---> " + results.reducedResult.length);
 
             this.updateStore(results, originalFields,dimensions,aggregationFunctions,aggregatedFields,partitions);
         },
@@ -308,6 +308,8 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
 
             self.vModel.resetFields(fields);
             self.vModel.resetRecords(result);
+
+            console.log("-----> vModel reset records -->>> " + result.length  );
 
             recline.Data.FieldsUtility.setFieldsAttributes(fields, self);
 
