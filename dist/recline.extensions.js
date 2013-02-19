@@ -11689,7 +11689,7 @@ this.recline.View = this.recline.View || {};
     	                var val = "N/A"
     	                if (selectedRecord)
                     	{
-    	                	var field = self.model.fields.get(selectedKpi)
+    	                	var field = self.model.fields.get(self.options.state.mapping[0].srcValueField)
     	                	if (field)
     	                		val = selectedRecord.getFieldValue(field)
                     	}
