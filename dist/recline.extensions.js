@@ -5454,16 +5454,16 @@ this.recline.View = this.recline.View || {};
         '<div class="indicator round-border-dark" > \
     	    <div class="panel indicator_{{viewId}}" > \
     			<div class="title">{{{label}}}</div>\
-        		<div id="indicator_{{viewId}}" class="indicator-container" style="float:left"> \
+        		<div id="indicator_{{viewId}}" class="indicator-container"> \
 			    	<div class="round-border" style="float:left;margin:2px 2px 0px 2px"> \
+    				<div class="value-cell" style="float:left">{{value}}</div> \
 					{{#compareShape}} \
 					<div class="compareshape" style="float:left">{{{compareShape}}}</div> \
 					{{/compareShape}} \
 					{{#shape}} \
 			        <div class="shape" style="float:left">{{{shape}}}</div> \
 					{{/shape}} \
-					<div class="value-cell" style="float:left">{{value}}</div> \
-				</div> \
+    			</div> \
     			</div> \
     	    </div> \
         </div>',
