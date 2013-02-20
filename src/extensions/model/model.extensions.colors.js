@@ -49,7 +49,7 @@
                 if (queryResult.facets) {
 
                     _.each(queryResult.facets, function (f, index) {
-                        console.log("generate colors facets for " + f.id);
+
                         recline.Data.ColorSchema.addColorsToTerms(f.id, f.terms, self.attributes.colorSchema);
                     });
                 }
