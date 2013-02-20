@@ -174,7 +174,10 @@ this.recline.Backend.ParallelUnionBackend = this.recline.Backend.ParallelUnionBa
             var ret = [];
             _.each(res, function(group, iterator) {
                 var r = {};
-                r[groupBy] = iterator;
+                _.each(groupBy, function(rec) {
+                    r[rec] = group[0][rec]; // take first value for grouped dim
+                })
+                //r[groupBy] = iterator;
                 _.each(group, function(record){
                     _.each(resulttype.fields, function(field, itField) {
                         if(r[field])
