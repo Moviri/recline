@@ -465,6 +465,7 @@ this.recline.View = this.recline.View || {};
             		</g> \
             		<g> \
             			{{^showValueLabels}} \
+            			<path d="M0,0 L{{totWidth}},0 L{{totWidth}},{{totHeight}} L0,{{totHeight}} L0,0" style="stroke:grey; fill:none;"/> \
             			{{#colorValues2}} \
             			<text width="{{width}}" fill="{{textColor}}" x="{{x}}" y="{{yplus30}}">{{val}}</text> \
             			{{/colorValues2}} \
@@ -1012,7 +1013,6 @@ this.recline.View = this.recline.View || {};
                 currActiveFilter.colorValues = [];
 
                 currActiveFilter.tmpValues = _.filter(_.pluck(currActiveFilter.facet.attributes.terms, "term"), function(val){ return typeof val != "undefined" && val != null; });
-                currActiveFilter.lineHeight = 40;
                 var ruler = document.getElementById("my_string_width_calculation_ruler");
                 if (typeof ruler == "undefined" || ruler == null) {
                     ruler = document.createElement("span");
@@ -1024,6 +1024,7 @@ this.recline.View = this.recline.View || {};
                 if (currActiveFilter.showValueLabels)
             	{
                     var maxWidth = 250;
+                    currActiveFilter.lineHeight = 40;
                     
 	                for (var jj in currActiveFilter.tmpValues)
 	                	currActiveFilter.tmpValues[jj] = Math.floor(currActiveFilter.tmpValues[jj])
@@ -1048,7 +1049,7 @@ this.recline.View = this.recline.View || {};
 	                currActiveFilter.totWidth = colsPerRow * pixelW;
 	                currActiveFilter.totWidth2 = currActiveFilter.totWidth + (currActiveFilter.labelPosition == 'left' ? currActiveFilter.label.length * 10 : 10)
 	                currActiveFilter.totHeight = totRighe * currActiveFilter.lineHeight;
-	                currActiveFilter.totHeight2 = currActiveFilter.totHeight + 40;
+	                currActiveFilter.totHeight2 = currActiveFilter.totHeight + currActiveFilter.lineHeight;
 	
 	                var riga = 0;
 	                var colonna = 0;
@@ -1069,6 +1070,7 @@ this.recline.View = this.recline.View || {};
                 else
             	{
                     currActiveFilter.colorValues2 = [];
+                    currActiveFilter.lineHeight = 25;
 
                 	currActiveFilter.minValue = currActiveFilter.tmpValues[0]
                 	currActiveFilter.maxValue = currActiveFilter.tmpValues[currActiveFilter.tmpValues.length-1]
@@ -1081,7 +1083,7 @@ this.recline.View = this.recline.View || {};
 	                currActiveFilter.totWidth = colsPerRow * pixelW;
 	                currActiveFilter.totWidth2 = currActiveFilter.totWidth + (currActiveFilter.labelPosition == 'left' ? currActiveFilter.label.length * 10 : 10)
 	                currActiveFilter.totHeight = currActiveFilter.lineHeight;
-	                currActiveFilter.totHeight2 = currActiveFilter.totHeight + 40;
+	                currActiveFilter.totHeight2 = currActiveFilter.totHeight + currActiveFilter.lineHeight;
 
 	                for (var i in currActiveFilter.tmpValues) {
 	                    var v = currActiveFilter.tmpValues[i];
@@ -1091,9 +1093,9 @@ this.recline.View = this.recline.View || {};
                     	{
 		                    ruler.innerHTML = v;
 		                    var w = ruler.offsetWidth
-		                    currActiveFilter.colorValues2.push({width:w, color:color, val:v, x:(i==0 ? 2 : currActiveFilter.totWidth-w-2), y:0, yplus30:25, textColor:self.complementColor(color)});
+		                    currActiveFilter.colorValues2.push({width:w, color:color, val:v, x:(i==0 ? 2 : currActiveFilter.totWidth-w-2), y:0, yplus30:15, textColor:self.complementColor(color)});
                     	}
-	                    currActiveFilter.colorValues.push({width:pixelW, color:color, val:"", x:pixelW * i, y:0, yplus30:25 });
+	                    currActiveFilter.colorValues.push({width:pixelW, color:color, val:"", x:pixelW * i, y:0, yplus30:15 });
 	                }
             	}
             }
