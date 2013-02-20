@@ -1285,7 +1285,8 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
                 {
                     backend: "Memory",
                     records:[], fields: [],
-                    renderer: self.attributes.renderer});
+                    renderer: self.attributes.renderer
+                });
 
 
             self.fields = self.vModel.fields;
@@ -1368,6 +1369,7 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
         },
 
         initializeCrossfilter:function () {
+            console.log("initialize crossfilter");
             var aggregatedFields = this.attributes.aggregation.measures;
             var aggregationFunctions = this.attributes.aggregation.aggregationFunctions;
             var originalFields = this.attributes.dataset.fields;
@@ -1987,6 +1989,10 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
             return this.vModel.getFieldsSummary();
         },
 
+        addStaticColorSchema: function(colorSchema, field) {
+           return this.vModel.addStaticColorSchema(colorSchema, field);
+        },
+
         // Retrieve the list of partitioned field for the specified aggregated field
         getPartitionedFields:function (partitionedField, measureField) {
             //var field = this.fields.get(fieldName);
@@ -2590,7 +2596,7 @@ this.recline.Data.ColorSchema = this.recline.Data.ColorSchema || {};
         bindToDataset: function () {
             var self = this;
             self.attributes.dataset.dataset.records.bind('reset', function () {
-                //console.log("record reset Generate color for dataset " + self.attributes.dataset.id + " field " + self.attributes.dataset.field);
+                //  console.log("record reset Generate color for dataset " + self.attributes.dataset.id + " field " + self.attributes.dataset.field);
                 self._generateFromDataset();
             });
             self.attributes.dataset.dataset.fields.bind('reset', function () {
@@ -4448,7 +4454,12 @@ this.recline.Backend.JsonpMemoryStore = this.recline.Backend.JsonpMemoryStore ||
         console.log("Fetching data structure " + dataset.url);
 
         // var data = {onlydesc:"true"}; due to the fact that we use memory store we need to get all data even in first fetch
-        return requestJson(dataset, "fetch", {});
+        if(dataset.fetchFilters) {
+            var data = buildRequestFromQuery(dataset.fetchFilters);
+            return requestJson(dataset, "fetch", data);
+        }
+        else
+            return requestJson(dataset, "fetch", {});
 
     };
 
@@ -4567,9 +4578,8 @@ this.recline.Backend.JsonpMemoryStore = this.recline.Backend.JsonpMemoryStore ||
     }
 
 
-    function buildRequestFromQuery(queryObj) {
+    function buildRequestFromQuery(filters) {
 
-        var filters = queryObj.filters;
         var data = [];
         var multivsep = "|";
 
@@ -4643,20 +4653,6 @@ this.recline.Backend.JsonpMemoryStore = this.recline.Backend.JsonpMemoryStore ||
         // build sort options
         var res = "";
 
-        _.each(queryObj.sort, function (sortObj) {
-            if (res.length > 0)
-                res += ";"
-
-            var fieldName = sortObj.field;
-            res += fieldName;
-            if (sortObj.order) {
-                res += ":" + sortObj.order;
-            }
-
-        });
-
-
-        // filters definitions
 
 
         var outdata = {};
@@ -4876,7 +4872,19 @@ this.recline.Backend.ParallelUnionBackend = this.recline.Backend.ParallelUnionBa
         }
         else if(resulttype.type == "sum") {
             var groupBy = resulttype.groupBy;
-            var res = _.groupBy(data.hits, groupBy);
+            var res;
+            if(groupBy.constructor == Array) {
+              res = _.groupBy(data.hits, function(c) {
+                  var tmp = "";
+                  _.each(groupBy, function(a) {
+                      tmp = tmp + "#" + c[a];
+                  })
+                  return tmp;
+              });
+            } else {
+              res = _.groupBy(data.hits, groupBy);
+            }
+
             var ret = [];
             _.each(res, function(group, iterator) {
                 var r = {};
@@ -6587,14 +6595,16 @@ this.recline.View = this.recline.View || {};
 
                         // selection is done on x axis so I need to take the record with range [min_x, max_x]
                         // is the group attribute
-                        var record_min = _.min(x, function (d) {
+                        /*var record_min = _.min(x, function (d) {
                             return d.min.x
                         });
                         var record_max = _.max(x, function (d) {
                             return d.max.x
-                        });
+                        });*/
+                        var record_min = x[0][0].record;
+                        var record_max = x[0][x[0].length-1].record;
 
-                        view.doActions(actions, [record_min.min.record, record_max.max.record]);
+                        view.doActions(actions, [record_min, record_max]);
 
                     };
                 } else

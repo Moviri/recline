@@ -23,7 +23,8 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
                 {
                     backend: "Memory",
                     records:[], fields: [],
-                    renderer: self.attributes.renderer});
+                    renderer: self.attributes.renderer
+                });
 
 
             self.fields = self.vModel.fields;
@@ -106,6 +107,7 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
         },
 
         initializeCrossfilter:function () {
+            console.log("initialize crossfilter");
             var aggregatedFields = this.attributes.aggregation.measures;
             var aggregationFunctions = this.attributes.aggregation.aggregationFunctions;
             var originalFields = this.attributes.dataset.fields;

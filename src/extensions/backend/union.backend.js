@@ -158,7 +158,19 @@ this.recline.Backend.ParallelUnionBackend = this.recline.Backend.ParallelUnionBa
         }
         else if(resulttype.type == "sum") {
             var groupBy = resulttype.groupBy;
-            var res = _.groupBy(data.hits, groupBy);
+            var res;
+            if(groupBy.constructor == Array) {
+              res = _.groupBy(data.hits, function(c) {
+                  var tmp = "";
+                  _.each(groupBy, function(a) {
+                      tmp = tmp + "#" + c[a];
+                  })
+                  return tmp;
+              });
+            } else {
+              res = _.groupBy(data.hits, groupBy);
+            }
+
             var ret = [];
             _.each(res, function(group, iterator) {
                 var r = {};

@@ -565,14 +565,16 @@ this.recline.View = this.recline.View || {};
 
                         // selection is done on x axis so I need to take the record with range [min_x, max_x]
                         // is the group attribute
-                        var record_min = _.min(x, function (d) {
+                        /*var record_min = _.min(x, function (d) {
                             return d.min.x
                         });
                         var record_max = _.max(x, function (d) {
                             return d.max.x
-                        });
+                        });*/
+                        var record_min = x[0][0].record;
+                        var record_max = x[0][x[0].length-1].record;
 
-                        view.doActions(actions, [record_min.min.record, record_max.max.record]);
+                        view.doActions(actions, [record_min, record_max]);
 
                     };
                 } else

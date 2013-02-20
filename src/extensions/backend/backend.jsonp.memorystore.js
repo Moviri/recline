@@ -20,7 +20,12 @@ this.recline.Backend.JsonpMemoryStore = this.recline.Backend.JsonpMemoryStore ||
         console.log("Fetching data structure " + dataset.url);
 
         // var data = {onlydesc:"true"}; due to the fact that we use memory store we need to get all data even in first fetch
-        return requestJson(dataset, "fetch", {});
+        if(dataset.fetchFilters) {
+            var data = buildRequestFromQuery(dataset.fetchFilters);
+            return requestJson(dataset, "fetch", data);
+        }
+        else
+            return requestJson(dataset, "fetch", {});
 
     };
 
@@ -139,9 +144,8 @@ this.recline.Backend.JsonpMemoryStore = this.recline.Backend.JsonpMemoryStore ||
     }
 
 
-    function buildRequestFromQuery(queryObj) {
+    function buildRequestFromQuery(filters) {
 
-        var filters = queryObj.filters;
         var data = [];
         var multivsep = "|";
 
@@ -215,20 +219,6 @@ this.recline.Backend.JsonpMemoryStore = this.recline.Backend.JsonpMemoryStore ||
         // build sort options
         var res = "";
 
-        _.each(queryObj.sort, function (sortObj) {
-            if (res.length > 0)
-                res += ";"
-
-            var fieldName = sortObj.field;
-            res += fieldName;
-            if (sortObj.order) {
-                res += ":" + sortObj.order;
-            }
-
-        });
-
-
-        // filters definitions
 
 
         var outdata = {};

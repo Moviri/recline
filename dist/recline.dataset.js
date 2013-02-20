@@ -215,6 +215,7 @@ my.Dataset = Backbone.Model.extend({
 
   _handleQueryResult: function(queryResult) {
     var self = this;
+
     self.recordCount = queryResult.total;
     var docs = _.map(queryResult.hits, function(hit) {
       var _doc = new my.Record(hit);
