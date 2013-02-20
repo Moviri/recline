@@ -725,6 +725,10 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
             return this.vModel.getFieldsSummary();
         },
 
+        addStaticColorSchema: function(colorSchema, field) {
+           return this.vModel.addStaticColorSchema(colorSchema, field);
+        },
+
         // Retrieve the list of partitioned field for the specified aggregated field
         getPartitionedFields:function (partitionedField, measureField) {
             //var field = this.fields.get(fieldName);

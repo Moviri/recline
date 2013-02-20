@@ -469,7 +469,7 @@ recline.Model.Query.prototype = $.extend(recline.Model.Query.prototype, {
                 if (queryResult.facets) {
 
                     _.each(queryResult.facets, function (f, index) {
-                        console.log("generate colors facets for " + f.id);
+
                         recline.Data.ColorSchema.addColorsToTerms(f.id, f.terms, self.attributes.colorSchema);
                     });
                 }
@@ -2590,7 +2590,7 @@ this.recline.Data.ColorSchema = this.recline.Data.ColorSchema || {};
         bindToDataset: function () {
             var self = this;
             self.attributes.dataset.dataset.records.bind('reset', function () {
-                console.log("record reset Generate color for dataset " + self.attributes.dataset.id + " field " + self.attributes.dataset.field);
+                //console.log("record reset Generate color for dataset " + self.attributes.dataset.id + " field " + self.attributes.dataset.field);
                 self._generateFromDataset();
             });
             self.attributes.dataset.dataset.fields.bind('reset', function () {
