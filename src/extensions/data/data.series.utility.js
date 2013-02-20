@@ -26,7 +26,8 @@ this.recline.Data.SeriesUtility = this.recline.Data.SeriesUtility || {};
             var series = [];
 
             var fillEmptyValuesWith = seriesAttr.fillEmptyValuesWith;
-
+            var requiredXValues = seriesAttr.requiredXValues;
+            
             var unselectedColor = "#C0C0C0";
             if (unselectedColorValue)
                 unselectedColor = unselectedColorValue;
@@ -48,6 +49,10 @@ this.recline.Data.SeriesUtility = this.recline.Data.SeriesUtility || {};
 
 
         var uniqueX = [];
+        if (requiredXValues != null){
+        	uniqueX = requiredXValues;
+        }
+        
             var sizeField;
             if (seriesAttr.sizeField) {
                 sizeField = model.fields.get(seriesAttr.sizeField);

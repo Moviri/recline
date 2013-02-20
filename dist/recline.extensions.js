@@ -3619,7 +3619,8 @@ this.recline.Data.SeriesUtility = this.recline.Data.SeriesUtility || {};
             var series = [];
 
             var fillEmptyValuesWith = seriesAttr.fillEmptyValuesWith;
-
+            var requiredXValues = seriesAttr.requiredXValues;
+            
             var unselectedColor = "#C0C0C0";
             if (unselectedColorValue)
                 unselectedColor = unselectedColorValue;
@@ -3641,6 +3642,10 @@ this.recline.Data.SeriesUtility = this.recline.Data.SeriesUtility || {};
 
 
         var uniqueX = [];
+        if (requiredXValues != null){
+        	uniqueX = requiredXValues;
+        }
+        
             var sizeField;
             if (seriesAttr.sizeField) {
                 sizeField = model.fields.get(seriesAttr.sizeField);
@@ -9342,7 +9347,9 @@ this.recline.View = this.recline.View || {};
             		</g> \
             		<g> \
             			{{^showValueLabels}} \
+            			{{#totWidth}} \
             			<path d="M0,0 L{{totWidth}},0 L{{totWidth}},{{totHeight}} L0,{{totHeight}} L0,0" style="stroke:grey; fill:none;"/> \
+            			{{/totWidth}} \
             			{{#colorValues2}} \
             			<text width="{{width}}" fill="{{textColor}}" x="{{x}}" y="{{yplus30}}">{{val}}</text> \
             			{{/colorValues2}} \
