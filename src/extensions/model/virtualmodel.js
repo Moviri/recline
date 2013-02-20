@@ -116,9 +116,7 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
             var group = this.createDimensions(crossfilterData, dimensions);
             var results = this.reduce(group,dimensions,aggregatedFields,aggregationFunctions,partitions);
 
-
-
-            this.updateStore(results, originalFields,dimensions,aggregationFunctions,aggregatedFields,partitions);
+                     this.updateStore(results, originalFields,dimensions,aggregationFunctions,aggregatedFields,partitions);
         },
 
         setDimensions:function (dimensions) {
@@ -308,6 +306,8 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
 
             self.vModel.resetFields(fields);
             self.vModel.resetRecords(result);
+
+
 
             recline.Data.FieldsUtility.setFieldsAttributes(fields, self);
 
@@ -684,6 +684,8 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
         },
 
         setColorSchema:function (type) {
+            if(this.attributes["colorSchema"])
+                 this.vModel.attributes["colorSchema"] = this.attributes["colorSchema"];
             return this.vModel.setColorSchema(type);
 
         },
@@ -739,7 +741,11 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
         },
 
         isFieldPartitioned:function (fieldName, type) {
-            return  this.getFields(type).get(fieldName).attributes.aggregationFunction
+            var field = this.getFields(type).get(fieldName);
+            if(!field)
+                throw("Virtualmodel.js: isFieldPartitioned: unable to find field [" + fieldName + "] in virtualmodel [" + this.id +"]");
+
+            return  field.attributes.aggregationFunction
                 && this.attributes.aggregation.partitions;
         },
 

@@ -70,6 +70,7 @@ my.Dataset = Backbone.Model.extend({
         self._store = new recline.Backend.Memory.Store(out.records, out.fields);
       }
 
+
       self.set(results.metadata);
       self.fields.reset(out.fields);
 
@@ -226,6 +227,7 @@ my.Dataset = Backbone.Model.extend({
       });
       return _doc;
     });
+
     self.records.reset(docs);
     if (queryResult.facets) {
       var facets = _.map(queryResult.facets, function(facetResult, facetId) {

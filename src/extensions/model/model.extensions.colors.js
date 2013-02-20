@@ -3,6 +3,7 @@
     recline.Model.Dataset.prototype = $.extend(recline.Model.Dataset.prototype, {
         setColorSchema:function () {
             var self = this;
+
             _.each(self.attributes.colorSchema, function (d) {
                 var field = _.find(self.fields.models, function (f) {
                     return d.field === f.id
