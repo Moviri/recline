@@ -464,14 +464,15 @@ recline.Model.Query.prototype = $.extend(recline.Model.Query.prototype, {
                 //console.log("-----> " + this.id +  " HQR colors");
                 var self = this;
 
+                return super_init.call(this, queryResult);
+
                 if (queryResult.facets) {
                     _.each(queryResult.facets, function (f, index) {
                         recline.Data.ColorSchema.addColorsToTerms(f.id, f.terms, self.attributes.colorSchema);
                     });
-
-                    return super_init.call(this, queryResult);
-
                 }
+
+
             };
         }()
     });
@@ -1375,7 +1376,8 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
             var group = this.createDimensions(crossfilterData, dimensions);
             var results = this.reduce(group,dimensions,aggregatedFields,aggregationFunctions,partitions);
 
-                     this.updateStore(results, originalFields,dimensions,aggregationFunctions,aggregatedFields,partitions);
+            this.updateStore(results, originalFields,dimensions,aggregationFunctions,aggregatedFields,partitions);
+            this.trigger('query:done');
         },
 
         setDimensions:function (dimensions) {
@@ -1411,8 +1413,10 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
                         if (i > 0) {
                             tmp = tmp + "#";
                         }
-
+                       if(d[dimensions[i]])
                         tmp = tmp + d[dimensions[i]].valueOf();
+                       else
+                        tmp = tmp + "NULL";
                     }
                     return tmp;
                 });
@@ -1424,8 +1428,8 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
 
         reduce:function (group, dimensions, aggregatedFields, aggregationFunctions, partitions) {
 
-            if (aggregationFunctions == null || aggregationFunctions.length == 0)
-                throw("Error aggregationFunctions parameters is not set for virtual dataset ");
+            //if (aggregationFunctions == null || aggregationFunctions.length == 0)
+            //    throw("Error aggregationFunctions parameters is not set for virtual dataset ");
 
 
             var partitioning = false;
@@ -1518,7 +1522,8 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
 
                 for (j = 0; j < aggregationFunctions.length; j++) {
                     tmp[aggregationFunctions[j]] = {};
-                    this.recline.Data.Aggregations.initFunctions[aggregationFunctions[j]](tmp, aggregatedFields, partitions);
+
+                        this.recline.Data.Aggregations.initFunctions[aggregationFunctions[j]](tmp, aggregatedFields, partitions);
                 }
 
                 if (partitioning) {
@@ -1573,6 +1578,7 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
             this.clearUnfilteredTotals();
 
             self.vModel.fetch();
+            self.recordCount = self.vModel.recordCount;
 
         },
 
@@ -6079,7 +6085,7 @@ this.recline.View = this.recline.View || {};
                 options.state
             );
             this.state = new recline.Model.ObjectState(stateData);
-            if (this.options.state.options.loader)
+            if (this.options.state.options && this.options.state.options.loader)
             	this.options.state.options.loader.bindChart(this);
         },
 
@@ -6102,29 +6108,13 @@ this.recline.View = this.recline.View || {};
 
             delete this.chart;
             
-            
-            if (tmplData.recordCount && tmplData.recordCount > 0)
-            {
+
                 var htmls = Mustache.render(this.template, tmplData);
                 $(this.el).html(htmls);
                 this.$graph = this.el.find('.panel.nvd3graph_' + tmplData["viewId"]);
                 self.trigger("chart:endDrawing")
                 return this;
-            }
-            else
-            {
-                var svgElem = this.el.find('#nvd3chart_' + self.uid+ ' svg') 
-            	svgElem.css("display", "block")
-            	// get computed dimensions
-            	var width = svgElem.width()
-            	var height = svgElem.height()
 
-            	// display noData message and exit
-            	svgElem.css("display", "none")
-            	this.el.find('#nvd3chart_' + self.uid).width(width).height(height).append(new recline.View.NoDataMsg().create());
-                self.trigger("chart:endDrawing")
-            	return this;
-        	}
 
 
         },
@@ -6143,6 +6133,21 @@ this.recline.View = this.recline.View || {};
         redraw:function () {
             var self = this;
             self.trigger("chart:startDrawing")
+
+            if (self.model.recordCount == 0)
+            {
+                var svgElem = this.el.find('#nvd3chart_' + self.uid+ ' svg')
+                svgElem.css("display", "block")
+                // get computed dimensions
+                var width = svgElem.width()
+                var height = svgElem.height()
+
+                // display noData message and exit
+                svgElem.css("display", "none")
+                this.el.find('#nvd3chart_' + self.uid).width(width).height(height).append(new recline.View.NoDataMsg().create());
+                self.trigger("chart:endDrawing")
+                return;
+            }
             
             var svgElem = this.el.find('#nvd3chart_' + self.uid+ ' svg') 
         	svgElem.css("display", "block")
@@ -6567,9 +6572,9 @@ this.recline.View = this.recline.View || {};
                 var options = {};
 
                 if (view.state.attributes.options) {
-                    if (view.state.attributes.options("trendlines"))
+                    if (view.state.attributes.options["trendlines"])
                         options["trendlines"] = view.state.attributes.options("trendlines");
-                    if (view.state.attributes.options("minmax"))
+                    if (view.state.attributes.options["minmax"])
                         options["minmax"] = view.state.attributes.options("minmax");
 
                 }
@@ -9931,7 +9936,8 @@ this.recline.View = this.recline.View || {};
 
                 	currActiveFilter.minValue = currActiveFilter.tmpValues[0]
                 	currActiveFilter.maxValue = currActiveFilter.tmpValues[currActiveFilter.tmpValues.length-1]
-                	var colorSchema = self._sourceDataset.attributes.colorSchema;
+                	//var colorSchema = self._sourceDataset.attributes.colorSchema[0].schema;
+                	
                 	var maxWidth = self.el.width() || 250
                 	var colsPerRow = currActiveFilter.tmpValues.length
                 	var pixelW = Math.floor(maxWidth / colsPerRow)

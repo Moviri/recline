@@ -66,7 +66,7 @@ this.recline.View = this.recline.View || {};
                 options.state
             );
             this.state = new recline.Model.ObjectState(stateData);
-            if (this.options.state.options.loader)
+            if (this.options.state.options && this.options.state.options.loader)
             	this.options.state.options.loader.bindChart(this);
         },
 
@@ -89,29 +89,13 @@ this.recline.View = this.recline.View || {};
 
             delete this.chart;
             
-            
-            if (tmplData.recordCount && tmplData.recordCount > 0)
-            {
+
                 var htmls = Mustache.render(this.template, tmplData);
                 $(this.el).html(htmls);
                 this.$graph = this.el.find('.panel.nvd3graph_' + tmplData["viewId"]);
                 self.trigger("chart:endDrawing")
                 return this;
-            }
-            else
-            {
-                var svgElem = this.el.find('#nvd3chart_' + self.uid+ ' svg') 
-            	svgElem.css("display", "block")
-            	// get computed dimensions
-            	var width = svgElem.width()
-            	var height = svgElem.height()
 
-            	// display noData message and exit
-            	svgElem.css("display", "none")
-            	this.el.find('#nvd3chart_' + self.uid).width(width).height(height).append(new recline.View.NoDataMsg().create());
-                self.trigger("chart:endDrawing")
-            	return this;
-        	}
 
 
         },
@@ -130,6 +114,21 @@ this.recline.View = this.recline.View || {};
         redraw:function () {
             var self = this;
             self.trigger("chart:startDrawing")
+
+            if (self.model.recordCount == 0)
+            {
+                var svgElem = this.el.find('#nvd3chart_' + self.uid+ ' svg')
+                svgElem.css("display", "block")
+                // get computed dimensions
+                var width = svgElem.width()
+                var height = svgElem.height()
+
+                // display noData message and exit
+                svgElem.css("display", "none")
+                this.el.find('#nvd3chart_' + self.uid).width(width).height(height).append(new recline.View.NoDataMsg().create());
+                self.trigger("chart:endDrawing")
+                return;
+            }
             
             var svgElem = this.el.find('#nvd3chart_' + self.uid+ ' svg') 
         	svgElem.css("display", "block")
@@ -554,9 +553,9 @@ this.recline.View = this.recline.View || {};
                 var options = {};
 
                 if (view.state.attributes.options) {
-                    if (view.state.attributes.options("trendlines"))
+                    if (view.state.attributes.options["trendlines"])
                         options["trendlines"] = view.state.attributes.options("trendlines");
-                    if (view.state.attributes.options("minmax"))
+                    if (view.state.attributes.options["minmax"])
                         options["minmax"] = view.state.attributes.options("minmax");
 
                 }

@@ -44,14 +44,15 @@
                 //console.log("-----> " + this.id +  " HQR colors");
                 var self = this;
 
+                return super_init.call(this, queryResult);
+
                 if (queryResult.facets) {
                     _.each(queryResult.facets, function (f, index) {
                         recline.Data.ColorSchema.addColorsToTerms(f.id, f.terms, self.attributes.colorSchema);
                     });
-
-                    return super_init.call(this, queryResult);
-
                 }
+
+
             };
         }()
     });
