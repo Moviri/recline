@@ -461,13 +461,15 @@ recline.Model.Query.prototype = $.extend(recline.Model.Query.prototype, {
             var super_init = recline.Model.Dataset.prototype._handleQueryResult;
 
             return function (queryResult) {
-                //console.log("-----> " + this.id +  " HQR colors");
+
                 var self = this;
 
-                return super_init.call(this, queryResult);
+                super_init.call(this, queryResult);
 
                 if (queryResult.facets) {
+
                     _.each(queryResult.facets, function (f, index) {
+                        console.log("generate colors facets for " + f.id);
                         recline.Data.ColorSchema.addColorsToTerms(f.id, f.terms, self.attributes.colorSchema);
                     });
                 }
@@ -2588,6 +2590,7 @@ this.recline.Data.ColorSchema = this.recline.Data.ColorSchema || {};
         bindToDataset: function () {
             var self = this;
             self.attributes.dataset.dataset.records.bind('reset', function () {
+                console.log("record reset Generate color for dataset " + self.attributes.dataset.id + " field " + self.attributes.dataset.field);
                 self._generateFromDataset();
             });
             self.attributes.dataset.dataset.fields.bind('reset', function () {
@@ -9435,7 +9438,7 @@ this.recline.View = this.recline.View || {};
 
             // not all filters required a source of data
             if (this._sourceDataset) {
-                this._sourceDataset.facets.bind('reset', this.render);
+                //this._sourceDataset.facets.bind('reset', this.render);
                 this._sourceDataset.bind('query:done', this.render);
                 this._sourceDataset.queryState.bind('selection:done', this.update);
             }

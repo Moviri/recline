@@ -571,7 +571,7 @@ this.recline.View = this.recline.View || {};
 
             // not all filters required a source of data
             if (this._sourceDataset) {
-                this._sourceDataset.facets.bind('reset', this.render);
+                //this._sourceDataset.facets.bind('reset', this.render);
                 this._sourceDataset.bind('query:done', this.render);
                 this._sourceDataset.queryState.bind('selection:done', this.update);
             }
