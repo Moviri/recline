@@ -529,7 +529,9 @@ this.recline.View = this.recline.View || {};
                         var record_max = _.max(x, function (d) {
                             return d.max.x
                         });
-
+                        console.log("Filtering for ");
+                        console.log(record_min);
+                        console.log(record_max);
                         view.doActions(actions, [record_min.min.record, record_max.max.record]);
 
                     };
