@@ -360,9 +360,9 @@ this.recline.View = this.recline.View || {};
                 <legend style="display:{{useLegend}}">{{label}}</legend>  \
     			<div style="float:left;padding-right:10px;padding-top:4px;display:{{useLeftLabel}}">{{label}}</div> \
     			<div class="btn-group data-control-id" > \
-            		{{#useAllButton}} \
+            		{{^noAllButton}} \
             		<button class="btn btn-mini grouped-button btn-primary">All</button> \
-            		{{/useAllButton}} \
+            		{{/noAllButton}} \
     	            {{#values}} \
     	    		<button class="btn btn-mini grouped-button {{selected}}" val="{{value}}" {{tooltip}}>{{{val}}}</button> \
     	            {{/values}} \
@@ -377,7 +377,7 @@ this.recline.View = this.recline.View || {};
     			<div style="float:left;padding-right:10px;padding-top:4px;display:{{useLeftLabel}}">{{label}}</div> \
     			<div class="btn-group data-control-id" level="1" style="float:left"> \
             		{{#useAllButton}} \
-            		<button class="btn btn-mini grouped-button btn-primary">All</button> \
+            		<button class="btn btn-mini grouped-button {{all1Selected}}" val="">All</button> \
             		{{/useAllButton}} \
     	            {{#values}} \
     	    		<button class="btn btn-mini grouped-button {{selected}}" val="{{value}}" {{tooltip}}>{{{val}}}</button> \
@@ -466,7 +466,7 @@ this.recline.View = this.recline.View || {};
             		<g> \
             			{{^showValueLabels}} \
             			{{#totWidth}} \
-            			<path d="M0,0 L{{totWidth}},0 L{{totWidth}},{{totHeight}} L0,{{totHeight}} L0,0" style="stroke:grey; fill:none;"/> \
+            			<path d="M0,0 L{{totWidth}},0 L{{totWidth}},{{totHeight}} L0,{{totHeight}} L0,0" style="fill:none;"/> \
             			{{/totWidth}} \
             			{{#colorValues2}} \
             			<text width="{{width}}" fill="{{textColor}}" x="{{x}}" y="{{yplus30}}">{{val}}</text> \
@@ -1072,11 +1072,10 @@ this.recline.View = this.recline.View || {};
                 else
             	{
                     currActiveFilter.colorValues2 = [];
-                    currActiveFilter.lineHeight = 25;
+                    currActiveFilter.lineHeight = 20;
 
                 	currActiveFilter.minValue = currActiveFilter.tmpValues[0]
                 	currActiveFilter.maxValue = currActiveFilter.tmpValues[currActiveFilter.tmpValues.length-1]
-                	//var colorSchema = self._sourceDataset.attributes.colorSchema[0].schema;
                 	
                 	var maxWidth = self.el.width() || 250
                 	var colsPerRow = currActiveFilter.tmpValues.length
@@ -1086,14 +1085,16 @@ this.recline.View = this.recline.View || {};
 	                currActiveFilter.totWidth2 = currActiveFilter.totWidth + (currActiveFilter.labelPosition == 'left' ? currActiveFilter.label.length * 10 : 10)
 	                currActiveFilter.totHeight = currActiveFilter.lineHeight;
 	                currActiveFilter.totHeight2 = currActiveFilter.totHeight + currActiveFilter.lineHeight;
-
 	                for (var i in currActiveFilter.tmpValues) {
 	                    var v = currActiveFilter.tmpValues[i];
 	                    var color = currActiveFilter.facet.attributes.terms[i].color;
 	                    // also set first and last label
 	                    if (i == 0 || i == currActiveFilter.tmpValues.length-1)
                     	{
-		                    ruler.innerHTML = v;
+	                    	if (!isNaN(v)){
+	                    		v = v.toFixed(2);	                    		
+	                    	}
+	                    	ruler.innerHTML = v;
 		                    var w = ruler.offsetWidth
 		                    currActiveFilter.colorValues2.push({width:w, color:color, val:v, x:(i==0 ? 2 : currActiveFilter.totWidth-w-2), y:0, yplus30:15, textColor:self.complementColor(color)});
                     	}
@@ -1106,10 +1107,14 @@ this.recline.View = this.recline.View || {};
                 var fullLevelValues = []
                 var totLevels = 1;
                 var userSelection = null;
+        		currActiveFilter.all1Selected = "btn-primary";
                 if (currActiveFilter.term)
                 	userSelection = currActiveFilter.term
                 else if (typeof currActiveFilter.list != "undefined" && currActiveFilter.list && currActiveFilter.list.length == 1) 
                 	userSelection = currActiveFilter.list[0];
+                
+                if (currActiveFilter.term || (currActiveFilter.list && currActiveFilter.list.length))
+                	currActiveFilter.all1Selected = ""
                 	
             	_.each(self._sourceDataset.getRecords(), function(record) {
                     var field = self._sourceDataset.fields.get(currActiveFilter.field);
@@ -1722,12 +1727,26 @@ this.recline.View = this.recline.View || {};
             		}                
                 }
                 else if (controlType == "radiobuttons") {
-                    // ensure one and only one selection is performed
-                    classToUse = "btn-primary"
-                    $fieldSet.find('div.btn-group button.' + classToUse).each(function () {
-                        $(this).removeClass(classToUse);
-                    });
-                    $target.addClass(classToUse);
+                	classToUse = "btn-primary"
+                	if (currActiveFilter.allowDeselection)
+            		{
+                		var wasSelected = $target.hasClass(classToUse) 
+                        $fieldSet.find('div.btn-group button.' + classToUse).each(function () {
+                            $(this).removeClass(classToUse);
+                        });
+                		if (!wasSelected)
+                			$target.addClass(classToUse)
+            		}
+                	else
+            		{
+                        // ensure one and only one selection is performed
+                        
+                        $fieldSet.find('div.btn-group button.' + classToUse).each(function () {
+                            $(this).removeClass(classToUse);
+                        });
+                        $target.addClass(classToUse);
+            		
+            		}
                 }
                 var listaValori = [];
                 $fieldSet.find('div.btn-group button.' + classToUse).each(function () {
@@ -1737,9 +1756,10 @@ this.recline.View = this.recline.View || {};
                 if (controlType == "multibutton")
                     currActiveFilter.list = listaValori;
                 else if (controlType == "radiobuttons") {
-                    if (listaValori.length == 1 && listaValori[0] == "All" && !currActiveFilter.noAllButton) {
-                        listaValori = [];
-                        currActiveFilter.term = "";
+                    if (listaValori.length == 1 && listaValori[0] == "All" && !currActiveFilter.noAllButton
+                    	|| listaValori.length == 0 && currActiveFilter.allowDeselection) {
+	                        listaValori = [];
+	                        currActiveFilter.term = "";
                     }
                     else currActiveFilter.term = $target.attr('val').valueOf();
                 }
@@ -1863,17 +1883,19 @@ this.recline.View = this.recline.View || {};
               };
             });
             var actions = this.options.actions;
-            if(res.length>0) {
-            	// I'm using record (not facet) so I can pass it to actions
-                actions.forEach(function(currAction){
-                    currAction.action.doAction(res, currAction.mapping);
-                });
-            } else
+            if (currFilter.facet) 
             {
                 actions.forEach(function(currAction){
                     currAction.action.doActionWithFacets(currFilter.facet.attributes.terms, values, currAction.mapping, fieldName);
                 });                
             }
+            else
+            {
+            	// I'm using record (not facet) so I can pass it to actions
+                actions.forEach(function(currAction){
+                    currAction.action.doAction(res, currAction.mapping);
+                });
+            } 
         },
 
         dateConvert:function (d) {

@@ -5458,7 +5458,9 @@ this.recline.View = this.recline.View || {};
                 <tr class="shaperow"> \
 	   				<td><div class="shape">{{{shape}}}</div> \
 	   				<div class="compareshape">{{{compareShape}}}</div> \
-	   				</td><td class="value-cell">{{value}}</td></tr>  \
+	   				</td><td class="value-cell"><div class="kpi_value">{{value}}</div></td>\
+	   				<td class="aftershape">{{{afterShape}}}</td> \
+	   			</tr> \
              </table>  \
 		</div>\
       </div> \
@@ -5474,7 +5476,8 @@ this.recline.View = this.recline.View || {};
 						{{#shape}} \
     	                <div class="shape" style="float:left">{{{shape}}}</div> \
     					{{/shape}} \
-        				<div class="value-cell" style="float:left">{{value}}</div> \
+        				<div class="value-cell" style="float:left"><div class="kpi_value">{{value}}</div></div> \
+    					<div class="aftershape" style="float:left">{{{afterShape}}}</div> \
     				</div> \
                     <div class="title">&nbsp;&nbsp;{{{label}}}</div>\
     			</div> \
@@ -5548,8 +5551,9 @@ this.recline.View = this.recline.View || {};
             else
                 field = self.model.getFields(self.options.state.kpi.type).get(self.options.state.kpi.field);
 
-            if (!field)
-                throw "View.Indicator: unable to find field [" + self.options.state.kpi.field + "] on model"
+            if (!field){
+            	throw "View.Indicator: unable to find field [" + self.options.state.kpi.field + "] on model"
+            }     
                 
             var textField = null;
             if (self.options.state.condensed == true && self.options.state.kpi.textField)
@@ -5602,38 +5606,43 @@ this.recline.View = this.recline.View || {};
                     else
                         compareWithField = self.options.model.getFields(self.options.state.compareWith.type).get(self.options.state.compareWith.field);
 
-                    if (!compareWithField)
-                        throw "View.Indicator: unable to find field [" + self.options.state.compareWith.field + "] on model"
+                    if (!compareWithField){
+                    	   throw "View.Indicator: unable to find field [" + self.options.state.compareWith.field + "] on model"	
+                    } 
+                	 tmplData["compareWithValue"] = compareWithRecord[0].getFieldValue(compareWithField);
+                     var compareWithValue = compareWithRecord[0].getFieldValueUnrendered(compareWithField);
 
+                     var compareValue;
 
-                    tmplData["compareWithValue"] = compareWithRecord[0].getFieldValue(compareWithField);
-                    var compareWithValue = compareWithRecord[0].getFieldValueUnrendered(compareWithField);
+                     var compareValue = self.compareType[self.options.state.compareWith.compareType](kpiValue, compareWithValue, self.templates, self.options.state.condensed, self.options.state.shapeAfter);
+                     if(!compareValue){
+                    	   throw "View.Indicator: unable to find compareType [" + self.options.state.compareWith.compareType + "]";	 
+                     }
+                	 tmplData["compareValue"] = compareValue.data;
 
-                    var compareValue;
+                     if(self.options.state.compareWith.shapes) {
+                         if(compareValue.unrenderedValue == 0)
+                             tmplData["compareShape"] = self.options.state.compareWith.shapes.constant;
+                         else if(compareValue.unrenderedValue > 0)
+                             tmplData["compareShape"] = self.options.state.compareWith.shapes.increase;
+                         else if(compareValue.unrenderedValue < 0)
+                             tmplData["compareShape"] = self.options.state.compareWith.shapes.decrease;
+                     }
 
-                    var compareValue = self.compareType[self.options.state.compareWith.compareType](kpiValue, compareWithValue, self.templates, self.options.state.condensed, self.options.state.shapeAfter);
-                    if(!compareValue)
-                        throw "View.Indicator: unable to find compareType [" + self.options.state.compareWith.compareType + "]";
-
-                    tmplData["compareValue"] = compareValue.data;
-
-                    if(self.options.state.compareWith.shapes) {
-                        if(compareValue.unrenderedValue == 0)
-                            tmplData["compareShape"] = self.options.state.compareWith.shapes.constant;
-                        else if(compareValue.unrenderedValue > 0)
-                            tmplData["compareShape"] = self.options.state.compareWith.shapes.increase;
-                        else if(compareValue.unrenderedValue < 0)
-                            tmplData["compareShape"] = self.options.state.compareWith.shapes.decrease;
-                    }
-
-                    if(compareValue.template)
-                        template = compareValue.template;
+                     if(compareValue.template)
+                         template = compareValue.template;	 
+                
                 }
             }
             if ((tmplData["shape"] == null || typeof tmplData["shape"] == "undefined") 
             	&& (tmplData["compareShape"] == null || typeof tmplData["compareShape"] == "undefined"))
             	tmplData["compareShape"] = " " // ensure the space is filled
 
+            if (this.options.showPercentageBar){
+            	tmplData["afterShape"] = "<div class='indicator-percent-complete-bar-background' style='float:left;'>"
+                    + "<span class='indicator-percent-complete-bar' style='width:" + tmplData["value"] + "'></span></div>"
+            }
+            
             if (this.options.state.description)
                 tmplData["description"] = this.options.state.description;
             
@@ -8113,10 +8122,15 @@ this.recline.View = this.recline.View || {};
             this.yAxisTitle = options.state.yAxisTitle;
             if (options.state.loader)
             	options.state.loader.bindChart(this);
+            this.widths = options.state.widths;
         },
 
-        render:function () {
+        render:function (width) {
             //console.log("View.xCharts: render");
+        	if (width){
+        		this.width = width;	
+        	}
+        	        	 
             var self = this;
             self.trigger("chart:startDrawing")
 
@@ -9252,9 +9266,9 @@ this.recline.View = this.recline.View || {};
                 <legend style="display:{{useLegend}}">{{label}}</legend>  \
     			<div style="float:left;padding-right:10px;padding-top:4px;display:{{useLeftLabel}}">{{label}}</div> \
     			<div class="btn-group data-control-id" > \
-            		{{#useAllButton}} \
+            		{{^noAllButton}} \
             		<button class="btn btn-mini grouped-button btn-primary">All</button> \
-            		{{/useAllButton}} \
+            		{{/noAllButton}} \
     	            {{#values}} \
     	    		<button class="btn btn-mini grouped-button {{selected}}" val="{{value}}" {{tooltip}}>{{{val}}}</button> \
     	            {{/values}} \
@@ -9269,7 +9283,7 @@ this.recline.View = this.recline.View || {};
     			<div style="float:left;padding-right:10px;padding-top:4px;display:{{useLeftLabel}}">{{label}}</div> \
     			<div class="btn-group data-control-id" level="1" style="float:left"> \
             		{{#useAllButton}} \
-            		<button class="btn btn-mini grouped-button btn-primary">All</button> \
+            		<button class="btn btn-mini grouped-button {{all1Selected}}" val="">All</button> \
             		{{/useAllButton}} \
     	            {{#values}} \
     	    		<button class="btn btn-mini grouped-button {{selected}}" val="{{value}}" {{tooltip}}>{{{val}}}</button> \
@@ -9358,7 +9372,7 @@ this.recline.View = this.recline.View || {};
             		<g> \
             			{{^showValueLabels}} \
             			{{#totWidth}} \
-            			<path d="M0,0 L{{totWidth}},0 L{{totWidth}},{{totHeight}} L0,{{totHeight}} L0,0" style="stroke:grey; fill:none;"/> \
+            			<path d="M0,0 L{{totWidth}},0 L{{totWidth}},{{totHeight}} L0,{{totHeight}} L0,0" style="fill:none;"/> \
             			{{/totWidth}} \
             			{{#colorValues2}} \
             			<text width="{{width}}" fill="{{textColor}}" x="{{x}}" y="{{yplus30}}">{{val}}</text> \
@@ -9964,11 +9978,10 @@ this.recline.View = this.recline.View || {};
                 else
             	{
                     currActiveFilter.colorValues2 = [];
-                    currActiveFilter.lineHeight = 25;
+                    currActiveFilter.lineHeight = 20;
 
                 	currActiveFilter.minValue = currActiveFilter.tmpValues[0]
                 	currActiveFilter.maxValue = currActiveFilter.tmpValues[currActiveFilter.tmpValues.length-1]
-                	//var colorSchema = self._sourceDataset.attributes.colorSchema[0].schema;
                 	
                 	var maxWidth = self.el.width() || 250
                 	var colsPerRow = currActiveFilter.tmpValues.length
@@ -9978,14 +9991,16 @@ this.recline.View = this.recline.View || {};
 	                currActiveFilter.totWidth2 = currActiveFilter.totWidth + (currActiveFilter.labelPosition == 'left' ? currActiveFilter.label.length * 10 : 10)
 	                currActiveFilter.totHeight = currActiveFilter.lineHeight;
 	                currActiveFilter.totHeight2 = currActiveFilter.totHeight + currActiveFilter.lineHeight;
-
 	                for (var i in currActiveFilter.tmpValues) {
 	                    var v = currActiveFilter.tmpValues[i];
 	                    var color = currActiveFilter.facet.attributes.terms[i].color;
 	                    // also set first and last label
 	                    if (i == 0 || i == currActiveFilter.tmpValues.length-1)
                     	{
-		                    ruler.innerHTML = v;
+	                    	if (!isNaN(v)){
+	                    		v = v.toFixed(2);	                    		
+	                    	}
+	                    	ruler.innerHTML = v;
 		                    var w = ruler.offsetWidth
 		                    currActiveFilter.colorValues2.push({width:w, color:color, val:v, x:(i==0 ? 2 : currActiveFilter.totWidth-w-2), y:0, yplus30:15, textColor:self.complementColor(color)});
                     	}
@@ -9998,10 +10013,14 @@ this.recline.View = this.recline.View || {};
                 var fullLevelValues = []
                 var totLevels = 1;
                 var userSelection = null;
+        		currActiveFilter.all1Selected = "btn-primary";
                 if (currActiveFilter.term)
                 	userSelection = currActiveFilter.term
                 else if (typeof currActiveFilter.list != "undefined" && currActiveFilter.list && currActiveFilter.list.length == 1) 
                 	userSelection = currActiveFilter.list[0];
+                
+                if (currActiveFilter.term || (currActiveFilter.list && currActiveFilter.list.length))
+                	currActiveFilter.all1Selected = ""
                 	
             	_.each(self._sourceDataset.getRecords(), function(record) {
                     var field = self._sourceDataset.fields.get(currActiveFilter.field);
@@ -10614,12 +10633,26 @@ this.recline.View = this.recline.View || {};
             		}                
                 }
                 else if (controlType == "radiobuttons") {
-                    // ensure one and only one selection is performed
-                    classToUse = "btn-primary"
-                    $fieldSet.find('div.btn-group button.' + classToUse).each(function () {
-                        $(this).removeClass(classToUse);
-                    });
-                    $target.addClass(classToUse);
+                	classToUse = "btn-primary"
+                	if (currActiveFilter.allowDeselection)
+            		{
+                		var wasSelected = $target.hasClass(classToUse) 
+                        $fieldSet.find('div.btn-group button.' + classToUse).each(function () {
+                            $(this).removeClass(classToUse);
+                        });
+                		if (!wasSelected)
+                			$target.addClass(classToUse)
+            		}
+                	else
+            		{
+                        // ensure one and only one selection is performed
+                        
+                        $fieldSet.find('div.btn-group button.' + classToUse).each(function () {
+                            $(this).removeClass(classToUse);
+                        });
+                        $target.addClass(classToUse);
+            		
+            		}
                 }
                 var listaValori = [];
                 $fieldSet.find('div.btn-group button.' + classToUse).each(function () {
@@ -10629,9 +10662,10 @@ this.recline.View = this.recline.View || {};
                 if (controlType == "multibutton")
                     currActiveFilter.list = listaValori;
                 else if (controlType == "radiobuttons") {
-                    if (listaValori.length == 1 && listaValori[0] == "All" && !currActiveFilter.noAllButton) {
-                        listaValori = [];
-                        currActiveFilter.term = "";
+                    if (listaValori.length == 1 && listaValori[0] == "All" && !currActiveFilter.noAllButton
+                    	|| listaValori.length == 0 && currActiveFilter.allowDeselection) {
+	                        listaValori = [];
+	                        currActiveFilter.term = "";
                     }
                     else currActiveFilter.term = $target.attr('val').valueOf();
                 }
@@ -10755,17 +10789,19 @@ this.recline.View = this.recline.View || {};
               };
             });
             var actions = this.options.actions;
-            if(res.length>0) {
-            	// I'm using record (not facet) so I can pass it to actions
-                actions.forEach(function(currAction){
-                    currAction.action.doAction(res, currAction.mapping);
-                });
-            } else
+            if (currFilter.facet) 
             {
                 actions.forEach(function(currAction){
                     currAction.action.doActionWithFacets(currFilter.facet.attributes.terms, values, currAction.mapping, fieldName);
                 });                
             }
+            else
+            {
+            	// I'm using record (not facet) so I can pass it to actions
+                actions.forEach(function(currAction){
+                    currAction.action.doAction(res, currAction.mapping);
+                });
+            } 
         },
 
         dateConvert:function (d) {
@@ -11899,7 +11935,7 @@ this.recline.View = this.recline.View || {};
     				{{#mapWidth}} width={{mapWidth}}{{/mapWidth}} \
     				{{#mapHeight}} height={{mapHeight}}{{/mapHeight}} \
     			  >Zoom</input>{{/showZoomCtrl}} \
-    			  <svg x="0" y="0" xmlns="http://www.w3.org/2000/svg" version="1.1"> \
+    			  <svg x="0" y="0" xmlns="http://www.w3.org/2000/svg" version="1.1" style="{{svgStyle}}"> \
     			  		<g class="regions"></g> \
     					<g class="regionLabels" pointer-events="none"></g> \
     					<g class="places" pointer-events="none"></g> \
@@ -11928,7 +11964,11 @@ this.recline.View = this.recline.View || {};
 
             this.mapWidth = this.options.state.width // optional. May be undefined
             this.mapHeight = this.options.state.height // optional. May be undefined
-            
+         
+            var svgCustomStyle = '';
+            if (this.options.state.svgStyle){
+            	svgCustomStyle = this.options.state.svgStyle;
+            } 
             if (this.mapWidth == null || typeof this.mapWidth == "undefined")
             	this.mapWidth = $(this.el).width()
             	
@@ -11939,7 +11979,7 @@ this.recline.View = this.recline.View || {};
             
             this.fieldLabels = this.options.state.fieldLabels;
 
-            var tmplData = {scale: this.scale,  mapWidth: this.mapWidth, mapHeight: this.mapHeight/*, showZoomCtrl: this.options.state.showZoomCtrl*/}
+            var tmplData = {scale: this.scale,  mapWidth: this.mapWidth, mapHeight: this.mapHeight, svgStyle: svgCustomStyle/*, showZoomCtrl: this.options.state.showZoomCtrl*/}
             var out = Mustache.render(this.template, tmplData);
             $(this.el).html(out);
             
