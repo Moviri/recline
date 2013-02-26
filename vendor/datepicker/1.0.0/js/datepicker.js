@@ -600,7 +600,26 @@
 						options.date[first] = (monday.setHours(0,0,0,0)).valueOf();
 						options.date[second] = (sunday.setHours(23,59,59,999)).valueOf();
 		                var modulo = options.mode == 'range' ? 2 : 4;
-		                options.lastSel = (current + 2) % modulo;					}
+		                options.lastSel = (current + 2) % modulo;					
+		            }
+					else if (options.monthlyMode)
+					{
+						tmp.setDate(1);
+						var year = tmp.getFullYear();
+						var month = tmp.getMonth() + 1
+						if (month == 12)
+						{
+							year++;
+							month = 0;
+						}
+						var firstDayNextMonth = new Date(year, month, 1, 23, 59, 59 ,999);
+						var lastMonthDate = new Date(firstDayNextMonth.getTime()-24*3600000); // return last day of this month 
+						changedRange = true;
+						options.date[first] = (tmp.setHours(0,0,0,0)).valueOf();
+						options.date[second] = lastMonthDate.valueOf();
+		                var modulo = options.mode == 'range' ? 2 : 4;
+		                options.lastSel = (current + 2) % modulo;					
+		            }
 					else
 					{
 	                    if (current == first) {
