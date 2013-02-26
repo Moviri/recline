@@ -65,6 +65,7 @@ this.recline.View = this.recline.View || {};
             var xDomain = [Infinity, -Infinity];
             var yDomain = [Infinity, -Infinity];
             var sizeDomain = [Infinity, -Infinity];
+            var colorDomain = [Infinity, -Infinity];
 
             var records = _.map(this.options.model.getRecords(type), function (record) {
                 xDomain = [
@@ -79,21 +80,34 @@ this.recline.View = this.recline.View || {};
                     Math.min(sizeDomain[0], record.attributes[state.sizeField.field]),
                     Math.max(sizeDomain[1], record.attributes[state.sizeField.field])
                 ];
+                colorDomain = [
+                    Math.min(colorDomain[0], record.attributes[state.colorField.field]),
+                    Math.max(colorDomain[1], record.attributes[state.colorField.field])
+                ];
 
                 return {
                     "key": record.attributes[state.keyField.field],
-                    "color": record.getFieldColor(record.fields.get(state.colorField.field)),//record.attributes[state.colorField.field],
+                    "color": record.attributes[state.colorField.field],//record.attributes[state.colorField.field],
                     "x": record.attributes[state.xField.field],
                     "size": record.attributes[state.sizeField.field],
                     "y": record.attributes[state.yField.field]
                 }
             });
 
+            if(sizeDomain[0] == sizeDomain[1])
+                sizeDomain = [sizeDomain[0]/2,sizeDomain[0]*2];
+            if(colorDomain[0] == colorDomain[1])
+                colorDomain = [colorDomain[0]/2, colorDomain[0]*2];
+            if(xDomain[0] == xDomain[1])
+                xDomain = [xDomain[0]/2, xDomain[0]*2];
+            if(yDomain[0] == yDomain[1])
+                yDomain = [yDomain[0]/2, yDomain[0]*2];
+
             // Various scales. These domains make assumptions of data, naturally.
             self.xScale = state.xField.scale.domain(xDomain).range([0, self.width]);
             self.yScale = state.yField.scale.domain(yDomain).range([self.height, 0]);
             self.sizeScale = state.sizeField.scale.domain(sizeDomain).range([0, 10]);
-            self.colorScale = state.colorField.scale;
+            self.colorScale = state.colorField.scale.domain(colorDomain);
 
             self.xAxisTitle = state.xAxisTitle;
             self.yAxisTitle = state.yAxisTitle;
@@ -182,7 +196,9 @@ this.recline.View = this.recline.View || {};
                 .data(data)
                 .enter().append("circle")
                 .attr("class", "dot")
-                .style("fill", function(d) { return self.colorScale(color(d)); })
+                .style("fill", function(d) {
+                    return self.colorScale(color(d));
+                })
                 .call(position)
                 .sort(order);
 
