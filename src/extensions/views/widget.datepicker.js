@@ -16,7 +16,7 @@ this.recline.View = this.recline.View || {};
         comparedateToChanged:false,
         initialize:function (options) {
             this.el = $(this.el);
-            _.bindAll(this, 'render', 'redraw', 'redrawCompare', 'calculateMonday');
+            _.bindAll(this, 'render', 'redraw', 'redrawCompare', 'calculateMonday', 'calculateFirstDayOfMonth', 'calculateLastDayOfMonth');
 
             if (this.model) {
                 this.model.bind('query:done', this.redraw);
@@ -377,12 +377,16 @@ this.recline.View = this.recline.View || {};
                     }
                 }
                 else {
-                    values.comparisonEnabled = true;
+                	// disable and hide all comparison controls
+                    values.comparisonEnabled = false;
                     values.comparisonPreset = "previousperiod"
                     $('.comparison-preset').val("previousperiod")
                     $('.comparison-preset').prop("disabled", true)
-                    $('.enable-comparison').css("checked", "checked")
+                    $('.enable-comparison').removeAttr("checked")
                     $('.enable-comparison').change()
+                    $('.comparison-daterange').css('display', 'none')
+                    $('.enable-comparison').parent().css('display', 'none')
+                    $('#datepicker-dropdown').css('min-height', "140px")
                 }
             }
         },
