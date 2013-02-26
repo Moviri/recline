@@ -11672,7 +11672,7 @@ this.recline.View = this.recline.View || {};
             // Various scales. These domains make assumptions of data, naturally.
             self.xScale = state.xField.scale.domain(xDomain).range([0, self.width]);
             self.yScale = state.yField.scale.domain(yDomain).range([self.height, 0]);
-            self.sizeScale = state.sizeField.scale.domain(sizeDomain).range([0, 40]);
+            self.sizeScale = state.sizeField.scale.domain(sizeDomain).range([0, 10]);
             self.colorScale = state.colorField.scale;
 
 
