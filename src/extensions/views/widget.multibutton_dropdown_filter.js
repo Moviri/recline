@@ -140,7 +140,7 @@ this.recline.View = this.recline.View || {};
         	{
             	if (self.buttonsData[key].options)
         		{
-            		var multiselect = $('#dropdown'+this.uid+'_'+k).multiselect({mainValue:key, buttonClass:'btn btn-mini'+(key == lastKey ? ' btn-last' : ''), buttonText:buttonText, onChange: onChange});
+            		var multiselect = $('#dropdown'+this.uid+'_'+k).multiselect({mainValue:key, buttonClass:'btn btn-mini'+(key == lastKey ? ' btn-last' : '')+(self.buttonsData.length == 1 ? : ' btn-first', ''), buttonText:buttonText, onChange: onChange});
             		var multiselectContainer = multiselect.data('multiselect').container;
             		$("button", multiselectContainer).parent().on("dropdown-hide", menuHidden);
     				if (_.find(self.buttonsData[key].options, function(optn) {return optn.selected}))
