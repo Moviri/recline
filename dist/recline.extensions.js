@@ -9316,7 +9316,7 @@ this.recline.View = this.recline.View || {};
     			<div style="float:left;padding-right:10px;padding-top:4px;display:{{useLeftLabel}}">{{label}}</div> \
     			<div class="btn-group data-control-id" level="1" style="float:left"> \
             		{{#useAllButton}} \
-            		<button class="btn btn-mini grouped-button {{all1Selected}}" val="">All</button> \
+            		<button class="btn btn-mini grouped-button {{all1Selected}}" val="All">All</button> \
             		{{/useAllButton}} \
     	            {{#values}} \
     	    		<button class="btn btn-mini grouped-button {{selected}}" val="{{value}}" {{tooltip}}>{{{val}}}</button> \
@@ -10052,7 +10052,7 @@ this.recline.View = this.recline.View || {};
                 else if (typeof currActiveFilter.list != "undefined" && currActiveFilter.list && currActiveFilter.list.length == 1) 
                 	userSelection = currActiveFilter.list[0];
                 
-                if (currActiveFilter.term || (currActiveFilter.list && currActiveFilter.list.length))
+                if (currActiveFilter.term || (currActiveFilter.list && currActiveFilter.list.length < self._sourceDataset.getRecords()))
                 	currActiveFilter.all1Selected = ""
                 	
             	_.each(self._sourceDataset.getRecords(), function(record) {
@@ -10570,10 +10570,14 @@ this.recline.View = this.recline.View || {};
                 currActiveFilter.userChanged = true;
 
                 if (listaValori.length == 1 && listaValori[0] == "All" && !currActiveFilter.noAllButton) {
-                    listaValori = [];
+                	// "All" pressed. Pass all records to the action 
                     currActiveFilter.term = "";
                     currActiveFilter.showLevel2 = "none";
                     currActiveFilter.showLevel3 = "none";
+                    var actions = this.options.actions;
+                    actions.forEach(function(currAction){
+                        currAction.action.doAction(self._sourceDataset.getRecords(), currAction.mapping);
+                    });
                 }
                 else
             	{
@@ -11240,7 +11244,11 @@ this.recline.View = this.recline.View || {};
         			self.handleChangedSelections();
 			}
 			var lastKey;
+			var firstKey = null;
 			for (var key in self.buttonsData) {
+				if (firstKey == null)
+					firstKey = key;
+				
 				if (self.buttonsData[key].options)
 					lastKey = key
 			}
@@ -11250,7 +11258,7 @@ this.recline.View = this.recline.View || {};
         	{
             	if (self.buttonsData[key].options)
         		{
-            		var multiselect = $('#dropdown'+this.uid+'_'+k).multiselect({mainValue:key, buttonClass:'btn btn-mini'+(key == lastKey ? ' btn-last' : ''), buttonText:buttonText, onChange: onChange});
+            		var multiselect = $('#dropdown'+this.uid+'_'+k).multiselect({mainValue:key, buttonClass:'btn btn-mini'+(key == firstKey ? ' btn-first' : '')+(key == lastKey ? ' btn-last' : ''), buttonText:buttonText, onChange: onChange});
             		var multiselectContainer = multiselect.data('multiselect').container;
             		$("button", multiselectContainer).parent().on("dropdown-hide", menuHidden);
     				if (_.find(self.buttonsData[key].options, function(optn) {return optn.selected}))
