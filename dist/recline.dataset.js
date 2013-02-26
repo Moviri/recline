@@ -813,42 +813,6 @@ this.recline.Backend.Memory = this.recline.Backend.Memory || {};
             return results;
         };
 
-        this.computeFacets = function (records, queryObj) {
-            var facetResults = {};
-            if (!queryObj.facets) {
-                return facetResults;
-            }
-            _.each(queryObj.facets, function (query, facetId) {
-                // TODO: remove dependency on recline.Model
-                facetResults[facetId] = new recline.Model.Facet({id:facetId}).toJSON();
-                facetResults[facetId].termsall = {};
-            });
-            // faceting
-            _.each(records, function (doc) {
-                _.each(queryObj.facets, function (query, facetId) {
-                    var fieldId = query.terms.field;
-                    var val = doc[fieldId];
-                    var tmp = facetResults[facetId];
-                    if (val) {
-                        tmp.termsall[val] = tmp.termsall[val] ? tmp.termsall[val] + 1 : 1;
-                    } else {
-                        tmp.missing = tmp.missing + 1;
-                    }
-                });
-            });
-            _.each(queryObj.facets, function (query, facetId) {
-                var tmp = facetResults[facetId];
-                var terms = _.map(tmp.termsall, function (count, term) {
-                    return { term:term, count:count };
-                });
-                tmp.terms = _.sortBy(terms, function (item) {
-                    // want descending order
-                    return -item.count;
-                });
-                tmp.terms = tmp.terms.slice(0, 10);
-            });
-            return facetResults;
-        };
 
         this.transform = function (editFunc) {
             var dfd = new _.Deferred();

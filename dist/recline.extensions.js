@@ -3017,7 +3017,7 @@ my.Faceting = {};
                 if (val) {
                     if( tmp.termsall[val] ) {
                         tmp.termsall[val].records.push(doc);
-                        tmp.termsall[val] = {count: tmp.termsall[val].count + 1};
+                        tmp.termsall[val].count = tmp.termsall[val].count + 1;
                     } else {
                         tmp.termsall[val] =  {count:1, value:val, records: [doc]};
                     }
@@ -3043,7 +3043,7 @@ my.Faceting = {};
                 );
 
             _.each(termsWithZeroCount, function (d) {
-                tmp.termsall[d] = {count:0, value:d, records: []    };
+                tmp.termsall[d] = {count:0, value:d, records: [] };
             });
 
         });
@@ -11692,7 +11692,7 @@ this.recline.View = this.recline.View || {};
 
                 return {
                     "key": record.attributes[state.keyField.field],
-                    "color": record.attributes[state.colorField.field],
+                    "color": record.getFieldColor(record.fields.get(state.colorField.field)),//record.attributes[state.colorField.field],
                     "x": record.attributes[state.xField.field],
                     "size": record.attributes[state.sizeField.field],
                     "y": record.attributes[state.yField.field]
@@ -11704,9 +11704,6 @@ this.recline.View = this.recline.View || {};
             self.yScale = state.yField.scale.domain(yDomain).range([self.height, 0]);
             self.sizeScale = state.sizeField.scale.domain(sizeDomain).range([0, 10]);
             self.colorScale = state.colorField.scale;
-
-
-
 
             self.xAxisTitle = state.xAxisTitle;
             self.yAxisTitle = state.yAxisTitle;
@@ -11788,7 +11785,7 @@ this.recline.View = this.recline.View || {};
                 .text(1800);
              */
 
-            // Add a dot per nation. Initialize the data at 1800, and set the colors.
+
             var dot = svg.append("g")
                 .attr("class", "dots")
                 .selectAll(".dot")

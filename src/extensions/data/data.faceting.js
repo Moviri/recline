@@ -26,7 +26,7 @@ my.Faceting = {};
                 if (val) {
                     if( tmp.termsall[val] ) {
                         tmp.termsall[val].records.push(doc);
-                        tmp.termsall[val] = {count: tmp.termsall[val].count + 1};
+                        tmp.termsall[val].count = tmp.termsall[val].count + 1;
                     } else {
                         tmp.termsall[val] =  {count:1, value:val, records: [doc]};
                     }
@@ -52,7 +52,7 @@ my.Faceting = {};
                 );
 
             _.each(termsWithZeroCount, function (d) {
-                tmp.termsall[d] = {count:0, value:d, records: []    };
+                tmp.termsall[d] = {count:0, value:d, records: [] };
             });
 
         });
