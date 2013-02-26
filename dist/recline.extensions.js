@@ -8122,12 +8122,14 @@ this.recline.View = this.recline.View || {};
             this.yAxisTitle = options.state.yAxisTitle;
             if (options.state.loader)
             	options.state.loader.bindChart(this);
-            this.widths = options.state.widths;
+           if (options.state.widths){
+        	   this.widths = options.state.widths;   
+           } 
         },
 
         render:function (width) {
-            //console.log("View.xCharts: render");
-        	if (width){
+//            console.log("View.xCharts: render");
+            if (!isNaN(width)){
         		this.width = width;	
         	}
         	        	 
@@ -11100,6 +11102,7 @@ this.recline.View = this.recline.View || {};
         },
         _sourceDataset:null,
         _selectedClassName:"btn-primary", // use bootstrap ready-for-use classes to highlight list item selection (avail classes are success, warning, info & error)
+        hasValueChanges: false,
         initialize:function (args) {
             this.el = $(this.el);
             _.bindAll(this, 'render', 'update', 'onButtonsetClicked', 'getDropdownSelections', 'getRecordByValue', 'handleChangedSelections');
@@ -11174,11 +11177,12 @@ this.recline.View = this.recline.View || {};
                     options.each(function() {
                         selected += $(this).text() + ', ';
                     });
-                    return this.mainValue+' <small style="opacity:0.5">'+selected.substr(0, selected.length -2) + '</small> <b class="caret"></b>';
+                    return this.mainValue+' <span style="opacity:0.5">'+selected.substr(0, selected.length -2) + '</span> <b class="caret"></b>';
                 }
             }
 			
 			var onChange = function(element, checked){
+				self.hasValueChanges =  true
         		var multiselect = element.parent();
         		var multiselectContainer = multiselect.data('multiselect').container;
 				var totSelectedObjs = element.parent().find("[selected='selected']")
@@ -11196,13 +11200,18 @@ this.recline.View = this.recline.View || {};
 			}
 			
 			var menuHidden = function(e) {
-        		console.log(">>> BLUR")
 				if (self.dropdownTimeout)
 				{
 					clearTimeout(self.dropdownTimeout)
 					delete self.dropdownTimeout
-				}            		
-        		self.handleChangedSelections();
+				}
+        		if (self.hasValueChanges)
+        			self.handleChangedSelections();
+			}
+			var lastKey;
+			for (var key in self.buttonsData) {
+				if (self.buttonsData[key].options)
+					lastKey = key
 			}
 			var k = 0;
             var multiSelects = []
@@ -11210,8 +11219,9 @@ this.recline.View = this.recline.View || {};
         	{
             	if (self.buttonsData[key].options)
         		{
-            		var multiselect = $('#dropdown'+this.uid+'_'+k).multiselect({mainValue:key, buttonClass:'btn btn-mini', buttonText:buttonText, onChange: onChange, onHideMenu: menuHidden});
+            		var multiselect = $('#dropdown'+this.uid+'_'+k).multiselect({mainValue:key, buttonClass:'btn btn-mini'+(key == lastKey ? ' btn-last' : ''), buttonText:buttonText, onChange: onChange});
             		var multiselectContainer = multiselect.data('multiselect').container;
+            		$("button", multiselectContainer).parent().on("dropdown-hide", menuHidden);
     				if (_.find(self.buttonsData[key].options, function(optn) {return optn.selected}))
     					$('button', multiselectContainer).addClass(self._selectedClassName);
             			
@@ -11219,18 +11229,6 @@ this.recline.View = this.recline.View || {};
                 	k++;
         		}
         	}
-            // attach to every dropdown menu an event handler that forces a doAction when the menu is hidden by clicking anywhere else on the page
-//            self.el.find('ul.dropdown-menu').each(function () {
-//            	$(this).on("blur", function(e){
-//            		console.log(">>> BLUR")
-//    				if (self.dropdownTimeout)
-//    				{
-//    					clearTimeout(self.dropdownTimeout)
-//    					delete self.dropdownTimeout
-//    				}            		
-//            		self.handleChangedSelections();
-//            	});
-//            });
         },
         buttonRender: function() {
         	var buttonData = this;
@@ -11341,6 +11339,7 @@ this.recline.View = this.recline.View || {};
             	res.push(self.getRecordByValue(valore));
             });
 
+			self.hasValueChanges =  false;
             self.sourceField.userChanged = true;
             self.sourceField.list = listaValori;
             var actions = self.options.actions;
