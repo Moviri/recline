@@ -11375,7 +11375,7 @@ this.recline.View = this.recline.View || {};
 				delete self.dropdownTimeout
 			}
             var $target = $(e.currentTarget);
-            if (self.exclusiveButtonValue)
+            if (!$target.hasClass(self._selectedClassName) && self.exclusiveButtonValue)
         	{
                 if (self.exclusiveButtonValue == $target.attr("val"))
             	{
