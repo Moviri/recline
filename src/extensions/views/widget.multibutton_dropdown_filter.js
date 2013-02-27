@@ -34,6 +34,7 @@ this.recline.View = this.recline.View || {};
 
             this.sourceField = args.sourceField;
             this._actions = args.actions;
+            this.exclusiveButtonValue = args.sourceField.exclusiveButtonValue;
 
             if (this._sourceDataset) {
                 this._sourceDataset.bind('query:done', this.render);
@@ -82,7 +83,16 @@ this.recline.View = this.recline.View || {};
             
             tmplData.buttonsData = _.map(self.buttonsData, function(obj, key){ return obj; }); // transform to array
             // ensure buttons with multiple options are moved to the end of the control toolbar to safeguard look & feel  
-            tmplData.buttonsData = _.sortBy(tmplData.buttonsData, function(obj){ if (obj.options) return 1; else return -1; }); 
+            tmplData.buttonsData = _.sortBy(tmplData.buttonsData, function(obj) { 
+            	if (obj.options) 
+            		return 1; 
+            	else
+        		{
+            		if (self.exclusiveButtonValue && self.exclusiveButtonValue == obj.value) // if ALL button present, put to the extreme left
+            			return -1;
+            		else return 0;
+        		}
+            }); 
             tmplData.buttonRender = self.buttonRender;
 
             var out = Mustache.render(this.template, tmplData);
@@ -117,7 +127,7 @@ this.recline.View = this.recline.View || {};
 					delete self.dropdownTimeout
 				}
 				// will force a doAction that forces a redraw that closes the dropdown menu after 2 secs
-				self.dropdownTimeout = setTimeout(function(){ self.handleChangedSelections() }, 2000);  
+				self.dropdownTimeout = setTimeout(function(){ self.handleChangedSelections(true) }, 2000);  
 			}
 			
 			var menuHidden = function(e) {
@@ -127,7 +137,7 @@ this.recline.View = this.recline.View || {};
 					delete self.dropdownTimeout
 				}
         		if (self.hasValueChanges)
-        			self.handleChangedSelections();
+        			self.handleChangedSelections(true);
 			}
 			var lastKey;
 			var firstKey = null;
@@ -246,12 +256,38 @@ this.recline.View = this.recline.View || {};
 				delete self.dropdownTimeout
 			}
             var $target = $(e.currentTarget);
+            if (self.exclusiveButtonValue)
+        	{
+                if (self.exclusiveButtonValue == $target.attr("val"))
+            	{
+                	// pressed ALL button. Deselect everything else
+                	// 1: deselect all non-dropdown buttons
+                    self.el.find('div.btn-toolbar button.' + self._selectedClassName).each(function () {
+                    	if (!$(this).hasClass("dropdown-toggle"))
+                    		$(this).removeClass(self._selectedClassName)
+                    });
+                    // 2: deselect all dropdown buttons
+                	_.each(self.multiSelects, function ($select) {
+                		_.each($select.find("option[selected='selected']"), function(opt) {
+                    		$(opt).removeAttr("selected");
+                		})
+                	});
+            	}
+                else
+            	{
+                	// pressed a normal button. Deselect ALL button
+                	$target.parent().find("button.grouped-button[val='"+self.exclusiveButtonValue+"']").removeClass(self._selectedClassName)
+            	}
+        	}
         	$target.toggleClass(self._selectedClassName);
         	this.handleChangedSelections();
         },
         
-        handleChangedSelections:function() {
+        handleChangedSelections:function(deselectExclusiveButton) {
             var self = this;
+            if (deselectExclusiveButton)
+            	self.el.find("div.btn-toolbar button.grouped-button[val='"+self.exclusiveButtonValue+"']").removeClass(self._selectedClassName)
+            			
             var listaValori = [];
             self.el.find('div.btn-toolbar button.' + self._selectedClassName).each(function () {
             	if (!$(this).hasClass("dropdown-toggle"))
