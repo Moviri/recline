@@ -6,7 +6,7 @@ this.recline.View = this.recline.View || {};
     "use strict";
 
     view.D3Bubble = Backbone.View.extend({
-        template: '<div id="{{uid}}" style="width: {{width}}px; height: {{height}}px;"> <div> ',
+        template: '<div id="{{uid}}" style="width: {{width}}px; height: {{height}}px;"> <div> <div><svg id="{{uid}}_legend"  width="{{legend_width}}" height="{{legend_height}}"></svg>',
 
         initialize: function (options) {
 
@@ -27,6 +27,11 @@ this.recline.View = this.recline.View || {};
             this.margin = {top: 19.5, right: 19.5, bottom: 19.5, left: 100.5};
             this.width = options.width - this.margin.right;
             this.height = options.height - this.margin.top - this.margin.bottom;
+
+            if(this.options.state.legend) {
+		this.legend_height = this.options.state.legend.height;
+		this.legend_width = this.options.state.legend.width;
+            }
 
             //render header & svg container
             var out = Mustache.render(this.template, this);
@@ -103,11 +108,15 @@ this.recline.View = this.recline.View || {};
             if(yDomain[0] == yDomain[1])
                 yDomain = [yDomain[0]/2, yDomain[0]*2];
 
-            // Various scales. These domains make assumptions of data, naturally.
+
             self.xScale = state.xField.scale.domain(xDomain).range([0, self.width]);
             self.yScale = state.yField.scale.domain(yDomain).range([self.height, 0]);
             self.sizeScale = state.sizeField.scale.domain(sizeDomain).range([0, 10]);
             self.colorScale = state.colorField.scale.domain(colorDomain);
+
+            if(state.legend) {
+                self.drawLegend(colorDomain[0], colorDomain[1]);
+            }
 
             self.xAxisTitle = state.xAxisTitle;
             self.yAxisTitle = state.yAxisTitle;
@@ -115,6 +124,46 @@ this.recline.View = this.recline.View || {};
             self.graph = d3.select("#" + self.uid);
 
             this.drawD3(records);
+        },
+
+        drawLegend: function(minData, maxData) {
+          var self=this;
+	    var state = self.options.state;
+	    var paddingAxis = 20;
+	    var numTick = state.legend.numElements;
+		
+            var legendid = "#" + this.uid + "_legend";
+            var legend = d3.select(legendid);
+
+            var data1 = d3.range(numTick);
+            var dataSca = [];
+
+            var rects = legend.selectAll("rect")
+                .data(data1);
+	    var rectWidth = (state.legend.width-paddingAxis*2-numTick)/numTick;
+
+            rects.enter()
+                .append("rect")
+                .attr({
+                    width: rectWidth,
+                    height: state.legend.height,
+                    y: 0,
+                    x: function(d,i) {
+                        return 15 + i * (rectWidth + 1);
+                    },
+                    fill: function(d,i) {
+                        return self.colorScale(d*(maxData-minData)/numTick+minData);
+                    }
+                });
+
+            var colorScale = d3.scale.linear().domain([minData, maxData]).range([0,state.legend.width-paddingAxis]);
+            var axis = d3.svg.axis().orient("bottom").scale(colorScale).tickValues([minData, maxData]).tickFormat(function (d) { return ''; });
+            legend.append("g")
+                .attr("class", "color axis")
+                .attr("transform", "translate(5,0)")
+                .call(axis);
+
+            //$(legendid).find('.color line').css('stroke-width',0);
         },
 
         drawD3: function (data) {
