@@ -6,7 +6,7 @@ this.recline.View = this.recline.View || {};
     "use strict";
 
     view.D3Bullet = Backbone.View.extend({
-        template: '<div id="{{uid}}" style="width: {{width}}px; height: {{height}}px;"> <div> ',
+        template: '<div id="{{uid}}" style="width: {{width}}px; height: {{height}}px;">',
         firstResizeDone: false,
         initialize:function (options) {
 
@@ -113,6 +113,8 @@ this.recline.View = this.recline.View || {};
             	height = 0;
 
             self.plugin();
+
+
 
             this.chart = d3.bullet()
                 .width(width)
