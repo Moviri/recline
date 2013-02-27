@@ -84,6 +84,15 @@ this.recline.View = this.recline.View || {};
         	});
             
             tmplData.buttonsData = _.map(self.buttonsData, function(obj, key){ return obj; }); // transform to array
+            
+            for (var jj in tmplData.buttonsData)
+            	if (tmplData.buttonsData[jj].options)
+        		{
+            		tmplData.buttonsData[jj].options = _.sortBy(tmplData.buttonsData[jj].options, function(opt) { 
+		            	return opt.value 
+		            });
+        		}
+            
             // ensure buttons with multiple options are moved to the end of the control toolbar to safeguard look & feel  
             tmplData.buttonsData = _.sortBy(tmplData.buttonsData, function(obj) { 
             	if (obj.options) 
@@ -156,6 +165,7 @@ this.recline.View = this.recline.View || {};
         	{
             	if (self.buttonsData[key].options)
         		{
+            		
             		var multiselect = $('#dropdown'+this.uid+'_'+k).multiselect({mainValue:key, buttonClass:'btn btn-mini'+(key == firstKey ? ' btn-first' : '')+(key == lastKey ? ' btn-last' : ''), buttonText:buttonText, onChange: onChange});
             		var multiselectContainer = multiselect.data('multiselect').container;
             		$("button", multiselectContainer).parent().on("dropdown-hide", menuHidden);
@@ -273,6 +283,8 @@ this.recline.View = this.recline.View || {};
                 		_.each($select.find("option[selected='selected']"), function(opt) {
                     		$(opt).removeAttr("selected");
                 		})
+                		// erase all options strings left inside main dropdown button
+                		$select.multiselect("rebuild")
                 	});
             	}
                 else
@@ -287,8 +299,6 @@ this.recline.View = this.recline.View || {};
         
         onDropdownClicked: function(e) {
         	var self = this;
-        	console.log(">> clicked!!!")
-        	console.log(self.dropdownTimeout)
 			if (self.dropdownTimeout)
 			{
 				clearTimeout(self.dropdownTimeout)
