@@ -35,6 +35,7 @@ this.recline.View = this.recline.View || {};
             this.sourceField = args.sourceField;
             this._actions = args.actions;
             this.exclusiveButtonValue = args.sourceField.exclusiveButtonValue;
+            this.separator = this.sourceField.separator
 
             if (this._sourceDataset) {
                 this._sourceDataset.bind('query:done', this.render);
@@ -67,9 +68,9 @@ this.recline.View = this.recline.View || {};
                 }
 
                 var fullLevelValue = record.getFieldValue(field);
-                if (fullLevelValue.indexOf(self.sourceField.separator) > 0)
+                if (self.separator && fullLevelValue.indexOf(self.separator) > 0)
             	{
-                	var levelValues = fullLevelValue.split(self.sourceField.separator, 2);
+                	var levelValues = fullLevelValue.split(self.separator, 2);
                 	if (self.buttonsData[levelValues[0]] && self.buttonsData[levelValues[0]].options)
                 		self.buttonsData[levelValues[0]].options.push({fullValue: fullLevelValue, value: levelValues[1], record: record, selected: _.contains(self.sourceField.list, fullLevelValue)})
                 	else
@@ -256,7 +257,7 @@ this.recline.View = this.recline.View || {};
 				delete self.dropdownTimeout
 			}
             var $target = $(e.currentTarget);
-            if (self.exclusiveButtonValue)
+            if (!$target.hasClass(self._selectedClassName) && self.exclusiveButtonValue)
         	{
                 if (self.exclusiveButtonValue == $target.attr("val"))
             	{
@@ -322,9 +323,9 @@ this.recline.View = this.recline.View || {};
         	var self = this;
         	if (self.buttonsData[val])
         		return self.buttonsData[val].record;
-        	else
+        	else if (self.separator)
     		{
-            	var levelValues = val.split(self.sourceField.separator, 2);
+            	var levelValues = val.split(self.separator, 2);
             	if (self.buttonsData[levelValues[0]])
         		{
             		var correctOpt = _.find(self.buttonsData[levelValues[0]].options, function (opt) { return opt.fullValue == val }); 
