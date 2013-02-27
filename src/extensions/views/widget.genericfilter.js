@@ -787,10 +787,10 @@ this.recline.View = this.recline.View || {};
         },
         updateMultibutton:function (filterContainer, currActiveFilter, filterCtrl) {
             var valueList = this.computeUserChoices(currActiveFilter);
-
+            var classToUse = currActiveFilter.selectedClassName || "btn-info";
             var buttons = filterCtrl.find("button.grouped-button");
             _.each(buttons, function (btn) {
-                $(btn).removeClass("btn-info")
+                $(btn).removeClass(classToUse)
             });
 
             // from now on, do not use each or other jquery/underscore methods since they don't work well here
@@ -800,7 +800,7 @@ this.recline.View = this.recline.View || {};
                     for (var j = 0; j < valueList.length; j++) {
                         var v = valueList[j];
                         if (this.areValuesEqual(v, btn.html()))
-                            btn.addClass("btn-info");
+                            btn.addClass(classToUse);
                     }
                 }
         },
@@ -1292,8 +1292,10 @@ this.recline.View = this.recline.View || {};
                                 selected = self._selectedClassName;
                         }
                         else if (currActiveFilter.controlType == "radiobuttons") {
+                            var classToUse = currActiveFilter.selectedClassName || "btn-primary"
+
                             if (self.areValuesEqual(currActiveFilter.term, v) || (typeof currActiveFilter.list != "undefined" && currActiveFilter.list && currActiveFilter.list.length == 1 && self.areValuesEqual(currActiveFilter.list[0], v)))
-                                selected = 'btn-primary'
+                                selected = classToUse
                             
                             if (currActiveFilter.useShapeOnly == true)
                             	if (facetTerms[i].shape && facetTerms[i].shape.indexOf("undefined") < 0)
@@ -1304,12 +1306,14 @@ this.recline.View = this.recline.View || {};
                             	else v = "<div class='shapeH'>"+v+"</div>"
                         }
                         else if (currActiveFilter.controlType == "multibutton") {
+                            var classToUse = currActiveFilter.selectedClassName || "btn-info"
+
                             if (self.areValuesEqual(currActiveFilter.term, v))
-                                selected = 'btn-info'
+                                selected = classToUse
                             else if (typeof currActiveFilter.list != "undefined" && currActiveFilter.list != null) {
                                 for (var j in currActiveFilter.list)
                                     if (self.areValuesEqual(currActiveFilter.list[j], v))
-                                        selected = 'btn-info'
+                                        selected = classToUse
                             }
                             if (currActiveFilter.useShapeOnly == true)
                             	if (facetTerms[i].shape && facetTerms[i].shape.indexOf("undefined") < 0)
@@ -1364,8 +1368,9 @@ this.recline.View = this.recline.View || {};
                         var v = record.getFieldValue(field);
                         var val = v;
                         if (currActiveFilter.controlType == "radiobuttons") {
+                        	var classToUse = currActiveFilter.selectedClassName || "btn-primary"
                             if (self.areValuesEqual(currActiveFilter.term, v) || (typeof currActiveFilter.list != "undefined" && currActiveFilter.list && currActiveFilter.list.length == 1 && self.areValuesEqual(currActiveFilter.list[0], v)))
-                                selected = 'btn-primary'
+                                selected = classToUse
                                 	
                             if (currActiveFilter.useShapeOnly == true)
                         	{
@@ -1379,12 +1384,13 @@ this.recline.View = this.recline.View || {};
                         	}
                         }
                         else if (currActiveFilter.controlType == "multibutton") {
+                        	var classToUse = currActiveFilter.selectedClassName || "btn-info"
                             if (self.areValuesEqual(currActiveFilter.term, v))
-                                selected = 'btn-info'
+                                selected = classToUse
                             else if (typeof currActiveFilter.list != "undefined" && currActiveFilter.list != null) {
                                 for (var j in currActiveFilter.list)
                                     if (self.areValuesEqual(currActiveFilter.list[j], v))
-                                        selected = 'btn-info'
+                                        selected = classToUse
                             }
                             if (currActiveFilter.useShapeOnly == true)
                         	{
@@ -1603,14 +1609,14 @@ this.recline.View = this.recline.View || {};
             var controlType = $fieldSet.attr('data-control-type');
             if (controlType == "hierarchic_radiobuttons")
         	{
+                var currActiveFilter = this.findActiveFilterByField(fieldId, controlType);
                 // ensure one and only one selection is performed
-                var classToUse = "btn-primary"
+                var classToUse = currActiveFilter.selectedClassName || "btn-primary"
                 $target.parent().find('button.' + classToUse).each(function () {
                     $(this).removeClass(classToUse);
                 });
                 $target.addClass(classToUse);
                 var currLevel = $target.parent().attr("level")
-                var currActiveFilter = this.findActiveFilterByField(fieldId, controlType);
                 var prefix = ""
                 if (currLevel >= 2)
                 {
@@ -1715,8 +1721,8 @@ this.recline.View = this.recline.View || {};
                 var type = $fieldSet.attr('data-filter-type');
                 var fieldId = $fieldSet.attr('data-filter-field');
                 var controlType = $fieldSet.attr('data-control-type');
-                var classToUse = "btn-info"
                 var currActiveFilter = this.findActiveFilterByField(fieldId, controlType);
+                var classToUse = currActiveFilter.selectedClassName || "btn-info"
                 if (controlType == "multibutton") {
                 	$target.toggleClass(classToUse);
                 	if (currActiveFilter.nullSelectionNotAllowed)
@@ -1731,7 +1737,7 @@ this.recline.View = this.recline.View || {};
             		}                
                 }
                 else if (controlType == "radiobuttons") {
-                	classToUse = "btn-primary"
+                	classToUse = currActiveFilter.selectedClassName || "btn-primary"
                 	if (currActiveFilter.allowDeselection)
             		{
                 		var wasSelected = $target.hasClass(classToUse) 
@@ -1744,7 +1750,6 @@ this.recline.View = this.recline.View || {};
                 	else
             		{
                         // ensure one and only one selection is performed
-                        
                         $fieldSet.find('div.btn-group button.' + classToUse).each(function () {
                             $(this).removeClass(classToUse);
                         });
