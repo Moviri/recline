@@ -11679,7 +11679,7 @@ this.recline.View = this.recline.View || {};
     "use strict";
 
     view.D3Bubble = Backbone.View.extend({
-        template: '<div id="{{uid}}" style="width: {{width}}px; height: {{height}}px;"> <div> <div><svg id="{{uid}}_legend"  width="{{legend_width}}" height="{{legend_height}}"></svg>',
+        template: '<div id="{{uid}}" style="width: {{width}}px; height: {{height}}px;"><div id="{{uid}}_graph"></div><div id="{{uid}}_graph"></div><div id="{{uid}}_legend"  style="width:{{legend_width}}px;height:{{legend_height}}px"></div></div>',
 
         initialize: function (options) {
 
@@ -11702,8 +11702,8 @@ this.recline.View = this.recline.View || {};
             this.height = options.height - this.margin.top - this.margin.bottom;
 
             if(this.options.state.legend) {
-		this.legend_height = this.options.state.legend.height;
-		this.legend_width = this.options.state.legend.width;
+		        this.legend_height = this.options.state.legend.height;
+		        this.legend_width = this.options.state.legend.width;
             }
 
             //render header & svg container
@@ -11712,11 +11712,16 @@ this.recline.View = this.recline.View || {};
         },
 
         render: function () {
+            console.log("bubble.render");
             var self = this;
-            var graphid = "#" + this.uid;
+            var graphid = "#" + this.uid + "_graph";
+            var legendid = "#" + this.uid + "_legend";
 
-            if (self.graph)
+            if (self.graph)            {
                 jQuery(graphid).empty();
+                jQuery(legendid).empty();
+
+            }
 
             self.graph = d3.select(graphid);
 
@@ -11732,6 +11737,7 @@ this.recline.View = this.recline.View || {};
         // sizeField: { field,  scale }
 
         redraw: function () {
+            console.log("bubble.redraw");
             var self = this;
              var state = self.options.state;
 
@@ -11784,7 +11790,7 @@ this.recline.View = this.recline.View || {};
 
             self.xScale = state.xField.scale.domain(xDomain).range([0, self.width]);
             self.yScale = state.yField.scale.domain(yDomain).range([self.height, 0]);
-            self.sizeScale = state.sizeField.scale.domain(sizeDomain).range([0, 10]);
+            self.sizeScale = state.sizeField.scale.domain(sizeDomain).range([2, 20]);
             self.colorScale = state.colorField.scale.domain(colorDomain);
 
             if(state.legend) {
@@ -11794,19 +11800,23 @@ this.recline.View = this.recline.View || {};
             self.xAxisTitle = state.xAxisTitle;
             self.yAxisTitle = state.yAxisTitle;
 
-            self.graph = d3.select("#" + self.uid);
+            self.graph = d3.select("#" + self.uid + "_graph");
 
             this.drawD3(records);
         },
 
         drawLegend: function(minData, maxData) {
+
           var self=this;
 	    var state = self.options.state;
 	    var paddingAxis = 20;
 	    var numTick = state.legend.numElements;
 		
             var legendid = "#" + this.uid + "_legend";
-            var legend = d3.select(legendid);
+            var legend = d3.select(legendid).append("svg");
+
+
+            console.log($(legendid));
 
             var data1 = d3.range(numTick);
             var dataSca = [];
@@ -11829,14 +11839,38 @@ this.recline.View = this.recline.View || {};
                     }
                 });
 
-            var colorScale = d3.scale.linear().domain([minData, maxData]).range([0,state.legend.width-paddingAxis]);
-            var axis = d3.svg.axis().orient("bottom").scale(colorScale).tickValues([minData, maxData]).tickFormat(function (d) { return ''; });
-            legend.append("g")
-                .attr("class", "color axis")
-                .attr("transform", "translate(5,0)")
-                .call(axis);
+/*            var colorScale = d3.scale.linear().domain([minData, maxData]).range([0,state.legend.width-paddingAxis]);
 
-            //$(legendid).find('.color line').css('stroke-width',0);
+ legend.append("g")
+ .attr("class", "color axis")
+ .attr("transform", "translate(5,0)")
+ .call(axis);
+
+            var axis = d3.svg.axis().ticks(2).tickFormat(d3.format("s")).orient("bottom").scale(colorScale);
+ */
+            var tickValues = _.map([minData, maxData], d3.format("s"));
+
+           /* legend.append("text")
+                .attr("class", "x label")
+                .attr("text-anchor", "end")
+                .attr("x", paddingAxis/2)
+                .attr("y", state.legend.height/2)
+                .text(tickValues[0]);*/
+
+            legend.selectAll(".label")
+                .data(tickValues).enter().append("text")
+                .attr("class", "x label")
+                .attr("text-anchor", "end")
+                .attr("x", function(t, i){
+                    return (state.legend.width / (tickValues.length-1)) * i + paddingAxis/2;
+                })
+                .attr("y", state.legend.height/2)
+                .text(function(t){
+                    return t;
+                });
+
+
+
         },
 
         drawD3: function (data) {
@@ -11864,8 +11898,8 @@ this.recline.View = this.recline.View || {};
 
 
 // The x & y axes.
-            var xAxis = d3.svg.axis().orient("bottom").scale(self.xScale).ticks(12, d3.format(",d")),
-                yAxis = d3.svg.axis().scale(self.yScale).orient("left");
+            var xAxis = d3.svg.axis().orient("bottom").scale(self.xScale).tickFormat(d3.format("s")),
+                yAxis = d3.svg.axis().scale(self.yScale).orient("left").tickFormat(d3.format("s"));
 
 // Create the SVG container and set the origin.
             var svg = self.graph.append("svg")
