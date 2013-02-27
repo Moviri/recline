@@ -20,13 +20,14 @@ this.recline.View = this.recline.View || {};
         					</select>',
         events:{
             'click .grouped-button':'onButtonsetClicked',
+            'click button.dropdown-toggle' : 'onDropdownClicked' 
         },
         _sourceDataset:null,
         _selectedClassName:"btn-primary", // use bootstrap ready-for-use classes to highlight list item selection (avail classes are success, warning, info & error)
         hasValueChanges: false,
         initialize:function (args) {
             this.el = $(this.el);
-            _.bindAll(this, 'render', 'update', 'onButtonsetClicked', 'getDropdownSelections', 'getRecordByValue', 'handleChangedSelections');
+            _.bindAll(this, 'render', 'update', 'onButtonsetClicked', 'getDropdownSelections', 'getRecordByValue', 'handleChangedSelections', 'onDropdownClicked');
 
             this._sourceDataset = args.sourceDataset;
             this.uid = args.id || Math.floor(Math.random() * 100000); // unique id of the view containing all filters
@@ -282,6 +283,18 @@ this.recline.View = this.recline.View || {};
         	}
         	$target.toggleClass(self._selectedClassName);
         	this.handleChangedSelections();
+        },
+        
+        onDropdownClicked: function(e) {
+        	var self = this;
+        	console.log(">> clicked!!!")
+        	console.log(self.dropdownTimeout)
+			if (self.dropdownTimeout)
+			{
+				clearTimeout(self.dropdownTimeout)
+				delete self.dropdownTimeout
+				self.handleChangedSelections(true)  
+			}
         },
         
         handleChangedSelections:function(deselectExclusiveButton) {
