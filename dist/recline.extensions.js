@@ -11796,7 +11796,7 @@ this.recline.View = this.recline.View || {};
         redraw: function () {
             var self = this;
             var state = self.options.state;
-
+         
             var type;
             if (this.options.resultType) {
                 type = this.options.resultType;
@@ -11808,25 +11808,36 @@ this.recline.View = this.recline.View || {};
             var colorDomain = [Infinity, -Infinity];
 
             var records = _.map(this.options.model.getRecords(type), function (record) {
-                xDomain = [
-                Math.min(xDomain[0], record.attributes[state.xField.field]),
-                Math.max(xDomain[1], record.attributes[state.xField.field])];
-                yDomain = [
-                Math.min(yDomain[0], record.attributes[state.yField.field]),
-                Math.max(yDomain[1], record.attributes[state.yField.field])];
-                sizeDomain = [
-                Math.min(sizeDomain[0], record.attributes[state.sizeField.field]),
-                Math.max(sizeDomain[1], record.attributes[state.sizeField.field])];
-                colorDomain = [
-                Math.min(colorDomain[0], record.attributes[state.colorField.field]),
-                Math.max(colorDomain[1], record.attributes[state.colorField.field])];
+		state.domains = state.domains || {};
+                xDomain = state.domains.xDomain || [
+                    Math.min(xDomain[0], record.attributes[state.xField.field]),
+                    Math.max(xDomain[1], record.attributes[state.xField.field])
+                ];
+                yDomain = state.domains.yDomain || [
+                    Math.min(yDomain[0], record.attributes[state.yField.field]),
+                    Math.max(yDomain[1], record.attributes[state.yField.field])
+                ];
+                sizeDomain = state.domains.sizeDomain || [
+                    Math.min(sizeDomain[0], record.attributes[state.sizeField.field]),
+                    Math.max(sizeDomain[1], record.attributes[state.sizeField.field])
+                ];
+                colorDomain = state.domains.colorDomain || [
+                    Math.min(colorDomain[0], record.attributes[state.colorField.field]),
+                    Math.max(colorDomain[1], record.attributes[state.colorField.field])
+                ];
+
+		
 
                 return {
                     "key": record.attributes[state.keyField.field],
-                    "color": record.attributes[state.colorField.field], //record.attributes[state.colorField.field],
+                    "color": record.attributes[state.colorField.field],//record.attributes[state.colorField.field],
                     "x": record.attributes[state.xField.field],
                     "size": record.attributes[state.sizeField.field],
-                    "y": record.attributes[state.yField.field]
+                    "y": record.attributes[state.yField.field],
+                    "color_formatted": record.getFieldValue(self.model.fields.get(state.colorField.field)),
+                    "x_formatted": record.getFieldValue(self.model.fields.get(state.xField.field)),
+                    "y_formatted": record.getFieldValue(self.model.fields.get(state.yField.field)),
+                    "size_formatted": record.getFieldValue(self.model.fields.get(state.sizeField.field))
                 }
             });
 
@@ -11908,13 +11919,13 @@ this.recline.View = this.recline.View || {};
                 .data(tickValues).enter().append("text")
                 .attr("class", "x label")
                 .attr("text-anchor", "end")
-                .attr("x", function (t, i) {
-                return (state.legend.width / (tickValues.length - 1)) * i + paddingAxis / 2;
-            })
-                .attr("y", state.legend.height / 2)
-                .text(function (t) {
-                return t;
-            });
+                .attr("x", function(t, i){
+                    return ((state.legend.width - paddingAxis) / (tickValues.length - 1)) * i + paddingAxis/2;
+                })
+                .attr("y", state.legend.height/2)
+                .text(function(t){
+                    return t;
+                });
 
 
 
@@ -11996,26 +12007,7 @@ this.recline.View = this.recline.View || {};
             svg.append("g").attr("class", "brush").call(d3.svg.brush().x(self.xScale).y(self.yScale).on("brushstart", self.brushstart).on("brush", self.brush(this)).on("brushend", self.brushend(this)));
 
 
-            var handleMouseover = function (e) {
-            	var mapOffset = $(self.el).position()
-        		var objRect = this.getBoundingClientRect();
-        		var docRect = document.body.getBoundingClientRect()
-                var pos = {left: objRect.left+objRect.width/2, top: objRect.top+objRect.height/2 - docRect.top};
-                
-                var values = { title: e.key, 
-                		dim1Label: self.xAxisTitle, dim1Value: e.x, 
-                		dim2Label: self.yAxisTitle, dim2Value: e.y,
-                		dim3Label: self.colorTitle, dim3Value: e.color,
-                		dim4Label: self.sizeTitle, dim4Value: e.size  }
-                var content = Mustache.render(self.tooltipTemplate, values);
-                var $mapElem = $(self.el)
-                var gravity = (pos.top < $mapElem[0].offsetTop + $mapElem.height()/2 ? 'n' : 's');
-                
-                nv.tooltip.show([pos.left, pos.top], content, gravity, null, $mapElem[0]);
-            };
-            var mouseout = function () {
-            	nv.tooltip.cleanup();
-            }
+
             
             var dot = svg.append("g")
                 .attr("class", "dots")
@@ -12028,14 +12020,14 @@ this.recline.View = this.recline.View || {};
             })
                 .call(position)
                 .sort(order)
-                .on("mouseover", handleMouseover)
-		        .on("mouseout", mouseout);
+                .on("mouseover", self.handleMouseover(self))
+		.on("mouseout", self.mouseout);
 
             // Add a title.
-            dot.append("title")
+            /*dot.append("title")
                 .text(function (d) {                	
                 return key(d);
-            });
+            });*/
 
             // Positions the dots based on data.
             function position(dot) {
@@ -12058,7 +12050,27 @@ this.recline.View = this.recline.View || {};
             self.alreadyDrawed = true;
 
 
-        }
+        },
+        handleMouseover: function(self) { return function (e) {
+            var mapOffset = $(self.el).position()
+            var objRect = this.getBoundingClientRect();
+            var docRect = document.body.getBoundingClientRect()
+            var pos = {left: objRect.left+objRect.width/2, top: objRect.top+objRect.height/2 - docRect.top};
+
+            var values = { title: e.key,
+                dim1Label: self.xAxisTitle, dim1Value: e.x_formatted,
+                dim2Label: self.yAxisTitle, dim2Value: e.y_formatted,
+                dim3Label: self.colorTitle, dim3Value: e.color_formatted,
+                dim4Label: self.sizeTitle, dim4Value: e.size_formatted  }
+            var content = Mustache.render(self.tooltipTemplate, values);
+            var $mapElem = $(self.el)
+            var gravity = (pos.top < $mapElem[0].offsetTop + $mapElem.height()/2 ? 'n' : 's');
+
+            nv.tooltip.show([pos.left, pos.top], content, gravity, null, $mapElem[0]);
+        };},
+     mouseout: function () {
+        nv.tooltip.cleanup();
+    }
 
 
 
@@ -12863,6 +12875,140 @@ this.recline.View = this.recline.View || {};
 
 })(jQuery, recline.View);
 
+this.recline = this.recline || {};
+this.recline.View = this.recline.View || {};
+
+(function ($, view) {
+
+    "use strict";
+
+    view.D3Cloud = Backbone.View.extend({
+        template: '<div id="{{uid}}" style="width: {{width}}px; height: {{height}}px;"></div>',
+
+        initialize: function (options) {
+
+            this.el = $(this.el);
+            _.bindAll(this, 'render', 'redraw');
+
+            this.model.bind('change', this.render);
+            this.model.fields.bind('reset', this.render);
+            this.model.fields.bind('add', this.render);
+
+            this.model.bind('query:done', this.redraw);
+            this.model.queryState.bind('selection:done', this.redraw);
+
+            this.uid = options.id || ("d3_" + new Date().getTime() + Math.floor(Math.random() * 10000)); // generating an unique id for the chart
+
+            this.margin = {top: 19.5, right: 19.5, bottom: 19.5, left: 100.5};
+            this.width = options.width - this.margin.right;
+            this.height = options.height - this.margin.top - this.margin.bottom;
+
+
+            var out = Mustache.render(this.template, this);
+            this.el.html(out);
+        },
+
+        render: function () {
+            var self = this;
+            var graphid = "#" + this.uid;
+
+            if (self.graph)            {
+                jQuery(graphid).empty();
+            }
+
+            self.graph = d3.select(graphid);
+        },
+
+
+        redraw: function () {
+            if(!this.visible)  { return }
+
+            var self = this;
+             var state = self.options.state;
+
+            var type;
+            if (this.options.resultType) {
+                type = this.options.resultType;
+            }
+
+            var records = _.map(this.options.model.getRecords(type), function (record) {
+                return { key: record.attributes[state.wordField], value: record.attributes[state.dimensionField]};
+            });
+
+            self.graph = d3.select("#" + self.uid);
+
+            this.drawD3(records);
+        },
+
+
+
+        drawD3: function (data) {
+
+            var self=this;
+            var state = self.options.state;
+            var fontSize = d3.scale.log().range([10, 100]);
+            var font = "Impact";
+
+            if(state.font)
+                font = "Impact";
+
+            if(state.scale)
+                fontSize = state.scale;
+
+            d3.layout.cloud().size([self.width, self.height])
+                .words(data.map(function(d) {
+                        return {text: d.key, size: d.value};
+                    }))
+                .rotate(function() {
+
+                    var tick =  Math.floor(Math.random() * state.orientations);
+                    var angle = Math.floor(tick*(state.angle_end-state.angle_start)/state.orientations + state.angle_start);
+                    console.log(angle);
+                    return angle;
+                })
+                .font(font)
+                .fontSize(function(d) {
+                    return fontSize(+d.size);
+                })
+                .on("end", self.drawCloud(this))
+                .start();
+
+            self.alreadyDrawed = true;
+
+        },
+
+        drawCloud: function(graph){
+           return  function(words) {
+            var self=graph;
+            var fill = d3.scale.category20();
+            self.graph.append("svg")
+                .attr("width", self.width)
+                .attr("height", self.height)
+                .append("g")
+                .attr("transform", "translate("+self.width/2+","+self.height/2+")")
+                .selectAll("text")
+                .data(words)
+                .enter().append("text")
+                .style("font-size", function(d) { return d.size + "px"; })
+                .style("font-family", "Impact")
+                .style("fill", function(d, i) { return fill(i); })
+                .attr("text-anchor", "middle")
+                .attr("transform", function(d) {
+                    return "translate(" + [d.x, d.y] + ")rotate(" + d.rotate + ")";
+                })
+                .text(function(d) { return d.text; });
+           };
+        }
+
+
+
+
+
+
+    });
+
+
+})(jQuery, recline.View);
 this.recline = this.recline || {};
 this.recline.View = this.recline.View || {};
 

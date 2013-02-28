@@ -102,7 +102,7 @@ this.recline.View = this.recline.View || {};
         redraw: function () {
             var self = this;
             var state = self.options.state;
-
+         
             var type;
             if (this.options.resultType) {
                 type = this.options.resultType;
@@ -114,29 +114,36 @@ this.recline.View = this.recline.View || {};
             var colorDomain = [Infinity, -Infinity];
 
             var records = _.map(this.options.model.getRecords(type), function (record) {
-                xDomain = [
+		state.domains = state.domains || {};
+                xDomain = state.domains.xDomain || [
                     Math.min(xDomain[0], record.attributes[state.xField.field]),
                     Math.max(xDomain[1], record.attributes[state.xField.field])
                 ];
-                yDomain = [
+                yDomain = state.domains.yDomain || [
                     Math.min(yDomain[0], record.attributes[state.yField.field]),
                     Math.max(yDomain[1], record.attributes[state.yField.field])
                 ];
-                sizeDomain = [
+                sizeDomain = state.domains.sizeDomain || [
                     Math.min(sizeDomain[0], record.attributes[state.sizeField.field]),
                     Math.max(sizeDomain[1], record.attributes[state.sizeField.field])
                 ];
-                colorDomain = [
+                colorDomain = state.domains.colorDomain || [
                     Math.min(colorDomain[0], record.attributes[state.colorField.field]),
                     Math.max(colorDomain[1], record.attributes[state.colorField.field])
                 ];
+
+		
 
                 return {
                     "key": record.attributes[state.keyField.field],
                     "color": record.attributes[state.colorField.field],//record.attributes[state.colorField.field],
                     "x": record.attributes[state.xField.field],
                     "size": record.attributes[state.sizeField.field],
-                    "y": record.attributes[state.yField.field]
+                    "y": record.attributes[state.yField.field],
+                    "color_formatted": record.getFieldValue(self.model.fields.get(state.colorField.field)),
+                    "x_formatted": record.getFieldValue(self.model.fields.get(state.xField.field)),
+                    "y_formatted": record.getFieldValue(self.model.fields.get(state.yField.field)),
+                    "size_formatted": record.getFieldValue(self.model.fields.get(state.sizeField.field))
                 }
             });
 
@@ -306,26 +313,7 @@ this.recline.View = this.recline.View || {};
             svg.append("g").attr("class", "brush").call(d3.svg.brush().x(self.xScale).y(self.yScale).on("brushstart", self.brushstart).on("brush", self.brush(this)).on("brushend", self.brushend(this)));
 
 
-            var handleMouseover = function (e) {
-            	var mapOffset = $(self.el).position()
-        		var objRect = this.getBoundingClientRect();
-        		var docRect = document.body.getBoundingClientRect()
-                var pos = {left: objRect.left+objRect.width/2, top: objRect.top+objRect.height/2 - docRect.top};
-                
-                var values = { title: e.key, 
-                		dim1Label: self.xAxisTitle, dim1Value: e.x, 
-                		dim2Label: self.yAxisTitle, dim2Value: e.y,
-                		dim3Label: self.colorTitle, dim3Value: e.color,
-                		dim4Label: self.sizeTitle, dim4Value: e.size  }
-                var content = Mustache.render(self.tooltipTemplate, values);
-                var $mapElem = $(self.el)
-                var gravity = (pos.top < $mapElem[0].offsetTop + $mapElem.height()/2 ? 'n' : 's');
-                
-                nv.tooltip.show([pos.left, pos.top], content, gravity, null, $mapElem[0]);
-            };
-            var mouseout = function () {
-            	nv.tooltip.cleanup();
-            }
+
             
             var dot = svg.append("g")
                 .attr("class", "dots")
@@ -338,14 +326,14 @@ this.recline.View = this.recline.View || {};
             })
                 .call(position)
                 .sort(order)
-                .on("mouseover", handleMouseover)
-		        .on("mouseout", mouseout);
+                .on("mouseover", self.handleMouseover(self))
+		.on("mouseout", self.mouseout);
 
             // Add a title.
-            dot.append("title")
+            /*dot.append("title")
                 .text(function (d) {                	
                 return key(d);
-            });
+            });*/
 
             // Positions the dots based on data.
             function position(dot) {
@@ -368,7 +356,27 @@ this.recline.View = this.recline.View || {};
             self.alreadyDrawed = true;
 
 
-        }
+        },
+        handleMouseover: function(self) { return function (e) {
+            var mapOffset = $(self.el).position()
+            var objRect = this.getBoundingClientRect();
+            var docRect = document.body.getBoundingClientRect()
+            var pos = {left: objRect.left+objRect.width/2, top: objRect.top+objRect.height/2 - docRect.top};
+
+            var values = { title: e.key,
+                dim1Label: self.xAxisTitle, dim1Value: e.x_formatted,
+                dim2Label: self.yAxisTitle, dim2Value: e.y_formatted,
+                dim3Label: self.colorTitle, dim3Value: e.color_formatted,
+                dim4Label: self.sizeTitle, dim4Value: e.size_formatted  }
+            var content = Mustache.render(self.tooltipTemplate, values);
+            var $mapElem = $(self.el)
+            var gravity = (pos.top < $mapElem[0].offsetTop + $mapElem.height()/2 ? 'n' : 's');
+
+            nv.tooltip.show([pos.left, pos.top], content, gravity, null, $mapElem[0]);
+        };},
+     mouseout: function () {
+        nv.tooltip.cleanup();
+    }
 
 
 
