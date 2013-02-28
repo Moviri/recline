@@ -11729,11 +11729,10 @@ this.recline.View = this.recline.View || {};
             };
         },
 
-	xRange: null,
-	yRange: null,
+        xRange: null,
+        yRange: null,
 
         initialize: function (options) {
-
             this.el = $(this.el);
             _.bindAll(this, 'render', 'redraw');
 
@@ -11761,7 +11760,10 @@ this.recline.View = this.recline.View || {};
                 this.legend_height = this.options.state.legend.height;
                 this.legend_width = this.options.state.legend.width;
             }
-
+           
+            if (this.options.state.customTooltipTemplate) {
+            	this.tooltipTemplate = this.options.state.customTooltipTemplate;
+            }
             //render header & svg container
             var out = Mustache.render(this.template, this);
             this.el.html(out);
@@ -11845,7 +11847,9 @@ this.recline.View = this.recline.View || {};
 
             self.xAxisTitle = state.xAxisTitle;
             self.yAxisTitle = state.yAxisTitle;
-
+            self.colorTitle = state.colorField['label'];
+            self.sizeTitle = state.sizeField['label'];
+            
             self.graph = d3.select("#" + self.uid + "_graph");
 
             this.drawD3(records);
@@ -11992,6 +11996,27 @@ this.recline.View = this.recline.View || {};
             svg.append("g").attr("class", "brush").call(d3.svg.brush().x(self.xScale).y(self.yScale).on("brushstart", self.brushstart).on("brush", self.brush(this)).on("brushend", self.brushend(this)));
 
 
+            var handleMouseover = function (e) {
+            	var mapOffset = $(self.el).position()
+        		var objRect = this.getBoundingClientRect();
+        		var docRect = document.body.getBoundingClientRect()
+                var pos = {left: objRect.left+objRect.width/2, top: objRect.top+objRect.height/2 - docRect.top};
+                
+                var values = { title: e.key, 
+                		dim1Label: self.xAxisTitle, dim1Value: e.x, 
+                		dim2Label: self.yAxisTitle, dim2Value: e.y,
+                		dim3Label: self.colorTitle, dim3Value: e.color,
+                		dim4Label: self.sizeTitle, dim4Value: e.size  }
+                var content = Mustache.render(self.tooltipTemplate, values);
+                var $mapElem = $(self.el)
+                var gravity = (pos.top < $mapElem[0].offsetTop + $mapElem.height()/2 ? 'n' : 's');
+                
+                nv.tooltip.show([pos.left, pos.top], content, gravity, null, $mapElem[0]);
+            };
+            var mouseout = function () {
+            	nv.tooltip.cleanup();
+            }
+            
             var dot = svg.append("g")
                 .attr("class", "dots")
                 .selectAll(".dot")
@@ -12002,11 +12027,13 @@ this.recline.View = this.recline.View || {};
                 return self.colorScale(color(d));
             })
                 .call(position)
-                .sort(order);
+                .sort(order)
+                .on("mouseover", handleMouseover)
+		        .on("mouseout", mouseout);
 
             // Add a title.
             dot.append("title")
-                .text(function (d) {
+                .text(function (d) {                	
                 return key(d);
             });
 
