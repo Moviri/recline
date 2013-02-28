@@ -86,7 +86,7 @@ this.recline.View = this.recline.View || {};
 
                     var tick =  Math.floor(Math.random() * state.orientations);
                     var angle = Math.floor(tick*(state.angle_end-state.angle_start)/state.orientations + state.angle_start);
-                    console.log(angle);
+               
                     return angle;
                 })
                 .font(font)
