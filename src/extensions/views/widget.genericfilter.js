@@ -447,13 +447,13 @@ this.recline.View = this.recline.View || {};
       </div> \
 	',
             color_legend:' \
-	<div class="filter-{{type}} filter" style="width:{{totWidth2}}px;max-height:{{totHeight2}}px"> \
-        <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}"> \
+	<div class="filter-{{type}} filter" id="{{ctrlId}}" style="width:{{totWidth2}}px;max-height:{{totHeight2}}px"> \
+        <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
             <legend style="display:{{useLegend}}">{{label}}</legend>  \
 				<div style="float:left;padding-right:10px;height:{{lineHeight}}px;display:{{useLeftLabel}}"> \
 					<label style="line-height:{{lineHeight}}px">{{label}}</label> \
 				</div> \
-            	<div style="width:{{totWidth}}px;height:{{totHeight}}px;display:inline"> \
+            	<div class="data-control-id" style="width:{{totWidth}}px;height:{{totHeight}}px;display:inline" > \
 					<svg height="{{totHeight}}" xmlns="http://www.w3.org/2000/svg"> \
             		<g> \
 					{{#colorValues}} \
@@ -543,9 +543,11 @@ this.recline.View = this.recline.View || {};
             _.bindAll(this, 'updateListbox');
             _.bindAll(this, 'updateListboxStyled');
             _.bindAll(this, 'updateLegend');
+            _.bindAll(this, 'updateColorLegend');
             _.bindAll(this, 'updateMultibutton');
             _.bindAll(this, 'redrawGenericControl');
             _.bindAll(this, 'fixHierarchicRadiobuttonsSelections');
+            _.bindAll(this, 'changeFilterField');
 
             this._sourceDataset = args.sourceDataset;
             this.uid = args.id || Math.floor(Math.random() * 100000); // unique id of the view containing all filters
@@ -670,6 +672,8 @@ this.recline.View = this.recline.View || {};
                             return self.updateListboxStyled($(flt), currActiveFilter, $(currFilterCtrl));
                         case "legend" :
                             return self.updateLegend($(flt), currActiveFilter, $(currFilterCtrl));
+                        case "color_legend" :
+                            return self.updateColorLegend($(flt), currActiveFilter, $(currFilterCtrl));
                         case "multibutton" :
                             return self.updateMultibutton($(flt), currActiveFilter, $(currFilterCtrl));
                     }
@@ -783,6 +787,9 @@ this.recline.View = this.recline.View || {};
             this.redrawGenericControl(filterContainer, currActiveFilter);
         },
         updateLegend:function (filterContainer, currActiveFilter, filterCtrl) {
+            this.redrawGenericControl(filterContainer, currActiveFilter);
+        },
+        updateColorLegend:function (filterContainer, currActiveFilter, filterCtrl) {
             this.redrawGenericControl(filterContainer, currActiveFilter);
         },
         updateMultibutton:function (filterContainer, currActiveFilter, filterCtrl) {
@@ -2132,6 +2139,10 @@ this.recline.View = this.recline.View || {};
                     return this.activeFilters[j];
             }
             return new Object(); // to avoid "undefined" errors
+        },
+        changeFilterField: function(idx, fieldId) {
+            if (this.activeFilters[idx])
+            	this.activeFilters[idx].field = fieldId
         },
         onRemoveFilter:function (e) {
             e.preventDefault();
