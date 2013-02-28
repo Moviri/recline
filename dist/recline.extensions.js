@@ -12930,13 +12930,22 @@ this.recline.View = this.recline.View || {};
             if (this.options.resultType) {
                 type = this.options.resultType;
             }
+	    var domain = [Infinity, -Infinity];
 
             var records = _.map(this.options.model.getRecords(type), function (record) {
+ 		domain = [
+                    Math.min(domain[0], record.attributes[state.dimensionField]),
+                    Math.max(domain[1], record.attributes[state.dimensionField])
+                ];
+
                 return { key: record.attributes[state.wordField], value: record.attributes[state.dimensionField]};
             });
 
-            self.graph = d3.select("#" + self.uid);
-
+		if (domain[0] == domain[1]) {
+			domain = [domain[0] / 2, domain[0] * 2];
+		}
+            	self.graph = d3.select("#" + self.uid);
+		self.domain = domain;
             this.drawD3(records);
         },
 
@@ -12946,7 +12955,8 @@ this.recline.View = this.recline.View || {};
 
             var self=this;
             var state = self.options.state;
-            var fontSize = d3.scale.log().range([10, 100]);
+            var fontSize = d3.scale.log().domain(self.domain).range([20, 100]);
+ 		
             var font = "Impact";
 
             if(state.font)
@@ -12980,8 +12990,8 @@ this.recline.View = this.recline.View || {};
         drawCloud: function(graph){
            return  function(words) {
             var self=graph;
-            //var fill = d3.scale.category20();
-               var fill = d3.scale.log().range(['#DEEBF7', '#3182BD']);
+
+            var fill = d3.scale.log().domain(self.domain).range(['#DEEBF7', '#3182BD']);
             self.graph.append("svg")
                 .attr("width", self.width)
                 .attr("height", self.height)
