@@ -189,7 +189,7 @@ this.recline.View = this.recline.View || {};
                 .attr("class", "x label")
                 .attr("text-anchor", "end")
                 .attr("x", function(t, i){
-                    return (state.legend.width / (tickValues.length - 1)) * i + paddingAxis/2;
+                    return ((state.legend.width - paddingAxis) / (tickValues.length - 1)) * i + paddingAxis/2;
                 })
                 .attr("y", state.legend.height/2)
                 .text(function(t){
