@@ -20,13 +20,14 @@ this.recline.View = this.recline.View || {};
         					</select>',
         events:{
             'click .grouped-button':'onButtonsetClicked',
+            'click button.dropdown-toggle' : 'onDropdownClicked' 
         },
         _sourceDataset:null,
         _selectedClassName:"btn-primary", // use bootstrap ready-for-use classes to highlight list item selection (avail classes are success, warning, info & error)
         hasValueChanges: false,
         initialize:function (args) {
             this.el = $(this.el);
-            _.bindAll(this, 'render', 'update', 'onButtonsetClicked', 'getDropdownSelections', 'getRecordByValue', 'handleChangedSelections');
+            _.bindAll(this, 'render', 'update', 'onButtonsetClicked', 'getDropdownSelections', 'getRecordByValue', 'handleChangedSelections', 'onDropdownClicked');
 
             this._sourceDataset = args.sourceDataset;
             this.uid = args.id || Math.floor(Math.random() * 100000); // unique id of the view containing all filters
@@ -83,6 +84,15 @@ this.recline.View = this.recline.View || {};
         	});
             
             tmplData.buttonsData = _.map(self.buttonsData, function(obj, key){ return obj; }); // transform to array
+            
+            for (var jj in tmplData.buttonsData)
+            	if (tmplData.buttonsData[jj].options)
+        		{
+            		tmplData.buttonsData[jj].options = _.sortBy(tmplData.buttonsData[jj].options, function(opt) { 
+		            	return opt.value 
+		            });
+        		}
+            
             // ensure buttons with multiple options are moved to the end of the control toolbar to safeguard look & feel  
             tmplData.buttonsData = _.sortBy(tmplData.buttonsData, function(obj) { 
             	if (obj.options) 
@@ -155,6 +165,7 @@ this.recline.View = this.recline.View || {};
         	{
             	if (self.buttonsData[key].options)
         		{
+            		
             		var multiselect = $('#dropdown'+this.uid+'_'+k).multiselect({mainValue:key, buttonClass:'btn btn-mini'+(key == firstKey ? ' btn-first' : '')+(key == lastKey ? ' btn-last' : ''), buttonText:buttonText, onChange: onChange});
             		var multiselectContainer = multiselect.data('multiselect').container;
             		$("button", multiselectContainer).parent().on("dropdown-hide", menuHidden);
@@ -272,6 +283,8 @@ this.recline.View = this.recline.View || {};
                 		_.each($select.find("option[selected='selected']"), function(opt) {
                     		$(opt).removeAttr("selected");
                 		})
+                		// erase all options strings left inside main dropdown button
+                		$select.multiselect("rebuild")
                 	});
             	}
                 else
@@ -282,6 +295,16 @@ this.recline.View = this.recline.View || {};
         	}
         	$target.toggleClass(self._selectedClassName);
         	this.handleChangedSelections();
+        },
+        
+        onDropdownClicked: function(e) {
+        	var self = this;
+			if (self.dropdownTimeout)
+			{
+				clearTimeout(self.dropdownTimeout)
+				delete self.dropdownTimeout
+				self.handleChangedSelections(true)  
+			}
         },
         
         handleChangedSelections:function(deselectExclusiveButton) {
