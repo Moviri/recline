@@ -69,15 +69,30 @@ this.recline.View = this.recline.View || {};
 
             var self=this;
             var state = self.options.state;
+            var fontSize = d3.scale.log().range([10, 100]);
+            var font = "Impact";
 
+            if(state.font)
+                font = "Impact";
+
+            if(state.scale)
+                fontSize = state.scale;
 
             d3.layout.cloud().size([self.width, self.height])
                 .words(data.map(function(d) {
                         return {text: d.key, size: d.value};
                     }))
-                .rotate(function() { return ~~(Math.random() * 2) * 90; })
-                .font("Impact")
-                .fontSize(function(d) { return d.size; })
+                .rotate(function() {
+
+                    var tick =  Math.floor(Math.random() * state.orientations);
+                    var angle = Math.floor(tick*(state.angle_end-state.angle_start)/state.orientations + state.angle_start);
+                    console.log(angle);
+                    return angle;
+                })
+                .font(font)
+                .fontSize(function(d) {
+                    return fontSize(+d.size);
+                })
                 .on("end", self.drawCloud(this))
                 .start();
 
@@ -93,7 +108,7 @@ this.recline.View = this.recline.View || {};
                 .attr("width", self.width)
                 .attr("height", self.height)
                 .append("g")
-                .attr("transform", "translate(150,150)")
+                .attr("transform", "translate("+self.width/2+","+self.height/2+")")
                 .selectAll("text")
                 .data(words)
                 .enter().append("text")
