@@ -12991,7 +12991,7 @@ this.recline.View = this.recline.View || {};
            return  function(words) {
             var self=graph;
 
-            var fill = d3.scale.log().domain(self.domain).range(['#DEEBF7', '#3182BD']);
+            var fill = d3.scale.log().range(['#DEEBF7', '#3182BD']);
             self.graph.append("svg")
                 .attr("width", self.width)
                 .attr("height", self.height)
