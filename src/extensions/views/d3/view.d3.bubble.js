@@ -313,7 +313,7 @@ this.recline.View = this.recline.View || {};
             // Add a title.
             dot.append("title")
                 .text(function (d) {
-                return key(d);
+                return key(d) + " " + x(d) + " " + self.xScale(x(d)) + " " + y(d) + " "+ self.yScale(y(d));
             });
 
             // Positions the dots based on data.
