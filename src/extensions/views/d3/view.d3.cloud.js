@@ -103,7 +103,8 @@ this.recline.View = this.recline.View || {};
         drawCloud: function(graph){
            return  function(words) {
             var self=graph;
-            var fill = d3.scale.category20();
+            //var fill = d3.scale.category20();
+               var fill = d3.scale.log().range(['#DEEBF7', '#3182BD']);
             self.graph.append("svg")
                 .attr("width", self.width)
                 .attr("height", self.height)
@@ -114,7 +115,7 @@ this.recline.View = this.recline.View || {};
                 .enter().append("text")
                 .style("font-size", function(d) { return d.size + "px"; })
                 .style("font-family", "Impact")
-                .style("fill", function(d, i) { return fill(i); })
+                .style("fill", function(d, i) { return fill(d.size); })
                 .attr("text-anchor", "middle")
                 .attr("transform", function(d) {
                     return "translate(" + [d.x, d.y] + ")rotate(" + d.rotate + ")";
