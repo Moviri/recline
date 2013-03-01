@@ -11157,6 +11157,7 @@ this.recline.View = this.recline.View || {};
         _sourceDataset:null,
         _selectedClassName:"btn-primary", // use bootstrap ready-for-use classes to highlight list item selection (avail classes are success, warning, info & error)
         hasValueChanges: false,
+        documentClickAssigned: false,
         initialize:function (args) {
             this.el = $(this.el);
             _.bindAll(this, 'render', 'update', 'onButtonsetClicked', 'getDropdownSelections', 'getRecordByValue', 'handleChangedSelections', 'onDropdownClicked');
@@ -11179,7 +11180,6 @@ this.recline.View = this.recline.View || {};
         render:function () {
             var self = this;
             this.el.html("")
-            console.log("Render "+this._sourceDataset.id+" ["+this._sourceDataset.getRecords().length+"]")
             
             var tmplData = {}
             //  Retain user selections
@@ -11264,24 +11264,17 @@ this.recline.View = this.recline.View || {};
 					$('button', multiselectContainer).addClass(self._selectedClassName);
 				else $('button', multiselectContainer).addClass(self._selectedClassName);
 				
-				if (self.dropdownTimeout)
+				if (!self.documentClickAssigned)
 				{
-					clearTimeout(self.dropdownTimeout)
-					delete self.dropdownTimeout
+					$(document).on("click.dropdownbtn", function (e) {
+						if (!$('button', multiselectContainer).parent().hasClass("open")) {
+							self.handleChangedSelections(true) 						
+						}
+					})
+					self.documentClickAssigned = true;
 				}
-				// will force a doAction that forces a redraw that closes the dropdown menu after 2 secs
-				self.dropdownTimeout = setTimeout(function(){ self.handleChangedSelections(true) }, 2000);  
 			}
-			
-			var menuHidden = function(e) {
-				if (self.dropdownTimeout)
-				{
-					clearTimeout(self.dropdownTimeout)
-					delete self.dropdownTimeout
-				}
-        		if (self.hasValueChanges)
-        			self.handleChangedSelections(true);
-			}
+
 			var lastKey;
 			var firstKey = null;
 			for (var key in self.buttonsData) {
@@ -11297,10 +11290,8 @@ this.recline.View = this.recline.View || {};
         	{
             	if (self.buttonsData[key].options)
         		{
-            		
             		var multiselect = $('#dropdown'+this.uid+'_'+k).multiselect({mainValue:key, buttonClass:'btn btn-mini'+(key == firstKey ? ' btn-first' : '')+(key == lastKey ? ' btn-last' : ''), buttonText:buttonText, onChange: onChange});
             		var multiselectContainer = multiselect.data('multiselect').container;
-            		$("button", multiselectContainer).parent().on("dropdown-hide", menuHidden);
     				if (_.find(self.buttonsData[key].options, function(optn) {return optn.selected}))
     					$('button', multiselectContainer).addClass(self._selectedClassName);
             			
@@ -11394,11 +11385,6 @@ this.recline.View = this.recline.View || {};
         onButtonsetClicked:function (e) {
         	var self = this;
             e.preventDefault();
-			if (self.dropdownTimeout)
-			{
-				clearTimeout(self.dropdownTimeout)
-				delete self.dropdownTimeout
-			}
             var $target = $(e.currentTarget);
             if (!$target.hasClass(self._selectedClassName) && self.exclusiveButtonValue)
         	{
@@ -11431,16 +11417,15 @@ this.recline.View = this.recline.View || {};
         
         onDropdownClicked: function(e) {
         	var self = this;
-			if (self.dropdownTimeout)
-			{
-				clearTimeout(self.dropdownTimeout)
-				delete self.dropdownTimeout
-				self.handleChangedSelections(true)  
-			}
         },
         
         handleChangedSelections:function(deselectExclusiveButton) {
-            var self = this;
+        	var self = this;
+			$(document).off("click.dropdownbtn")
+			self.documentClickAssigned = false;
+			// close all open menus
+			$("div.btn-toolbar .btngroup-multiselect.open").removeClass("open")
+			
             if (deselectExclusiveButton)
             	self.el.find("div.btn-toolbar button.grouped-button[val='"+self.exclusiveButtonValue+"']").removeClass(self._selectedClassName)
             			
