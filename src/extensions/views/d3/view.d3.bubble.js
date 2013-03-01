@@ -7,17 +7,20 @@ this.recline.View = this.recline.View || {};
 
 
     view.D3Bubble = Backbone.View.extend({
-        template: '<div id="{{uid}}" style="width: {{width}}px; height: {{height}}px;"><div id="{{uid}}_graph"></div><div id="{{uid}}_graph"></div><div id="{{uid}}_legend"  style="width:{{legend_width}}px;height:{{legend_height}}px"></div></div>',
+        template: '<div id="{{uid}}" style="width: {{width}}px; height: {{height}}px;"><div id="{{uid}}_legend_color"  style="width:{{legend_width}}px;height:{{legend_height}}px"></div><div id="{{uid}}_graph"></div><div id="{{uid}}_graph"></div></div>',
 
         brushstart: function () {
             return []; //svg.classed("selecting", true);
         },
 
         brushend: function (graph) {
-		return function(){
-			graph.trigger('zoom',{xRange: graph.xRange, yRange: graph.yRange});
-           		 return []; //svg.classed("selecting", !d3.event.target.empty());
-		};
+            return function () {
+                graph.trigger('zoom', {
+                    xRange: graph.xRange,
+                    yRange: graph.yRange
+                });
+                return []; //svg.classed("selecting", !d3.event.target.empty());
+            };
         },
 
         brush: function (graph) {
@@ -25,8 +28,8 @@ this.recline.View = this.recline.View || {};
                 var e;
                 e = d3.event.target.extent();
 
-		graph.xRange = [e[0][0], e[1][0]];
-		graph.yRange = [e[0][1], e[1][1]];	
+                graph.xRange = [e[0][0], e[1][0]];
+                graph.yRange = [e[0][1], e[1][1]];
 
                 return [];
                 /*return svg.selectAll("circle").classed("selected", function (d) {
@@ -63,12 +66,13 @@ this.recline.View = this.recline.View || {};
             this.height = options.height - this.margin.top - this.margin.bottom;
 
             if (this.options.state.legend) {
-                this.legend_height = this.options.state.legend.height;
-                this.legend_width = this.options.state.legend.width;
+                this.options.state.legend.margin = this.options.state.legend.margin || [];
+                this.legend_width = this.options.state.legend.width + (this.options.state.legend.margin.right || 0) + (this.options.state.legend.margin.left || this.options.state.legend.margin.right || 0);
+                this.legend_height = this.options.state.legend.height + (this.options.state.legend.margin.top || 0) + (this.options.state.legend.margin.bottom || this.options.state.legend.margin.top || 0);
             }
-           
+
             if (this.options.state.customTooltipTemplate) {
-            	this.tooltipTemplate = this.options.state.customTooltipTemplate;
+                this.tooltipTemplate = this.options.state.customTooltipTemplate;
             }
             //render header & svg container
             var out = Mustache.render(this.template, this);
@@ -78,7 +82,7 @@ this.recline.View = this.recline.View || {};
         render: function () {
             var self = this;
             var graphid = "#" + this.uid + "_graph";
-            var legendid = "#" + this.uid + "_legend";
+            var legendid = "#" + this.uid + "_legend_color";
 
             if (self.graph) {
                 jQuery(graphid).empty();
@@ -90,19 +94,10 @@ this.recline.View = this.recline.View || {};
 
         },
 
-        // OPTIONS
-        //width height
-        // STATE
-        //     xAxisTitle
-        //     yAxisTitle
-        //
-        //      sizeField: xField yField colorField keyField
-        // sizeField: { field,  scale }
-
         redraw: function () {
             var self = this;
             var state = self.options.state;
-         
+
             var type;
             if (this.options.resultType) {
                 type = this.options.resultType;
@@ -114,29 +109,25 @@ this.recline.View = this.recline.View || {};
             var colorDomain = [Infinity, -Infinity];
 
             var records = _.map(this.options.model.getRecords(type), function (record) {
-		state.domains = state.domains || {};
+                state.domains = state.domains || {};
                 xDomain = state.domains.xDomain || [
-                    Math.min(xDomain[0], record.attributes[state.xField.field]),
-                    Math.max(xDomain[1], record.attributes[state.xField.field])
-                ];
+                Math.min(xDomain[0], record.attributes[state.xField.field]),
+                Math.max(xDomain[1], record.attributes[state.xField.field])];
                 yDomain = state.domains.yDomain || [
-                    Math.min(yDomain[0], record.attributes[state.yField.field]),
-                    Math.max(yDomain[1], record.attributes[state.yField.field])
-                ];
+                Math.min(yDomain[0], record.attributes[state.yField.field]),
+                Math.max(yDomain[1], record.attributes[state.yField.field])];
                 sizeDomain = state.domains.sizeDomain || [
-                    Math.min(sizeDomain[0], record.attributes[state.sizeField.field]),
-                    Math.max(sizeDomain[1], record.attributes[state.sizeField.field])
-                ];
+                Math.min(sizeDomain[0], record.attributes[state.sizeField.field]),
+                Math.max(sizeDomain[1], record.attributes[state.sizeField.field])];
                 colorDomain = state.domains.colorDomain || [
-                    Math.min(colorDomain[0], record.attributes[state.colorField.field]),
-                    Math.max(colorDomain[1], record.attributes[state.colorField.field])
-                ];
+                Math.min(colorDomain[0], record.attributes[state.colorField.field]),
+                Math.max(colorDomain[1], record.attributes[state.colorField.field])];
 
-		
+
 
                 return {
                     "key": record.attributes[state.keyField.field],
-                    "color": record.attributes[state.colorField.field],//record.attributes[state.colorField.field],
+                    "color": record.attributes[state.colorField.field], //record.attributes[state.colorField.field],
                     "x": record.attributes[state.xField.field],
                     "size": record.attributes[state.sizeField.field],
                     "y": record.attributes[state.yField.field],
@@ -159,79 +150,70 @@ this.recline.View = this.recline.View || {};
             self.colorScale = state.colorField.scale.domain(colorDomain);
 
             if (state.legend) {
-                self.drawLegend(colorDomain[0], colorDomain[1]);
+                self.drawLegendColor(colorDomain[0], colorDomain[1]);
             }
 
             self.xAxisTitle = state.xAxisTitle;
             self.yAxisTitle = state.yAxisTitle;
             self.colorTitle = state.colorField['label'];
             self.sizeTitle = state.sizeField['label'];
-            
+
             self.graph = d3.select("#" + self.uid + "_graph");
 
             this.drawD3(records);
         },
 
-        drawLegend: function (minData, maxData) {
+        drawLegendColor: function (minData, maxData) {
 
             var self = this;
             var state = self.options.state;
             var paddingAxis = 20;
             var numTick = state.legend.numElements;
 
-            var legendid = "#" + this.uid + "_legend";
-            var legend = d3.select(legendid).append("svg");
+
+            console.log(state.legend.margin);
+
+            var legendid = "#" + this.uid + "_legend_color";
+            var transX = (self.legend_width / 2 - state.legend.width / 2) || 0;
+            var transY = state.legend.margin.top || 0;
+            var legend = d3.select(legendid).append("svg")
+                .attr("width", this.legend_width)
+                .attr("height", this.legend_height);
 
             var data1 = d3.range(numTick);
             var dataSca = [];
 
             var rects = legend.selectAll("rect")
                 .data(data1);
-            var rectWidth = (state.legend.width - paddingAxis * 2 - numTick) / numTick;
+            var rectHeight = (state.legend.height - paddingAxis * 2 - numTick) / numTick;
 
             rects.enter()
                 .append("rect")
                 .attr({
-                width: rectWidth,
-                height: state.legend.height,
-                y: 0,
-                x: function (d, i) {
-                    return 15 + i * (rectWidth + 1);
+                width: state.legend.width,
+                height: rectHeight,
+                y: function (d, i) {
+                    return transY + (15) + i * (rectHeight + 1);
                 },
+                x: transX,
                 fill: function (d, i) {
                     return self.colorScale(d * (maxData - minData) / numTick + minData);
                 }
             });
 
-            /*            var colorScale = d3.scale.linear().domain([minData, maxData]).range([0,state.legend.width-paddingAxis]);
-
- legend.append("g")
- .attr("class", "color axis")
- .attr("transform", "translate(5,0)")
- .call(axis);
-
-            var axis = d3.svg.axis().ticks(2).tickFormat(d3.format("s")).orient("bottom").scale(colorScale);
- */
             var tickValues = _.map([minData, maxData], d3.format("s"));
-
-            /* legend.append("text")
-                .attr("class", "x label")
-                .attr("text-anchor", "end")
-                .attr("x", paddingAxis/2)
-                .attr("y", state.legend.height/2)
-                .text(tickValues[0]);*/
 
             legend.selectAll(".label")
                 .data(tickValues).enter().append("text")
-                .attr("class", "x label")
+                .attr("class", "y label")
                 .attr("text-anchor", "end")
-                .attr("x", function(t, i){
-                    return ((state.legend.width - paddingAxis) / (tickValues.length - 1)) * i + paddingAxis/2;
-                })
-                .attr("y", state.legend.height/2)
-                .text(function(t){
-                    return t;
-                });
+                .attr("y", function (t, i) {
+                return ((state.legend.height - paddingAxis) / (tickValues.length - 1)) * i + paddingAxis / 2;
+            })
+                .attr("x", 15 + transX)
+                .text(function (t) {
+                return t;
+            });
 
 
 
@@ -314,7 +296,7 @@ this.recline.View = this.recline.View || {};
 
 
 
-            
+
             var dot = svg.append("g")
                 .attr("class", "dots")
                 .selectAll(".dot")
@@ -327,7 +309,7 @@ this.recline.View = this.recline.View || {};
                 .call(position)
                 .sort(order)
                 .on("mouseover", self.handleMouseover(self))
-		.on("mouseout", self.mouseout);
+                .on("mouseout", self.mouseout);
 
             // Add a title.
             /*dot.append("title")
@@ -357,26 +339,37 @@ this.recline.View = this.recline.View || {};
 
 
         },
-        handleMouseover: function(self) { return function (e) {
-            var mapOffset = $(self.el).position()
-            var objRect = this.getBoundingClientRect();
-            var docRect = document.body.getBoundingClientRect()
-            var pos = {left: objRect.left+objRect.width/2, top: objRect.top+objRect.height/2 - docRect.top};
+        handleMouseover: function (self) {
+            return function (e) {
+                var mapOffset = $(self.el).position()
+                var objRect = this.getBoundingClientRect();
+                var docRect = document.body.getBoundingClientRect()
+                var pos = {
+                    left: objRect.left + objRect.width / 2,
+                    top: objRect.top + objRect.height / 2 - docRect.top
+                };
 
-            var values = { title: e.key,
-                dim1Label: self.xAxisTitle, dim1Value: e.x_formatted,
-                dim2Label: self.yAxisTitle, dim2Value: e.y_formatted,
-                dim3Label: self.colorTitle, dim3Value: e.color_formatted,
-                dim4Label: self.sizeTitle, dim4Value: e.size_formatted  }
-            var content = Mustache.render(self.tooltipTemplate, values);
-            var $mapElem = $(self.el)
-            var gravity = (pos.top < $mapElem[0].offsetTop + $mapElem.height()/2 ? 'n' : 's');
+                var values = {
+                    title: e.key,
+                    dim1Label: self.xAxisTitle,
+                    dim1Value: e.x_formatted,
+                    dim2Label: self.yAxisTitle,
+                    dim2Value: e.y_formatted,
+                    dim3Label: self.colorTitle,
+                    dim3Value: e.color_formatted,
+                    dim4Label: self.sizeTitle,
+                    dim4Value: e.size_formatted
+                }
+                var content = Mustache.render(self.tooltipTemplate, values);
+                var $mapElem = $(self.el)
+                var gravity = (pos.top < $mapElem[0].offsetTop + $mapElem.height() / 2 ? 'n' : 's');
 
-            nv.tooltip.show([pos.left, pos.top], content, gravity, null, $mapElem[0]);
-        };},
-     mouseout: function () {
-        nv.tooltip.cleanup();
-    }
+                nv.tooltip.show([pos.left, pos.top], content, gravity, null, $mapElem[0]);
+            };
+        },
+        mouseout: function () {
+            nv.tooltip.cleanup();
+        }
 
 
 
