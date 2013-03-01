@@ -7,7 +7,7 @@ this.recline.View = this.recline.View || {};
 
 
     view.D3Bubble = Backbone.View.extend({
-        template: '<div id="{{uid}}" style="width: {{width}}px; height: {{height}}px;"><div id="{{uid}}_legend_color"  style="width:{{legend_width}}px;height:{{legend_height}}px"></div><div id="{{uid}}_graph"></div><div id="{{uid}}_graph"></div></div>',
+        template: '<div id="{{uid}}" style="width: {{width}}px; height: {{height}}px;"><div id="{{uid}}_graph" class="span11"></div><div class="span1"><div id="{{uid}}_legend_color"  style="width:{{color_legend_width}}px;height:{{color_legend_height}}px"></div><div id="{{uid}}_legend_size" style="width:{{size_legend_width}}px;height:{{size_legend_height}}px"></div></div></div>',
 
         brushstart: function () {
             return []; //svg.classed("selecting", true);
@@ -60,15 +60,23 @@ this.recline.View = this.recline.View || {};
                 top: 19.5,
                 right: 19.5,
                 bottom: 19.5,
-                left: 100.5
+                left: 50
             };
-            this.width = options.width - this.margin.right;
+            this.width = (options.width - this.margin.right);
+	    this.bubbleWidth = this.width*0.9;
+	    this.legendWidth = this.width*0.1;
             this.height = options.height - this.margin.top - this.margin.bottom;
 
-            if (this.options.state.legend) {
-                this.options.state.legend.margin = this.options.state.legend.margin || [];
-                this.legend_width = this.options.state.legend.width + (this.options.state.legend.margin.right || 0) + (this.options.state.legend.margin.left || this.options.state.legend.margin.right || 0);
-                this.legend_height = this.options.state.legend.height + (this.options.state.legend.margin.top || 0) + (this.options.state.legend.margin.bottom || this.options.state.legend.margin.top || 0);
+            if (this.options.state.colorLegend) {
+                this.options.state.colorLegend.margin = this.options.state.colorLegend.margin || [];
+                this.color_legend_width = this.options.state.colorLegend.width + (this.options.state.colorLegend.margin.right || 0) + (this.options.state.colorLegend.margin.left || this.options.state.colorLegend.margin.right || 0);
+                this.color_legend_height = this.options.state.colorLegend.height + (this.options.state.colorLegend.margin.top || 0) + (this.options.state.colorLegend.margin.bottom || this.options.state.colorLegend.margin.top || 0);
+            }
+
+            if (this.options.state.sizeLegend) {
+                this.options.state.sizeLegend.margin = this.options.state.sizeLegend.margin || [];
+                this.size_legend_width = this.options.state.sizeLegend.width + (this.options.state.sizeLegend.margin.right || 0) + (this.options.state.sizeLegend.margin.left || this.options.state.sizeLegend.margin.right || 0);
+                this.size_legend_height = this.options.state.sizeLegend.height + (this.options.state.sizeLegend.margin.top || 0) + (this.options.state.sizeLegend.margin.bottom || this.options.state.sizeLegend.margin.top || 0);
             }
 
             if (this.options.state.customTooltipTemplate) {
@@ -82,12 +90,13 @@ this.recline.View = this.recline.View || {};
         render: function () {
             var self = this;
             var graphid = "#" + this.uid + "_graph";
-            var legendid = "#" + this.uid + "_legend_color";
+            var colorLegendId = "#" + this.uid + "_legend_color";
+            var sizeLegendId = "#" + this.uid + "_legend_size";
 
             if (self.graph) {
                 jQuery(graphid).empty();
-                jQuery(legendid).empty();
-
+                jQuery(colorLegendId).empty();
+                jQuery(sizeLegendId).empty();
             }
 
             self.graph = d3.select(graphid);
@@ -144,13 +153,16 @@ this.recline.View = this.recline.View || {};
             if (yDomain[0] == yDomain[1]) yDomain = [yDomain[0] / 2, yDomain[0] * 2];
 
 
-            self.xScale = state.xField.scale.domain(xDomain).range([0, self.width]);
+            self.xScale = state.xField.scale.domain(xDomain).range([0, self.bubbleWidth]);
             self.yScale = state.yField.scale.domain(yDomain).range([self.height, 0]);
             self.sizeScale = state.sizeField.scale.domain(sizeDomain).range([2, 20]);
             self.colorScale = state.colorField.scale.domain(colorDomain);
 
-            if (state.legend) {
+            if (state.colorLegend) {
                 self.drawLegendColor(colorDomain[0], colorDomain[1]);
+            }
+            if (state.sizeLegend) {
+                self.drawLegendSize(sizeDomain[0], sizeDomain[1]);
             }
 
             self.xAxisTitle = state.xAxisTitle;
@@ -163,37 +175,97 @@ this.recline.View = this.recline.View || {};
             this.drawD3(records);
         },
 
+	drawLegendSize: function (minData, maxData) {
+
+            var self = this;
+            var legendOpt = self.options.state.sizeLegend;
+            var legendWidth = self.size_legend_width;
+
+            var paddingAxis = 20;
+            var numTick = legendOpt.numElements;
+
+            var legendid = "#" + this.uid + "_legend_size";
+            var transX = (legendWidth / 2 - legendOpt.width / 2) || 0;
+            var transY = legendOpt.margin.top || 0;
+            var legend = d3.select(legendid).append("svg")
+                .attr("width", this.color_legend_width)
+                .attr("height", this.color_legend_height);
+
+            var data1 = d3.range(numTick);
+            var dataSca = [];
+
+            var circles = legend.selectAll("circle")
+                .data(data1);
+            var rectHeight = (legendOpt.height - paddingAxis * 2 - numTick) / numTick;
+
+//<circle cx="100" cy="50" r="40" stroke="black"
+//  stroke-width="2" fill="red"/>
+
+            circles.enter()
+                .append("circle")
+                .attr({
+                width: legendOpt.width,
+                height: rectHeight,
+                cy: function (d, i) {
+                    return transY + (5) + i * (rectHeight + 1);
+                },
+                cx: legendWidth / 2,
+                r: function (d, i) {
+                    return self.sizeScale(d * (maxData - minData) / numTick + minData);
+                },
+		fill: legendOpt.color,
+		//opacity: "0.7",
+		stroke: "black",
+		"stroke-width": "1px"
+            });
+
+            var tickValues = _.map([minData, maxData], function (a) {
+                return (a > 1000) ? d3.format("s")(Math.round(a)) : d3.format(".2f")(a);
+            });
+
+            legend.selectAll(".label")
+                .data(tickValues).enter().append("text")
+                .attr("class", "y label")
+                .attr("text-anchor", "middle")
+                .attr("y", function (t, i) {
+                return ((legendOpt.height - paddingAxis) / (tickValues.length - 1)) * i + paddingAxis / 2;
+            })
+                .attr("x", transX + legendOpt.width / 2)
+                .text(function (t) {
+                return t;
+            });
+        },
+
         drawLegendColor: function (minData, maxData) {
 
             var self = this;
-            var state = self.options.state;
+            var legendOpt = self.options.state.colorLegend;
+            var legendWidth = self.color_legend_width;
+
             var paddingAxis = 20;
-            var numTick = state.legend.numElements;
-
-
-            console.log(state.legend.margin);
+            var numTick = legendOpt.numElements;
 
             var legendid = "#" + this.uid + "_legend_color";
-            var transX = (self.legend_width / 2 - state.legend.width / 2) || 0;
-            var transY = state.legend.margin.top || 0;
+            var transX = (legendWidth / 2 - legendOpt.width / 2) || 0;
+            var transY = legendOpt.margin.top || 0;
             var legend = d3.select(legendid).append("svg")
-                .attr("width", this.legend_width)
-                .attr("height", this.legend_height);
+                .attr("width", this.color_legend_width)
+                .attr("height", this.color_legend_height);
 
             var data1 = d3.range(numTick);
             var dataSca = [];
 
             var rects = legend.selectAll("rect")
                 .data(data1);
-            var rectHeight = (state.legend.height - paddingAxis * 2 - numTick) / numTick;
+            var rectHeight = (legendOpt.height - paddingAxis * 2 - numTick) / numTick;
 
             rects.enter()
                 .append("rect")
                 .attr({
-                width: state.legend.width,
+                width: legendOpt.width,
                 height: rectHeight,
                 y: function (d, i) {
-                    return transY + (15) + i * (rectHeight + 1);
+                    return transY + (5) + i * (rectHeight + 1);
                 },
                 x: transX,
                 fill: function (d, i) {
@@ -201,22 +273,21 @@ this.recline.View = this.recline.View || {};
                 }
             });
 
-            var tickValues = _.map([minData, maxData], d3.format("s"));
+            var tickValues = _.map([minData, maxData], function (a) {
+                return (a > 1000) ? d3.format("s")(Math.round(a)) : d3.format(".2f")(a);
+            });
 
             legend.selectAll(".label")
                 .data(tickValues).enter().append("text")
                 .attr("class", "y label")
-                .attr("text-anchor", "end")
+                .attr("text-anchor", "middle")
                 .attr("y", function (t, i) {
-                return ((state.legend.height - paddingAxis) / (tickValues.length - 1)) * i + paddingAxis / 2;
+                return ((legendOpt.height - paddingAxis) / (tickValues.length - 1)) * i + paddingAxis / 2;
             })
-                .attr("x", 15 + transX)
+                .attr("x", transX + legendOpt.width / 2)
                 .text(function (t) {
                 return t;
             });
-
-
-
         },
 
         drawD3: function (data) {
@@ -242,14 +313,13 @@ this.recline.View = this.recline.View || {};
                 return d.key;
             }
 
-
             // The x & y axes.
             var xAxis = d3.svg.axis().orient("bottom").scale(self.xScale).tickFormat(d3.format("s")),
                 yAxis = d3.svg.axis().scale(self.yScale).orient("left").tickFormat(d3.format("s"));
 
             // Create the SVG container and set the origin.
             var svg = self.graph.append("svg")
-                .attr("width", self.width + self.margin.left + self.margin.right)
+                .attr("width", (self.bubbleWidth + self.margin.left + self.margin.right))
                 .attr("height", self.height + self.margin.top + self.margin.bottom)
                 .append("g")
                 .attr("transform", "translate(" + self.margin.left + "," + self.margin.top + ")");
@@ -269,7 +339,7 @@ this.recline.View = this.recline.View || {};
             svg.append("text")
                 .attr("class", "x label")
                 .attr("text-anchor", "end")
-                .attr("x", self.width)
+                .attr("x", self.bubbleWidth)
                 .attr("y", self.height - 6)
                 .text(self.xAxisTitle);
 
@@ -293,9 +363,6 @@ this.recline.View = this.recline.View || {};
 
             //Add brush
             svg.append("g").attr("class", "brush").call(d3.svg.brush().x(self.xScale).y(self.yScale).on("brushstart", self.brushstart).on("brush", self.brush(this)).on("brushend", self.brushend(this)));
-
-
-
 
             var dot = svg.append("g")
                 .attr("class", "dots")
