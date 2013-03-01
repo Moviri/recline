@@ -16,7 +16,6 @@ this.recline.Data = this.recline.Data || {};
         initialize: function () {
             var self = this;
 
-
             _.each(self.attributes.models, function (c) {
                 c.ds.queryState.bind("change",
                     function () {
@@ -27,6 +26,8 @@ this.recline.Data = this.recline.Data || {};
                         self.setState(self.attributes.stateName, c.ds.queryState, c.field, self)
                     })
             });
+            if (this.attributes.defaultValue)
+            	this.defaultValue = this.attributes.defaultValue;
 
             var state = my.StateManagement.getState(self.attributes.stateName);
 
@@ -95,8 +96,9 @@ this.recline.Data = this.recline.Data || {};
         var res = $.cookie("recline.extensions.statemanagement." + name);
         if (res)
             return JSON.parse(res);
-
-        return null;
+        else if (this.State.arguments && this.State.arguments.length && this.State.arguments[0].defaultValue)
+        	return this.State.arguments[0].defaultValue;
+        else return null;
     };
 
 

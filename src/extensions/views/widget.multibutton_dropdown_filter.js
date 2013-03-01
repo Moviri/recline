@@ -284,7 +284,7 @@ this.recline.View = this.recline.View || {};
                     		$(opt).removeAttr("selected");
                 		})
                 		// erase all options strings left inside main dropdown button
-                		$select.multiselect("rebuild")
+                		$select.multiselect("refresh")
                 	});
             	}
                 else
