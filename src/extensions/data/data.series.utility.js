@@ -104,7 +104,7 @@ this.recline.Data.SeriesUtility = this.recline.Data.SeriesUtility || {};
                     var y = doc.getFieldValueUnrendered(fieldValue);
                     var y_formatted = doc.getFieldValue(fieldValue);
 
-                    if (y && !isNaN(y)) {
+                    if (y != null && typeof y != "undefined" && !isNaN(y)) {
 
                         var point = {x:x, y:y, record:doc, y_formatted:y_formatted, x_formatted:x_formatted};
                         if (sizeField)
