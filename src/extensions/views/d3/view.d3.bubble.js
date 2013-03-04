@@ -7,7 +7,7 @@ this.recline.View = this.recline.View || {};
 
 
     view.D3Bubble = Backbone.View.extend({
-        template: '<div id="{{uid}}" style="width: {{width}}px; height: {{height}}px;"><div id="{{uid}}_graph" class="span11"></div><div class="span1"><div id="{{uid}}_legend_color"  style="width:{{color_legend_width}}px;height:{{color_legend_height}}px"></div><div id="{{uid}}_legend_size" style="width:{{size_legend_width}}px;height:{{size_legend_height}}px"></div></div></div>',
+        template: '<div id="{{uid}}" style="width: {{width}}px; height: {{height}}px;"><div id="{{uid}}_graph" class="span11"></div><div class="span1" style="padding-left:30px;"><div id="{{uid}}_legend_color"  style="width:{{color_legend_width}}px;height:{{color_legend_height}}px"></div><div id="{{uid}}_legend_size" style="width:{{size_legend_width}}px;height:{{size_legend_height}}px"></div></div></div>',
 
         brushstart: function () {
             return []; //svg.classed("selecting", true);
@@ -180,7 +180,9 @@ this.recline.View = this.recline.View || {};
             var self = this;
             var legendOpt = self.options.state.sizeLegend;
             var legendWidth = self.size_legend_width;
+	    var legendHeight = self.size_legend_height;
 
+	    legendOpt.margin = $.extend({top:0, right:0, bottom:0, left:0},legendOpt.margin);
             var paddingAxis = 20;
             var numTick = legendOpt.numElements;
 
@@ -188,18 +190,24 @@ this.recline.View = this.recline.View || {};
             var transX = (legendWidth / 2 - legendOpt.width / 2) || 0;
             var transY = legendOpt.margin.top || 0;
             var legend = d3.select(legendid).append("svg")
-                .attr("width", this.color_legend_width)
-                .attr("height", this.color_legend_height);
-
+                .attr("width", legendWidth)
+                .attr("height", legendHeight);
+	    
             var data1 = d3.range(numTick);
             var dataSca = [];
 
-            var circles = legend.selectAll("circle")
-                .data(data1);
+
             var rectHeight = (legendOpt.height - paddingAxis * 2 - numTick) / numTick;
 
 //<circle cx="100" cy="50" r="40" stroke="black"
 //  stroke-width="2" fill="red"/>
+
+	    var tickValues = _.map(data1, function(d){
+		return d*(maxData-minData)/(numTick-1) + minData;		
+	    });
+
+            var circles = legend.selectAll("circle")
+                .data(tickValues);
 
             circles.enter()
                 .append("circle")
@@ -207,19 +215,22 @@ this.recline.View = this.recline.View || {};
                 width: legendOpt.width,
                 height: rectHeight,
                 cy: function (d, i) {
-                    return transY + (5) + i * (rectHeight + 1);
+		    var r = self.sizeScale(d);
+		    var max = self.sizeScale(maxData);
+                    return max*2-r+5;
                 },
-                cx: legendWidth / 2,
+                cx: legendOpt.margin.left+self.sizeScale(maxData),
                 r: function (d, i) {
-                    return self.sizeScale(d * (maxData - minData) / numTick + minData);
+                    return self.sizeScale(d);
                 },
-		fill: legendOpt.color,
+		fill: "none",
 		//opacity: "0.7",
 		stroke: "black",
-		"stroke-width": "1px"
+		"stroke-width": "1",
+		"stroke-dasharray": "2,2"
             });
 
-            var tickValues = _.map([minData, maxData], function (a) {
+	    _.map([minData, (maxData-minData)/2, maxData], function (a) {
                 return (a > 1000) ? d3.format("s")(Math.round(a)) : d3.format(".2f")(a);
             });
 
@@ -228,12 +239,14 @@ this.recline.View = this.recline.View || {};
                 .attr("class", "y label")
                 .attr("text-anchor", "middle")
                 .attr("y", function (t, i) {
-                return ((legendOpt.height - paddingAxis) / (tickValues.length - 1)) * i + paddingAxis / 2;
+			var r = self.sizeScale(t);
+	                var max = self.sizeScale(maxData);
+                        return max*2-r*2+10;
             })
-                .attr("x", transX + legendOpt.width / 2)
+                .attr("x", transX + self.sizeScale(maxData)*4)
                 .text(function (t) {
-                return t;
-            });
+                	return (t > 1000) ? d3.format("s")(Math.round(t)) : d3.format(".2f")(t);
+            	});
         },
 
         drawLegendColor: function (minData, maxData) {
@@ -241,16 +254,19 @@ this.recline.View = this.recline.View || {};
             var self = this;
             var legendOpt = self.options.state.colorLegend;
             var legendWidth = self.color_legend_width;
+	    var legendHeight = this.color_legend_height;
+	    legendOpt.margin = $.extend({top:0, right:0, bottom:0, left:0},legendOpt.margin);
 
+	    var rectWidth = 20;//legendOpt.width;
             var paddingAxis = 20;
             var numTick = legendOpt.numElements;
 
             var legendid = "#" + this.uid + "_legend_color";
-            var transX = (legendWidth / 2 - legendOpt.width / 2) || 0;
+            var transX = (legendWidth / 2 - rectWidth / 2) || 0;
             var transY = legendOpt.margin.top || 0;
             var legend = d3.select(legendid).append("svg")
-                .attr("width", this.color_legend_width)
-                .attr("height", this.color_legend_height);
+                .attr("width", legendWidth)
+                .attr("height", legendHeight);
 
             var data1 = d3.range(numTick);
             var dataSca = [];
@@ -262,7 +278,7 @@ this.recline.View = this.recline.View || {};
             rects.enter()
                 .append("rect")
                 .attr({
-                width: legendOpt.width,
+                width: rectWidth,
                 height: rectHeight,
                 y: function (d, i) {
                     return transY + (5) + i * (rectHeight + 1);
@@ -284,7 +300,7 @@ this.recline.View = this.recline.View || {};
                 .attr("y", function (t, i) {
                 return ((legendOpt.height - paddingAxis) / (tickValues.length - 1)) * i + paddingAxis / 2;
             })
-                .attr("x", transX + legendOpt.width / 2)
+                .attr("x", ((legendWidth / 2 - legendOpt.width / 2) || 0) + legendOpt.width / 2)
                 .text(function (t) {
                 return t;
             });
