@@ -164,7 +164,8 @@ this.recline.View = this.recline.View || {};
                     state.opts.interpolation = state.interpolation;
 
                     self.graph = new xChart(state.type, self.series, '#' + self.uid, state.opts);
-
+                    if (state.timing != null && typeof state.timing != "undefined")
+                    	self.graph._options.timing = state.timing;
 
 
                     self.updateOptions();

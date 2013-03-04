@@ -33,6 +33,7 @@ this.recline.View = this.recline.View || {};
 
         render: function () {
             var self = this;
+            self.trigger("chart:startDrawing")
             var graphid = "#" + this.uid;
 
             if (self.graph)            {
@@ -40,6 +41,7 @@ this.recline.View = this.recline.View || {};
             }
 
             self.graph = d3.select(graphid);
+            self.trigger("chart:endDrawing")
         },
 
 
@@ -47,6 +49,7 @@ this.recline.View = this.recline.View || {};
             if(!this.visible)  { return }
 
             var self = this;
+            self.trigger("chart:startDrawing")
              var state = self.options.state;
 
             var type;
@@ -70,6 +73,8 @@ this.recline.View = this.recline.View || {};
             	self.graph = d3.select("#" + self.uid);
 		self.domain = domain;
             this.drawD3(records);
+
+          self.trigger("chart:endDrawing")
         },
 
 
