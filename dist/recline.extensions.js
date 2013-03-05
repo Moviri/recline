@@ -2881,12 +2881,17 @@ this.recline.Data.ColorSchema = this.recline.Data.ColorSchema || {};
 
                     var hop = 0;
                     if (closeU > closeUO) {
-                        hop = 1;
+                    	if(closeUO*2<closeU){
+                    		//reset colors
+                    		uniq_old = [];
+                    	}else{
+                    		hop = 1;
+                    	}
                     }
 
                     empty = (uniq_old.length) ? emptyCache[arrayHash(uniq_old)] : [];
 
-                    if (hop > 0 && uniq_old.length !== 0) {
+                    if (hop == 1 && uniq_old.length !== 0) {
                         //nuove posizioni disponibili
                         //quali? per ora gestisco solo hop=1
                         for (i = 1; i < closeU; i = i + 2) empty.push(i);
@@ -2919,11 +2924,18 @@ this.recline.Data.ColorSchema = this.recline.Data.ColorSchema || {};
                                 i++;
                             } else {
                                 //elemento rimosso
-                                empty.push(j * Math.pow(2, hop));
+                                empty.push(old_poss[uniq_old[j]]);
                                 j++;
                             }
                             controlj = j >= uniq_old.length;
                             controli = i >= uniq.length;
+                        }
+                        
+                        while(!controlj){
+                        	//elemento rimosso
+                        	empty.push(old_poss[uniq_old[j]]);
+                            j++;
+                            controlj = j >= uniq_old.length;
                         }
 
                         i = 0;
@@ -8143,7 +8155,8 @@ this.recline.View = this.recline.View || {};
             this.model.fields.bind('reset', this.render);
             this.model.fields.bind('add', this.render);
 
-            this.model.bind('query:done', this.redraw);
+            //this.model.bind('query:done', this.redraw);
+            this.model.records.bind('reset', this.redraw);
             this.model.queryState.bind('selection:done', this.redraw);
 
             this.uid = options.id || ("d3_" + new Date().getTime() + Math.floor(Math.random() * 10000)); // generating an unique id for the chart
@@ -8272,7 +8285,7 @@ this.recline.View = this.recline.View || {};
             var self = this;
             var state = self.options.state;
             self.updateSeries();
-
+            
 
             if(state.legend)
                 self.createLegend();
@@ -8361,10 +8374,15 @@ this.recline.View = this.recline.View || {};
                 xScale: state.xScale,
                 yScale: state.yScale
             };
-
+            var coloriUsati = []
             _.each( series, function(d) {
                 var serie = {color:d.color, name:d.name, data:_.map(d.data, function(c) { return {x:c.x, y:c.y, x_formatted: c.x_formatted, y_formatted: c.y_formatted} })};
-
+                if (!_.contains(coloriUsati, d.color))
+                	coloriUsati.push(d.color)
+                else
+            	{
+                	console.log(">>>>> Colore gia presente!!!!")
+            	}
                 data.main.push(serie);
             });
 

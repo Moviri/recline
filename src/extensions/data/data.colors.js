@@ -326,12 +326,17 @@ this.recline.Data.ColorSchema = this.recline.Data.ColorSchema || {};
 
                     var hop = 0;
                     if (closeU > closeUO) {
-                        hop = 1;
+                    	if(closeUO*2<closeU){
+                    		//reset colors
+                    		uniq_old = [];
+                    	}else{
+                    		hop = 1;
+                    	}
                     }
 
                     empty = (uniq_old.length) ? emptyCache[arrayHash(uniq_old)] : [];
 
-                    if (hop > 0 && uniq_old.length !== 0) {
+                    if (hop == 1 && uniq_old.length !== 0) {
                         //nuove posizioni disponibili
                         //quali? per ora gestisco solo hop=1
                         for (i = 1; i < closeU; i = i + 2) empty.push(i);
@@ -364,11 +369,18 @@ this.recline.Data.ColorSchema = this.recline.Data.ColorSchema || {};
                                 i++;
                             } else {
                                 //elemento rimosso
-                                empty.push(j * Math.pow(2, hop));
+                                empty.push(old_poss[uniq_old[j]]);
                                 j++;
                             }
                             controlj = j >= uniq_old.length;
                             controli = i >= uniq.length;
+                        }
+                        
+                        while(!controlj){
+                        	//elemento rimosso
+                        	empty.push(old_poss[uniq_old[j]]);
+                            j++;
+                            controlj = j >= uniq_old.length;
                         }
 
                         i = 0;
