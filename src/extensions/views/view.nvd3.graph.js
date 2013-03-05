@@ -188,12 +188,26 @@ this.recline.View = this.recline.View || {};
                     		pos = {top: e.e.pageY, left: e.e.pageX}
                     	else pos = {left: e.pos[0] + +svgElem.offset().left + 50, top: e.pos[1]+svgElem.offset().top}
                     	
-                        var values = { 
-                        				x: self.getFormatter[xfield.get('type')](e.point.x),
-                        				y: e.point.y,
-                        				xLabel: e.series.key,
-                        				yLabel: "" 
-                        			}
+                        var values;
+                    	if (graphType.indexOf("Horizontal") >= 0)
+                		{
+                        	values = { 
+                            		x: e.point.x,
+                            		y: (yfield ? self.getFormatter[yfield.get('type')](e.point.y) : e.point.y), 
+                    				yLabel: e.series.key,
+                    				xLabel: (xfield ? xfield.get("label") : "") 
+                    			}
+                		}
+                    	else
+                		{
+                        	values = { 
+                            		x: (xfield ? self.getFormatter[xfield.get('type')](e.point.x) : e.point.x),
+                            		y: e.point.y,
+                    				xLabel: e.series.key,
+                    				yLabel: (yfield ? yfield.get("label") : "")
+                    			}
+                		}
+                    		
                         var content = Mustache.render(self.options.state.options.customTooltips, values);
 
                         nv.tooltip.show([pos.left+leftOffset, pos.top+topOffset], content, (pos.left < self.el[0].offsetLeft + self.el.width()/2 ? 'w' : 'e'), null, self.el[0]);
@@ -219,7 +233,7 @@ this.recline.View = this.recline.View || {};
                 d3.select('#nvd3chart_' + self.uid + '  svg')
                     .datum(seriesNVD3)
                     .transition()
-                    .duration(500)
+                    .duration(self.state.attributes.options.timing || 500)
                     .call(self.chart);
 
                 nv.utils.windowResize(self.graphResize);
@@ -268,27 +282,45 @@ this.recline.View = this.recline.View || {};
             var xLabel = self.state.get("xLabel");
 
             if (axis == "all" || axis == "x") {
-                var xfield = self.model.fields.get(self.state.attributes.group);
+            	var xAxisFormat = function(str) {return str;}
+            	// axis are switched when using horizontal bar chart
+            	if (self.state.get("graphType").indexOf("Horizontal") < 0)
+        		{
+                    var xfield = self.model.fields.get(self.state.attributes.group);
+            		xAxisFormat = self.getFormatter[xfield.get('type')];
 
-                // set label
-                if (xLabel == null || xLabel == "" || typeof xLabel == 'undefined')
-                    xLabel = xfield.get('label');
+            		if (xLabel == null || xLabel == "" || typeof xLabel == 'undefined')
+                        xLabel = xfield.get('label');
+        		}
+            	else xLabel = self.state.get("yLabel");
 
                 // set data format
                 chart.xAxis
                     .axisLabel(xLabel)
-                    .tickFormat(self.getFormatter[xfield.get('type')]);
+                    .tickFormat(xAxisFormat)
 
-            } else if (axis == "all" || axis == "y") {
+            } 
+            if (axis == "all" || axis == "y") {
                 var yLabel = self.state.get("yLabel");
 
-                if (yLabel == null || yLabel == "" || typeof yLabel == 'undefined')
-                    yLabel = self.state.attributes.seriesValues.join("/");
-
                 // todo yaxis format must be passed as prop
+                var yAxisFormat = function(str) {return str;}
+            	// axis are switched when using horizontal bar chart
+                if (self.state.get("graphType").indexOf("Horizontal") >= 0)
+            	{
+                	var yfield = self.model.fields.get(self.state.attributes.group);            	
+                	yAxisFormat = self.getFormatter[yfield.get('type')]
+            		yLabel = self.state.get("xLabel");
+            	}
+                else
+            	{
+                    if (yLabel == null || yLabel == "" || typeof yLabel == 'undefined')
+                        yLabel = self.state.attributes.seriesValues.join("/");
+            	}
+                	
                 chart.yAxis
                     .axisLabel(yLabel)
-                    .tickFormat(d3.format('s'));
+                    .tickFormat(yAxisFormat);
             }
         },
 
