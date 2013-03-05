@@ -2933,6 +2933,9 @@ this.recline.Data.ColorSchema = this.recline.Data.ColorSchema || {};
                         
                         while(!controlj){
                         	//elemento rimosso
+
+
+
                         	empty.push(old_poss[uniq_old[j]]);
                             j++;
                             controlj = j >= uniq_old.length;
