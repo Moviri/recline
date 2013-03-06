@@ -106,7 +106,7 @@ this.recline.Data.SeriesUtility = this.recline.Data.SeriesUtility || {};
 
                     if (y != null && typeof y != "undefined" && !isNaN(y)) {
 
-                        var point = {x:x, y:y, record:doc, y_formatted:y_formatted, x_formatted:x_formatted};
+                        var point = {x:x, y:y, record:doc, y_formatted:y_formatted, x_formatted:x_formatted, legendField: seriesNameField.attributes.label || seriesNameField.attributes.id, legendValue: key };
                         if (sizeField)
                             point["size"] = doc.getFieldValueUnrendered(sizeField);
                         if (shape != null)

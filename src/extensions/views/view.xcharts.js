@@ -238,7 +238,7 @@ this.recline.View = this.recline.View || {};
                 yScale: state.yScale
             };
             _.each( series, function(d) {
-                var serie = {color:d.color, name:d.name, data:_.map(d.data, function(c) { return {x:c.x, y:c.y, x_formatted: c.x_formatted, y_formatted: c.y_formatted} })};
+                var serie = {color:d.color, name:d.name, data:_.map(d.data, function(c) { return {x:c.x, y:c.y, x_formatted: c.x_formatted, y_formatted: c.y_formatted, legendField: c.legendField, legendValue: c.legendValue } })};
                 data.main.push(serie);
             });
 
