@@ -237,15 +237,8 @@ this.recline.View = this.recline.View || {};
                 xScale: state.xScale,
                 yScale: state.yScale
             };
-            var coloriUsati = []
             _.each( series, function(d) {
                 var serie = {color:d.color, name:d.name, data:_.map(d.data, function(c) { return {x:c.x, y:c.y, x_formatted: c.x_formatted, y_formatted: c.y_formatted} })};
-                if (!_.contains(coloriUsati, d.color))
-                	coloriUsati.push(d.color)
-                else
-            	{
-                	console.log(">>>>> Colore gia presente!!!!")
-            	}
                 data.main.push(serie);
             });
 
