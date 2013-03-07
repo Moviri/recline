@@ -24,7 +24,7 @@ recline.Model.Dataset.prototype = $.extend(recline.Model.Dataset.prototype, {
             super_init.call(this);
             _.bindAll(this, 'applyRendererToFields');
 
-            this.fields.bind('reset', this.applyRendererToFields());
+            this.fields.bind('reset', this.applyRendererToFields);
         };
     }(),
 

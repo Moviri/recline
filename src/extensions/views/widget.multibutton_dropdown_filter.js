@@ -12,7 +12,7 @@ this.recline.View = this.recline.View || {};
         				{{/buttonsData}} \
         			</div> \
         		</div>',
-        buttonTemplate: '<button class="btn btn-mini grouped-button {{selected}}" val="{{value}}">{{value}}</button>',
+        buttonTemplate: '<button class="btn btn-mini grouped-button {{selected}}" val="{{value}}">{{valueLabel}}</button>',
         dropdownTemplate: '<select id="dropdown{{uid}}_{{numId}}" multiple="multiple"> \
         					{{#options}} \
         						<option value="{{fullValue}}" {{#selected}}selected="selected"{{/selected}}>{{value}}</option> \
@@ -69,6 +69,7 @@ this.recline.View = this.recline.View || {};
                 }
 
                 var fullLevelValue = record.getFieldValue(field);
+                var valueUnrendered = record.getFieldValueUnrendered(field);
                 if (self.separator && fullLevelValue.indexOf(self.separator) > 0)
             	{
                 	var levelValues = fullLevelValue.split(self.separator, 2);
@@ -79,7 +80,7 @@ this.recline.View = this.recline.View || {};
             	}
                 else
             	{
-                	self.buttonsData[fullLevelValue] = { value: fullLevelValue, record: record, selected: _.contains(self.sourceField.list, fullLevelValue), self: self }
+                	self.buttonsData[valueUnrendered] = { value: fullLevelValue, valueUnrendered: valueUnrendered, record: record, selected: _.contains(self.sourceField.list, fullLevelValue), self: self }
             	}
         	});
             
@@ -99,7 +100,7 @@ this.recline.View = this.recline.View || {};
             		return 1; 
             	else
         		{
-            		if (self.exclusiveButtonValue && self.exclusiveButtonValue == obj.value) // if ALL button present, put to the extreme left
+            		if (self.exclusiveButtonValue && self.exclusiveButtonValue == obj.valueUnrendered) // if ALL button present, put to the extreme left
             			return -1;
             		else return 0;
         		}
@@ -183,7 +184,8 @@ this.recline.View = this.recline.View || {};
     		}
         	else
     		{
-        		tmplData.value = buttonData.value;
+        		tmplData.value = buttonData.valueUnrendered;
+        		tmplData.valueLabel = buttonData.value;
         		if (buttonData.selected)
         			tmplData.selected = " "+self._selectedClassName+" "; 
         				

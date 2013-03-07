@@ -79,6 +79,7 @@ this.recline.Data.SeriesUtility = this.recline.Data.SeriesUtility || {};
 
                     // key is the field that identiy the value that "build" series
                     var key = doc.getFieldValueUnrendered(seriesNameField);
+                    var keyLabel = doc.getFieldValue(seriesNameField);
                     var tmpS;
 
                     // verify if the serie is already been initialized
@@ -86,7 +87,7 @@ this.recline.Data.SeriesUtility = this.recline.Data.SeriesUtility || {};
                         tmpS = seriesTmp[key]
                     }
                     else {
-                        tmpS = {name:key, data:[], field:fieldValue};
+                        tmpS = {name:key, label: keyLabel, data:[], field:fieldValue};
 
                         var color = doc.getFieldColor(seriesNameField);
 
@@ -106,7 +107,7 @@ this.recline.Data.SeriesUtility = this.recline.Data.SeriesUtility || {};
 
                     if (y != null && typeof y != "undefined" && !isNaN(y)) {
 
-                        var point = {x:x, y:y, record:doc, y_formatted:y_formatted, x_formatted:x_formatted, legendField: seriesNameField.attributes.label || seriesNameField.attributes.id, legendValue: key };
+                        var point = {x:x, y:y, record:doc, y_formatted:y_formatted, x_formatted:x_formatted, legendField: seriesNameField.attributes.label || seriesNameField.attributes.id, legendValue: keyLabel };
                         if (sizeField)
                             point["size"] = doc.getFieldValueUnrendered(sizeField);
                         if (shape != null)

@@ -548,7 +548,7 @@ recline.Model.Query.prototype = $.extend(recline.Model.Query.prototype, {
             super_init.call(this);
             _.bindAll(this, 'applyRendererToFields');
 
-            this.fields.bind('reset', this.applyRendererToFields());
+            this.fields.bind('reset', this.applyRendererToFields);
         };
     }(),
 
@@ -859,7 +859,7 @@ recline.Model.Query.prototype = $.extend(recline.Model.Query.prototype, {
             _.bindAll(this, 'applySelectionOnRecords');
 
             this.queryState.bind('selection:change', this.selection);
-            this.records.bind('reset', this.applySelectionOnRecords());
+            this.records.bind('reset', this.applySelectionOnRecords);
         };
     }(),
     applySelectionOnRecords: function() {
@@ -3489,6 +3489,44 @@ this.recline.Data = this.recline.Data || {};
         return r(val, field, doc);
     };
 
+    my.Formatters.RenderersConvert_ALL_ = function(val, field, doc)   {
+
+    	var stringFormatterFor_ALL_ = function(val, field, doc) {
+    		console.log(">>> My formatter: orig value is "+val)
+    		console.log(doc)
+            var format = field.get('format');
+            if (format === 'markdown') {
+                if (typeof Showdown !== 'undefined') {
+                    var showdown = new Showdown.converter();
+                    out = showdown.makeHtml(val);
+                    return out;
+                } else {
+                    return val;
+                }
+            } else if (format == 'plain') {
+            	if (val)
+            		return val.replace(/\b_ALL_\b/g, "All")
+            	else return val;
+            } else {
+                // as this is the default and default type is string may get things
+                // here that are not actually strings
+                if (val && typeof val === 'string') {
+                    val = val.replace(/(https?:\/\/[^ ]+)/g, '<a href="$1">$1</a>').replace(/\b_ALL_\b/g, "All");
+                }
+                return val
+            }
+        }
+    	
+        var r = my.Formatters.RenderersImpl[field.attributes.type];
+        if(r==null) {
+            throw "No custom renderers defined for field type " + field.attributes.type;
+        }
+        if (field.attributes.type == "string")
+        	r = stringFormatterFor_ALL_;
+
+        return r(val, field, doc);
+    };
+
     // renderers use fieldtype and fieldformat to generate output for getFieldValue
     my.Formatters.RenderersImpl = {
         object: function(val, field, doc) {
@@ -3687,6 +3725,7 @@ this.recline.Data.SeriesUtility = this.recline.Data.SeriesUtility || {};
 
                     // key is the field that identiy the value that "build" series
                     var key = doc.getFieldValueUnrendered(seriesNameField);
+                    var keyLabel = doc.getFieldValue(seriesNameField);
                     var tmpS;
 
                     // verify if the serie is already been initialized
@@ -3694,7 +3733,7 @@ this.recline.Data.SeriesUtility = this.recline.Data.SeriesUtility || {};
                         tmpS = seriesTmp[key]
                     }
                     else {
-                        tmpS = {name:key, data:[], field:fieldValue};
+                        tmpS = {name:key, label: keyLabel, data:[], field:fieldValue};
 
                         var color = doc.getFieldColor(seriesNameField);
 
@@ -3714,7 +3753,7 @@ this.recline.Data.SeriesUtility = this.recline.Data.SeriesUtility || {};
 
                     if (y != null && typeof y != "undefined" && !isNaN(y)) {
 
-                        var point = {x:x, y:y, record:doc, y_formatted:y_formatted, x_formatted:x_formatted, legendField: seriesNameField.attributes.label || seriesNameField.attributes.id, legendValue: key };
+                        var point = {x:x, y:y, record:doc, y_formatted:y_formatted, x_formatted:x_formatted, legendField: seriesNameField.attributes.label || seriesNameField.attributes.id, legendValue: keyLabel };
                         if (sizeField)
                             point["size"] = doc.getFieldValueUnrendered(sizeField);
                         if (shape != null)
@@ -8346,7 +8385,7 @@ this.recline.View = this.recline.View || {};
     					"</style>").appendTo("head");
                 	var legendItem = $('<div class="legend_item"/>');
                 	var name = $("<span/>");
-                	name.html(d.name);
+                	name.html(d.label);
                 	legendItem.append(name);
                 	var value = $('<div class="legend_item_value"/>');
                 	value.addClass("legendcolor"+i);
@@ -8378,7 +8417,7 @@ this.recline.View = this.recline.View || {};
                 yScale: state.yScale
             };
             _.each( series, function(d) {
-                var serie = {color:d.color, name:d.name, data:_.map(d.data, function(c) { return {x:c.x, y:c.y, x_formatted: c.x_formatted, y_formatted: c.y_formatted, legendField: c.legendField, legendValue: c.legendValue } })};
+                var serie = {color:d.color, name:d.name, label: d.label, data:_.map(d.data, function(c) { return {x:c.x, y:c.y, x_formatted: c.x_formatted, y_formatted: c.y_formatted, legendField: c.legendField, legendValue: c.legendValue } })};
                 data.main.push(serie);
             });
 
@@ -11191,7 +11230,7 @@ this.recline.View = this.recline.View || {};
         				{{/buttonsData}} \
         			</div> \
         		</div>',
-        buttonTemplate: '<button class="btn btn-mini grouped-button {{selected}}" val="{{value}}">{{value}}</button>',
+        buttonTemplate: '<button class="btn btn-mini grouped-button {{selected}}" val="{{value}}">{{valueLabel}}</button>',
         dropdownTemplate: '<select id="dropdown{{uid}}_{{numId}}" multiple="multiple"> \
         					{{#options}} \
         						<option value="{{fullValue}}" {{#selected}}selected="selected"{{/selected}}>{{value}}</option> \
@@ -11248,6 +11287,7 @@ this.recline.View = this.recline.View || {};
                 }
 
                 var fullLevelValue = record.getFieldValue(field);
+                var valueUnrendered = record.getFieldValueUnrendered(field);
                 if (self.separator && fullLevelValue.indexOf(self.separator) > 0)
             	{
                 	var levelValues = fullLevelValue.split(self.separator, 2);
@@ -11258,7 +11298,7 @@ this.recline.View = this.recline.View || {};
             	}
                 else
             	{
-                	self.buttonsData[fullLevelValue] = { value: fullLevelValue, record: record, selected: _.contains(self.sourceField.list, fullLevelValue), self: self }
+                	self.buttonsData[valueUnrendered] = { value: fullLevelValue, valueUnrendered: valueUnrendered, record: record, selected: _.contains(self.sourceField.list, fullLevelValue), self: self }
             	}
         	});
             
@@ -11278,7 +11318,7 @@ this.recline.View = this.recline.View || {};
             		return 1; 
             	else
         		{
-            		if (self.exclusiveButtonValue && self.exclusiveButtonValue == obj.value) // if ALL button present, put to the extreme left
+            		if (self.exclusiveButtonValue && self.exclusiveButtonValue == obj.valueUnrendered) // if ALL button present, put to the extreme left
             			return -1;
             		else return 0;
         		}
@@ -11362,7 +11402,8 @@ this.recline.View = this.recline.View || {};
     		}
         	else
     		{
-        		tmplData.value = buttonData.value;
+        		tmplData.value = buttonData.valueUnrendered;
+        		tmplData.valueLabel = buttonData.value;
         		if (buttonData.selected)
         			tmplData.selected = " "+self._selectedClassName+" "; 
         				

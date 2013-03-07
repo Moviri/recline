@@ -21,7 +21,7 @@ recline.Model.Dataset.prototype = $.extend(recline.Model.Dataset.prototype, {
             _.bindAll(this, 'applySelectionOnRecords');
 
             this.queryState.bind('selection:change', this.selection);
-            this.records.bind('reset', this.applySelectionOnRecords());
+            this.records.bind('reset', this.applySelectionOnRecords);
         };
     }(),
     applySelectionOnRecords: function() {

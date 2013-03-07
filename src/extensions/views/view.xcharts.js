@@ -206,7 +206,7 @@ this.recline.View = this.recline.View || {};
     					"</style>").appendTo("head");
                 	var legendItem = $('<div class="legend_item"/>');
                 	var name = $("<span/>");
-                	name.html(d.name);
+                	name.html(d.label);
                 	legendItem.append(name);
                 	var value = $('<div class="legend_item_value"/>');
                 	value.addClass("legendcolor"+i);
@@ -238,7 +238,7 @@ this.recline.View = this.recline.View || {};
                 yScale: state.yScale
             };
             _.each( series, function(d) {
-                var serie = {color:d.color, name:d.name, data:_.map(d.data, function(c) { return {x:c.x, y:c.y, x_formatted: c.x_formatted, y_formatted: c.y_formatted, legendField: c.legendField, legendValue: c.legendValue } })};
+                var serie = {color:d.color, name:d.name, label: d.label, data:_.map(d.data, function(c) { return {x:c.x, y:c.y, x_formatted: c.x_formatted, y_formatted: c.y_formatted, legendField: c.legendField, legendValue: c.legendValue } })};
                 data.main.push(serie);
             });
 

@@ -70,6 +70,44 @@ this.recline.Data = this.recline.Data || {};
         return r(val, field, doc);
     };
 
+    my.Formatters.RenderersConvert_ALL_ = function(val, field, doc)   {
+
+    	var stringFormatterFor_ALL_ = function(val, field, doc) {
+    		console.log(">>> My formatter: orig value is "+val)
+    		console.log(doc)
+            var format = field.get('format');
+            if (format === 'markdown') {
+                if (typeof Showdown !== 'undefined') {
+                    var showdown = new Showdown.converter();
+                    out = showdown.makeHtml(val);
+                    return out;
+                } else {
+                    return val;
+                }
+            } else if (format == 'plain') {
+            	if (val)
+            		return val.replace(/\b_ALL_\b/g, "All")
+            	else return val;
+            } else {
+                // as this is the default and default type is string may get things
+                // here that are not actually strings
+                if (val && typeof val === 'string') {
+                    val = val.replace(/(https?:\/\/[^ ]+)/g, '<a href="$1">$1</a>').replace(/\b_ALL_\b/g, "All");
+                }
+                return val
+            }
+        }
+    	
+        var r = my.Formatters.RenderersImpl[field.attributes.type];
+        if(r==null) {
+            throw "No custom renderers defined for field type " + field.attributes.type;
+        }
+        if (field.attributes.type == "string")
+        	r = stringFormatterFor_ALL_;
+
+        return r(val, field, doc);
+    };
+
     // renderers use fieldtype and fieldformat to generate output for getFieldValue
     my.Formatters.RenderersImpl = {
         object: function(val, field, doc) {
