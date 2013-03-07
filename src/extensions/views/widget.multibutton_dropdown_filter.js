@@ -80,7 +80,7 @@ this.recline.View = this.recline.View || {};
             	}
                 else
             	{
-                	self.buttonsData[valueUnrendered] = { value: fullLevelValue, valueUnrendered: valueUnrendered, record: record, selected: _.contains(self.sourceField.list, fullLevelValue), self: self }
+                	self.buttonsData[valueUnrendered] = { value: fullLevelValue, valueUnrendered: valueUnrendered, record: record, selected: _.contains(self.sourceField.list, valueUnrendered), self: self }
             	}
         	});
             

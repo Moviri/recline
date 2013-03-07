@@ -5174,13 +5174,23 @@ this.recline.View = this.recline.View || {};
                     if (t.count > 0) {
                         var uid = (new Date().getTime() + Math.floor(Math.random() * 10000)); // generating an unique id for the chart
 
+                        // facet has no renderer, so we need to retrieve the first record that matches the value and use its renderer
+                        // This is needed to solve the notorious "All"/"_ALL_" issue
+                        var term_rendered;
+                        if (t.term)
+                    	{
+                        	var validRec = _.find(self.model.getRecords(), function(rec) { return rec.attributes[self.options.groupBy] == t.term })
+                            if (validRec)
+                            	term_rendered = validRec.getFieldValue(field)
+                    	}
+                        	
                         var term_desc;
                         if (self.options.rowTitle)
                             term_desc = self.options.rowTitle(t);
                         else
-                            term_desc = t.term;
+                            term_desc = term_rendered || t.term;
 
-                        var dim = {term: t.term, term_desc: term_desc, id_dimension: uid, shape: t.shape};
+                        var dim = {term: term_rendered || t.term, term_desc: term_desc, id_dimension: uid, shape: t.shape};
 
                         dim["getDimensionIDbyMeasureID"] = function () {
                             return function (measureID) {
@@ -11298,7 +11308,7 @@ this.recline.View = this.recline.View || {};
             	}
                 else
             	{
-                	self.buttonsData[valueUnrendered] = { value: fullLevelValue, valueUnrendered: valueUnrendered, record: record, selected: _.contains(self.sourceField.list, fullLevelValue), self: self }
+                	self.buttonsData[valueUnrendered] = { value: fullLevelValue, valueUnrendered: valueUnrendered, record: record, selected: _.contains(self.sourceField.list, valueUnrendered), self: self }
             	}
         	});
             
