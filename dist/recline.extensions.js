@@ -10167,10 +10167,11 @@ this.recline.View = this.recline.View || {};
                     }
 
                     var v = record.getFieldValue(field);
+                    var vUnrendered = record.getFieldValueUnrendered(field);
                     var shape = record.getFieldShape(field, false, false);
                     fullLevelValues.push(v);
                     if (v.indexOf(currActiveFilter.separator) < 0)
-                    	lev1Values.push({value: v, record: record, shape: shape});
+                    	lev1Values.push({value: v, valueUnrendered: vUnrendered, record: record, shape: shape});
                     else
                 	{
                     	var valueSet = v.split(currActiveFilter.separator);
@@ -10179,7 +10180,7 @@ this.recline.View = this.recline.View || {};
                         	{ /* skip already present */ }
                         else 
                     	{
-                        	lev1Values.push({value: lev1Val, record: null, shape: shape});
+                        	lev1Values.push({value: lev1Val, valueUnrendered: lev1Val, record: null, shape: shape});
                         	if (valueSet.length > totLevels)
                         		totLevels = valueSet.length
                     	}
@@ -10201,10 +10202,10 @@ this.recline.View = this.recline.View || {};
             	_.each(lev1Values, function(lev1Val) {
                     var selected = "";
                     var v = lev1Val.value;
-                    var val = v;
+                    var vUnrendered = lev1Val.valueUnrendered;
                     var record = lev1Val.record;
                     
-                	if (userSelection && userSelection != "" && self.areValuesEqual(userSelection.split(currActiveFilter.separator)[0], v))
+                	if (userSelection && userSelection != "" && self.areValuesEqual(userSelection.split(currActiveFilter.separator)[0], vUnrendered))
                         selected = 'btn-primary'
                         	
                     if (currActiveFilter.useShapeOnly == true)
@@ -10217,7 +10218,7 @@ this.recline.View = this.recline.View || {};
                     	}
                     	else v = "<div class='shapeH'>"+v+"</div>"
                 	}
-                    currActiveFilter.values.push({value: val, val:v, record:record, selected:selected, valCount: v, tooltip: tooltip });
+                    currActiveFilter.values.push({value: vUnrendered, val:v, record:record, selected:selected, valCount: v, tooltip: tooltip });
                 });
             	// handle user selection
             	if (userSelection && userSelection != "")
@@ -10329,6 +10330,19 @@ this.recline.View = this.recline.View || {};
                         var selected = "";
                         var tooltip = "";
                         var v = facetTerms[i].term;
+                        // facet has no renderer, so we need to retrieve the first record that matches the value and use its renderer
+                        // This is needed to solve the notorious "All"/"_ALL_" issue
+                        if (facetTerms[i].term)
+                    	{
+                        	var validRec = _.find(self._sourceDataset.getRecords(), function(rec) { return rec.attributes[currActiveFilter.field] == facetTerms[i].term })
+                            if (validRec)
+                        	{
+                            	var validRecField = validRec.fields.get(currActiveFilter.field)
+                            	if (validRecField)
+                            		v = validRec.getFieldValue(validRecField)
+                        	}
+                    	}
+                        var vUnrendered = facetTerms[i].term;
                         var val = v;
                         var count = facetTerms[i].count
                         if (currActiveFilter.controlType == "list") {
@@ -10338,7 +10352,7 @@ this.recline.View = this.recline.View || {};
                         else if (currActiveFilter.controlType == "radiobuttons") {
                             var classToUse = currActiveFilter.selectedClassName || "btn-primary"
 
-                            if (self.areValuesEqual(currActiveFilter.term, v) || (typeof currActiveFilter.list != "undefined" && currActiveFilter.list && currActiveFilter.list.length == 1 && self.areValuesEqual(currActiveFilter.list[0], v)))
+                            if (self.areValuesEqual(currActiveFilter.term, vUnrendered) || (typeof currActiveFilter.list != "undefined" && currActiveFilter.list && currActiveFilter.list.length == 1 && self.areValuesEqual(currActiveFilter.list[0], vUnrendered)))
                                 selected = classToUse
                             
                             if (currActiveFilter.useShapeOnly == true)
@@ -10352,11 +10366,11 @@ this.recline.View = this.recline.View || {};
                         else if (currActiveFilter.controlType == "multibutton") {
                             var classToUse = currActiveFilter.selectedClassName || "btn-info"
 
-                            if (self.areValuesEqual(currActiveFilter.term, v))
+                            if (self.areValuesEqual(currActiveFilter.term, vUnrendered))
                                 selected = classToUse
                             else if (typeof currActiveFilter.list != "undefined" && currActiveFilter.list != null) {
                                 for (var j in currActiveFilter.list)
-                                    if (self.areValuesEqual(currActiveFilter.list[j], v))
+                                    if (self.areValuesEqual(currActiveFilter.list[j], vUnrendered))
                                         selected = classToUse
                             }
                             if (currActiveFilter.useShapeOnly == true)
@@ -10368,21 +10382,21 @@ this.recline.View = this.recline.View || {};
                             	else v = "<div class='shapeH'>"+v+"</div>"
                         }
                         else if (currActiveFilter.controlType == "dropdown" || currActiveFilter.controlType == "dropdown_styled") {
-                            if (self.areValuesEqual(currActiveFilter.term, v) || (typeof currActiveFilter.list != "undefined" && currActiveFilter.list && currActiveFilter.list.length == 1 && self.areValuesEqual(currActiveFilter.list[0], v)))
+                            if (self.areValuesEqual(currActiveFilter.term, vUnrendered) || (typeof currActiveFilter.list != "undefined" && currActiveFilter.list && currActiveFilter.list.length == 1 && self.areValuesEqual(currActiveFilter.list[0], vUnrendered)))
                                 selected = "selected"
                         }
                         else if (currActiveFilter.controlType == "listbox" || currActiveFilter.controlType == "listbox_styled") {
-                            if (self.areValuesEqual(currActiveFilter.term, v))
+                            if (self.areValuesEqual(currActiveFilter.term, vUnrendered))
                                 selected = "selected"
                             else if (typeof currActiveFilter.list != "undefined" && currActiveFilter.list != null) {
                                 for (var j in currActiveFilter.list)
-                                    if (self.areValuesEqual(currActiveFilter.list[j], v))
+                                    if (self.areValuesEqual(currActiveFilter.list[j], vUnrendered))
                                         selected = "selected"
                             }
                         }
                         if (currActiveFilter.showCount)
-                            currActiveFilter.values.push({value: val, val:v, selected:selected, valCount: v+"\t["+count+"]", count: "["+count+"]", tooltip: tooltip });
-                        else currActiveFilter.values.push({value: val, val:v, selected:selected, valCount: v, tooltip: tooltip });
+                            currActiveFilter.values.push({value: vUnrendered, val:v, selected:selected, valCount: v+"\t["+count+"]", count: "["+count+"]", tooltip: tooltip });
+                        else currActiveFilter.values.push({value: vUnrendered, val:v, selected:selected, valCount: v, tooltip: tooltip });
 
                         if (currActiveFilter.controlType.indexOf('slider') >= 0) {
                             if (v > currActiveFilter.max)
@@ -10410,10 +10424,11 @@ this.recline.View = this.recline.View || {};
                         }
 
                         var v = record.getFieldValue(field);
+                        var vUnrendered = record.getFieldValueUnrendered(field);
                         var val = v;
                         if (currActiveFilter.controlType == "radiobuttons") {
                         	var classToUse = currActiveFilter.selectedClassName || "btn-primary"
-                            if (self.areValuesEqual(currActiveFilter.term, v) || (typeof currActiveFilter.list != "undefined" && currActiveFilter.list && currActiveFilter.list.length == 1 && self.areValuesEqual(currActiveFilter.list[0], v)))
+                            if (self.areValuesEqual(currActiveFilter.term, vUnrendered) || (typeof currActiveFilter.list != "undefined" && currActiveFilter.list && currActiveFilter.list.length == 1 && self.areValuesEqual(currActiveFilter.list[0], vUnrendered)))
                                 selected = classToUse
                                 	
                             if (currActiveFilter.useShapeOnly == true)
@@ -10429,11 +10444,11 @@ this.recline.View = this.recline.View || {};
                         }
                         else if (currActiveFilter.controlType == "multibutton") {
                         	var classToUse = currActiveFilter.selectedClassName || "btn-info"
-                            if (self.areValuesEqual(currActiveFilter.term, v))
+                            if (self.areValuesEqual(currActiveFilter.term, vUnrendered))
                                 selected = classToUse
                             else if (typeof currActiveFilter.list != "undefined" && currActiveFilter.list != null) {
                                 for (var j in currActiveFilter.list)
-                                    if (self.areValuesEqual(currActiveFilter.list[j], v))
+                                    if (self.areValuesEqual(currActiveFilter.list[j], vUnrendered))
                                         selected = classToUse
                             }
                             if (currActiveFilter.useShapeOnly == true)
@@ -10448,19 +10463,19 @@ this.recline.View = this.recline.View || {};
                         	}
                         }
                         else if (currActiveFilter.controlType == "dropdown" || currActiveFilter.controlType == "dropdown_styled") {
-                            if (self.areValuesEqual(currActiveFilter.term, v) || (typeof currActiveFilter.list != "undefined" && currActiveFilter.list && currActiveFilter.list.length == 1 && self.areValuesEqual(currActiveFilter.list[0], v)))
+                            if (self.areValuesEqual(currActiveFilter.term, vUnrendered) || (typeof currActiveFilter.list != "undefined" && currActiveFilter.list && currActiveFilter.list.length == 1 && self.areValuesEqual(currActiveFilter.list[0], vUnrendered)))
                                 selected = "selected"
                         }
                         else if (currActiveFilter.controlType == "listbox" || currActiveFilter.controlType == "listbox_styled") {
-                            if (self.areValuesEqual(currActiveFilter.term, v))
+                            if (self.areValuesEqual(currActiveFilter.term, vUnrendered))
                                 selected = "selected"
                             else if (typeof currActiveFilter.list != "undefined" && currActiveFilter.list != null) {
                                 for (var j in currActiveFilter.list)
-                                    if (self.areValuesEqual(currActiveFilter.list[j], v))
+                                    if (self.areValuesEqual(currActiveFilter.list[j], vUnrendered))
                                         selected = "selected"
                             }
                         }
-                        currActiveFilter.values.push({value: val, val:v, record:record, selected:selected, valCount: v, tooltip: tooltip });
+                        currActiveFilter.values.push({value: vUnrendered, val:v, record:record, selected:selected, valCount: v, tooltip: tooltip });
 
                         if (currActiveFilter.controlType.indexOf('slider') >= 0) {
                             if (v > currActiveFilter.max)
