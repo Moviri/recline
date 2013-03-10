@@ -6,7 +6,7 @@ this.recline.Backend.JsonpMemoryStore = this.recline.Backend.JsonpMemoryStore ||
     my.__type__ = 'JsonpMemoryStore';
     // Timeout for request (after this time if no response we error)
     // Needed because use JSONP so do not receive e.g. 500 errors
-    my.timeout = 30000;
+    my.timeout = 60000;
 
     // ## load
     //
