@@ -73,8 +73,8 @@ this.recline.Data = this.recline.Data || {};
     my.Formatters.RenderersConvert_ALL_ = function(val, field, doc)   {
 
     	var stringFormatterFor_ALL_ = function(val, field, doc) {
-    		console.log(">>> My formatter: orig value is "+val)
-    		console.log(doc)
+    		//console.log(">>> My formatter: orig value is "+val)
+    		//console.log(doc)
             var format = field.get('format');
             if (format === 'markdown') {
                 if (typeof Showdown !== 'undefined') {
