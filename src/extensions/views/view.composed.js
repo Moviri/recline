@@ -200,7 +200,7 @@ this.recline.View = this.recline.View || {};
                         else
                             term_desc = term_rendered || t.term;
 
-                        var dim = {term: term_rendered || t.term, term_desc: term_desc, id_dimension: uid, shape: t.shape};
+                        var dim = {term: t.term, term_desc: term_desc, id_dimension: uid, shape: t.shape};
 
                         dim["getDimensionIDbyMeasureID"] = function () {
                             return function (measureID) {
