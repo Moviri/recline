@@ -9736,7 +9736,7 @@ this.recline.View = this.recline.View || {};
 
             if (valueList != null && valueList.length == 1) {
                 filterCtrl[0].style.color = "";
-                filterCtrl.val(currActiveFilter.list[0]);
+                filterCtrl.val(valueList[0]);
             }
             else
                 filterCtrl.find("option:first").prop("selected", "selected");
