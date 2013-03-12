@@ -98,8 +98,16 @@ this.recline.Data.ColorSchema = this.recline.Data.ColorSchema || {};
 
             self.bindToVariationDataset();
         },
+        
+        generateFromExternalDataset: function(ds) {
+//        	console.log('color generateFromExternalDataset');
+        	 var self = this;
+             var data = this.getRecordsArray(ds);
+             self._generateLimits(data);	
+        },
 
         _generateFromDataset: function () {
+//        	console.log('color generateFromDataset');
             var self = this;
             var data = this.getRecordsArray(self.attributes.dataset);
             self._generateLimits(data);
@@ -122,12 +130,14 @@ this.recline.Data.ColorSchema = this.recline.Data.ColorSchema || {};
                     });
                     break;
                 case "scaleWithDistinctData":
+                	console.log('scaleWithDistinctData');
                     self.schema = new chroma.ColorScale({
                         colors: this.attributes.colors,
                         limits: [0, 1]
                     });
                     self.limitsMapping = this.limits["distinct"](data, self.oldLimitData);
                     self.oldLimitData =  data;
+                    console.log(self);
                     break;
                 case "fixedLimits":
                     self.schema = new chroma.ColorScale({
@@ -296,6 +306,7 @@ this.recline.Data.ColorSchema = this.recline.Data.ColorSchema || {};
 
                 var arrayCache = {};
                 var emptyCache = {};
+                var sizeCache = {};
 
                 return function (data, data_old) {
 
@@ -320,10 +331,13 @@ this.recline.Data.ColorSchema = this.recline.Data.ColorSchema || {};
 
                     var uniq = _.uniq(data, true);
                     var uniq_old = _.uniq(data_old, true);
-
-                    var closeUO = closestSize(uniq_old.length);
+//                    console.log('unique');
+//                    console.log(uniq);
+//                    console.log('unique_old');
+//                    console.log(uniq_old);
+                    var closeUO = sizeCache[arrayHash(uniq_old)] || closestSize(uniq_old.length);                    
                     var closeU = Math.max(closestSize(uniq.length), closeUO);
-
+                    
                     var hop = 0;
                     if (closeU > closeUO) {
                     	if(closeUO*2<closeU){
@@ -421,7 +435,9 @@ this.recline.Data.ColorSchema = this.recline.Data.ColorSchema || {};
 
                     arrayCache[arrayHash(uniq)] = poss;
                     emptyCache[arrayHash(uniq)] = empty;
-
+                    sizeCache[arrayHash(uniq)] = closeU;
+//                    console.log('data colors returning: ');
+//                    console.log(obj);
                     return obj;
                 };
             }()

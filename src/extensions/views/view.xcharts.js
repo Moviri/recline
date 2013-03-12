@@ -38,7 +38,7 @@ this.recline.View = this.recline.View || {};
         },
 
         render:function (width) {
-//            console.log("View.xCharts: render");
+            console.log("View.xCharts: render");
             if (!isNaN(width)){
         		this.width = width;	
         	}
@@ -66,7 +66,7 @@ this.recline.View = this.recline.View || {};
             var self = this;
             self.trigger("chart:startDrawing")
 
-            //console.log("View.xCharts: redraw");
+            console.log("View.xCharts: redraw");
 
             if (false /*self.graph*/)
                 self.updateGraph();
@@ -194,8 +194,23 @@ this.recline.View = this.recline.View || {};
             var self=this;
             var res = $("<div/>");
             var i =0;
+            
+            
+    		$("<script>" +
+				"function changeSeriesVisibility(i){"+
+	            	"var isVisible = $('g .color'+i).attr('display');"+
+	            	" if (isVisible === 'none') {isVisible = false;} else {isVisible = true;}"+
+	            	"if (isVisible){"+
+	            	"	$('g .color'+i).attr('display', 'none');"+
+	            	"	$('.legend_item_value.legendcolor'+i).addClass('noFillLegendBullet');"+
+	            	"} else {"+
+	            		"$('g .color'+i).attr('display', 'inline');"+
+	            		"$('.legend_item_value.legendcolor'+i).removeClass('noFillLegendBullet');"+
+	            	"}"+
+	            "}"+
+           	"</script>").appendTo("head");		
             _.each(self.series.main, function(d) {
-            	
+            	console.log(d);
             	if (d.color){
                 	$("<style type='text/css'> " +
                 			".color"+i+"{ color:rgb("+d.color.rgb+");} " +
@@ -204,7 +219,7 @@ this.recline.View = this.recline.View || {};
         					".xchart .color"+i+" .line { stroke:rgb("+d.color.rgb+");} " +    
         					".xchart .color"+i+" rect, .xchart .color"+i+" circle { fill:rgb("+d.color.rgb+");} " +
     					"</style>").appendTo("head");
-                	var legendItem = $('<div class="legend_item"/>');
+                	var legendItem = $('<div class="legend_item" onClick="changeSeriesVisibility('+i+')"/>');
                 	var name = $("<span/>");
                 	name.html(d.label);
                 	legendItem.append(name);

@@ -546,7 +546,7 @@ var emptyData = [[]],
     empty: function (self, selector, d) {},
     notempty: function (self, selector) {},
 
-    timing: 750,
+    timing: 0,
 
     // Line interpolation
     interpolation: 'monotone'
@@ -889,7 +889,7 @@ _.defaults(xChart.prototype, {
       .scale(self.xScale)
       .ticks(xTicks)
       //.tickSize(-self._height)
-      .tickSize(-10)
+      .tickSize(-5)
       .tickFormat(o.tickFormatX)
       .orient('bottom');
 

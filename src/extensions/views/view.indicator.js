@@ -81,7 +81,7 @@ this.recline.View = this.recline.View || {};
                 <tr class="shaperow"> \
 	   				<td><div class="shape">{{{shape}}}</div> \
 	   				<div class="compareshape">{{{compareShape}}}</div> \
-	   				</td><td class="value-cell"><div class="kpi_value">{{value}}</div></td>\
+	   				</td><td class="value-cell"><div class="kpi_value">{{{value}}}</div></td>\
 	   				<td class="aftershape">{{{afterShape}}}</td> \
 	   			</tr> \
              </table>  \
@@ -99,7 +99,7 @@ this.recline.View = this.recline.View || {};
 						{{#shape}} \
     	                <div class="shape" style="float:left">{{{shape}}}</div> \
     					{{/shape}} \
-        				<div class="value-cell" style="float:left"><div class="kpi_value">{{value}}</div></div> \
+        				<div class="value-cell" style="float:left"><div class="kpi_value">{{{value}}}</div></div> \
     					<div class="aftershape" style="float:left">{{{afterShape}}}</div> \
     				</div> \
                     <div class="title">&nbsp;&nbsp;{{{label}}}</div>\
@@ -112,7 +112,7 @@ this.recline.View = this.recline.View || {};
     			<div class="title">{{{label}}}</div>\
         		<div id="indicator_{{viewId}}" class="indicator-container"> \
 			    	<div class="round-border" style="float:left;margin:2px 2px 0px 2px"> \
-    				<div class="value-cell" style="float:left">{{value}}</div> \
+    				<div class="value-cell" style="float:left">{{{value}}}</div> \
 					{{#compareShape}} \
 					<div class="compareshape" style="float:left">{{{compareShape}}}</div> \
 					{{/compareShape}} \
@@ -134,10 +134,10 @@ this.recline.View = this.recline.View || {};
 						<div class="shape">{{{shape}}}</div> \
 						<span class="value-cell"> \
 							<div style="white-space: nowrap;"> \
-								<div class="kpi_value">{{value}}</div> \
+								<div class="kpi_value">{{{value}}}</div> \
 								<div class="kpi_compare_shape_container"> \
 									<div class="kpi_compare_shape_shape" >{{{compareShape}}}</div> \
-									<div class="kpi_compare_shape_msg">{{percentageMsg}}{{compareValue}}</div>\
+									<div class="kpi_compare_shape_msg">{{{percentageMsg}}}{{{compareValue}}}</div>\
 								</div> \
 							</div> </span> \
 					</div>  \

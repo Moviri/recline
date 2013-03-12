@@ -2665,8 +2665,16 @@ this.recline.Data.ColorSchema = this.recline.Data.ColorSchema || {};
 
             self.bindToVariationDataset();
         },
+        
+        generateFromExternalDataset: function(ds) {
+//        	console.log('color generateFromExternalDataset');
+        	 var self = this;
+             var data = this.getRecordsArray(ds);
+             self._generateLimits(data);	
+        },
 
         _generateFromDataset: function () {
+//        	console.log('color generateFromDataset');
             var self = this;
             var data = this.getRecordsArray(self.attributes.dataset);
             self._generateLimits(data);
@@ -2689,12 +2697,14 @@ this.recline.Data.ColorSchema = this.recline.Data.ColorSchema || {};
                     });
                     break;
                 case "scaleWithDistinctData":
+                	console.log('scaleWithDistinctData');
                     self.schema = new chroma.ColorScale({
                         colors: this.attributes.colors,
                         limits: [0, 1]
                     });
                     self.limitsMapping = this.limits["distinct"](data, self.oldLimitData);
                     self.oldLimitData =  data;
+                    console.log(self);
                     break;
                 case "fixedLimits":
                     self.schema = new chroma.ColorScale({
@@ -2863,6 +2873,7 @@ this.recline.Data.ColorSchema = this.recline.Data.ColorSchema || {};
 
                 var arrayCache = {};
                 var emptyCache = {};
+                var sizeCache = {};
 
                 return function (data, data_old) {
 
@@ -2887,10 +2898,13 @@ this.recline.Data.ColorSchema = this.recline.Data.ColorSchema || {};
 
                     var uniq = _.uniq(data, true);
                     var uniq_old = _.uniq(data_old, true);
-
-                    var closeUO = closestSize(uniq_old.length);
+//                    console.log('unique');
+//                    console.log(uniq);
+//                    console.log('unique_old');
+//                    console.log(uniq_old);
+                    var closeUO = sizeCache[arrayHash(uniq_old)] || closestSize(uniq_old.length);                    
                     var closeU = Math.max(closestSize(uniq.length), closeUO);
-
+                    
                     var hop = 0;
                     if (closeU > closeUO) {
                     	if(closeUO*2<closeU){
@@ -2988,7 +3002,9 @@ this.recline.Data.ColorSchema = this.recline.Data.ColorSchema || {};
 
                     arrayCache[arrayHash(uniq)] = poss;
                     emptyCache[arrayHash(uniq)] = empty;
-
+                    sizeCache[arrayHash(uniq)] = closeU;
+//                    console.log('data colors returning: ');
+//                    console.log(obj);
                     return obj;
                 };
             }()
@@ -3548,9 +3564,9 @@ this.recline.Data = this.recline.Data || {};
             var format = field.get('format');
             if(format === "currency_euro") {
                // return "€ " + val;
-            	return accounting.formatMoney(val, { symbol: "€",  format: "%v %s", decimal : ".", thousand: " ", precision : 0 }); // �4,999.99
+            	return accounting.formatMoney(val, { symbol: "€",  format: "%v %s", decimal : ".", thousand: ",", precision : 0 }); // �4,999.99
             }           
-            return accounting.formatNumber(val, 0, " ");
+            return accounting.formatNumber(val, 0, ",");
         },
         date: function(val, field, doc) {
             var format = field.get('format');
@@ -3570,15 +3586,21 @@ this.recline.Data = this.recline.Data || {};
             
             if (format === 'percentage') {
                 try {
-                    return accounting.formatNumber(val, 2, " ", ".") + '%';
+                    return accounting.formatNumber(val, 2, ",", ".") + '<small class="muted">%</small>';
                 } catch(err) {
                     return "-";
                 }
 
-
+                
+            } else if(format === "percentage_0to1") {
+            	 try {
+                     return accounting.formatNumber(val*100, 2, ",", ".") + '<small class="muted">%</small>';
+                 } catch(err) {
+                     return "-";
+                 }
             } else if(format === "currency_euro") {
                 try {
-                    return accounting.formatMoney(val, { symbol: "€",  format: "%v %s", decimal : ".", thousand: " ", precision : 0 }); // �4,999.99
+                    return accounting.formatMoney(val, { symbol: "",  format: "%v %s", decimal : ".", thousand: ",", precision : 0 }) + '<small class="muted">€</small>'; 
                  
                      
             		
@@ -3588,24 +3610,33 @@ this.recline.Data = this.recline.Data || {};
                 }
             } else if(format === "currency_euro_decimal") {
                 try {
-                	return accounting.formatMoney(val, { symbol: "€",  format: "%v %s", decimal : ".", thousand: " ", precision : 2 }); // �4,999.99
+                	return accounting.formatMoney(val, { symbol: "",  format: "%v %s", decimal : ".", thousand: ",", precision : 2 }) + '<small class="muted">€</small>';
                     
                     // return "€ " + parseFloat(val.toFixed(2));
                 } catch(err) {
                     return "-";
                 }
-            }           
-            
-            else if(format === "integer") {
+            }   else if (format === 'time') {
+            	var sec_numb    = parseInt(val);
+                var hours   = Math.floor(sec_numb / 3600);
+                var minutes = Math.floor((sec_numb - (hours * 3600)) / 60);
+                var seconds = sec_numb - (hours * 3600) - (minutes * 60);
+                if (hours   < 10) {hours   = "0"+hours;}
+                if (minutes < 10) {minutes = "0"+minutes;}
+                if (seconds < 10) {seconds = "0"+seconds;}
+                var time    = hours+':'+minutes+':'+seconds;
+                return time;
+               
+            }  else if(format === "integer") {
                 try {
-                	return accounting.formatNumber(val, 0, " ", ".");
+                	return accounting.formatNumber(val, 0, ",", ".");
                 } catch(err) {
                     return "-";
                 }
             }
 
             try {
-            	return accounting.formatNumber(val, 2, " ", ".");
+            	return accounting.formatNumber(val, 2, ",", ".");
                 // return parseFloat(val.toFixed(2));
             }
             catch(err) {
@@ -3627,6 +3658,16 @@ this.recline.Data = this.recline.Data || {};
                 }
             } else if (format == 'plain') {
                 return val;
+            } else if (format === 'time') {
+            	var sec_numb    = parseInt(val);
+                var hours   = Math.floor(sec_numb / 3600);
+                var minutes = Math.floor((sec_numb - (hours * 3600)) / 60);
+                var seconds = sec_numb - (hours * 3600) - (minutes * 60);
+                if (hours   < 10) {hours   = "0"+hours;}
+                if (minutes < 10) {minutes = "0"+minutes;}
+                if (seconds < 10) {seconds = "0"+seconds;}
+                var time    = hours+':'+minutes+':'+seconds;
+                return time;
             } else {
                 // as this is the default and default type is string may get things
                 // here that are not actually strings
@@ -5536,7 +5577,7 @@ this.recline.View = this.recline.View || {};
                 <tr class="shaperow"> \
 	   				<td><div class="shape">{{{shape}}}</div> \
 	   				<div class="compareshape">{{{compareShape}}}</div> \
-	   				</td><td class="value-cell"><div class="kpi_value">{{value}}</div></td>\
+	   				</td><td class="value-cell"><div class="kpi_value">{{{value}}}</div></td>\
 	   				<td class="aftershape">{{{afterShape}}}</td> \
 	   			</tr> \
              </table>  \
@@ -5554,7 +5595,7 @@ this.recline.View = this.recline.View || {};
 						{{#shape}} \
     	                <div class="shape" style="float:left">{{{shape}}}</div> \
     					{{/shape}} \
-        				<div class="value-cell" style="float:left"><div class="kpi_value">{{value}}</div></div> \
+        				<div class="value-cell" style="float:left"><div class="kpi_value">{{{value}}}</div></div> \
     					<div class="aftershape" style="float:left">{{{afterShape}}}</div> \
     				</div> \
                     <div class="title">&nbsp;&nbsp;{{{label}}}</div>\
@@ -5567,7 +5608,7 @@ this.recline.View = this.recline.View || {};
     			<div class="title">{{{label}}}</div>\
         		<div id="indicator_{{viewId}}" class="indicator-container"> \
 			    	<div class="round-border" style="float:left;margin:2px 2px 0px 2px"> \
-    				<div class="value-cell" style="float:left">{{value}}</div> \
+    				<div class="value-cell" style="float:left">{{{value}}}</div> \
 					{{#compareShape}} \
 					<div class="compareshape" style="float:left">{{{compareShape}}}</div> \
 					{{/compareShape}} \
@@ -5589,10 +5630,10 @@ this.recline.View = this.recline.View || {};
 						<div class="shape">{{{shape}}}</div> \
 						<span class="value-cell"> \
 							<div style="white-space: nowrap;"> \
-								<div class="kpi_value">{{value}}</div> \
+								<div class="kpi_value">{{{value}}}</div> \
 								<div class="kpi_compare_shape_container"> \
 									<div class="kpi_compare_shape_shape" >{{{compareShape}}}</div> \
-									<div class="kpi_compare_shape_msg">{{percentageMsg}}{{compareValue}}</div>\
+									<div class="kpi_compare_shape_msg">{{{percentageMsg}}}{{{compareValue}}}</div>\
 								</div> \
 							</div> </span> \
 					</div>  \
@@ -8246,7 +8287,7 @@ this.recline.View = this.recline.View || {};
         },
 
         render:function (width) {
-//            console.log("View.xCharts: render");
+            console.log("View.xCharts: render");
             if (!isNaN(width)){
         		this.width = width;	
         	}
@@ -8274,7 +8315,7 @@ this.recline.View = this.recline.View || {};
             var self = this;
             self.trigger("chart:startDrawing")
 
-            //console.log("View.xCharts: redraw");
+            console.log("View.xCharts: redraw");
 
             if (false /*self.graph*/)
                 self.updateGraph();
@@ -8402,8 +8443,23 @@ this.recline.View = this.recline.View || {};
             var self=this;
             var res = $("<div/>");
             var i =0;
+            
+            
+    		$("<script>" +
+				"function changeSeriesVisibility(i){"+
+	            	"var isVisible = $('g .color'+i).attr('display');"+
+	            	" if (isVisible === 'none') {isVisible = false;} else {isVisible = true;}"+
+	            	"if (isVisible){"+
+	            	"	$('g .color'+i).attr('display', 'none');"+
+	            	"	$('.legend_item_value.legendcolor'+i).addClass('noFillLegendBullet');"+
+	            	"} else {"+
+	            		"$('g .color'+i).attr('display', 'inline');"+
+	            		"$('.legend_item_value.legendcolor'+i).removeClass('noFillLegendBullet');"+
+	            	"}"+
+	            "}"+
+           	"</script>").appendTo("head");		
             _.each(self.series.main, function(d) {
-            	
+            	console.log(d);
             	if (d.color){
                 	$("<style type='text/css'> " +
                 			".color"+i+"{ color:rgb("+d.color.rgb+");} " +
@@ -8412,7 +8468,7 @@ this.recline.View = this.recline.View || {};
         					".xchart .color"+i+" .line { stroke:rgb("+d.color.rgb+");} " +    
         					".xchart .color"+i+" rect, .xchart .color"+i+" circle { fill:rgb("+d.color.rgb+");} " +
     					"</style>").appendTo("head");
-                	var legendItem = $('<div class="legend_item"/>');
+                	var legendItem = $('<div class="legend_item" onClick="changeSeriesVisibility('+i+')"/>');
                 	var name = $("<span/>");
                 	name.html(d.label);
                 	legendItem.append(name);
