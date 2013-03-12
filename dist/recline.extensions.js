@@ -13567,7 +13567,7 @@ this.recline.View = this.recline.View || {};
                     var node = circles
                         .enter()
                         .append("a")
-                        .attr("xlink:href", function(d) { return d.url; })
+                        //.attr("xlink:href", function(d) { return d.url; })
                         .append("circle")
                         .attr("r", 0)
                         .attr("cx", function(d) { return d.x; })
@@ -13588,7 +13588,12 @@ this.recline.View = this.recline.View || {};
                         .transition()
                         .delay(function(d, i) { return i * 10; })
                         .duration( 1000 )
-                        .attr("r", function(d) { return self.sizeScale( size(d) ); });
+                        .attr("r", function(d) {
+                            if(d) {
+                                return self.sizeScale( size(d) );
+                            } else return 0;
+
+                        });
 
                     loadGravity( moveCenter );
 
@@ -13652,14 +13657,10 @@ this.recline.View = this.recline.View || {};
 
                 var values = {
                     title: e.key,
-                    dim1Label: self.xAxisTitle,
-                    dim1Value: e.x_formatted,
-                    dim2Label: self.yAxisTitle,
-                    dim2Value: e.y_formatted,
-                    dim3Label: self.colorTitle,
-                    dim3Value: e.color_formatted,
-                    dim4Label: self.sizeTitle,
-                    dim4Value: e.size_formatted
+                    colorLabel: self.colorTitle,
+                    colorValue: e.color_formatted,
+                    sizeabel: self.sizeTitle,
+                    sizeValue: e.size_formatted
                 }
                 var content = Mustache.render(self.tooltipTemplate, values);
                 var $mapElem = $(self.el)
