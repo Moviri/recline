@@ -6496,7 +6496,13 @@ this.recline.View = this.recline.View || {};
                 chart.showValues(value);
             },
             "customTooltips":function (chart, value) { 
-            }
+            },
+            "stacked":function(chart, value) {
+        		chart.stacked(value);
+            },
+            "grouped":function(chart, value) {
+        		chart.stacked(!value);
+            },
         },
 
 
@@ -11303,6 +11309,7 @@ this.recline.View = this.recline.View || {};
         render:function () {
             var self = this;
             this.el.html("")
+            this.numId = 0;
             
             var tmplData = {}
             //  Retain user selections

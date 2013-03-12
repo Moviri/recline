@@ -48,6 +48,7 @@ this.recline.View = this.recline.View || {};
         render:function () {
             var self = this;
             this.el.html("")
+            this.numId = 0;
             
             var tmplData = {}
             //  Retain user selections

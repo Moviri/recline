@@ -366,7 +366,13 @@ this.recline.View = this.recline.View || {};
                 chart.showValues(value);
             },
             "customTooltips":function (chart, value) { 
-            }
+            },
+            "stacked":function(chart, value) {
+        		chart.stacked(value);
+            },
+            "grouped":function(chart, value) {
+        		chart.stacked(!value);
+            },
         },
 
 
