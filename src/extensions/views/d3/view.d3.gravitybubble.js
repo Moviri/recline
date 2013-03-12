@@ -305,7 +305,7 @@ this.recline.View = this.recline.View || {};
                             h -  (self.margin.top + self.margin.bottom ) ]),
                     svg = self.graph.append("svg"),
                     circles,         //data representation
-                    tooltip = self.CustomTooltip( "posts_tooltip", 240 );
+                    //tooltip = self.CustomTooltip( "posts_tooltip", 240 );
 
 
 
