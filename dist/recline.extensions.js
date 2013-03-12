@@ -6337,6 +6337,7 @@ this.recline.View = this.recline.View || {};
                     				yLabel: (yfield ? yfield.get("label") : "")
                     			}
                 		}
+                    	values["record"] = e.point.record.attributes;
                     		
                         var content = Mustache.render(self.options.state.options.customTooltips, values);
 
