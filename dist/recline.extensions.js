@@ -3492,8 +3492,8 @@ this.recline.Data = this.recline.Data || {};
     my.Formatters.RenderersConvert_ALL_ = function(val, field, doc)   {
 
     	var stringFormatterFor_ALL_ = function(val, field, doc) {
-    		console.log(">>> My formatter: orig value is "+val)
-    		console.log(doc)
+    		//console.log(">>> My formatter: orig value is "+val)
+    		//console.log(doc)
             var format = field.get('format');
             if (format === 'markdown') {
                 if (typeof Showdown !== 'undefined') {
@@ -5190,7 +5190,7 @@ this.recline.View = this.recline.View || {};
                         else
                             term_desc = term_rendered || t.term;
 
-                        var dim = {term: term_rendered || t.term, term_desc: term_desc, id_dimension: uid, shape: t.shape};
+                        var dim = {term: t.term, term_desc: term_desc, id_dimension: uid, shape: t.shape};
 
                         dim["getDimensionIDbyMeasureID"] = function () {
                             return function (measureID) {
@@ -9736,7 +9736,7 @@ this.recline.View = this.recline.View || {};
 
             if (valueList != null && valueList.length == 1) {
                 filterCtrl[0].style.color = "";
-                filterCtrl.val(currActiveFilter.list[0]);
+                filterCtrl.val(valueList[0]);
             }
             else
                 filterCtrl.find("option:first").prop("selected", "selected");
@@ -11305,6 +11305,7 @@ this.recline.View = this.recline.View || {};
             }
         
             self.buttonsData = {};
+            var alreadyInsertedValues = []
         	_.each(self._sourceDataset.getRecords(), function(record) {
                 var field = self._sourceDataset.fields.get(self.sourceField.field);
                 if(!field) {
@@ -11313,17 +11314,21 @@ this.recline.View = this.recline.View || {};
 
                 var fullLevelValue = record.getFieldValue(field);
                 var valueUnrendered = record.getFieldValueUnrendered(field);
-                if (self.separator && fullLevelValue.indexOf(self.separator) > 0)
+                if (!_.contains(alreadyInsertedValues, fullLevelValue))
             	{
-                	var levelValues = fullLevelValue.split(self.separator, 2);
-                	if (self.buttonsData[levelValues[0]] && self.buttonsData[levelValues[0]].options)
-                		self.buttonsData[levelValues[0]].options.push({fullValue: fullLevelValue, value: levelValues[1], record: record, selected: _.contains(self.sourceField.list, fullLevelValue)})
-                	else
-                		self.buttonsData[levelValues[0]] = { self: self, options: [{fullValue: fullLevelValue, value: levelValues[1], record: record, selected: _.contains(self.sourceField.list, fullLevelValue)}]}
-            	}
-                else
-            	{
-                	self.buttonsData[valueUnrendered] = { value: fullLevelValue, valueUnrendered: valueUnrendered, record: record, selected: _.contains(self.sourceField.list, valueUnrendered), self: self }
+                    if (self.separator && fullLevelValue.indexOf(self.separator) > 0)
+                	{
+                    	var levelValues = fullLevelValue.split(self.separator, 2);
+                    	if (self.buttonsData[levelValues[0]] && self.buttonsData[levelValues[0]].options)
+                    		self.buttonsData[levelValues[0]].options.push({fullValue: fullLevelValue, value: levelValues[1], record: record, selected: _.contains(self.sourceField.list, fullLevelValue)})
+                    	else
+                    		self.buttonsData[levelValues[0]] = { self: self, options: [{fullValue: fullLevelValue, value: levelValues[1], record: record, selected: _.contains(self.sourceField.list, fullLevelValue)}]}
+                	}
+                    else
+                	{
+                    	self.buttonsData[valueUnrendered] = { value: fullLevelValue, valueUnrendered: valueUnrendered, record: record, selected: _.contains(self.sourceField.list, valueUnrendered), self: self }
+                	}
+                    alreadyInsertedValues.push(fullLevelValue)
             	}
         	});
             
