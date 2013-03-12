@@ -141,8 +141,20 @@ this.recline.Model.FilteredDataset = this.recline.Model.FilteredDataset || {};
                     field.attributes.colorSchema = d.schema;
             })
 
-        }
+        },
+        toFullJSON:function (resultType) {
+            var self = this;
+            return _.map(self.records.models, function (r) {
+                var res = {};
 
+                _.each(self.fields.models, function (f) {
+                    res[f.id] = r.getFieldValueUnrendered(f);
+                });
+
+                return res;
+
+            });
+        }
 
 
 
