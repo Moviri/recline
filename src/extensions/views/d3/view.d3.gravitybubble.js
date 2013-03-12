@@ -76,6 +76,9 @@ this.recline.View = this.recline.View || {};
             var self = this;
             var state = self.options.state;
 
+            if(!self.visible)
+                return;
+
             var type;
             if (this.options.resultType) {
                 type = this.options.resultType;
@@ -344,7 +347,9 @@ this.recline.View = this.recline.View || {};
                         .attr("r", 0)
                         .attr("cx", function(d) { return d.x; })
                         .attr("cy", function(d) { return d.y; })
-                        .attr("fill", function(d) { return self.colorScale( color(d) ); })
+                        .attr("fill", function(d) {
+                            return self.colorScale( color(d) );
+                        })
                         .attr("stroke-width", 2)
                         .attr("stroke", function(d) { return d3.rgb(self.colorScale( color(d) )).darker(); })
                         .attr("id", function(d) { return "post_#" + key(d); })
@@ -359,7 +364,7 @@ this.recline.View = this.recline.View || {};
                     d3.selectAll("circle")
                         .transition()
                         .delay(function(d, i) { return i * 10; })
-                        .duration( 1000 )
+                        .duration( 100 )
                         .attr("r", function(d) {
                             if(d) {
                                 return self.sizeScale( size(d) );
