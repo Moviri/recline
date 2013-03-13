@@ -85,16 +85,23 @@ this.recline.View = this.recline.View || {};
                 type = this.options.resultType;
             }
 
-            var xDomain = [Infinity, -Infinity];
-            var yDomain = [Infinity, -Infinity];
-
+            function isNumber(o) { return typeof o === 'number' && isFinite(o); }
+            
             var colorDataFormat = "number";
 
             var records = _.map(this.options.model.getRecords(type), function (record) {
                 state.domains = state.domains || {};
 
-                if(record.fields.get(state.colorField.field).format == "string")
-                    colorDataFormat = "string";
+                if(record.fields.get(state.colorField.field).format)
+            	{
+                    if(record.fields.get(state.colorField.field).attributes.format == "string")
+                        colorDataFormat = "string";
+            	}
+                else
+            	{
+                	if (!isNumber(record.attributes[state.colorField.field]))
+                		colorDataFormat = "string";
+            	}
 
                 return {
                     "key": record.attributes[state.keyField.field],
@@ -105,32 +112,35 @@ this.recline.View = this.recline.View || {};
                 }
             });
 
-            // z
+            var sizeDomain = [ d3.min(self.options.model.getRecords(type), function(d) { return (d.attributes[state.sizeField.field]); }),
+                               d3.max(self.options.model.getRecords(type), function(d) { return (d.attributes[state.sizeField.field]); }) ]
+            
             self.sizeScale =  d3.scale.linear()
-                .domain([ d3.min(self.options.model.getRecords(type), function(d) { return (d.attributes[state.sizeField.field]); }),
-                    d3.max(self.options.model.getRecords(type), function(d) { return (d.attributes[state.sizeField.field]); }) ])
+                .domain(sizeDomain)
                 .range([ 2, 50 ])
                 .clamp(true);
 
-
-            if(colorDataFormat != "string")
+            var colorDomain =  [
+                                d3.min(self.options.model.getRecords(type), function(d) { return (d.attributes[state.colorField.field]); }),
+                                d3.max(self.options.model.getRecords(type), function(d) { return (d.attributes[state.colorField.field]); })
+                                ]
+            
+            //if(colorDataFormat == "string")
                 self.colorScale =  d3.scale.category20();
-            else
-                self.colorScale = d3.scale.linear()
-                    .domain([ d3.min(self.options.model.getRecords(type), function(d) { return (d.attributes[state.colorField.field]); }),
-                        d3.max(self.options.model.getRecords(type), function(d) { return (d.attributes[state.colorField.field]); }) ])
-                .range([ '#ff7f0e', '#ff7f0e' ]);
+//            else
+//                self.colorScale = d3.scale.linear()
+//                    .domain(colorDomain)
+//                .range([ '#ffe70f', '#ffe70f' ]);
 
             var yAxisDomain = _.unique( _.map(user_clusters_props.getRecords(), function(c) { return c.attributes[state.colorField.field] } ));
             self.yAxis = d3.scale.ordinal().domain(yAxisDomain).range([0, self.height]  );
 
-      /*      if (state.colorLegend) {
+            if (state.colorLegend) {
                 self.drawLegendColor(colorDomain[0], colorDomain[1]);
             }
             if (state.sizeLegend) {
                 self.drawLegendSize(sizeDomain[0], sizeDomain[1]);
             }
-       */
             self.colorTitle = state.colorField['label'];
             self.sizeTitle = state.sizeField['label'];
 
