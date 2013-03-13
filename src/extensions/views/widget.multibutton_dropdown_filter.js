@@ -20,7 +20,7 @@ this.recline.View = this.recline.View || {};
         					</select>',
         events:{
             'click .grouped-button':'onButtonsetClicked',
-            'click button.dropdown-toggle' : 'onDropdownClicked' 
+            'click button.select-all-button' : 'onDropdownSelectAll' 
         },
         _sourceDataset:null,
         _selectedClassName:"btn-primary", // use bootstrap ready-for-use classes to highlight list item selection (avail classes are success, warning, info & error)
@@ -28,7 +28,7 @@ this.recline.View = this.recline.View || {};
         documentClickAssigned: false,
         initialize:function (args) {
             this.el = $(this.el);
-            _.bindAll(this, 'render', 'update', 'onButtonsetClicked', 'getDropdownSelections', 'getRecordByValue', 'handleChangedSelections', 'onDropdownClicked');
+            _.bindAll(this, 'render', 'update', 'onButtonsetClicked', 'getDropdownSelections', 'getRecordByValue', 'handleChangedSelections', 'onDropdownSelectAll');
 
             this._sourceDataset = args.sourceDataset;
             this.uid = args.id || Math.floor(Math.random() * 100000); // unique id of the view containing all filters
@@ -120,13 +120,16 @@ this.recline.View = this.recline.View || {};
 				var $select = $(options.context);
 				var totOptions = $select.find("option").length
                 if (options.length == 0 || options.length == totOptions) 
-                    return this.mainValue+' <b class="caret"></b>';
+                    return this.mainValue;//+' <b class="caret"></b>';
                 else {
                     var selected = '';
-                    options.each(function() {
-                        selected += $(this).text() + ', ';
-                    });
-                    return this.mainValue+' <span style="opacity:0.5">'+selected.substr(0, selected.length -2) + '</span> <b class="caret"></b>';
+                    for (var i = 0; i < 4 && i < options.length;i++)
+                    	selected += $(options[i]).text() + ', ';
+                    
+                    if (i < options.length)
+                    	selected += '... '+(options.length-i)+' other options  '
+                    
+                    return this.mainValue+' <span style="opacity:0.5">'+selected.substr(0, selected.length -2) + '</span>';// <b class="caret"></b>';
                 }
             }
 			
@@ -165,7 +168,14 @@ this.recline.View = this.recline.View || {};
         	{
             	if (self.buttonsData[key].options)
         		{
-            		var multiselect = $('#dropdown'+this.uid+'_'+k).multiselect({mainValue:key, buttonClass:'btn btn-mini'+(key == firstKey ? ' btn-first' : '')+(key == lastKey ? ' btn-last' : ''), buttonText:buttonText, onChange: onChange});
+            		var multiselect = $('#dropdown'+this.uid+'_'+k).multiselect({
+            																		mainValue:key,
+            																		buttonClass:'btn btn-mini'+(key == lastKey ? ' btn-last' : ''),
+            																		buttonClassFirst:'btn btn-mini'+(key == firstKey ? ' btn-first' : ''),
+            																		buttonText:buttonText, 
+            																		onChange: onChange
+            																	});
+            		
             		var multiselectContainer = multiselect.data('multiselect').container;
     				if (_.find(self.buttonsData[key].options, function(optn) {return optn.selected}))
     					$('button', multiselectContainer).addClass(self._selectedClassName);
@@ -216,7 +226,7 @@ this.recline.View = this.recline.View || {};
             });
             var valueList = this.computeUserChoices(self.sourceField);
 
-            self.el.find('div.btn-toolbar button').each(function () {
+            self.el.find('div.btn-toolbar button').not('.select-all-button').each(function () {
             	if (!$(this).hasClass("dropdown-toggle"))
         		{
             		if (!_.contains(valueList, $(this).attr("val")))
@@ -261,6 +271,8 @@ this.recline.View = this.recline.View || {};
         onButtonsetClicked:function (e) {
         	var self = this;
             e.preventDefault();
+            console.log("onBUttonsetClicked");
+            console.log(e);
             var $target = $(e.currentTarget);
             if (!$target.hasClass(self._selectedClassName) && self.exclusiveButtonValue)
         	{
@@ -268,7 +280,7 @@ this.recline.View = this.recline.View || {};
             	{
                 	// pressed ALL button. Deselect everything else
                 	// 1: deselect all non-dropdown buttons
-                    self.el.find('div.btn-toolbar button.' + self._selectedClassName).each(function () {
+                    self.el.find('div.btn-toolbar button.' + self._selectedClassName).not('.select-all-button').each(function () {
                     	if (!$(this).hasClass("dropdown-toggle"))
                     		$(this).removeClass(self._selectedClassName)
                     });
@@ -291,8 +303,32 @@ this.recline.View = this.recline.View || {};
         	this.handleChangedSelections();
         },
         
-        onDropdownClicked: function(e) {
+        onDropdownSelectAll: function(e) {
         	var self = this;
+			self.hasValueChanges =  true
+        	var $target = $(e.currentTarget);
+    		var multiselect = $target.parent().prev('select');
+    		var multiselectContainer = multiselect.data('multiselect').container;
+			var totSelectedObjs = multiselect.find("[selected='selected']")
+			var totObjs = multiselect.find("option")
+        	if ((totSelectedObjs.length > 0 && totObjs.length > totSelectedObjs.length) || !$target.hasClass(self._selectedClassName))
+    		{
+        		// select all
+        		_.each(totObjs, function(opt) { 
+        			$(opt).attr("selected", "selected"); 
+        		});
+        		$('button', multiselectContainer).addClass(self._selectedClassName);
+    		}
+        	else
+    		{
+        		// deselect all
+        		_.each(totObjs, function(opt) { 
+        			$(opt).removeAttr("selected"); 
+        		});
+        		$('button', multiselectContainer).removeClass(self._selectedClassName);        		
+    		}
+			multiselect.multiselect("refresh")
+        	self.handleChangedSelections(true);
         },
         
         handleChangedSelections:function(deselectExclusiveButton) {
@@ -306,7 +342,7 @@ this.recline.View = this.recline.View || {};
             	self.el.find("div.btn-toolbar button.grouped-button[val='"+self.exclusiveButtonValue+"']").removeClass(self._selectedClassName)
             			
             var listaValori = [];
-            self.el.find('div.btn-toolbar button.' + self._selectedClassName).each(function () {
+            self.el.find('div.btn-toolbar button.' + self._selectedClassName).not('.select-all-button').each(function () {
             	if (!$(this).hasClass("dropdown-toggle"))
             		listaValori.push($(this).attr('val').valueOf()); // in case there's a date, convert it with valueOf
             });

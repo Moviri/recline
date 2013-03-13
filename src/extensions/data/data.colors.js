@@ -130,14 +130,12 @@ this.recline.Data.ColorSchema = this.recline.Data.ColorSchema || {};
                     });
                     break;
                 case "scaleWithDistinctData":
-                	console.log('scaleWithDistinctData');
-                    self.schema = new chroma.ColorScale({
+                	self.schema = new chroma.ColorScale({
                         colors: this.attributes.colors,
                         limits: [0, 1]
                     });
                     self.limitsMapping = this.limits["distinct"](data, self.oldLimitData);
                     self.oldLimitData =  data;
-                    console.log(self);
                     break;
                 case "fixedLimits":
                     self.schema = new chroma.ColorScale({
@@ -330,7 +328,13 @@ this.recline.Data.ColorSchema = this.recline.Data.ColorSchema || {};
                     else data_old = [];
 
                     var uniq = _.uniq(data, true);
+                    if (uniq[0] == null){
+                        uniq = [];
+                     }
                     var uniq_old = _.uniq(data_old, true);
+                    if (uniq_old[0] == null){
+                    	uniq_old = [];
+                    }
 //                    console.log('unique');
 //                    console.log(uniq);
 //                    console.log('unique_old');
