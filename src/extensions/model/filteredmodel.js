@@ -73,7 +73,7 @@ this.recline.Model.FilteredDataset = this.recline.Model.FilteredDataset || {};
 
             //todo use records fitlering in order to inherit all record properties
             //todo perhaps need a new applyfiltersondata
-            var results = recline.Data.Filters.applyFiltersOnData(queryObj.filters, dataset.records.toJSON(), dataset.fields.toJSON());
+            var results = recline.Data.Filters.applyFiltersOnData(queryObj.filters, dataset.toFullJSON(), dataset.fields.toJSON());
 
             _.each(queryObj.sort, function (sortObj) {
                 var fieldName = sortObj.field;
