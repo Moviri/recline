@@ -13694,7 +13694,7 @@ this.recline.View = this.recline.View || {};
                         .on("mouseout", self.mouseout);
 
 
-                    d3.selectAll("circle")
+                    circles.selectAll("circle")
                         .transition()
                         .delay(function(d, i) { return i * 10; })
                         .duration( 1 )
