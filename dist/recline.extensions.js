@@ -73,7 +73,7 @@ this.recline.Model.FilteredDataset = this.recline.Model.FilteredDataset || {};
 
             //todo use records fitlering in order to inherit all record properties
             //todo perhaps need a new applyfiltersondata
-            var results = recline.Data.Filters.applyFiltersOnData(queryObj.filters, dataset.records.toJSON(), dataset.fields.toJSON());
+            var results = recline.Data.Filters.applyFiltersOnData(queryObj.filters, dataset.toFullJSON(), dataset.fields.toJSON());
 
             _.each(queryObj.sort, function (sortObj) {
                 var fieldName = sortObj.field;
@@ -13420,7 +13420,7 @@ this.recline.View = this.recline.View || {};
             var records = _.map(this.options.model.getRecords(type), function (record) {
                 state.domains = state.domains || {};
 
-                if(record.fields.get(state.colorField.field).format == "string")
+                if(record.fields.get(state.colorField.field).attributes.type == "string")
                     colorDataFormat = "string";
 
                 return {
@@ -13436,20 +13436,23 @@ this.recline.View = this.recline.View || {};
             self.sizeScale =  d3.scale.linear()
                 .domain([ d3.min(self.options.model.getRecords(type), function(d) { return (d.attributes[state.sizeField.field]); }),
                     d3.max(self.options.model.getRecords(type), function(d) { return (d.attributes[state.sizeField.field]); }) ])
-                .range([ 2, 50 ])
+                .range([ 2, 100 ])
                 .clamp(true);
 
-
-            if(colorDataFormat != "string")
+		 
+            var colorDomain = _.unique( _.map(user_clusters_props.getRecords(), function(c) { return c.attributes[state.colorField.field] } ));
+            
+	    //if(colorDataFormat != "string")
                 self.colorScale =  d3.scale.category20();
-            else
-                self.colorScale = d3.scale.linear()
-                    .domain([ d3.min(self.options.model.getRecords(type), function(d) { return (d.attributes[state.colorField.field]); }),
-                        d3.max(self.options.model.getRecords(type), function(d) { return (d.attributes[state.colorField.field]); }) ])
-                .range([ '#ff7f0e', '#ff7f0e' ]);
+            /*else
+                self.colorScale = d3.scale.ordinal()
+                    .domain(colorDomain)
+                    .range(colorbrewer.RdBu[9]);
+	    */
 
-            var yAxisDomain = _.unique( _.map(user_clusters_props.getRecords(), function(c) { return c.attributes[state.colorField.field] } ));
-            self.yAxis = d3.scale.ordinal().domain(yAxisDomain).range([0, self.height]  );
+
+            
+            self.yAxis = d3.scale.ordinal().domain(colorDomain).range([0, self.height]  );
 
       /*      if (state.colorLegend) {
                 self.drawLegendColor(colorDomain[0], colorDomain[1]);
@@ -13724,25 +13727,6 @@ this.recline.View = this.recline.View || {};
                         });
                     }
                 }
-
-
-                /*function highlight( data, i, element ) {
-                    d3.select( element ).attr( "stroke", "black" );
-
-                    var content = data.key;
-
-                    tooltip.showTooltip(content, d3.event);
-                }
-
-                function downlight( data, i, element ) {
-                    d3.select(element).attr("stroke", function(d) { return d3.rgb( z( color(d) )).darker(); });
-                }
-                */
-
-
-
-
-
 
 
             self.alreadyDrawed = true;
