@@ -50,22 +50,6 @@ this.recline.View = this.recline.View || {};
             this.model.queryState.bind('selection:done', this.redraw);
             this.model.bind('dimensions:change', this.changeDimensions);
 
-
-            var stateData = _.extend({
-                    group:null,
-                    seriesNameField:[],
-                    seriesValues:[],
-                    colors:["#edc240", "#afd8f8", "#cb4b4b", "#4da74d", "#9440ed"],
-                    graphType:"lineChart",
-                    xLabel:"",
-                    id:0
-
-
-
-                },
-                options.state
-            );
-            this.state = new recline.Model.ObjectState(stateData);
             if (this.options.state.options && this.options.state.options.loader)
             	this.options.state.options.loader.bindChart(this);
         },
@@ -78,6 +62,18 @@ this.recline.View = this.recline.View || {};
         render:function () {
             var self = this;
             self.trigger("chart:startDrawing")
+            var stateData = _.extend({
+                    group:null,
+                    seriesNameField:[],
+                    seriesValues:[],
+                    colors:["#edc240", "#afd8f8", "#cb4b4b", "#4da74d", "#9440ed"],
+                    graphType:"lineChart",
+                    xLabel:"",
+                    id:0
+                },
+                this.options.state
+            );
+            this.state = new recline.Model.ObjectState(stateData);
 
             var tmplData = this.model.toTemplateJSON();
             tmplData["viewId"] = this.uid;
