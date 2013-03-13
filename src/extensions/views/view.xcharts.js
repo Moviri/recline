@@ -38,7 +38,7 @@ this.recline.View = this.recline.View || {};
         },
 
         render:function (width) {
-            console.log("View.xCharts: render");
+//            console.log("View.xCharts: render");
             if (!isNaN(width)){
         		this.width = width;	
         	}
@@ -66,7 +66,7 @@ this.recline.View = this.recline.View || {};
             var self = this;
             self.trigger("chart:startDrawing")
 
-            console.log("View.xCharts: redraw");
+//            console.log("View.xCharts: redraw");
 
             if (false /*self.graph*/)
                 self.updateGraph();
@@ -210,7 +210,6 @@ this.recline.View = this.recline.View || {};
 	            "}"+
            	"</script>").appendTo("head");		
             _.each(self.series.main, function(d) {
-            	console.log(d);
             	if (d.color){
                 	$("<style type='text/css'> " +
                 			".color"+i+"{ color:rgb("+d.color.rgb+");} " +

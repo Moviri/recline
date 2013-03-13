@@ -107,7 +107,7 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
         },
 
         initializeCrossfilter:function () {
-            console.log("initialize crossfilter");
+         //   console.log("initialize crossfilter");
             var aggregatedFields = this.attributes.aggregation.measures;
             var aggregationFunctions = this.attributes.aggregation.aggregationFunctions;
             var originalFields = this.attributes.dataset.fields;
