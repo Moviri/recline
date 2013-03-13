@@ -13412,9 +13412,7 @@ this.recline.View = this.recline.View || {};
                 type = this.options.resultType;
             }
 
-            var xDomain = [Infinity, -Infinity];
-            var yDomain = [Infinity, -Infinity];
-
+            
             var colorDataFormat = "number";
 
             var records = _.map(this.options.model.getRecords(type), function (record) {
@@ -13432,35 +13430,40 @@ this.recline.View = this.recline.View || {};
                 }
             });
 
-            // z
+            var sizeDomain = [ d3.min(self.options.model.getRecords(type), function(d) { return (d.attributes[state.sizeField.field]); }),
+                               d3.max(self.options.model.getRecords(type), function(d) { return (d.attributes[state.sizeField.field]); }) ]
+            
             self.sizeScale =  d3.scale.linear()
-                .domain([ d3.min(self.options.model.getRecords(type), function(d) { return (d.attributes[state.sizeField.field]); }),
-                    d3.max(self.options.model.getRecords(type), function(d) { return (d.attributes[state.sizeField.field]); }) ])
+                .domain(sizeDomain)
                 .range([ 2, 100 ])
                 .clamp(true);
 
 		 
-            var colorDomain = _.unique( _.map(user_clusters_props.getRecords(), function(c) { return c.attributes[state.colorField.field] } ));
+            var colorDomain;
             
-	    //if(colorDataFormat != "string")
-                self.colorScale =  d3.scale.category20();
-            /*else
-                self.colorScale = d3.scale.ordinal()
-                    .domain(colorDomain)
-                    .range(colorbrewer.RdBu[9]);
-	    */
+	        if(colorDataFormat == "string") {
+                colorDomain = _.unique( _.map(user_clusters_props.getRecords(), function(c) { return c.attributes[state.colorField.field] } ));
 
 
-            
-            self.yAxis = d3.scale.ordinal().domain(colorDomain).range([0, self.height]  );
+            } else {
+               colorDomain = [ d3.min(self.options.model.getRecords(type), function(d) { return (d.attributes[state.colorField.field]); }),
+                   d3.max(self.options.model.getRecords(type), function(d) { return (d.attributes[state.colorField.field]); }) ];
 
-      /*      if (state.colorLegend) {
+
+            }
+             self.colorScale = d3.scale.category20().domain(colorDomain);
+
+
+
+            var yAxisDomain = _.unique( _.map(user_clusters_props.getRecords(), function(c) { return c.attributes[state.colorField.field] } ));
+            self.yAxis = d3.scale.ordinal().domain(yAxisDomain).range([0, self.height]  );
+
+            if (state.colorLegend) {
                 self.drawLegendColor(colorDomain[0], colorDomain[1]);
             }
             if (state.sizeLegend) {
                 self.drawLegendSize(sizeDomain[0], sizeDomain[1]);
             }
-       */
             self.colorTitle = state.colorField['label'];
             self.sizeTitle = state.sizeField['label'];
 
@@ -13727,6 +13730,25 @@ this.recline.View = this.recline.View || {};
                         });
                     }
                 }
+
+
+                /*function highlight( data, i, element ) {
+                    d3.select( element ).attr( "stroke", "black" );
+
+                    var content = data.key;
+
+                    tooltip.showTooltip(content, d3.event);
+                }
+
+                function downlight( data, i, element ) {
+                    d3.select(element).attr("stroke", function(d) { return d3.rgb( z( color(d) )).darker(); });
+                }
+                */
+
+
+
+
+
 
 
             self.alreadyDrawed = true;
