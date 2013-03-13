@@ -18,6 +18,7 @@ this.recline.View = this.recline.View || {};
             this.model.fields.bind('reset', this.render);
             this.model.fields.bind('add', this.render);
 
+            this.model.bind('query:done', this.render);
             this.model.bind('query:done', this.redraw);
             this.model.queryState.bind('selection:done', this.redraw);
 
@@ -26,12 +27,12 @@ this.recline.View = this.recline.View || {};
 
 
             this.margin = {
-                top: 19.5,
-                right: 19.5,
-                bottom: 19.5,
-                left: 50
+                top: 0,
+                right: 0,
+                bottom: 0,
+                left: 0
             };
-            this.width = (options.width - this.margin.right);
+            this.width = (options.width - this.margin.right );
             this.bubbleWidth = this.width * 0.9;
             this.legendWidth = this.width * 0.1;
             this.height = options.height - this.margin.top - this.margin.bottom;
@@ -76,6 +77,9 @@ this.recline.View = this.recline.View || {};
             var self = this;
             var state = self.options.state;
 
+            if(!self.visible)
+                return;
+
             var type;
             if (this.options.resultType) {
                 type = this.options.resultType;
@@ -105,22 +109,20 @@ this.recline.View = this.recline.View || {};
             self.sizeScale =  d3.scale.linear()
                 .domain([ d3.min(self.options.model.getRecords(type), function(d) { return (d.attributes[state.sizeField.field]); }),
                     d3.max(self.options.model.getRecords(type), function(d) { return (d.attributes[state.sizeField.field]); }) ])
-                .range([ 10, 130 ])
+                .range([ 2, 50 ])
                 .clamp(true);
 
 
             if(colorDataFormat != "string")
-                self.colorScale =  d3.scale.category20()
-                    .domain([ d3.min(self.options.model.getRecords(type), function(d) { return (d.attributes[state.colorField.field]); }),
-                        d3.max(self.options.model.getRecords(type), function(d) { return (d.attributes[state.colorField.field]); }) ])
-                    .range([ '#ff7f0e', '#ff7f0e' ]);
+                self.colorScale =  d3.scale.category20();
             else
                 self.colorScale = d3.scale.linear()
                     .domain([ d3.min(self.options.model.getRecords(type), function(d) { return (d.attributes[state.colorField.field]); }),
                         d3.max(self.options.model.getRecords(type), function(d) { return (d.attributes[state.colorField.field]); }) ])
                 .range([ '#ff7f0e', '#ff7f0e' ]);
 
-
+            var yAxisDomain = _.unique( _.map(user_clusters_props.getRecords(), function(c) { return c.attributes[state.colorField.field] } ));
+            self.yAxis = d3.scale.ordinal().domain(yAxisDomain).range([0, self.height]  );
 
       /*      if (state.colorLegend) {
                 self.drawLegendColor(colorDomain[0], colorDomain[1]);
@@ -297,7 +299,7 @@ this.recline.View = this.recline.View || {};
                     g,            //gravity scale
                     gravity  = -0.01,//gravity constants
                     damper   = 0.2,
-                    friction = 0.9,
+                    friction = 0.8,
                     force = d3       //gravity engine
                         .layout
                         .force()
@@ -333,7 +335,7 @@ this.recline.View = this.recline.View || {};
                     // Init all circles at random places on the canvas
                     force.nodes().forEach( function(d, i) {
                         d.x = Math.random() * w;
-                        d.y = Math.random() * h;
+                        d.y = self.yAxis(color(d));
                     });
 
                     var node = circles
@@ -344,8 +346,10 @@ this.recline.View = this.recline.View || {};
                         .attr("r", 0)
                         .attr("cx", function(d) { return d.x; })
                         .attr("cy", function(d) { return d.y; })
-                        .attr("fill", function(d) { return self.colorScale( color(d) ); })
-                        .attr("stroke-width", 2)
+                        .attr("fill", function(d) {
+                            return self.colorScale( color(d) );
+                        })
+                        .attr("stroke-width", 1)
                         .attr("stroke", function(d) { return d3.rgb(self.colorScale( color(d) )).darker(); })
                         .attr("id", function(d) { return "post_#" + key(d); })
                         .attr("title", function(d) { return key(d) })
@@ -359,7 +363,7 @@ this.recline.View = this.recline.View || {};
                     d3.selectAll("circle")
                         .transition()
                         .delay(function(d, i) { return i * 10; })
-                        .duration( 1000 )
+                        .duration( 1 )
                         .attr("r", function(d) {
                             if(d) {
                                 return self.sizeScale( size(d) );
@@ -393,7 +397,7 @@ this.recline.View = this.recline.View || {};
                 }
 
 
-                function highlight( data, i, element ) {
+                /*function highlight( data, i, element ) {
                     d3.select( element ).attr( "stroke", "black" );
 
                     var content = data.key;
@@ -404,9 +408,8 @@ this.recline.View = this.recline.View || {};
                 function downlight( data, i, element ) {
                     d3.select(element).attr("stroke", function(d) { return d3.rgb( z( color(d) )).darker(); });
                 }
+                */
 
-                //Register category selectors
-                $("a.category").on("click", function(e) { update( $(this).attr("value") ); });
 
 
 
