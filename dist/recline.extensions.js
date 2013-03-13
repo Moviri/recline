@@ -13413,13 +13413,13 @@ this.recline.View = this.recline.View || {};
             }
 
             
-            var colorDataFormat = "number";
+            self.colorDataFormat = "number";
 
             var records = _.map(this.options.model.getRecords(type), function (record) {
                 state.domains = state.domains || {};
 
                 if(record.fields.get(state.colorField.field).attributes.type == "string")
-                    colorDataFormat = "string";
+                    self.colorDataFormat = "string";
 
                 return {
                     "key": record.attributes[state.keyField.field],
@@ -13439,27 +13439,21 @@ this.recline.View = this.recline.View || {};
                 .clamp(true);
 
 		 
-            var colorDomain;
-            
-	        if(colorDataFormat == "string") {
-                colorDomain = _.unique( _.map(user_clusters_props.getRecords(), function(c) { return c.attributes[state.colorField.field] } ));
 
-
+	        if(self.colorDataFormat == "string") {
+                self.colorDomain = _.unique( _.map(self.options.model.getRecords(), function(c) { return c.attributes[state.colorField.field] } ));
             } else {
-               colorDomain = [ d3.min(self.options.model.getRecords(type), function(d) { return (d.attributes[state.colorField.field]); }),
+               self.colorDomain = [ d3.min(self.options.model.getRecords(type), function(d) { return (d.attributes[state.colorField.field]); }),
                    d3.max(self.options.model.getRecords(type), function(d) { return (d.attributes[state.colorField.field]); }) ];
-
-
             }
-             self.colorScale = d3.scale.category20().domain(colorDomain);
-
+             self.colorScale = d3.scale.category20().domain(self.colorDomain);
 
 
             var yAxisDomain = _.unique( _.map(user_clusters_props.getRecords(), function(c) { return c.attributes[state.colorField.field] } ));
             self.yAxis = d3.scale.ordinal().domain(yAxisDomain).range([0, self.height]  );
 
             if (state.colorLegend) {
-                self.drawLegendColor(colorDomain[0], colorDomain[1]);
+                self.drawLegendColor();
             }
             if (state.sizeLegend) {
                 self.drawLegendSize(sizeDomain[0], sizeDomain[1]);
@@ -13544,7 +13538,7 @@ this.recline.View = this.recline.View || {};
                 });
         },
 
-        drawLegendColor: function (minData, maxData) {
+        drawLegendColor: function () {
 
             var self = this;
             var legendOpt = self.options.state.colorLegend;
@@ -13554,7 +13548,7 @@ this.recline.View = this.recline.View || {};
 
             var rectWidth = 20;//legendOpt.width;
             var paddingAxis = 20;
-            var numTick = legendOpt.numElements;
+
 
             var legendid = "#" + this.uid + "_legend_color";
             var transX = (legendWidth / 2 - rectWidth / 2) || 0;
@@ -13563,7 +13557,30 @@ this.recline.View = this.recline.View || {};
                 .attr("width", legendWidth)
                 .attr("height", legendHeight);
 
-            var data1 = d3.range(numTick);
+            var data1;
+            var calculateColor;
+            var numTick;
+            var tickValues;
+
+            if(self.colorDataFormat == "string") {
+               data1 = self.colorDomain;
+                calculateColor = function(d) {
+                    return self.colorScale(d);
+                };
+                numTick = self.colorDomain.length;
+                tickValues = self.colorDomain;
+            }  else {
+                numTick =  legendOpt.numElements;
+               data1 =  d3.range(numTick);
+                calculateColor = function(d) { return self.colorScale(d * (self.colorDomain[1] - self.colorDomain[0]) / numTick + self.colorDomain[0])};
+
+                tickValues = _.map([self.colorDomain[0], self.colorDomain[1]], function (a) {
+                    return (a > 1000) ? d3.format("s")(Math.round(a)) : d3.format(".2f")(a);
+                });
+            }
+
+
+
             var dataSca = [];
 
             var rects = legend.selectAll("rect")
@@ -13580,22 +13597,36 @@ this.recline.View = this.recline.View || {};
                     },
                     x: transX,
                     fill: function (d, i) {
-                        return self.colorScale(d * (maxData - minData) / numTick + minData);
+                        return calculateColor(d);
                     }
                 });
-
-            var tickValues = _.map([minData, maxData], function (a) {
-                return (a > 1000) ? d3.format("s")(Math.round(a)) : d3.format(".2f")(a);
-            });
 
             legend.selectAll(".label")
                 .data(tickValues).enter().append("text")
                 .attr("class", "y label")
-                .attr("text-anchor", "middle")
+                .attr("text-anchor", function(){
+                      if(self.colorDataFormat == "string"){
+                             return "left";
+                      }else{
+                          return "middle";
+                      }
+                 })
                 .attr("y", function (t, i) {
-                    return ((legendOpt.height - paddingAxis) / (tickValues.length - 1)) * i + paddingAxis / 2;
+                    if(self.colorDataFormat == "string") {
+                        return transY + (16) + i * (rectHeight + 1);
+                    }  else{
+                        return ((legendOpt.height - paddingAxis) / (tickValues.length - 1)) * i + paddingAxis / 2;
+                    }
+
                 })
-                .attr("x", ((legendWidth / 2 - legendOpt.width / 2) || 0) + legendOpt.width / 2)
+                .attr("x", function(){
+                    if(self.colorDataFormat == "string") {
+                         return transX+rectWidth;
+                    }else{
+                        return ((legendWidth / 2 - legendOpt.width / 2) || 0) + legendOpt.width / 2;
+                    }
+
+                })
                 .text(function (t) {
                     return t;
                 });
