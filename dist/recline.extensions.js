@@ -325,9 +325,11 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
 
                 // define the record with all data from model
                 var record = {};
-                _.each(r.toJSON(), function (f, index) {
-                    record[index] = f;
+                _.each(r.fields.models, function(field) {
+                   record[field.id] = r.getFieldValueUnrendered(field);
                 });
+
+
 
                 _.each(joinModel, function(p) {
                     // retrieve records from secondary model
@@ -339,7 +341,7 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
                         filters.push({field:field.id, type:"term", term: r.getFieldValueUnrendered(field), fieldType:field.attributes.type });
                     })
 
-                    var resultsFromDataset2 = recline.Data.Filters.applyFiltersOnData(filters, p.model.records.toJSON(), p.model.fields.toJSON());
+                    var resultsFromDataset2 = recline.Data.Filters.applyFiltersOnData(filters, p.model.toFullJSON(), p.model.fields.toJSON());
 
                     if(resultsFromDataset2.length == 0)
                         recordMustBeAdded = false;
@@ -625,6 +627,8 @@ recline.Model.Query.prototype = $.extend(recline.Model.Query.prototype, {
 
         });
     },
+
+
     resetRecords:function (records) {
         this.set({records:records}, {silent:true});
     },

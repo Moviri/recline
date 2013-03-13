@@ -12,6 +12,8 @@ recline.Model.Dataset.prototype = $.extend(recline.Model.Dataset.prototype, {
 
         });
     },
+
+
     resetRecords:function (records) {
         this.set({records:records}, {silent:true});
     },
