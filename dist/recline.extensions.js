@@ -13587,6 +13587,7 @@ this.recline.View = this.recline.View || {};
                     force = d3       //gravity engine
                         .layout
                         .force()
+                        .linkStrength(function(c,i) { console.log(" c,i [" + c + "," + i + "]")})
                         .size([ w - (self.margin.left + self.margin.right ),
                             h -  (self.margin.top + self.margin.bottom ) ]),
                     svg = self.graph.append("svg"),
@@ -13663,6 +13664,7 @@ this.recline.View = this.recline.View || {};
                             .gravity(gravity)
                             .charge( function(d) { return g( size(d) ); })
                             .friction(friction)
+                            .linkStrength( function(d,i) { console.log(c + " - "+ i);}  )
                             .on("tick", function(e) {
                                 generator(e.alpha);
                                 node
