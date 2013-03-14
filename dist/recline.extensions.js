@@ -7561,8 +7561,7 @@ this.recline.View = this.recline.View || {};
                 explicitInitialization:true,
                 syncColumnCellResize:true,
                 forceFitColumns:this.state.get('fitColumns'),
-                useInnerChart:this.state.get('useInnerChart'),
-                useInnerChartScale:isTrue(this.state.get('useInnerChart')) && isFalse(this.state.get('hideInnerChartScale')),
+                useInnerChart:isTrue(this.state.get('useInnerChart')) && isFalse(this.state.get('hideInnerChartScale')),
                 innerChartMax:this.state.get('innerChartMax'),
                 useStripedStyle:this.state.get('useStripedStyle'),
                 useCondensedStyle:this.state.get('useCondensedStyle'),
@@ -7574,9 +7573,6 @@ this.recline.View = this.recline.View || {};
                 customHtmlFormatters:this.state.get('customHtmlFormatters'), 
                 fieldFormatters:this.state.get('fieldFormatters')
             };
-            var optionsFixed = _.clone(options)
-            optionsFixed.useInnerChart = options.useInnerChartScale
-
             // We need all columns, even the hidden ones, to show on the column picker
             var columns = [];
             // custom formatter as default one escapes html
@@ -7949,13 +7945,36 @@ this.recline.View = this.recline.View || {};
 
             if (options.showTotals && myRecords.length > 0) {
                 options.totals = {};
-                var totalsRecord = self.model.getRecords("totals");
-                for (var f in options.showTotals) {
-                    var currTotal = options.showTotals[f];
-                    var fieldObj = self.model.getField_byAggregationFunction("totals" + (currTotal.filtered ? "_filtered" : ""), currTotal.field, currTotal.aggregation);
-                    if (typeof fieldObj != "undefined")
-                        options.totals[currTotal.field] = totalsRecord[0].getFieldValueUnrendered(fieldObj);
-                }
+                if (self.model.getField_byAggregationFunction) // virtual model
+            	{
+                    var totalsRecord = self.model.getRecords("totals");
+                    for (var f in options.showTotals) {
+                        var currTotal = options.showTotals[f];
+                        var fieldObj = self.model.getField_byAggregationFunction("totals" + (currTotal.filtered ? "_filtered" : ""), currTotal.field, currTotal.aggregation);
+                        if (typeof fieldObj != "undefined")
+                            options.totals[currTotal.field] = totalsRecord[0].getFieldValueUnrendered(fieldObj);
+                    }
+            	}
+                else
+            	{
+                	for (var f in options.showTotals) {
+                		var currTotal = options.showTotals[f];
+                		var currSum = _.reduce(myRecords, function(memo, rec){ return memo + rec.attributes[currTotal.field]; }, 0);
+                		var fieldObj = self.model.fields.get(currTotal.field)
+                		var origValue = myRecords[0].attributes[currTotal.field]
+                		
+                		if (currTotal.aggregation == "sum")
+                			myRecords[0].attributes[currTotal.field] = currSum
+                		else if (currTotal.aggregation == "avg")
+                			myRecords[0].attributes[currTotal.field] = currSum/myRecords.length
+                		
+                		options.totals[currTotal.field] = myRecords[0].getFieldValue(fieldObj)
+                		if (currTotal.align)
+                			options.totals[currTotal.field] = "<div style='text-align:"+currTotal.align+"'>"+options.totals[currTotal.field]+"</div>"
+                			
+                		myRecords[0].attributes[currTotal.field] = origValue 
+                	}
+            	}
             }
 
             if (this.options.actions != null && typeof this.options.actions != "undefined") {
@@ -7969,7 +7988,7 @@ this.recline.View = this.recline.View || {};
                     return { "selectable":false }
             }
 
-            this.grid = new Slick.Grid(this.el, data, visibleColumns, optionsFixed);
+            this.grid = new Slick.Grid(this.el, data, visibleColumns, options);
 
             var classesToAdd = ["s-table"];
             if (options.useHoverStyle)
