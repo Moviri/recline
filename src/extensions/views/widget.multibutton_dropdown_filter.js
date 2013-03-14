@@ -172,7 +172,7 @@ this.recline.View = this.recline.View || {};
 					lastKey = key
 			}
 			var k = 0;
-            var multiSelects = []
+            self.multiSelects = []
             for (var key in self.buttonsData)
         	{
             	if (self.buttonsData[key].options)
