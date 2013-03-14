@@ -113,7 +113,7 @@ this.recline.View = this.recline.View || {};
 
 		 
 
-	        if(self.colorDataFormat == "string") {
+	        if(self.colorDataFormat == "string")    {
                 self.colorDomain = _.unique( _.map(self.options.model.getRecords(), function(c) { return c.attributes[state.colorField.field] } ));
             } else {
                self.colorDomain = [ d3.min(self.options.model.getRecords(type), function(d) { return (d.attributes[state.colorField.field]); }),
