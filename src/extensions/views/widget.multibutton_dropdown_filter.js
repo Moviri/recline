@@ -39,7 +39,7 @@ this.recline.View = this.recline.View || {};
 
             this.sourceField = args.sourceField;
             this._actions = args.actions;
-            this.noAllButton = args.noAllButton || false;
+            this.noAllButton = args.sourceField.noAllButton || false;
             this.exclusiveButtonValue = args.sourceField.exclusiveButtonValue || (!this.noAllButton ? "All" : undefined);
             this.separator = this.sourceField.separator
 
