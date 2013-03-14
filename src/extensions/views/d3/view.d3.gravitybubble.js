@@ -122,7 +122,7 @@ this.recline.View = this.recline.View || {};
              self.colorScale = d3.scale.category20().domain(self.colorDomain);
 
 
-            var yAxisDomain = _.unique( _.map(user_clusters_props.getRecords(), function(c) { return c.attributes[state.colorField.field] } ));
+            var yAxisDomain = _.unique( _.map(self.options.model.getRecords(), function(c) { return c.attributes[state.colorField.field] } ));
             self.yAxis = d3.scale.ordinal().domain(yAxisDomain).range([0, self.height]  );
 
             if (state.colorLegend) {
