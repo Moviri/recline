@@ -370,6 +370,9 @@ this.recline.View = this.recline.View || {};
             "grouped":function(chart, value) {
         		chart.stacked(!value);
             },
+            "margin":function(chart, value) {
+                chart.margin(value);
+            },
         },
 
 
