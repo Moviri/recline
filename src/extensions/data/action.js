@@ -259,8 +259,8 @@ this.recline = this.recline || {};
                 term:function (filter, data) {
 
                     if (data.length === 0) {
-                        //empty list
                         filter["term"] = null;
+                		filter["remove"] = true;
                     } else if (data.length === 1) {
                     	if(data[0] == null)
                     		filter["remove"] = true;

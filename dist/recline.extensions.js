@@ -2321,8 +2321,8 @@ this.recline = this.recline || {};
                 term:function (filter, data) {
 
                     if (data.length === 0) {
-                        //empty list
                         filter["term"] = null;
+                		filter["remove"] = true;
                     } else if (data.length === 1) {
                     	if(data[0] == null)
                     		filter["remove"] = true;
@@ -11100,6 +11100,7 @@ this.recline.View = this.recline.View || {};
             activeFilter.userChanged = true;
             if (fieldType == "term") {
                 var term;
+                var op = "add";
                 var termObj = $target.find('.data-control-id');
                 switch (controlType) {
                     case "term":
@@ -11110,12 +11111,14 @@ this.recline.View = this.recline.View || {};
                         break;
                     case "slider_styled":
                         term = termObj.attr("value");
-                        if (term = "")
+                        if (term == "")
                         	term = null;
                         break;
                     case "dropdown":
                     case "dropdown_styled":
                         term = termObj.val();
+                        if (term == "")
+                        	term = null;
                         break;
                     case "listbox":
                         term = termObj.val();
@@ -11124,9 +11127,9 @@ this.recline.View = this.recline.View || {};
                 activeFilter.term = term;
                 if (term)
                 	activeFilter.list = [term];
-                else activeFilter.list = [];
+                else activeFilter.list = [null];
                 
-                this.doAction("onFilterValueChanged", fieldId, activeFilter.list, "add", activeFilter);
+                this.doAction("onFilterValueChanged", fieldId, activeFilter.list, op, activeFilter);
             }
             else if (fieldType == "list") {
                 var list = new Array();
