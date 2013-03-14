@@ -108,7 +108,7 @@ this.recline.View = this.recline.View || {};
             
             self.sizeScale =  d3.scale.linear()
                 .domain(sizeDomain)
-                .range([ 2, 100 ])
+                .range([ 2, 60 ])
                 .clamp(true);
 
 		 

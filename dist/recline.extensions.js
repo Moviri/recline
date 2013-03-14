@@ -11332,7 +11332,10 @@ this.recline.View = this.recline.View || {};
     my.MultiButtonDropdownFilter = Backbone.View.extend({
         template: '<div class="btn-toolbar"> \
         				<div class="btn-group data-control-id"> \
-        				{{#buttonsData}} \
+        				{{^noAllButton}} \
+        					<button class="btn btn-mini grouped-button AllButton {{allButtonSelected}}" val="All">All</button> \
+        				{{/noAllButton}} \
+    					{{#buttonsData}} \
         					{{{buttonRender}}} \
         				{{/buttonsData}} \
         			</div> \
@@ -11361,7 +11364,8 @@ this.recline.View = this.recline.View || {};
 
             this.sourceField = args.sourceField;
             this._actions = args.actions;
-            this.exclusiveButtonValue = args.sourceField.exclusiveButtonValue;
+            this.noAllButton = args.noAllButton || false;
+            this.exclusiveButtonValue = args.sourceField.exclusiveButtonValue || (!this.noAllButton ? "All" : undefined);
             this.separator = this.sourceField.separator
 
             if (this._sourceDataset) {
@@ -11375,7 +11379,7 @@ this.recline.View = this.recline.View || {};
             this.el.html("")
             this.numId = 0;
             
-            var tmplData = {}
+            var tmplData = {noAllButton: this.noAllButton}
             //  Retain user selections
             if (self._sourceDataset) {
                 _.each(self._sourceDataset.queryState.get('selections'), function (filter) {
@@ -11386,10 +11390,14 @@ this.recline.View = this.recline.View || {};
                     }
                 });
             }
-        
+            
+            
             self.buttonsData = {};
+            var records = self._sourceDataset.getRecords()
+            tmplData.allButtonSelected = (records && self.sourceField.list && records.length == self.sourceField.list.length && !self.noAllButton)
+            
             var alreadyInsertedValues = []
-        	_.each(self._sourceDataset.getRecords(), function(record) {
+        	_.each(records, function(record) {
                 var field = self._sourceDataset.fields.get(self.sourceField.field);
                 if(!field) {
                     throw "widget.genericfilter: unable to find field ["+self.sourceField.field+"] in dataset";
@@ -11403,17 +11411,18 @@ this.recline.View = this.recline.View || {};
                 	{
                     	var levelValues = fullLevelValue.split(self.separator, 2);
                     	if (self.buttonsData[levelValues[0]] && self.buttonsData[levelValues[0]].options)
-                    		self.buttonsData[levelValues[0]].options.push({fullValue: fullLevelValue, value: levelValues[1], record: record, selected: _.contains(self.sourceField.list, fullLevelValue)})
+                    		self.buttonsData[levelValues[0]].options.push({fullValue: fullLevelValue, value: levelValues[1], record: record, selected: !tmplData.allButtonSelected && _.contains(self.sourceField.list, fullLevelValue)})
                     	else
-                    		self.buttonsData[levelValues[0]] = { self: self, options: [{fullValue: fullLevelValue, value: levelValues[1], record: record, selected: _.contains(self.sourceField.list, fullLevelValue)}]}
+                    		self.buttonsData[levelValues[0]] = { self: self, options: [{fullValue: fullLevelValue, value: levelValues[1], record: record, selected: !tmplData.allButtonSelected && _.contains(self.sourceField.list, fullLevelValue)}]}
                 	}
                     else
                 	{
-                    	self.buttonsData[valueUnrendered] = { value: fullLevelValue, valueUnrendered: valueUnrendered, record: record, selected: _.contains(self.sourceField.list, valueUnrendered), self: self }
+                    	self.buttonsData[valueUnrendered] = { value: fullLevelValue, valueUnrendered: valueUnrendered, record: record, selected: !tmplData.allButtonSelected && _.contains(self.sourceField.list, valueUnrendered), self: self }
                 	}
                     alreadyInsertedValues.push(fullLevelValue)
             	}
         	});
+            self.allValues = alreadyInsertedValues;
             
             tmplData.buttonsData = _.map(self.buttonsData, function(obj, key){ return obj; }); // transform to array
             
@@ -11550,39 +11559,48 @@ this.recline.View = this.recline.View || {};
                 }
             });
             var valueList = this.computeUserChoices(self.sourceField);
-
-            self.el.find('div.btn-toolbar button').not('.select-all-button').each(function () {
-            	if (!$(this).hasClass("dropdown-toggle"))
-        		{
-            		if (!_.contains(valueList, $(this).attr("val")))
-	        		{
-	            		$(this).removeClass(self._selectedClassName);
-	            		valueList = _.without(valueList, $(this).attr("val")) 
-	        		}
-	            	else 
-            		{
-	            		$(this).addClass(self._selectedClassName)
-	            		valueList = _.without(valueList, $(this).attr("val")) 
-            		}
-        		}
-            });
             
-        	_.each(self.multiSelects, function ($select) {
-        		_.each($select.find("option"), function(opt) {
-        			if (!_.contains(valueList, $(opt).val()))
-        				$(opt).removeAttr("selected");
-        			else 
-    				{
-        				$(opt).attr("selected", "selected");
-        				valueList = _.without(valueList, $(opt).val())
-    				}
-        			// update selection of drop-down buttons
-            		var multiselectContainer = $select.data('multiselect').container;
-            		if ($select.find('option:selected').length)
-                		$('button', multiselectContainer).addClass(self._selectedClassName);
-            		else $('button', multiselectContainer).removeClass(self._selectedClassName);
-        		})
-        	});
+            var records = self._sourceDataset.getRecords()
+            if (records && self.sourceField.list && records.length == self.sourceField.list.length && !self.noAllButton)
+        	{
+            	// just select button "All"
+            	self.el.find('div.btn-toolbar button.AllButton').addClass(self._selectedClassName);
+        	}
+            else
+        	{
+                self.el.find('div.btn-toolbar button').not('.select-all-button').each(function () {
+                	if (!$(this).hasClass("dropdown-toggle"))
+            		{
+                		if (!_.contains(valueList, $(this).attr("val")))
+    	        		{
+    	            		$(this).removeClass(self._selectedClassName);
+    	            		valueList = _.without(valueList, $(this).attr("val")) 
+    	        		}
+    	            	else 
+                		{
+    	            		$(this).addClass(self._selectedClassName)
+    	            		valueList = _.without(valueList, $(this).attr("val")) 
+                		}
+            		}
+                });
+                
+            	_.each(self.multiSelects, function ($select) {
+            		_.each($select.find("option"), function(opt) {
+            			if (!_.contains(valueList, $(opt).val()))
+            				$(opt).removeAttr("selected");
+            			else 
+        				{
+            				$(opt).attr("selected", "selected");
+            				valueList = _.without(valueList, $(opt).val())
+        				}
+            			// update selection of drop-down buttons
+                		var multiselectContainer = $select.data('multiselect').container;
+                		if ($select.find('option:selected').length)
+                    		$('button', multiselectContainer).addClass(self._selectedClassName);
+                		else $('button', multiselectContainer).removeClass(self._selectedClassName);
+            		})
+            	});
+        	}
         },
 
         computeUserChoices:function (sourceField) {
@@ -11596,8 +11614,6 @@ this.recline.View = this.recline.View || {};
         onButtonsetClicked:function (e) {
         	var self = this;
             e.preventDefault();
-            console.log("onBUttonsetClicked");
-            console.log(e);
             var $target = $(e.currentTarget);
             if (!$target.hasClass(self._selectedClassName) && self.exclusiveButtonValue)
         	{
@@ -11609,11 +11625,16 @@ this.recline.View = this.recline.View || {};
                     	if (!$(this).hasClass("dropdown-toggle"))
                     		$(this).removeClass(self._selectedClassName)
                     });
-                    // 2: deselect all dropdown buttons
+                    // 2: deselect all dropdown buttons and options
                 	_.each(self.multiSelects, function ($select) {
                 		_.each($select.find("option[selected='selected']"), function(opt) {
-                    		$(opt).removeAttr("selected");
+                    		$(opt).removeAttr("selected"); // deselect options
                 		})
+                		// deselect buttons
+                		var multiselectContainer = $select.data('multiselect').container;
+                		_.each(multiselectContainer.find("button."+self._selectedClassName), function(btn) { 
+                			$(btn).removeClass(self._selectedClassName) 
+                		});
                 		// erase all options strings left inside main dropdown button
                 		$select.multiselect("refresh")
                 	});
@@ -11671,7 +11692,9 @@ this.recline.View = this.recline.View || {};
             	if (!$(this).hasClass("dropdown-toggle"))
             		listaValori.push($(this).attr('val').valueOf()); // in case there's a date, convert it with valueOf
             });
-            listaValori = listaValori.concat(self.getDropdownSelections())
+            if (listaValori.length == 1 && listaValori[0] == "All")
+            	listaValori = self.allValues;
+    		else listaValori = listaValori.concat(self.getDropdownSelections())
             
             var res = [];
             _.each(listaValori, function(valore) {
@@ -13435,7 +13458,7 @@ this.recline.View = this.recline.View || {};
             
             self.sizeScale =  d3.scale.linear()
                 .domain(sizeDomain)
-                .range([ 2, 100 ])
+                .range([ 2, 60 ])
                 .clamp(true);
 
 		 
@@ -13449,7 +13472,7 @@ this.recline.View = this.recline.View || {};
              self.colorScale = d3.scale.category20().domain(self.colorDomain);
 
 
-            var yAxisDomain = _.unique( _.map(user_clusters_props.getRecords(), function(c) { return c.attributes[state.colorField.field] } ));
+            var yAxisDomain = _.unique( _.map(self.options.model.getRecords(), function(c) { return c.attributes[state.colorField.field] } ));
             self.yAxis = d3.scale.ordinal().domain(yAxisDomain).range([0, self.height]  );
 
             if (state.colorLegend) {
