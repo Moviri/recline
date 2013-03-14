@@ -203,9 +203,13 @@ this.recline.View = this.recline.View || {};
                 .attr("y", function (t, i) {
                     var r = self.sizeScale(t);
                     var max = self.sizeScale(maxData);
-                    return max * 2 - r * 2 + 10;
+                    var y = max * 2 - r * 2;
+                    if (y == 0) 
+                    	y = 20;
+                    
+                    return y;
                 })
-                .attr("x", transX + self.sizeScale(maxData) * 4)
+                .attr("x", transX + self.sizeScale(maxData))
                 .text(function (t) {
                     return (t > 1000) ? d3.format("s")(Math.round(t)) : d3.format(".2f")(t);
                 });
