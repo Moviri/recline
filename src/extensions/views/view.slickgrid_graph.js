@@ -465,7 +465,10 @@ this.recline.View = this.recline.View || {};
             	{
                 	for (var f in options.showTotals) {
                 		var currTotal = options.showTotals[f];
-                		var currSum = _.reduce(myRecords, function(memo, rec){ return memo + rec.attributes[currTotal.field]; }, 0);
+                		var currSum = 0;
+                		for (var jj in myRecords)
+                			currSum += myRecords[jj].attributes[currTotal.field];
+                		
                 		var fieldObj = self.model.fields.get(currTotal.field)
                 		var origValue = myRecords[0].attributes[currTotal.field]
                 		
