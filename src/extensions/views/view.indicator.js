@@ -256,6 +256,8 @@ this.recline.View = this.recline.View || {};
                          template = compareValue.template;	 
                 
                 }
+            } else if (self.options.state.fillCompareSpace){
+            	template = this.templates.templatePercentage;
             }
             if ((tmplData["shape"] == null || typeof tmplData["shape"] == "undefined") 
             	&& (tmplData["compareShape"] == null || typeof tmplData["compareShape"] == "undefined"))
