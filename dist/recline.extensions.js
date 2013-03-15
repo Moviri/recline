@@ -13376,6 +13376,219 @@ this.recline.View = this.recline.View || {};
 
 
 })(jQuery, recline.View);
+/*jshint multistr:true */
+
+this.recline = this.recline || {};
+this.recline.View = this.recline.View || {};
+
+(function ($, my) {
+
+
+    my.D3CooccurrenceMatrix = Backbone.View.extend({
+    	rendered: false,
+    	template:'{{#showZoomCtrl}}<input type="range" id="mapZoomCtrl" step="500" min="0" max="30000" value="{{scale}}" \
+    				{{#mapWidth}} width={{mapWidth}}{{/mapWidth}} \
+    				{{#mapHeight}} height={{mapHeight}}{{/mapHeight}} \
+    			  >Zoom</input>{{/showZoomCtrl}} \
+    			  <svg x="0" y="0" xmlns="http://www.w3.org/2000/svg" version="1.1" style="{{svgStyle}}"> \
+    			  		<g class="regions"></g> \
+    					<g class="regionLabels" pointer-events="none"></g> \
+    					<g class="places" pointer-events="none"></g> \
+    				</svg>',
+        events: {
+        	'change #mapZoomCtrl':'onZoomChanged',
+        },    			  
+        initialize:function (options) {
+            var self = this;
+
+            _.bindAll(this, 'render', 'redraw', 'getRecordByValue', 'getActionsForEvent', 'onZoomChanged', 'getLabelFor');
+
+            this.model.bind('change', self.render);
+            this.model.fields.bind('reset', self.render);
+            this.model.fields.bind('add', self.render);
+
+            this.model.bind('query:done', this.redraw);
+            this.model.queryState.bind('selection:done', this.redraw);
+
+            this.uid = "" + new Date().getTime() + Math.floor(Math.random() * 10000); // generating an unique id for the map
+            this.el = options.el;
+            
+            this.unselectedColor = "#C0C0C0";
+            if (this.options.state.unselectedColor)
+                this.unselectedColor = this.options.state.unselectedColor;
+
+            this.mapWidth = this.options.state.width // optional. May be undefined
+            this.mapHeight = this.options.state.height // optional. May be undefined
+         
+            var svgCustomStyle = '';
+            if (this.options.state.svgStyle){
+            	svgCustomStyle = this.options.state.svgStyle;
+            } 
+            if (this.mapWidth == null || typeof this.mapWidth == "undefined")
+            	this.mapWidth = $(this.el).width()
+            	
+            if (this.mapHeight == null || typeof this.mapHeight == "undefined")
+            	this.mapHeight = $(this.el).height()
+            	
+            this.scale = this.options.state.scale
+            
+            this.fieldLabels = this.options.state.fieldLabels;
+
+            var tmplData = {scale: this.scale,  mapWidth: this.mapWidth, mapHeight: this.mapHeight, svgStyle: svgCustomStyle/*, showZoomCtrl: this.options.state.showZoomCtrl*/}
+            var out = Mustache.render(this.template, tmplData);
+            $(this.el).html(out);
+            
+            this.svg = d3v3.select(this.el+" svg")
+        },
+        render:function () {
+            var self = this;
+
+//            var margin = {top: 80, right: 0, bottom: 10, left: 80},
+//                width = 720,
+//                height = 720;
+//
+//            var x = d3.scale.ordinal().rangeBands([0, width]),
+//                z = d3.scale.linear().domain([0, 4]).clamp(true),
+//                c = d3.scale.category10().domain(d3.range(10));
+//
+//            var svg = d3.select("body").append("svg")
+//                .attr("width", width + margin.left + margin.right)
+//                .attr("height", height + margin.top + margin.bottom)
+//                .style("margin-left", -margin.left + "px")
+//              .append("g")
+//                .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+//
+//            d3.json("miserables.json", function(miserables) {
+//              var matrix = [],
+//                  nodes = miserables.nodes,
+//                  n = nodes.length;
+//
+//              // Compute index per node.
+//              nodes.forEach(function(node, i) {
+//                node.index = i;
+//                node.count = 0;
+//                matrix[i] = d3.range(n).map(function(j) { return {x: j, y: i, z: 0}; });
+//              });
+//
+//              // Convert links to matrix; count character occurrences.
+//              miserables.links.forEach(function(link) {
+//                matrix[link.source][link.target].z += link.value;
+//                matrix[link.target][link.source].z += link.value;
+//                matrix[link.source][link.source].z += link.value;
+//                matrix[link.target][link.target].z += link.value;
+//                nodes[link.source].count += link.value;
+//                nodes[link.target].count += link.value;
+//              });
+//
+//              // Precompute the orders.
+//              var orders = {
+//                name: d3.range(n).sort(function(a, b) { return d3.ascending(nodes[a].name, nodes[b].name); }),
+//                count: d3.range(n).sort(function(a, b) { return nodes[b].count - nodes[a].count; }),
+//                group: d3.range(n).sort(function(a, b) { return nodes[b].group - nodes[a].group; })
+//              };
+//
+//              // The default sort order.
+//              x.domain(orders.name);
+//
+//              svg.append("rect")
+//                  .attr("class", "background")
+//                  .attr("width", width)
+//                  .attr("height", height);
+//
+//              var row = svg.selectAll(".row")
+//                  .data(matrix)
+//                .enter().append("g")
+//                  .attr("class", "row")
+//                  .attr("transform", function(d, i) { return "translate(0," + x(i) + ")"; })
+//                  .each(row);
+//
+//              row.append("line")
+//                  .attr("x2", width);
+//
+//              row.append("text")
+//                  .attr("x", -6)
+//                  .attr("y", x.rangeBand() / 2)
+//                  .attr("dy", ".32em")
+//                  .attr("text-anchor", "end")
+//                  .text(function(d, i) { return nodes[i].name; });
+//
+//              var column = svg.selectAll(".column")
+//                  .data(matrix)
+//                .enter().append("g")
+//                  .attr("class", "column")
+//                  .attr("transform", function(d, i) { return "translate(" + x(i) + ")rotate(-90)"; });
+//
+//              column.append("line")
+//                  .attr("x1", -width);
+//
+//              column.append("text")
+//                  .attr("x", 6)
+//                  .attr("y", x.rangeBand() / 2)
+//                  .attr("dy", ".32em")
+//                  .attr("text-anchor", "start")
+//                  .text(function(d, i) { return nodes[i].name; });
+//
+//              function row(row) {
+//                var cell = d3.select(this).selectAll(".cell")
+//                    .data(row.filter(function(d) { return d.z; }))
+//                  .enter().append("rect")
+//                    .attr("class", "cell")
+//                    .attr("x", function(d) { return x(d.x); })
+//                    .attr("width", x.rangeBand())
+//                    .attr("height", x.rangeBand())
+//                    .style("fill-opacity", function(d) { return z(d.z); })
+//                    .style("fill", function(d) { return nodes[d.x].group == nodes[d.y].group ? c(nodes[d.x].group) : null; })
+//                    .on("mouseover", mouseover)
+//                    .on("mouseout", mouseout);
+//              }
+//
+//              function mouseover(p) {
+//                d3.selectAll(".row text").classed("active", function(d, i) { return i == p.y; });
+//                d3.selectAll(".column text").classed("active", function(d, i) { return i == p.x; });
+//              }
+//
+//              function mouseout() {
+//                d3.selectAll("text").classed("active", false);
+//              }
+//
+//              d3.select("#order").on("change", function() {
+//                clearTimeout(timeout);
+//                order(this.value);
+//              });
+//
+//              function order(value) {
+//                x.domain(orders[value]);
+//
+//                var t = svg.transition().duration(2500);
+//
+//                t.selectAll(".row")
+//                    .delay(function(d, i) { return x(i) * 4; })
+//                    .attr("transform", function(d, i) { return "translate(0," + x(i) + ")"; })
+//                  .selectAll(".cell")
+//                    .delay(function(d) { return x(d.x) * 4; })
+//                    .attr("x", function(d) { return x(d.x); });
+//
+//                t.selectAll(".column")
+//                    .delay(function(d, i) { return x(i) * 4; })
+//                    .attr("transform", function(d, i) { return "translate(" + x(i) + ")rotate(-90)"; });
+//              }
+//
+//              var timeout = setTimeout(function() {
+//                order("group");
+//                d3.select("#order").property("selectedIndex", 2).node().focus();
+//              }, 5000);
+//            });
+        },
+
+        redraw:function () {
+            var self = this;
+
+        },
+    });
+
+
+})(jQuery, recline.View);
+
 this.recline = this.recline || {};
 this.recline.View = this.recline.View || {};
 
@@ -13385,7 +13598,14 @@ this.recline.View = this.recline.View || {};
 
 
     view.D3GravityBubble = Backbone.View.extend({
-        template: '<div id="{{uid}}" style="width: {{width}}px; height: {{height}}px;"><div id="{{uid}}_graph" class="span11"></div><div class="span1" style="padding-left:30px;"><div id="{{uid}}_legend_color"  style="width:{{color_legend_width}}px;height:{{color_legend_height}}px"></div><div id="{{uid}}_legend_size" style="width:{{size_legend_width}}px;height:{{size_legend_height}}px"></div></div></div>',
+        template: ' \
+	        <div id="{{uid}}"  style="width: {{width}}px; height: {{height}}px;"> \
+	        	<div id="{{uid}}_graph" class="span11" ></div> \
+	        	<div class="span1"> \
+	        		<div id="{{uid}}_legend_color"  style="width:{{color_legend_width}}px;height:{{color_legend_height}}px;{{#colorMargin}}margin:{{colorMargin}}{{/colorMargin}}"></div> \
+	        		<div id="{{uid}}_legend_size" style="width:{{size_legend_width}}px;height:{{size_legend_height}}px;{{#sizeMargin}}margin:{{sizeMargin}}{{/sizeMargin}}"></div> \
+	        	</div> \
+	        </div>',
 
 
         initialize: function (options) {
@@ -13419,12 +13639,14 @@ this.recline.View = this.recline.View || {};
                 this.options.state.colorLegend.margin = this.options.state.colorLegend.margin || [];
                 this.color_legend_width = this.options.state.colorLegend.width + (this.options.state.colorLegend.margin.right || 0) + (this.options.state.colorLegend.margin.left || this.options.state.colorLegend.margin.right || 0);
                 this.color_legend_height = this.options.state.colorLegend.height + (this.options.state.colorLegend.margin.top || 0) + (this.options.state.colorLegend.margin.bottom || this.options.state.colorLegend.margin.top || 0);
+                this.colorMargin = (this.options.state.colorLegend.margin.top || 0)+"px "+(this.options.state.colorLegend.margin.right || 0)+"px "+(this.options.state.colorLegend.margin.bottom || 0)+"px "+(this.options.state.colorLegend.margin.left || 0)+"px"
             }
 
             if (this.options.state.sizeLegend) {
                 this.options.state.sizeLegend.margin = this.options.state.sizeLegend.margin || [];
                 this.size_legend_width = this.options.state.sizeLegend.width + (this.options.state.sizeLegend.margin.right || 0) + (this.options.state.sizeLegend.margin.left || this.options.state.sizeLegend.margin.right || 0);
                 this.size_legend_height = this.options.state.sizeLegend.height + (this.options.state.sizeLegend.margin.top || 0) + (this.options.state.sizeLegend.margin.bottom || this.options.state.sizeLegend.margin.top || 0);
+                this.sizeMargin = (this.options.state.sizeLegend.margin.top || 0)+"px "+(this.options.state.sizeLegend.margin.right || 0)+"px "+(this.options.state.sizeLegend.margin.bottom || 0)+"px "+(this.options.state.sizeLegend.margin.left || 0)+"px"
             }
 
             if (this.options.state.customTooltipTemplate) {
@@ -13587,7 +13809,7 @@ this.recline.View = this.recline.View || {};
                     
                     return y;
                 })
-                .attr("x", transX + self.sizeScale(maxData))
+                .attr("x", transX + self.sizeScale(maxData)+(self.options.state.sizeLegend.margin.left || 0)/2)
                 .text(function (t) {
                     return (t > 1000) ? d3.format("s")(Math.round(t)) : d3.format(".2f")(t);
                 });

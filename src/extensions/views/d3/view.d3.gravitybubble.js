@@ -7,7 +7,14 @@ this.recline.View = this.recline.View || {};
 
 
     view.D3GravityBubble = Backbone.View.extend({
-        template: '<div id="{{uid}}" style="width: {{width}}px; height: {{height}}px;"><div id="{{uid}}_graph" class="span11"></div><div class="span1" style="padding-left:30px;"><div id="{{uid}}_legend_color"  style="width:{{color_legend_width}}px;height:{{color_legend_height}}px"></div><div id="{{uid}}_legend_size" style="width:{{size_legend_width}}px;height:{{size_legend_height}}px"></div></div></div>',
+        template: ' \
+	        <div id="{{uid}}"  style="width: {{width}}px; height: {{height}}px;"> \
+	        	<div id="{{uid}}_graph" class="span11" ></div> \
+	        	<div class="span1"> \
+	        		<div id="{{uid}}_legend_color"  style="width:{{color_legend_width}}px;height:{{color_legend_height}}px;{{#colorMargin}}margin:{{colorMargin}}{{/colorMargin}}"></div> \
+	        		<div id="{{uid}}_legend_size" style="width:{{size_legend_width}}px;height:{{size_legend_height}}px;{{#sizeMargin}}margin:{{sizeMargin}}{{/sizeMargin}}"></div> \
+	        	</div> \
+	        </div>',
 
 
         initialize: function (options) {
@@ -41,12 +48,14 @@ this.recline.View = this.recline.View || {};
                 this.options.state.colorLegend.margin = this.options.state.colorLegend.margin || [];
                 this.color_legend_width = this.options.state.colorLegend.width + (this.options.state.colorLegend.margin.right || 0) + (this.options.state.colorLegend.margin.left || this.options.state.colorLegend.margin.right || 0);
                 this.color_legend_height = this.options.state.colorLegend.height + (this.options.state.colorLegend.margin.top || 0) + (this.options.state.colorLegend.margin.bottom || this.options.state.colorLegend.margin.top || 0);
+                this.colorMargin = (this.options.state.colorLegend.margin.top || 0)+"px "+(this.options.state.colorLegend.margin.right || 0)+"px "+(this.options.state.colorLegend.margin.bottom || 0)+"px "+(this.options.state.colorLegend.margin.left || 0)+"px"
             }
 
             if (this.options.state.sizeLegend) {
                 this.options.state.sizeLegend.margin = this.options.state.sizeLegend.margin || [];
                 this.size_legend_width = this.options.state.sizeLegend.width + (this.options.state.sizeLegend.margin.right || 0) + (this.options.state.sizeLegend.margin.left || this.options.state.sizeLegend.margin.right || 0);
                 this.size_legend_height = this.options.state.sizeLegend.height + (this.options.state.sizeLegend.margin.top || 0) + (this.options.state.sizeLegend.margin.bottom || this.options.state.sizeLegend.margin.top || 0);
+                this.sizeMargin = (this.options.state.sizeLegend.margin.top || 0)+"px "+(this.options.state.sizeLegend.margin.right || 0)+"px "+(this.options.state.sizeLegend.margin.bottom || 0)+"px "+(this.options.state.sizeLegend.margin.left || 0)+"px"
             }
 
             if (this.options.state.customTooltipTemplate) {
@@ -209,7 +218,7 @@ this.recline.View = this.recline.View || {};
                     
                     return y;
                 })
-                .attr("x", transX + self.sizeScale(maxData))
+                .attr("x", transX + self.sizeScale(maxData)+(self.options.state.sizeLegend.margin.left || 0)/2)
                 .text(function (t) {
                     return (t > 1000) ? d3.format("s")(Math.round(t)) : d3.format(".2f")(t);
                 });
