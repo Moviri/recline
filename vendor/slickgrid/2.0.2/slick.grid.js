@@ -679,10 +679,17 @@ if (typeof Slick === "undefined") {
 		{
 			var lastBottomColumnHtml = "";
 			if (i == 0 && options.showLineNumbers)
-				lastBottomColumnHtml = getDataLength();
+			{
+				var totRecs = getDataLength();
+				lastBottomColumnHtml = (totRecs > 0 ? totRecs : "");
+			}
 			else if (options.showTotals && i == (options.showLineNumbers?1:0))
-				lastBottomColumnHtml = "<b>Grand total(s)</b>";
-			else if (i < columns.length-(options.useInnerChart ? 1 : 0) && options.totals[m.id])
+			{
+				if (getDataLength() > 0)
+					lastBottomColumnHtml = (options.showPartitionedData && options.showPartitionedData.showSubTotals ? "<b>Grand totals</b>": "<b>Totals</b>");
+				else lastBottomColumnHtml = ""
+			}
+			else if (i < columns.length-(options.useInnerChart ? 1 : 0) && options.totals && options.totals[m.id])
 				lastBottomColumnHtml = options.totals[m.id];
 			
 			headerBottom = $("<div class='ui-state-default slick-footer-column' id='" + uid + m.id + "' />")
