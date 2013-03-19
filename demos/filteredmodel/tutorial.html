@@ -147,7 +147,7 @@ var filter2 = new recline.View.GenericFilter({
 $('#filter2').append(filter2.el);
 
 var $el = $('#grid1');
-var grid1 = new recline.View.SlickGrid({
+var grid1 = new recline.View.SlickGridGraph({
     model: dataset,
     el: $el,
     state: {  fitColumns:true,
@@ -168,7 +168,7 @@ grid1.visible = true;
 grid1.render();
 
 var $el = $('#grid2');
-var grid2 = new recline.View.SlickGrid({
+var grid2 = new recline.View.SlickGridGraph({
     model: filtereddataset,
     el: $el,
     state: {

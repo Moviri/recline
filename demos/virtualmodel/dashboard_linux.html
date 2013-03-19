@@ -1,5 +1,5 @@
 ---
-layout: moviri
+layout: moviri-release
 title: Dashboard
 recline-deps: true
 root: ../../
@@ -226,7 +226,7 @@ root: ../../
 		
    		
            var $el = $('#mygrid');
-		   var grid = new recline.View.SlickGrid(
+		   var grid = new recline.View.SlickGridGraph(
 											{model: virtualdatasetAge, el: $el, 
 												state: {
 													fitColumns:true,
@@ -314,16 +314,18 @@ root: ../../
             $('#mygraph4').append(graph4.el);
 
             var indicator1 = new recline.View.Indicator({
+                model: virtualdatasetTotal,
                 state: {
-                    kpi:            {dataset: virtualdatasetTotal, type: "filtered", field: "totalviewed_sum"},
+                    kpi:            {type: "filtered", field: "totalviewed_sum"},
 					label:"Views"
                 }
             });
             $('#indicator1').append(indicator1.el);
 
             var indicator2 = new recline.View.Indicator({
+                model: virtualdatasetTotal,
                 state: {
-                    kpi:            {dataset: virtualdatasetTotal, type: "filtered", field: "price_sum_sum"},
+                    kpi:            {type: "filtered", field: "price_sum_sum"},
                     label:"Views"
                 }
             });

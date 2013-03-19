@@ -1,5 +1,5 @@
 ---
-layout: moviri
+layout: moviri-release
 title: Demos - Virtualmodel
 recline-deps: true
 root: ../../
@@ -169,7 +169,7 @@ var virtual1 = new recline.Model.VirtualDataset({
 		    </div>
 		    <div class="row-fluid">
     <pre>
-var grid3 = new recline.View.SlickGrid({
+var grid3 = new recline.View.SlickGridGraph({
     model:virtual1,
     el:$el,
     state:{
@@ -240,7 +240,7 @@ var grid3 = new recline.View.SlickGrid({
 
 
     var $el = $('#grid1');
-    var grid1 = new recline.View.SlickGrid({
+    var grid1 = new recline.View.SlickGridGraph({
         model:dataset,
         el:$el,
         state:{  fitColumns:true,
@@ -254,7 +254,7 @@ var grid3 = new recline.View.SlickGrid({
     grid1.render();
 
     $el = $('#grid2');
-    var grid2 = new recline.View.SlickGrid({
+    var grid2 = new recline.View.SlickGridGraph({
         model:virtual1,
         el:$el,
         state:{
@@ -271,7 +271,7 @@ var grid3 = new recline.View.SlickGrid({
 
 
     $el = $('#grid3');
-    var grid3 = new recline.View.SlickGrid({
+    var grid3 = new recline.View.SlickGridGraph({
         model:virtual1,
         el:$el,
         state:{

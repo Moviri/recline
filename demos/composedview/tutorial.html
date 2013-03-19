@@ -1,5 +1,5 @@
 ---
-layout: moviri
+layout: moviri-release
 title: Demos - Composed View
 recline-deps: true
 root: ../../
@@ -169,7 +169,7 @@ var composed = new recline.View.Composed({
         dataset.queryState.addFacetNoEvent("gender");
 
         var $el = $('#grid1');
-        var grid1 = new recline.View.SlickGrid({
+        var grid1 = new recline.View.SlickGridGraph({
             model:dataset,
             el:$el,
             state:{

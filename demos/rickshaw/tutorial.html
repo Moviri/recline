@@ -1,5 +1,5 @@
 ---
-layout: moviri
+layout: moviri-release
 title: Demos - NVD3 Integration
 recline-deps: true
 root: ../../
@@ -113,7 +113,7 @@ var datasetevents = new recline.Model.Dataset({
 
 
 var $el = $('#grid1');
-var grid1 = new recline.View.SlickGrid({
+var grid1 = new recline.View.SlickGridGraph({
     model: datasetevents,
     el: $el,
     state: {  fitColumns:true,

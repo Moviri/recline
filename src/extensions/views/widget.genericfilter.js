@@ -84,7 +84,7 @@ this.recline.View = this.recline.View || {};
 				from: {{min}}, \
 				to: {{max}}, \
 				scale: [{{min}},"|","{{step1}}","|","{{mean}}","|","{{step3}}","|",{{max}}], \
-				step: {{step}}, \
+            	{{#step}}step: {{step}}{{/step}}, \
 				limits: false, \
 				skin: "plastic" \
 			}); \
@@ -153,7 +153,7 @@ this.recline.View = this.recline.View || {};
 				to: {{max}}, \
 				scale: [{{min}},"|","{{step1}}","|","{{mean}}","|","{{step3}}","|",{{max}}], \
 				limits: false, \
-				step: {{step}}, \
+            	{{#step}}step: {{step}}{{/step}}, \
 				skin: "round_plastic", \
 			}); \
 		}); \
@@ -734,7 +734,7 @@ this.recline.View = this.recline.View || {};
             _.each(buttons, function (btn) {
                 $(btn).removeClass("btn-primary")
             });
-            if (valueList != null) {
+            if (valueList != null && typeof valuelist != "undefined") {
                 if (valueList.length == 1) {
                     // do not use each or other jquery/underscore methods since they don't work well here
                     for (var i = 0; i < buttons.length; i++) {
@@ -756,7 +756,7 @@ this.recline.View = this.recline.View || {};
         },
         updateRangeSlider:function (filterContainer, currActiveFilter, filterCtrl) {
             var valueList = this.computeUserChoices(currActiveFilter);
-            if (valueList != null && valueList.length == 2) {
+            if (valueList && valueList.length == 2) {
                 filterCtrl.slider("values", 0, valueList[0]);
                 filterCtrl.slider("values", 1, valueList[1]);
                 $("#amount" + currActiveFilter.ctrlId).html(currActiveFilter.label + ": " + valueList[0] + " - " + valueList[1]); // sistema di riserva
@@ -765,7 +765,7 @@ this.recline.View = this.recline.View || {};
         },
         updateRangeSliderStyled:function (filterContainer, currActiveFilter, filterCtrl) {
             var valueList = this.computeUserChoices(currActiveFilter);
-            if (valueList != null && valueList.length == 2)
+            if (valueList && valueList.length == 2)
                 filterCtrl.jslider("value", valueList[0], valueList[1]);
         },
         updateRangeCalendar:function (filterContainer, currActiveFilter, filterCtrlFrom, filterCtrlTo) {
@@ -801,7 +801,7 @@ this.recline.View = this.recline.View || {};
             });
 
             // from now on, do not use each or other jquery/underscore methods since they don't work well here
-            if (valueList != null)
+            if (valueList)
                 for (var i = 0; i < buttons.length; i++) {
                     var btn = $(buttons[i]);
                     for (var j = 0; j < valueList.length; j++) {
@@ -831,7 +831,7 @@ this.recline.View = this.recline.View || {};
             		
                 currActiveFilter.facet = self._sourceDataset.getFacetByFieldId(currActiveFilter.field);
 
-                if (currActiveFilter.facet == null)
+                if (currActiveFilter.facet == null || typeof currActiveFilter.facet == "undefined")
                     throw "GenericFilter: no facet present for field [" + currActiveFilter.field + "]. Define a facet before filter render"
                 
                 if (currActiveFilter.fieldType == "integer" || currActiveFilter.fieldType == "number") // sort if numeric (Chrome issue)
@@ -1369,7 +1369,7 @@ this.recline.View = this.recline.View || {};
                                 currActiveFilter.min = v;
 
                             if (currActiveFilter.controlType.indexOf('styled') > 0 && lastV != null) {
-                                if (currActiveFilter.step == null)
+                                if (currActiveFilter.step == null || typeof currActiveFilter.step == "undefined")
                                     currActiveFilter.step = v - lastV;
                                 else if (v - lastV != currActiveFilter.step)
                                     currActiveFilter.step = 1;
@@ -1448,7 +1448,7 @@ this.recline.View = this.recline.View || {};
                                 currActiveFilter.min = v;
 
                             if (currActiveFilter.controlType.indexOf('styled') > 0 && lastV != null) {
-                                if (currActiveFilter.step == null)
+                                if (currActiveFilter.step == null || typeof currActiveFilter.step == "undefined")
                                     currActiveFilter.step = v - lastV;
                                 else if (v - lastV != currActiveFilter.step)
                                     currActiveFilter.step = 1;

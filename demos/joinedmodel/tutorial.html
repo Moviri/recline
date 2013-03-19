@@ -1,5 +1,5 @@
 ---
-layout: moviri
+layout: moviri-release
 title: Demos - Joined Model
 recline-deps: true
 root: ../../
@@ -260,7 +260,7 @@ var joined1 = new recline.Model.JoinedDataset( {
     joined1.query();
 
     var $el = $('#grid1');
-    var grid1 = new recline.View.SlickGrid({
+    var grid1 = new recline.View.SlickGridGraph({
         model:dataset1,
         el:$el,
         state:{  fitColumns:true,
@@ -281,7 +281,7 @@ var joined1 = new recline.Model.JoinedDataset( {
     grid1.render();
 
     $el = $('#grid2');
-    var grid2 = new recline.View.SlickGrid({
+    var grid2 = new recline.View.SlickGridGraph({
         model:dataset2,
         el:$el,
         state:{
@@ -295,7 +295,7 @@ var joined1 = new recline.Model.JoinedDataset( {
     grid2.render();
 
     $el = $('#grid4');
-    var grid4 = new recline.View.SlickGrid({
+    var grid4 = new recline.View.SlickGridGraph({
         model:dataset3,
         el:$el,
         state:{
@@ -311,7 +311,7 @@ var joined1 = new recline.Model.JoinedDataset( {
 
 
     $el = $('#grid3');
-    var grid3 = new recline.View.SlickGrid({
+    var grid3 = new recline.View.SlickGridGraph({
         model:joined1,
         el:$el,
         state:{

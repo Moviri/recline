@@ -1,5 +1,5 @@
 ---
-layout: moviri
+layout: moviri-release
 title: Demos - DatePicker
 recline-deps: true
 root: ../../
@@ -165,7 +165,7 @@ root: ../../
 
 
     var $el = $('#grid');
-    var grid1 = new recline.View.SlickGrid({
+    var grid1 = new recline.View.SlickGridGraph({
         model:dataset,
         el:$el,
         state: {
@@ -180,7 +180,7 @@ root: ../../
     grid1.render();
 
     var $el = $('#grid_compare');
-    var grid2 = new recline.View.SlickGrid({
+    var grid2 = new recline.View.SlickGridGraph({
         model:dataset_compare,
         el:$el,
         state: {

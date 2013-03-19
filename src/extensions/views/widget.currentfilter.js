@@ -48,7 +48,7 @@ this.recline.View = this.recline.View || {};
 
             var values = [];
             _.each(self._sourceDatasets, function (ds, ds_index) {
-                _.each(ds.queryState.getFilters(), function (filter, filter_index) {
+                _.each(ds.queryState.get('filters'), function (filter, filter_index) {
                     var v = {dataset_index:ds_index, filter_index:filter_index};
                     v["val"] = self.filterDescription[filter.type](filter, ds);
 

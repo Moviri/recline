@@ -1,5 +1,5 @@
 ---
-layout: moviri
+layout: moviri-release
 title: Demos - Filters
 recline-deps: true
 root: ../../
@@ -205,7 +205,7 @@ root: ../../
 <script>
 
 
-var initialState = new recline.Data.StateManagement.State({fromQueryString:true});
+//var initialState = new recline.Data.StateManagement.State({fromQueryString:true});
 
 var colorSchemaDate = new recline.Data.ColorSchema({
     type:"scaleWithDistinctData",
@@ -248,7 +248,7 @@ var dataset = new recline.Model.Dataset({
         {id:'date', type:"date"},
         {id:'gender', type:"string"}
     ],
-    initialState:initialState
+    //initialState:initialState
 });
 colorSchemaDate.setDataset(dataset, "date");
 colorSchemaAge.setDataset(dataset, "age");
@@ -257,14 +257,14 @@ dataset.queryState.addFacetNoEvent("age", true);
 dataset.queryState.addFacetNoEvent("date", true);
 
 
-dataset.queryState.bind('change', function () {
+//dataset.queryState.bind('change', function () {
 
-    $("#link").attr("href", window.location.origin + window.location.pathname + "?" + recline.Data.StateManagement.getQueryString([dataset]));
-});
-dataset.queryState.bind('selection:change', function () {
+//     $("#link").attr("href", window.location.origin + window.location.pathname + "?" + recline.Data.StateManagement.getQueryString([dataset]));
+// });
+// dataset.queryState.bind('selection:change', function () {
 
-    $("#link").attr("href", window.location.origin + window.location.pathname + "?" + recline.Data.StateManagement.getQueryString([dataset]));
-});
+//     $("#link").attr("href", window.location.origin + window.location.pathname + "?" + recline.Data.StateManagement.getQueryString([dataset]));
+// });
 
 
 var action1 = new recline.Action({
@@ -287,7 +287,7 @@ var action1 = new recline.Action({
 
 
 var $el = $('#grid1');
-var grid1 = new recline.View.SlickGrid({
+var grid1 = new recline.View.SlickGridGraph({
     model:dataset,
     el:$el,
     state:{
@@ -378,22 +378,22 @@ function drawGraph() {
     });
     $('#filter3').append(filter3.el);
 
-    var filter4 = new recline.View.GenericFilter({
-        sourceDataset:dataset,
-        sourceFields:[
-            {field:"age", controlType:'legend', fieldType:"integer" }
-        ],
-        actions:[
-            {
-                action:action1,
-                mapping:[
-                    {srcField:"age", filter:"filter_age_list"}
-                ],
-                event:["selection"]
-            }
-        ]
-    });
-    $('#filter4').append(filter4.el);
+//     var filter4 = new recline.View.GenericFilter({
+//         sourceDataset:dataset,
+//         sourceFields:[
+//             {field:"age", controlType:'legend', fieldType:"integer" }
+//         ],
+//         actions:[
+//             {
+//                 action:action1,
+//                 mapping:[
+//                     {srcField:"age", filter:"filter_age_list"}
+//                 ],
+//                 event:["selection"]
+//             }
+//         ]
+//     });
+//     $('#filter4').append(filter4.el);
 
     var filter5 = new recline.View.GenericFilter({
         sourceDataset:dataset,
@@ -499,28 +499,28 @@ function drawGraph() {
     $('#filter10').append(filter10.el);
 
 
-    var filter11 = new recline.View.GenericFilter({
-        sourceDataset:dataset,
-        sourceFields:[
-            {field:"age", controlType:'color_legend', fieldType:"integer" }
-        ],
-        actions:[
-            {
-                action:action1,
-                mapping:[
-                    {srcField:"age", filter:"filter_age_list"}
-                ],
-                event:["selection"]
-            }
-        ]
-    });
-    $('#filter11').append(filter11.el);
+//     var filter11 = new recline.View.GenericFilter({
+//         sourceDataset:dataset,
+//         sourceFields:[
+//             {field:"age", controlType:'color_legend', fieldType:"integer" }
+//         ],
+//         actions:[
+//             {
+//                 action:action1,
+//                 mapping:[
+//                     {srcField:"age", filter:"filter_age_list"}
+//                 ],
+//                 event:["selection"]
+//             }
+//         ]
+//     });
+//     $('#filter11').append(filter11.el);
 
 
     filterhorizontal = new recline.View.GenericFilter({
         sourceDataset:dataset,
         sourceFields:[
-            {field:"age", controlType:'color_legend', fieldType:"integer", label:"Select age", labelPosition:"left"  },
+            //{field:"age", controlType:'color_legend', fieldType:"integer", label:"Select age", labelPosition:"left"  },
             {field:"age", controlType:'dropdown', fieldType:"integer", label:"Select age", labelPosition:"left"  },
             {field:"age", controlType:'listbox_styled', fieldType:"integer", label:"Select age", labelPosition:"inside"  }
 
@@ -565,25 +565,26 @@ function drawGraph() {
     });
     $('#horizontal2').append(filterhorizontal2.el);
 
-    filterhorizontal3 = new recline.View.GenericFilter({
-        sourceFields:[
-            {field:"daydate", controlType:'dropdown_date_range', fieldType:'date', label:"Select period", labelPosition:"left" }
-        ],
-        state:{
-            useHorizontalLayout:true,
-        },
-        actions:[
-            {
-                action:action1,
-                mapping:[
-                    {srcField:"daydate", filter:"filter_date_range"}
-                ],
-                event:["selection"]
-            }
-        ]
-    });
-    $('#horizontal3').append(filterhorizontal3.el);
-    filterhorizontal3.render();
+//     filterhorizontal3 = new recline.View.GenericFilter({
+//         sourceDataset:dataset,
+//         sourceFields:[
+//             {field:"daydate", controlType:'dropdown_date_range', fieldType:'date', label:"Select period", labelPosition:"left" }
+//         ],
+//         state:{
+//             useHorizontalLayout:true,
+//         },
+//         actions:[
+//             {
+//                 action:action1,
+//                 mapping:[
+//                     {srcField:"daydate", filter:"filter_date_range"}
+//                 ],
+//                 event:["selection"]
+//             }
+//         ]
+//     });
+//     $('#horizontal3').append(filterhorizontal3.el);
+//     filterhorizontal3.render();
 
     filterhorizontal4 = new recline.View.DatePicker({});
     $('#horizontal4').append(filterhorizontal4.el);

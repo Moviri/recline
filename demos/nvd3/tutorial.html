@@ -1,5 +1,5 @@
 ---
-layout: moviri
+layout: moviri-release
 title: Demos - NVD3 Integration
 recline-deps: true
 root: ../../
@@ -208,7 +208,7 @@ var action1 = new recline.Action({
 });
 
 var $el = $('#grid1');
-var grid1 = new recline.View.SlickGrid({
+var grid1 = new recline.View.SlickGridGraph({
     model:dataset,
     el:$el,
     state:{  fitColumns:true },
@@ -238,7 +238,7 @@ grid1.render();
 
 
 var $el = $('#grid2');
-var grid2 = new recline.View.SlickGrid({
+var grid2 = new recline.View.SlickGridGraph({
     model:dataset,
     el:$el,
     state:{ fitColumns:true },
@@ -252,7 +252,7 @@ grid2.visible = true;
 grid2.render();
 
 var $el = $('#grid3');
-var grid3 = new recline.View.SlickGrid({
+var grid3 = new recline.View.SlickGridGraph({
     model:dataset,
     el:$el,
     state:{ fitColumns:true },
@@ -266,7 +266,7 @@ grid3.visible = true;
 grid3.render();
 
 var $el = $('#grid4');
-var grid4 = new recline.View.SlickGrid({
+var grid4 = new recline.View.SlickGridGraph({
     model:vdatasetGender,
     el:$el,
     state:{ fitColumns:true },

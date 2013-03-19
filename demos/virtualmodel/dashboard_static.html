@@ -1,5 +1,5 @@
 ---
-layout: moviri
+layout: moviri-release
 title: Dashboard
 recline-deps: true
 root: ../../
@@ -124,7 +124,7 @@ root: ../../
         dataset.fetch(); // needed to populate filter list
 		
            var $el = $('#mygrid');
-		   var grid = new recline.View.SlickGrid({model: virtualdatasetAge, el: $el, state: {fitColumns:true, useInnerChart:true, innerChartSerie1:'totalviewed_by_gender_Male_sum', innerChartSerie2:'totalviewed_by_gender_Female_sum', innerChartHeader:'Views by Gender'}});
+		   var grid = new recline.View.SlickGridGraph({model: virtualdatasetAge, el: $el, state: {fitColumns:true, useInnerChart:true, innerChartSerie1:'totalviewed_by_gender_Male_sum', innerChartSerie2:'totalviewed_by_gender_Female_sum', innerChartHeader:'Views by Gender'}});
             grid.visible = true;
             grid.render();
 

@@ -1,5 +1,5 @@
 ---
-layout: moviri
+layout: moviri-release
 title: Dashboard
 recline-deps: true
 root: ../../
@@ -144,7 +144,7 @@ root: ../../
 			dataset.fetch();
 			// needed to populate filter list
 
-			var graph = new recline.View.d3.table({
+			var graph = new recline.View.D3table({
 				model : virtualdatasetAge,
 				columns : [{
 					"name" : "age",
@@ -210,7 +210,7 @@ root: ../../
 
 		/*
            var $el = $('#mygrid');
-		   var grid = new recline.View.SlickGrid(
+		   var grid = new recline.View.SlickGridGraph(
 											{model: virtualdatasetAge, el: $el, 
 												state: {
 													fitColumns:true, 
@@ -283,7 +283,7 @@ root: ../../
             var indicator1 = new recline.View.Indicator({
                 model: virtualdatasetTotal,
                 state: {
-                    series: ["totalviewed_sum"],
+                	kpi:{ type:"filtered", field:"totalviewed_sum"},
                     format: ',d',
 					label:"Views",
                     id: "6"
@@ -296,7 +296,7 @@ root: ../../
             var indicator2 = new recline.View.Indicator({
                 model: virtualdatasetTotal,
                 state: {
-                    series: ["price_sum_sum"],
+                	kpi:{ type:"filtered", field:"price_sum_sum"},
                     format: ',.02f',
 					label:"Revenues",
                     id: "7"
