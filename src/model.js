@@ -4,6 +4,9 @@ this.recline.Model = this.recline.Model || {};
 
 (function(my) {
 
+// use either jQuery or Underscore Deferred depending on what is available
+var Deferred = _.isUndefined(this.jQuery) ? _.Deferred : jQuery.Deferred;
+
 // ## <a id="dataset">Dataset</a>
 my.Dataset = Backbone.Model.extend({
   constructor: function Dataset() {
@@ -47,7 +50,7 @@ my.Dataset = Backbone.Model.extend({
   // Retrieve dataset and (some) records from the backend.
   fetch: function() {
     var self = this;
-    var dfd = new _.Deferred();
+    var dfd = new Deferred();
 
     if (this.backend !== recline.Backend.Memory) {
       this.backend.fetch(this.toJSON())
@@ -69,7 +72,6 @@ my.Dataset = Backbone.Model.extend({
       if (results.useMemoryStore) {
         self._store = new recline.Backend.Memory.Store(out.records, out.fields);
       }
-
 
       self.set(results.metadata);
       self.fields.reset(out.fields);
@@ -96,7 +98,7 @@ my.Dataset = Backbone.Model.extend({
   },
 
   // ### _normalizeRecordsAndFields
-  //
+  // 
   // Get a proper set of fields and records from incoming set of fields and records either of which may be null or arrays or objects
   //
   // e.g. fields = ['a', 'b', 'c'] and records = [ [1,2,3] ] =>
@@ -113,7 +115,7 @@ my.Dataset = Backbone.Model.extend({
           return {id: key};
         });
       }
-    }
+    } 
 
     // fields is an array of strings (i.e. list of field headings/ids)
     if (fields && fields.length > 0 && (fields[0] === null || typeof(fields[0]) != 'object')) {
@@ -192,7 +194,7 @@ my.Dataset = Backbone.Model.extend({
   // also returned.
   query: function(queryObj) {
     var self = this;
-    var dfd = new _.Deferred();
+    var dfd = new Deferred();
     this.trigger('query:start');
 
     if (queryObj) {
@@ -215,7 +217,6 @@ my.Dataset = Backbone.Model.extend({
 
   _handleQueryResult: function(queryResult) {
     var self = this;
-
     self.recordCount = queryResult.total;
     var docs = _.map(queryResult.hits, function(hit) {
       var _doc = new my.Record(hit);
@@ -228,7 +229,6 @@ my.Dataset = Backbone.Model.extend({
       });
       return _doc;
     });
-
     self.records.reset(docs);
     if (queryResult.facets) {
       var facets = _.map(queryResult.facets, function(facetResult, facetId) {
@@ -249,7 +249,7 @@ my.Dataset = Backbone.Model.extend({
   // ### getFieldsSummary
   //
   // Get a summary for each field in the form of a `Facet`.
-  //
+  // 
   // @return null as this is async function. Provides deferred/promise interface.
   getFieldsSummary: function() {
     var self = this;
@@ -258,7 +258,7 @@ my.Dataset = Backbone.Model.extend({
     this.fields.each(function(field) {
       query.addFacet(field.id);
     });
-    var dfd = new _.Deferred();
+    var dfd = new Deferred();
     this._store.query(query.toJSON(), this.toJSON()).done(function(queryResult) {
       if (queryResult.facets) {
         _.each(queryResult.facets, function(facetResult, facetId) {
@@ -304,7 +304,7 @@ my.Record = Backbone.Model.extend({
   },
 
   // ### initialize
-  //
+  // 
   // Create a Record
   //
   // You usually will not do this directly but will have records created by
@@ -319,9 +319,11 @@ my.Record = Backbone.Model.extend({
   //
   // For the provided Field get the corresponding rendered computed data value
   // for this record.
+  //
+  // NB: if field is undefined a default '' value will be returned
   getFieldValue: function(field) {
     val = this.getFieldValueUnrendered(field);
-    if (field.renderer) {
+    if (field && !_.isUndefined(field.renderer)) {
       val = field.renderer(val, field, this.toJSON());
     }
     return val;
@@ -331,7 +333,12 @@ my.Record = Backbone.Model.extend({
   //
   // For the provided Field get the corresponding computed data value
   // for this record.
+  //
+  // NB: if field is undefined a default '' value will be returned
   getFieldValueUnrendered: function(field) {
+    if (!field) {
+      return '';
+    }
     var val = this.get(field.id);
     if (field.deriver) {
       val = field.deriver(val, field, this);
@@ -345,7 +352,7 @@ my.Record = Backbone.Model.extend({
   summary: function(record) {
     var self = this;
     var html = '<div class="recline-record-summary">';
-    this.fields.each(function(field) {
+    this.fields.each(function(field) { 
       if (field.id != 'id') {
         html += '<div class="' + field.id + '"><strong>' + field.get('label') + '</strong>: ' + self.getFieldValue(field) + '</div>';
       }
@@ -429,7 +436,7 @@ my.Field = Backbone.Model.extend({
       return JSON.stringify(val);
     },
     'number': function(val, field, doc) {
-      var format = field.get('format');
+      var format = field.get('format'); 
       if (format === 'percentage') {
         return val + '%';
       }
@@ -501,7 +508,7 @@ my.Query = Backbone.Model.extend({
         lat: 0
       }
     }
-  },
+  },  
   // ### addFilter(filter)
   //
   // Add a new filter specified by the filter hash and append to the list of filters

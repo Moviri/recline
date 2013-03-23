@@ -41,7 +41,7 @@ def minify():
 
 if __name__ == '__main__':
     if not len(sys.argv) > 1:
-        print 'make cat | docs | all'
+        print 'make cat | docs | minify | all'
         sys.exit(1)
     action = sys.argv[1]
     if action == 'cat':

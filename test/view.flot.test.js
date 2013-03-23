@@ -1,8 +1,8 @@
-module("View - Graph");
+module("View - Flot");
 
 test('basics', function () {
   var dataset = Fixture.getDataset();
-  var view = new recline.View.Graph({
+  var view = new recline.View.Flot({
     model: dataset
   });
   $('.fixtures').append(view.el);
@@ -14,7 +14,7 @@ test('basics', function () {
 
 test('initialize', function () {
   var dataset = Fixture.getDataset();
-  var view = new recline.View.Graph({
+  var view = new recline.View.Flot({
     model: dataset,
     state: {
       'graphType': 'lines',
@@ -40,7 +40,7 @@ test('initialize', function () {
 test('dates in graph view', function () {
   expect(0);
   var dataset = Fixture.getDataset();
-  var view = new recline.View.Graph({
+  var view = new recline.View.Flot({
     model: dataset,
     state: {
       'graphType': 'lines',
@@ -53,9 +53,9 @@ test('dates in graph view', function () {
   view.remove();
 });
 
-test('GraphControls basics', function () {
+test('FlotControls basics', function () {
   var dataset = Fixture.getDataset();
-  var view = new recline.View.GraphControls({
+  var view = new recline.View.FlotControls({
     model: dataset,
     state: {
       graphType: 'bars',
@@ -69,18 +69,3 @@ test('GraphControls basics', function () {
   view.remove();
 });
 
-test('Overriding graph options', function () {
-  var dataset = Fixture.getDataset();
-  var randomWidth = Math.random();
-  var view = new recline.View.Graph({
-    model: dataset,
-    state: {
-      'graphType': 'bars',
-      'group': 'date',
-      'series': ['y', 'z'],
-      'graphOptions': { bars: {barWidth: randomWidth}}
-    }
-  });
-  equal(view.getGraphOptions('bars').bars.barWidth, randomWidth)
-  view.remove();
-});
