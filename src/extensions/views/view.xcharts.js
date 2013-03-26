@@ -34,7 +34,9 @@ this.recline.View = this.recline.View || {};
             	options.state.loader.bindChart(this);
            if (options.state.widths){
         	   this.widths = options.state.widths;   
-           } 
+           }
+           if (options.state.opts == null || typeof options.state.opts == "undefined")
+        	   options.state.opts = {}
         },
 
         render:function (width) {

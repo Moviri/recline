@@ -185,7 +185,7 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
             self.ds_fetched = [];
             self.field_fetched = [];
 
-            self.joinedModel = new my.Dataset({backend: "Memory", records:[], fields: [], renderer: self.attributes.renderer});
+            self.joinedModel = new my.Dataset({backend: "Memory", records:[], fields: [], renderer: self.attributes.renderer, facets:[]});
 
             self.fields = self.joinedModel.fields;
             self.records = self.joinedModel.records;
@@ -1088,7 +1088,7 @@ this.recline.Model.UnionDataset = this.recline.Model.UnionDataset || {};
 
             self.ds_fetched = [];
 
-            self.unionModel = new my.Dataset({backend: "Memory", records:[], fields: [], renderer: self.attributes.renderer});
+            self.unionModel = new my.Dataset({backend: "Memory", records:[], fields: [], renderer: self.attributes.renderer, facets: []});
 
             self.fields = self.unionModel.fields;
             self.records = self.unionModel.records;
@@ -1301,7 +1301,8 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
                 {
                     backend: "Memory",
                     records:[], fields: [],
-                    renderer: self.attributes.renderer
+                    renderer: self.attributes.renderer,
+                    facets:[]
                 });
 
 
@@ -3186,6 +3187,18 @@ this.recline.Data.FieldsUtility = this.recline.Data.FieldsUtility || {};
             })
         }
 
+        // if type is declared and was unspecified (typical for CSV), it's updated 
+        if (model.attributes.fieldsType) {
+            // if type is declared in dataset properties merge it;
+            _.each(model.attributes.fieldsType, function (d) {
+                var field = _.find(fields, function (f) {
+                    return d.id === f.id
+                });
+                if (field != null && (typeof field.type == "undefined" || field.type == null))
+                    field.type = d.type;
+            })
+        }
+
 
         // assignment of color schema to fields
         if (model.attributes.colorSchema) {
@@ -3286,7 +3299,7 @@ this.recline.Data = this.recline.Data || {};
             else {
                 if (field.attributes)
                     fieldType = field.attributes.type;
-                else
+                else if (field.type)
                     fieldType = field.type;
             }
             return recline.Data.Filters._dataParsers[fieldType];
@@ -3816,6 +3829,9 @@ this.recline.Data.SeriesUtility = this.recline.Data.SeriesUtility || {};
 
                     var y = doc.getFieldValueUnrendered(fieldValue);
                     var y_formatted = doc.getFieldValue(fieldValue);
+                    
+                    if (y == null || typeof y == "undefined" && fillEmptyValuesWith != null)
+                    	y = fillEmptyValuesWith;
 
                     if (y != null && typeof y != "undefined" && !isNaN(y)) {
 
@@ -3879,6 +3895,8 @@ this.recline.Data.SeriesUtility = this.recline.Data.SeriesUtility || {};
 
                             var y = doc.getFieldValueUnrendered(yfield);
                             var y_formatted = doc.getFieldValue(yfield);
+                            if (y == null || typeof y == "undefined" && fillEmptyValuesWith != null)
+                            	y = fillEmptyValuesWith;
 
                             if (y != null && !isNaN(y)) {
                                 var color;
@@ -3939,9 +3957,9 @@ this.recline.Data.SeriesUtility = this.recline.Data.SeriesUtility || {};
                 uniqueX = _.unique(uniqueX);
                 _.each(series, function (s) {
                     // foreach series obtain the unique list of x
-                    var tmpValues = _.map(s.data, function (d) {
+                    var tmpValues = _.unique(_.map(s.data, function (d) {
                         return d.x
-                    });
+                    }));
                     // foreach non present field set the value
                     _.each(_.difference(uniqueX, tmpValues), function (diff) {
                         s.data.push({x:diff, y:fillEmptyValuesWith});
@@ -3949,6 +3967,10 @@ this.recline.Data.SeriesUtility = this.recline.Data.SeriesUtility || {};
 
                 });
             }
+            // force sorting of values or scrambled series may generate a wrong chart  
+            _.each(series, function(serie) {
+            	serie.values = _.sortBy(serie.values, function(value) { return value.x }) 
+            })
 
 
         return series;
@@ -6562,6 +6584,17 @@ this.recline.View = this.recline.View || {};
 
             if (this.options.state.options && this.options.state.options.loader)
             	this.options.state.options.loader.bindChart(this);
+            
+            // remove unwanted options from original NVD3 options or an error line is logged each time
+            this.extraOptions = {
+        		timing: this.options.state.options.timing,
+        		scaleTo100Perc: this.options.state.options.scaleTo100Perc,
+            }
+            if (this.options.state.options.timing)
+            	delete this.options.state.options.timing
+            	
+            if (this.options.state.options.scaleTo100Perc)
+            	delete this.options.state.options.scaleTo100Perc
         },
 
         changeDimensions: function() {
@@ -6740,7 +6773,7 @@ this.recline.View = this.recline.View || {};
                 d3.select('#nvd3chart_' + self.uid + '  svg')
                     .datum(seriesNVD3)
                     .transition()
-                    .duration(self.state.attributes.options.timing || 500)
+                    .duration(self.extraOptions.timing || 500)
                     .call(self.chart);
 
                 nv.utils.windowResize(self.graphResize);
@@ -7293,8 +7326,9 @@ this.recline.View = this.recline.View || {};
                     var shape = doc.getFieldShapeName(seriesNameField);
 
                     var x = doc.getFieldValueUnrendered(xfield);
-                    var y = doc.getFieldValueUnrendered(fieldValue);
-
+                    var y = doc.getFieldValueUnrendered(fieldValue)
+                    if (y == null || typeof y == "undefined" && fillEmptyValuesWith != null)
+                    	y = fillEmptyValuesWith;
 
                     var point = {x:x, y:y, record:doc};
                     if (sizeField)
@@ -7312,6 +7346,7 @@ this.recline.View = this.recline.View || {};
                     seriesTmp[key] = tmpS;
 
                 });
+                
 
                 for (var j in seriesTmp) {
                     series.push(seriesTmp[j]);
@@ -7349,7 +7384,10 @@ this.recline.View = this.recline.View || {};
 
                         try {
 
-                            var y = doc.getFieldValueUnrendered(yfield);
+                            var y = doc.getFieldValueUnrendered(yfield) ;
+                            if (y == null || typeof y == "undefined" && fillEmptyValuesWith != null)
+                            	y = fillEmptyValuesWith;
+
                             if (y != null) {
                                 var color;
 
@@ -7407,7 +7445,25 @@ this.recline.View = this.recline.View || {};
 
                 });
             }
+            // force sorting of values or scrambled series may generate a wrong chart  
+            _.each(series, function(serie) {
+            	serie.values = _.sortBy(serie.values, function(value) { return value.x }) 
+            })
 
+            if (self.extraOptions.scaleTo100Perc && series.length)
+        	{
+            	// perform extra steps to scale the values
+            	var tot = series[0].values.length
+            	var seriesTotals = []
+            	for (var i = 0; i < tot; i++)
+            		seriesTotals.push(_.reduce(series, function(memo, serie) { return memo + serie.values[i].y; }, 0))
+            		
+            	for (var i = 0; i < tot; i++)
+            		_.each(series, function(serie) {
+            			serie.values[i].y_orig = serie.values[i].y
+            			serie.values[i].y = serie.values[i].y_orig/seriesTotals[i]*100
+            		});
+        	}
             return series;
         }
 
@@ -8643,7 +8699,9 @@ this.recline.View = this.recline.View || {};
             	options.state.loader.bindChart(this);
            if (options.state.widths){
         	   this.widths = options.state.widths;   
-           } 
+           }
+           if (options.state.opts == null || typeof options.state.opts == "undefined")
+        	   options.state.opts = {}
         },
 
         render:function (width) {
@@ -11684,6 +11742,162 @@ this.recline.View = this.recline.View || {};
 
 (function ($, my) {
 
+    my.JQueryMobileFilter = Backbone.View.extend({
+        filterTemplates:{
+            toggle:' \
+      <div class="filter-{{type}} filter" id="{{ctrlId}}"> \
+        <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
+            <legend style="display:{{useLegend}}">{{label}}</legend>  \
+    		<div style="float:left;padding-right:10px;padding-top:2px;display:{{useLeftLabel}}">{{label}}</div> \
+          <input type="text" value="{{term}}" name="term" class="data-control-id" /> \
+          <input type="button" class="btn" id="setFilterValueButton" value="Set"></input> \
+        </fieldset> \
+      </div> \
+    ',
+            slider:' \
+	<script> \
+		$(document).ready(function(){ \
+			$( "#slider{{ctrlId}}" ).slider({ \
+				min: {{min}}, \
+				max: {{max}}, \
+				value: {{term}}, \
+				slide: function( event, ui ) { \
+					$( "#amount{{ctrlId}}" ).html( "{{label}}: "+ ui.value ); \
+				} \
+			}); \
+			$( "#amount{{ctrlId}}" ).html( "{{label}}: "+ $( "#slider{{ctrlId}}" ).slider( "value" ) ); \
+		}); \
+	</script> \
+      <div class="filter-{{type}} filter" id="{{ctrlId}}" style="min-width:100px"> \
+        <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
+            <legend style="display:{{useLegend}}">{{label}} \
+			<a class="js-remove-filter" href="#" title="Remove this filter">&times;</a> \
+		</legend>  \
+		  <label id="amount{{ctrlId}}">{{label}}: </label> \
+		  <div id="slider{{ctrlId}}" class="data-control-id"></div> \
+		  <br> \
+          <input type="button" class="btn" id="setFilterValueButton" value="Set"></input> \
+        </fieldset> \
+      </div> \
+    '
+        },
+        events:{
+            'change .slider-styled':'onStyledSliderValueChanged'
+        },
+        initialize:function (args) {
+            this.el = $(this.el);
+            _.bindAll(this, 'render', 'update', 'doAction');
+
+            this.model = args.model;
+            this.uid = args.id || Math.floor(Math.random() * 100000); // unique id of the view containing all filters
+
+            if (this.model) {
+                this.model.bind('query:done', this.render);
+                this.model.queryState.bind('selection:done', this.update);
+            }
+        },
+
+        render:function () {
+            var self = this;
+            var tmplData = {};
+
+            //  map them to the correct controlType and retain their values (start/from/term/...)
+//            if (self.model) {
+//                _.each(self.model.queryState.get('selections'), function (filter) {
+//                    for (var j in tmplData.filters) {
+//                        if (tmplData.filters[j].field == filter.field) {
+//                            tmplData.filters[j].list = filter.list
+//                            tmplData.filters[j].term = filter.term
+//                            tmplData.filters[j].start = filter.start
+//                            tmplData.filters[j].stop = filter.stop
+//                            self.fixHierarchicRadiobuttonsSelections(tmplData.filters[j])
+//                        }
+//                    }
+//                });
+//
+//                tmplData.fields = this.model.fields.toJSON();
+//
+//            }
+//
+//            var resultType = self.options.resultType || "filtered";
+//
+//            tmplData.filterRender = self.filterRender;
+//
+//            var out = Mustache.render(currTemplate, tmplData);
+//            this.el.html(out);
+            
+        },
+        update:function () {
+            var self = this;
+            // retrieve filter values (start/from/term/...)
+//            _.each(this.model.queryState.get('selections'), function (filter) {
+//                for (var j in self.activeFilters) {
+//                    if (self.activeFilters[j].field == filter.field) {
+//                        self.activeFilters[j].list = filter.list
+//                        self.activeFilters[j].term = filter.term
+//                        self.activeFilters[j].start = filter.start
+//                        self.activeFilters[j].stop = filter.stop
+//                        self.fixHierarchicRadiobuttonsSelections(self.activeFilters[j])
+//                    }
+//                }
+//            });
+        },
+        // action could be add or remove
+        doAction:function (eventType, fieldName, values, actionType, currFilter) {
+            var self=this;
+
+//            var res = [];
+//            // make sure you use all values, even 2nd or 3rd level if present (hierarchic radiobuttons only)
+//            var allValues = currFilter.values
+//            // TODO it is not efficient, record must be indexed by term
+//            // TODO conversion to string is not correct, original value must be used
+//            _.each(allValues, function(v) {
+//              if(v.record) {
+//                  var field = v.record.fields.get(currFilter.field);
+//                  if(_.contains(values,v.record.getFieldValueUnrendered(field).toString()))
+//                    res.push(v.record);
+//              };
+//            });
+//            var actions = this.options.actions;
+//            actions.forEach(function(currAction){
+//                currAction.action.doAction(res, currAction.mapping);
+//            });
+        },
+
+        onStyledSliderValueChanged:function (e, value) {
+//            e.preventDefault();
+//            var $target = $(e.target).parent().parent();
+//            var fieldId = $target.attr('data-filter-field');
+//            var fieldType = $target.attr('data-filter-type');
+//            var controlType = $target.attr('data-control-type');
+//            if (fieldType == "term") {
+//                var term = value;
+//                var activeFilter = this.findActiveFilterByField(fieldId, controlType);
+//                activeFilter.userChanged = true;
+//                activeFilter.term = term;
+//                activeFilter.list = [term];
+//                this.doAction("onStyledSliderValueChanged", fieldId, [term], "add", activeFilter);
+//            }
+//            else if (fieldType == "range") {
+//                var activeFilter = this.findActiveFilterByField(fieldId, controlType);
+//                activeFilter.userChanged = true;
+//                var fromTo = value.split(";");
+//                var from = fromTo[0];
+//                var to = fromTo[1];
+//                activeFilter.from = from;
+//                activeFilter.to = to;
+//                this.doAction("onStyledSliderValueChanged", fieldId, [from, to], "add", activeFilter);
+//            }
+        },
+    });
+
+})(jQuery, recline.View);
+/*jshint multistr:true */
+this.recline = this.recline || {};
+this.recline.View = this.recline.View || {};
+
+(function ($, my) {
+
     my.MultiButtonDropdownFilter = Backbone.View.extend({
         template: '<div class="btn-toolbar"> \
         				<div class="btn-group data-control-id"> \
@@ -13183,6 +13397,169 @@ this.recline.View = this.recline.View || {};
 
 
 })(jQuery, recline.View);/*jshint multistr:true */
+
+this.recline = this.recline || {};
+this.recline.View = this.recline.View || {};
+
+(function ($, my) {
+    my.D3CalendarView = Backbone.View.extend({
+    	template: '<style> \
+        	.calendar-view { \
+        	  shape-rendering: crispEdges; \
+        	} \
+        	.calendar-view svg .day { \
+        	  fill: #fff; \
+        	  stroke: #ccc; \
+        	} \
+        	.calendar-view svg  .month { \
+        	  fill: none; \
+        	  stroke: #000; \
+        	  stroke-width: 2px; \
+        	} \
+    		.calendar-view svg.RdYlGn .q0-11{fill:rgb(165,0,38)} \
+    		.calendar-view svg.RdYlGn .q1-11{fill:rgb(215,48,39)} \
+    		.calendar-view svg.RdYlGn .q2-11{fill:rgb(244,109,67)} \
+    		.calendar-view svg.RdYlGn .q3-11{fill:rgb(253,174,97)} \
+    		.calendar-view svg.RdYlGn .q4-11{fill:rgb(254,224,139)} \
+    		.calendar-view svg.RdYlGn .q5-11{fill:rgb(255,255,191)} \
+    		.calendar-view svg.RdYlGn .q6-11{fill:rgb(217,239,139)} \
+    		.calendar-view svg.RdYlGn .q7-11{fill:rgb(166,217,106)} \
+    		.calendar-view svg.RdYlGn .q8-11{fill:rgb(102,189,99)} \
+    		.calendar-view svg.RdYlGn .q9-11{fill:rgb(26,152,80)} \
+    		.calendar-view svg.RdYlGn .q10-11{fill:rgb(0,104,55)} \
+    	</style>',
+    	initialize:function (options) {
+
+            var self = this;
+
+            _.bindAll(this, 'render');
+            
+            this.model = options.model;
+            this.model.bind('query:done', this.render);
+            
+            this.el = options.el;
+            $(this.el).addClass('calendar-view');
+            this.dateField = options.dateField;
+            this.valueField = options.valueField;
+            this.scaleDomain = options.valueDomain
+            var out = Mustache.render(this.template, this);
+            $(this.el).html(out);
+        },
+        
+        render:function () {
+            var self = this;
+            
+            function getCurrDate(dateStr) {
+            	return Date.parse(dateStr) || Date.parse(dateStr.replace(/\.\d\d\d\+\d+$/, '')) || Date.parse(dateStr.split('T')[0]) || new Date(dateStr)
+            }
+            
+            if (this.model.getRecords().length)
+        	{
+                var width = 960,
+                height = 136,
+                cellSize = 17; // cell size
+
+                //var svg = d3.select(this.el+" svg")
+
+    	        var day = d3.time.format("%w"),
+    	            week = d3.time.format("%U"),
+    	            percent = d3.format(".1%"),
+    	            format = d3.time.format("%Y-%m-%d");
+    	
+    	        var color = d3.scale.quantize()
+    	            .domain([self.scaleDomain])
+    	            .range(d3.range(11).map(function(d) { return "q" + d + "-11"; }));
+    	        
+    	        var records = this.model.getRecords()
+    	        var minYear;
+    	        var maxYear;
+    	        _.each(records, function(rec) {
+    	        	var currYear = getCurrDate(rec.attributes[self.dateField]).getFullYear()
+    	        	if (minYear)
+	        		{
+    	        		if (minYear > currYear)
+    	        			minYear = currYear
+	        		}
+    	        	else minYear = currYear
+    	        	if (maxYear)
+	        		{
+    	        		if (maxYear < currYear)
+    	        			maxYear = currYear
+	        		}
+    	        	else maxYear = currYear
+    	        });
+    	        var yearRange = d3.range(minYear, maxYear)
+    	        if (minYear == maxYear)
+    	        	yearRange = [minYear]
+    	        
+    	        var data = d3.nest()
+    	            .key(function(d) { return getCurrDate(d.attributes[self.dateField]).toString("yyyy-MM-dd") ; })
+    	            .rollup(function(d) { return d[0].attributes[self.valueField] || 0; })
+    	            .map(records);
+    	
+    	        var svg = d3.select(this.el).selectAll("svg")
+    	            .data(yearRange)
+    	          .enter()
+    	          .append("svg")
+    	            .attr("width", width)
+    	            .attr("height", height)
+    	            .attr("class", "RdYlGn")
+    	          .append("g")
+    	            .attr("transform", "translate(" + ((width - cellSize * 53) / 2) + "," + (height - cellSize * 7 - 1) + ")");
+    	
+    	        svg.append("text")
+    	            .attr("transform", "translate(-6," + cellSize * 3.5 + ")rotate(-90)")
+    	            .style("text-anchor", "middle")
+    	            .text(function(d) { return d; });
+    	
+    	        var rect = svg.selectAll(".day")
+    	            .data(function(d) { return d3.time.days(new Date(d, 0, 1), new Date(d + 1, 0, 1)); })
+    	          .enter().append("rect")
+    	            .attr("class", "day")
+    	            .attr("width", cellSize)
+    	            .attr("height", cellSize)
+    	            .attr("x", function(d) { return week(d) * cellSize; })
+    	            .attr("y", function(d) { return day(d) * cellSize; })
+    	            .datum(format);
+    	
+    	        rect.append("title")
+    	            .text(function(d) { return d; });
+    	
+    	        function monthPath(t0) {
+      	          var t1 = new Date(t0.getFullYear(), t0.getMonth() + 1, 0),
+      	              d0 = +day(t0), w0 = +week(t0),
+      	              d1 = +day(t1), w1 = +week(t1);
+      	          return "M" + (w0 + 1) * cellSize + "," + d0 * cellSize
+      	              + "H" + w0 * cellSize + "V" + 7 * cellSize
+      	              + "H" + w1 * cellSize + "V" + (d1 + 1) * cellSize
+      	              + "H" + (w1 + 1) * cellSize + "V" + 0
+      	              + "H" + (w0 + 1) * cellSize + "Z";
+      	        }
+    	
+    	        svg.selectAll(".month")
+		            .data(function(d) { return d3.time.months(new Date(d, 0, 1), new Date(d + 1, 0, 1)); })
+		    		.enter().append("path")
+		            .attr("class", "month")
+		            .attr("d", monthPath);
+	
+    	        rect.filter(function(d) { return d in data; })
+    	            .attr("class", function(d) { 
+    	            	return "day " + color(data[d]); 
+    	            })
+    	            .select("title")
+    	            .text(function(d) { 
+    	            	return d + ": " + data[d]; 
+    	            });
+    	
+    	        d3.select(self.frameElement).style("height", height+"px");
+        	}
+        },
+    });
+
+
+})(jQuery, recline.View);
+
+/*jshint multistr:true */
 
 this.recline = this.recline || {};
 this.recline.View = this.recline.View || {};

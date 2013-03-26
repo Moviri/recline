@@ -34,6 +34,18 @@ this.recline.Data.FieldsUtility = this.recline.Data.FieldsUtility || {};
             })
         }
 
+        // if type is declared and was unspecified (typical for CSV), it's updated 
+        if (model.attributes.fieldsType) {
+            // if type is declared in dataset properties merge it;
+            _.each(model.attributes.fieldsType, function (d) {
+                var field = _.find(fields, function (f) {
+                    return d.id === f.id
+                });
+                if (field != null && (typeof field.type == "undefined" || field.type == null))
+                    field.type = d.type;
+            })
+        }
+
 
         // assignment of color schema to fields
         if (model.attributes.colorSchema) {

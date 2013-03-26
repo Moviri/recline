@@ -52,6 +52,17 @@ this.recline.View = this.recline.View || {};
 
             if (this.options.state.options && this.options.state.options.loader)
             	this.options.state.options.loader.bindChart(this);
+            
+            // remove unwanted options from original NVD3 options or an error line is logged each time
+            this.extraOptions = {
+        		timing: this.options.state.options.timing,
+        		scaleTo100Perc: this.options.state.options.scaleTo100Perc,
+            }
+            if (this.options.state.options.timing)
+            	delete this.options.state.options.timing
+            	
+            if (this.options.state.options.scaleTo100Perc)
+            	delete this.options.state.options.scaleTo100Perc
         },
 
         changeDimensions: function() {
@@ -230,7 +241,7 @@ this.recline.View = this.recline.View || {};
                 d3.select('#nvd3chart_' + self.uid + '  svg')
                     .datum(seriesNVD3)
                     .transition()
-                    .duration(self.state.attributes.options.timing || 500)
+                    .duration(self.extraOptions.timing || 500)
                     .call(self.chart);
 
                 nv.utils.windowResize(self.graphResize);
@@ -783,8 +794,9 @@ this.recline.View = this.recline.View || {};
                     var shape = doc.getFieldShapeName(seriesNameField);
 
                     var x = doc.getFieldValueUnrendered(xfield);
-                    var y = doc.getFieldValueUnrendered(fieldValue);
-
+                    var y = doc.getFieldValueUnrendered(fieldValue)
+                    if (y == null || typeof y == "undefined" && fillEmptyValuesWith != null)
+                    	y = fillEmptyValuesWith;
 
                     var point = {x:x, y:y, record:doc};
                     if (sizeField)
@@ -802,6 +814,7 @@ this.recline.View = this.recline.View || {};
                     seriesTmp[key] = tmpS;
 
                 });
+                
 
                 for (var j in seriesTmp) {
                     series.push(seriesTmp[j]);
@@ -839,7 +852,10 @@ this.recline.View = this.recline.View || {};
 
                         try {
 
-                            var y = doc.getFieldValueUnrendered(yfield);
+                            var y = doc.getFieldValueUnrendered(yfield) ;
+                            if (y == null || typeof y == "undefined" && fillEmptyValuesWith != null)
+                            	y = fillEmptyValuesWith;
+
                             if (y != null) {
                                 var color;
 
@@ -897,7 +913,25 @@ this.recline.View = this.recline.View || {};
 
                 });
             }
+            // force sorting of values or scrambled series may generate a wrong chart  
+            _.each(series, function(serie) {
+            	serie.values = _.sortBy(serie.values, function(value) { return value.x }) 
+            })
 
+            if (self.extraOptions.scaleTo100Perc && series.length)
+        	{
+            	// perform extra steps to scale the values
+            	var tot = series[0].values.length
+            	var seriesTotals = []
+            	for (var i = 0; i < tot; i++)
+            		seriesTotals.push(_.reduce(series, function(memo, serie) { return memo + serie.values[i].y; }, 0))
+            		
+            	for (var i = 0; i < tot; i++)
+            		_.each(series, function(serie) {
+            			serie.values[i].y_orig = serie.values[i].y
+            			serie.values[i].y = serie.values[i].y_orig/seriesTotals[i]*100
+            		});
+        	}
             return series;
         }
 

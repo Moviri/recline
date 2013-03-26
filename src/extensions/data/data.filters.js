@@ -72,7 +72,7 @@ this.recline.Data = this.recline.Data || {};
             else {
                 if (field.attributes)
                     fieldType = field.attributes.type;
-                else
+                else if (field.type)
                     fieldType = field.type;
             }
             return recline.Data.Filters._dataParsers[fieldType];

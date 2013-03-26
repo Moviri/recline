@@ -104,6 +104,9 @@ this.recline.Data.SeriesUtility = this.recline.Data.SeriesUtility || {};
 
                     var y = doc.getFieldValueUnrendered(fieldValue);
                     var y_formatted = doc.getFieldValue(fieldValue);
+                    
+                    if (y == null || typeof y == "undefined" && fillEmptyValuesWith != null)
+                    	y = fillEmptyValuesWith;
 
                     if (y != null && typeof y != "undefined" && !isNaN(y)) {
 
@@ -167,6 +170,8 @@ this.recline.Data.SeriesUtility = this.recline.Data.SeriesUtility || {};
 
                             var y = doc.getFieldValueUnrendered(yfield);
                             var y_formatted = doc.getFieldValue(yfield);
+                            if (y == null || typeof y == "undefined" && fillEmptyValuesWith != null)
+                            	y = fillEmptyValuesWith;
 
                             if (y != null && !isNaN(y)) {
                                 var color;
@@ -227,9 +232,9 @@ this.recline.Data.SeriesUtility = this.recline.Data.SeriesUtility || {};
                 uniqueX = _.unique(uniqueX);
                 _.each(series, function (s) {
                     // foreach series obtain the unique list of x
-                    var tmpValues = _.map(s.data, function (d) {
+                    var tmpValues = _.unique(_.map(s.data, function (d) {
                         return d.x
-                    });
+                    }));
                     // foreach non present field set the value
                     _.each(_.difference(uniqueX, tmpValues), function (diff) {
                         s.data.push({x:diff, y:fillEmptyValuesWith});
@@ -237,6 +242,10 @@ this.recline.Data.SeriesUtility = this.recline.Data.SeriesUtility || {};
 
                 });
             }
+            // force sorting of values or scrambled series may generate a wrong chart  
+            _.each(series, function(serie) {
+            	serie.values = _.sortBy(serie.values, function(value) { return value.x }) 
+            })
 
 
         return series;
