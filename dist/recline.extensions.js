@@ -7877,7 +7877,105 @@ this.recline.View = this.recline.View || {};
 
 
     });
-})(jQuery, recline.View);/*jshint multistr:true */
+})(jQuery, recline.View);this.recline = this.recline || {};
+this.recline.View = this.recline.View || {};
+
+(function($, view) {
+
+	view.SaveCSV = Backbone.View.extend({
+		template:'<a id="{{uid}}" style="text-decoration: none;cursor: pointer;"><i class="icon-download" title="Download as csv file"></i></a>',
+		id : 'save',
+
+		initialize:function (options) {
+		
+		    this.el = $(this.el);
+		    _.bindAll(this, 'render', 'redraw');
+		
+		
+			this.model.bind('change', this.render);
+			this.model.fields.bind('reset', this.render);
+			this.model.fields.bind('add', this.render);
+			
+			this.model.records.bind('reset', this.render);
+			this.model.queryState.bind('selection:done', this.render);
+			
+			this.uid = options.id || ("save_" + new Date().getTime() + Math.floor(Math.random() * 10000)); // generating an unique id
+			
+		    this.options = options;		    
+		},
+	    
+		initialize : function(options) {
+			this.el = $(this.el);
+		},
+
+		updateState: function(options) {
+			var self = this;
+			self.options.visibleColumns = options.visibleColumns;
+		},
+		render : function() {
+			 var self = this;
+			 var saveDataset = function() {
+				var res = []; // tmp array in which we store the dataset and then
+								// we use it to generate csv
+
+				var records = self.model.records;
+
+				// parse records of dataset and fill the array
+				var header = []
+				_.each(self.options.visibleColumns,
+						function(attribute) {
+							if (attribute.indexOf('_sum', attribute.length - '_sum'.length) !== -1) {
+								attribute = attribute.substring(0, attribute.length - 4);
+							}
+
+							if ( self.options.fieldLabels ){
+								var tmp = _.find( self.options.fieldLabels, function(x) {
+									return x.id == attribute;
+								});
+								if (tmp) {
+									header.push(tmp.label);
+								} else {
+									header.push(attribute);
+								}
+							} else {
+								header.push(attribute);
+							}
+						});
+				res.push(header);
+				_.each(records.models, function(record) {
+					var r = [];
+					_.each(self.options.visibleColumns, function(attribute) {
+						r.push(record.getFieldValueUnrendered(record.fields.get(attribute))); // str.replace(str.match('<[^>]*>'),'').replace(str.match('</[^>]*>'),'')
+					});
+					res.push(r);
+				});
+
+				// convert to comma separated value
+				var str = '';
+				var line = '';
+				for ( var i = 0; i < res.length; i++) {
+					var line = '';
+					for ( var index in res[i]) {
+						var value = res[i][index] + "";
+						line += '"' + value.replace(/"/g, '""') + '",';
+					}
+					line = line.slice(0, -1);
+					str += line + '\r\n';
+				}
+				
+				saveAs(new Blob([ str ], { type : "text/plain;charset=" + document.characterSet}), "data.csv"); // use FileSaver.js
+				
+			};
+			
+			var out = Mustache.render(this.template, self);
+			this.el.off('click');
+			this.el.click(function (){ return saveDataset() });
+			this.el.html(out);
+		},
+
+	});
+})(jQuery, recline.View);
+/*jshint multistr:true */
 
 this.recline = this.recline || {};
 this.recline.View = this.recline.View || {};
@@ -11735,162 +11833,6 @@ this.recline.View = this.recline.View || {};
         },
 
 
-    });
-
-})(jQuery, recline.View);
-/*jshint multistr:true */
-this.recline = this.recline || {};
-this.recline.View = this.recline.View || {};
-
-(function ($, my) {
-
-    my.JQueryMobileFilter = Backbone.View.extend({
-        filterTemplates:{
-            toggle:' \
-      <div class="filter-{{type}} filter" id="{{ctrlId}}"> \
-        <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
-            <legend style="display:{{useLegend}}">{{label}}</legend>  \
-    		<div style="float:left;padding-right:10px;padding-top:2px;display:{{useLeftLabel}}">{{label}}</div> \
-          <input type="text" value="{{term}}" name="term" class="data-control-id" /> \
-          <input type="button" class="btn" id="setFilterValueButton" value="Set"></input> \
-        </fieldset> \
-      </div> \
-    ',
-            slider:' \
-	<script> \
-		$(document).ready(function(){ \
-			$( "#slider{{ctrlId}}" ).slider({ \
-				min: {{min}}, \
-				max: {{max}}, \
-				value: {{term}}, \
-				slide: function( event, ui ) { \
-					$( "#amount{{ctrlId}}" ).html( "{{label}}: "+ ui.value ); \
-				} \
-			}); \
-			$( "#amount{{ctrlId}}" ).html( "{{label}}: "+ $( "#slider{{ctrlId}}" ).slider( "value" ) ); \
-		}); \
-	</script> \
-      <div class="filter-{{type}} filter" id="{{ctrlId}}" style="min-width:100px"> \
-        <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
-            <legend style="display:{{useLegend}}">{{label}} \
-			<a class="js-remove-filter" href="#" title="Remove this filter">&times;</a> \
-		</legend>  \
-		  <label id="amount{{ctrlId}}">{{label}}: </label> \
-		  <div id="slider{{ctrlId}}" class="data-control-id"></div> \
-		  <br> \
-          <input type="button" class="btn" id="setFilterValueButton" value="Set"></input> \
-        </fieldset> \
-      </div> \
-    '
-        },
-        events:{
-            'change .slider-styled':'onStyledSliderValueChanged'
-        },
-        initialize:function (args) {
-            this.el = $(this.el);
-            _.bindAll(this, 'render', 'update', 'doAction');
-
-            this.model = args.model;
-            this.uid = args.id || Math.floor(Math.random() * 100000); // unique id of the view containing all filters
-
-            if (this.model) {
-                this.model.bind('query:done', this.render);
-                this.model.queryState.bind('selection:done', this.update);
-            }
-        },
-
-        render:function () {
-            var self = this;
-            var tmplData = {};
-
-            //  map them to the correct controlType and retain their values (start/from/term/...)
-//            if (self.model) {
-//                _.each(self.model.queryState.get('selections'), function (filter) {
-//                    for (var j in tmplData.filters) {
-//                        if (tmplData.filters[j].field == filter.field) {
-//                            tmplData.filters[j].list = filter.list
-//                            tmplData.filters[j].term = filter.term
-//                            tmplData.filters[j].start = filter.start
-//                            tmplData.filters[j].stop = filter.stop
-//                            self.fixHierarchicRadiobuttonsSelections(tmplData.filters[j])
-//                        }
-//                    }
-//                });
-//
-//                tmplData.fields = this.model.fields.toJSON();
-//
-//            }
-//
-//            var resultType = self.options.resultType || "filtered";
-//
-//            tmplData.filterRender = self.filterRender;
-//
-//            var out = Mustache.render(currTemplate, tmplData);
-//            this.el.html(out);
-            
-        },
-        update:function () {
-            var self = this;
-            // retrieve filter values (start/from/term/...)
-//            _.each(this.model.queryState.get('selections'), function (filter) {
-//                for (var j in self.activeFilters) {
-//                    if (self.activeFilters[j].field == filter.field) {
-//                        self.activeFilters[j].list = filter.list
-//                        self.activeFilters[j].term = filter.term
-//                        self.activeFilters[j].start = filter.start
-//                        self.activeFilters[j].stop = filter.stop
-//                        self.fixHierarchicRadiobuttonsSelections(self.activeFilters[j])
-//                    }
-//                }
-//            });
-        },
-        // action could be add or remove
-        doAction:function (eventType, fieldName, values, actionType, currFilter) {
-            var self=this;
-
-//            var res = [];
-//            // make sure you use all values, even 2nd or 3rd level if present (hierarchic radiobuttons only)
-//            var allValues = currFilter.values
-//            // TODO it is not efficient, record must be indexed by term
-//            // TODO conversion to string is not correct, original value must be used
-//            _.each(allValues, function(v) {
-//              if(v.record) {
-//                  var field = v.record.fields.get(currFilter.field);
-//                  if(_.contains(values,v.record.getFieldValueUnrendered(field).toString()))
-//                    res.push(v.record);
-//              };
-//            });
-//            var actions = this.options.actions;
-//            actions.forEach(function(currAction){
-//                currAction.action.doAction(res, currAction.mapping);
-//            });
-        },
-
-        onStyledSliderValueChanged:function (e, value) {
-//            e.preventDefault();
-//            var $target = $(e.target).parent().parent();
-//            var fieldId = $target.attr('data-filter-field');
-//            var fieldType = $target.attr('data-filter-type');
-//            var controlType = $target.attr('data-control-type');
-//            if (fieldType == "term") {
-//                var term = value;
-//                var activeFilter = this.findActiveFilterByField(fieldId, controlType);
-//                activeFilter.userChanged = true;
-//                activeFilter.term = term;
-//                activeFilter.list = [term];
-//                this.doAction("onStyledSliderValueChanged", fieldId, [term], "add", activeFilter);
-//            }
-//            else if (fieldType == "range") {
-//                var activeFilter = this.findActiveFilterByField(fieldId, controlType);
-//                activeFilter.userChanged = true;
-//                var fromTo = value.split(";");
-//                var from = fromTo[0];
-//                var to = fromTo[1];
-//                activeFilter.from = from;
-//                activeFilter.to = to;
-//                this.doAction("onStyledSliderValueChanged", fieldId, [from, to], "add", activeFilter);
-//            }
-        },
     });
 
 })(jQuery, recline.View);
