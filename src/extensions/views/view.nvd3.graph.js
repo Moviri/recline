@@ -370,6 +370,9 @@ this.recline.View = this.recline.View || {};
             "showControls":function(chart, value) {
                 chart.showControls(value);
             },
+            "showMaxMin":function(chart, value) {
+                chart.showMaxMin(value);
+            },
             showValues: function(chart, value) {
                 chart.showValues(value);
             },

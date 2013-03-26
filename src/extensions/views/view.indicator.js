@@ -102,7 +102,7 @@ this.recline.View = this.recline.View || {};
         				<div class="value-cell" style="float:left"><div class="kpi_value">{{{value}}}</div></div> \
     					<div class="aftershape" style="float:left">{{{afterShape}}}</div> \
     				</div> \
-                    <div class="title">&nbsp;&nbsp;{{{label}}}</div>\
+    				{{#label}}<div class="title">&nbsp;&nbsp;{{{label}}}</div>{{/label}}\
     			</div> \
     	    </div> \
         </div>',

@@ -5952,7 +5952,7 @@ this.recline.View = this.recline.View || {};
         				<div class="value-cell" style="float:left"><div class="kpi_value">{{{value}}}</div></div> \
     					<div class="aftershape" style="float:left">{{{afterShape}}}</div> \
     				</div> \
-                    <div class="title">&nbsp;&nbsp;{{{label}}}</div>\
+    				{{#label}}<div class="title">&nbsp;&nbsp;{{{label}}}</div>{{/label}}\
     			</div> \
     	    </div> \
         </div>',
@@ -6900,6 +6900,9 @@ this.recline.View = this.recline.View || {};
             },
             "showControls":function(chart, value) {
                 chart.showControls(value);
+            },
+            "showMaxMin":function(chart, value) {
+                chart.showMaxMin(value);
             },
             showValues: function(chart, value) {
                 chart.showValues(value);
@@ -13466,7 +13469,7 @@ this.recline.View = this.recline.View || {};
     	            format = d3.time.format("%Y-%m-%d");
     	
     	        var color = d3.scale.quantize()
-    	            .domain([self.scaleDomain])
+    	            .domain(self.scaleDomain)
     	            .range(d3.range(11).map(function(d) { return "q" + d + "-11"; }));
     	        
     	        var records = this.model.getRecords()
