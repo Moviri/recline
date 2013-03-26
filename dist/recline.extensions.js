@@ -185,7 +185,7 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
             self.ds_fetched = [];
             self.field_fetched = [];
 
-            self.joinedModel = new my.Dataset({backend: "Memory", records:[], fields: [], renderer: self.attributes.renderer, facets:[]});
+            self.joinedModel = new my.Dataset({backend: "Memory", records:[], fields: [], renderer: self.attributes.renderer});
 
             self.fields = self.joinedModel.fields;
             self.records = self.joinedModel.records;
@@ -1088,7 +1088,7 @@ this.recline.Model.UnionDataset = this.recline.Model.UnionDataset || {};
 
             self.ds_fetched = [];
 
-            self.unionModel = new my.Dataset({backend: "Memory", records:[], fields: [], renderer: self.attributes.renderer, facets: []});
+            self.unionModel = new my.Dataset({backend: "Memory", records:[], fields: [], renderer: self.attributes.renderer});
 
             self.fields = self.unionModel.fields;
             self.records = self.unionModel.records;
@@ -1301,8 +1301,7 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
                 {
                     backend: "Memory",
                     records:[], fields: [],
-                    renderer: self.attributes.renderer,
-                    facets:[]
+                    renderer: self.attributes.renderer
                 });
 
 
