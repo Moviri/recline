@@ -52,7 +52,9 @@ this.recline.View = this.recline.View || {};
             var self = this;
             
             function getCurrDate(dateStr) {
-            	return Date.parse(dateStr) || Date.parse(dateStr.replace(/\.\d\d\d\+\d+$/, '')) || Date.parse(dateStr.split('T')[0]) || new Date(dateStr)
+            	if (dateStr.getDate)
+            		return dateStr // already a date obj
+            	else return Date.parse(dateStr) || Date.parse(dateStr.replace(/\.\d\d\d\+\d+$/, '')) || Date.parse(dateStr.split('T')[0]) || new Date(dateStr)
             }
             
             if (this.model.getRecords().length)
@@ -69,7 +71,7 @@ this.recline.View = this.recline.View || {};
     	            format = d3.time.format("%Y-%m-%d");
     	
     	        var color = d3.scale.quantize()
-    	            .domain([self.scaleDomain])
+    	            .domain(self.scaleDomain)
     	            .range(d3.range(11).map(function(d) { return "q" + d + "-11"; }));
     	        
     	        var records = this.model.getRecords()

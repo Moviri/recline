@@ -5,7 +5,7 @@ this.recline.Data.FieldsUtility = this.recline.Data.FieldsUtility || {};
 
 (function($, my) {
 
-    my.setFieldsAttributes = function(fields, model) {
+    my.setFieldsAttributes = function(fields, model, records) {
 
 
         // if labels are declared in dataset properties merge it;
@@ -41,8 +41,22 @@ this.recline.Data.FieldsUtility = this.recline.Data.FieldsUtility || {};
                 var field = _.find(fields, function (f) {
                     return d.id === f.id
                 });
-                if (field != null && (typeof field.type == "undefined" || field.type == null))
+                if (field != null && (typeof field.type == "undefined" || field.type == null) && field.type != d.type)
+            	{
                     field.type = d.type;
+                    if (model.backend.__type__ == "csv" && records && field.type != "string")
+                	{
+                    	_.each(records, function(rec) {
+                    		if (field.type == "date")
+                    			rec[d.id] = new Date(rec[d.id])
+                    		else if (field.type == "integer")
+                    			rec[d.id] = parseInt(rec[d.id])
+                    		else if (field.type == "number")
+                    			rec[d.id] = parseFloat(rec[d.id])
+                    	})
+                	}
+            	}
+                	
             })
         }
 
@@ -69,6 +83,7 @@ this.recline.Data.FieldsUtility = this.recline.Data.FieldsUtility || {};
             })
         }
     }
+
 
 
 }(jQuery, this.recline.Data.FieldsUtility));

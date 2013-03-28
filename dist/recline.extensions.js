@@ -689,7 +689,8 @@ recline.Model.Query.prototype = $.extend(recline.Model.Query.prototype, {
         return function (records, fields) {
             var self=this;
             var out = super_init.call(this, records, fields);
-            recline.Data.FieldsUtility.setFieldsAttributes(out.fields, self);
+            recline.Data.FieldsUtility.setFieldsAttributes(out.fields, self, (self.backend.__type__ == "csv" ? out.records : undefined));
+            	
             return out;
         };
     }(),
@@ -712,9 +713,7 @@ recline.Model.Query.prototype = $.extend(recline.Model.Query.prototype, {
                 self.fields.reset(queryResult.fields, options);
 
             }
-
             return super_init.call(this, queryResult);
-
         };
     }()
 
@@ -3157,7 +3156,7 @@ this.recline.Data.FieldsUtility = this.recline.Data.FieldsUtility || {};
 
 (function($, my) {
 
-    my.setFieldsAttributes = function(fields, model) {
+    my.setFieldsAttributes = function(fields, model, records) {
 
 
         // if labels are declared in dataset properties merge it;
@@ -3193,8 +3192,22 @@ this.recline.Data.FieldsUtility = this.recline.Data.FieldsUtility || {};
                 var field = _.find(fields, function (f) {
                     return d.id === f.id
                 });
-                if (field != null && (typeof field.type == "undefined" || field.type == null))
+                if (field != null && (typeof field.type == "undefined" || field.type == null) && field.type != d.type)
+            	{
                     field.type = d.type;
+                    if (model.backend.__type__ == "csv" && records && field.type != "string")
+                	{
+                    	_.each(records, function(rec) {
+                    		if (field.type == "date")
+                    			rec[d.id] = new Date(rec[d.id])
+                    		else if (field.type == "integer")
+                    			rec[d.id] = parseInt(rec[d.id])
+                    		else if (field.type == "number")
+                    			rec[d.id] = parseFloat(rec[d.id])
+                    	})
+                	}
+            	}
+                	
             })
         }
 
@@ -3221,6 +3234,7 @@ this.recline.Data.FieldsUtility = this.recline.Data.FieldsUtility || {};
             })
         }
     }
+
 
 
 }(jQuery, this.recline.Data.FieldsUtility));
@@ -3590,13 +3604,14 @@ this.recline.Data = this.recline.Data || {};
         },
         date: function(val, field, doc) {
             var format = field.get('format');
-            if(format == null || format == "date")
-                return val;
-            if(format === "localeTimeString") {
+            if(format == null || format == "date"){
+            	return val;
+            } else if(format === "localeTimeString") {
                 return (new Date(val)).toLocaleString();
+            } else if(format === "timeString"){
+            	return (new Date(val)).toUTCString();
             }
-
-            return new Date(val).toLocaleString();
+            return new Date(val).toUTCString();
         },
         geo_point: function(val, field, doc) {
             return JSON.stringify(val);
@@ -3746,7 +3761,7 @@ this.recline.Data.SeriesUtility = this.recline.Data.SeriesUtility || {};
 
  */
 (function($, my) {
-    my.createSeries = function (seriesAttr, unselectedColorValue, model, resultTypeValue, groupField) {
+    my.createSeries = function (seriesAttr, unselectedColorValue, model, resultTypeValue, groupField, scaleTo100Perc, groupAllSmallSeries) {
             var series = [];
 
             var fillEmptyValuesWith = seriesAttr.fillEmptyValuesWith;
@@ -3970,6 +3985,57 @@ this.recline.Data.SeriesUtility = this.recline.Data.SeriesUtility || {};
             _.each(series, function(serie) {
             	serie.values = _.sortBy(serie.values, function(value) { return value.x }) 
             })
+            
+            if (groupAllSmallSeries)
+        	{
+            	// must group all small series into one. Note that the original records of the merged series are lost,
+            	// so the use of custom tooltips isn't possible at the moment 
+            	var mainSeriesCount = groupAllSmallSeries.mainSeriesCount
+            	var label = groupAllSmallSeries.labelForSmallSeries || "Other"
+            	var seriesKeyTotals = []
+            	_.each(series, function(serieObj) {
+            		seriesKeyTotals.push({
+            			id: seriesKeyTotals.length,
+            			key: serieObj.key,
+            			total: _.reduce(serieObj.values, function(memo, valueObj) { return memo + valueObj.y; }, 0)
+            		})
+            	})
+            	seriesKeyTotals = _.sortBy(seriesKeyTotals, function(serieObj){ return - serieObj.total; });
+            	var newSeries = []
+            	var j = 0
+            	for (j = 0; j < mainSeriesCount && j < seriesKeyTotals.length; j++)
+            		newSeries.push(series[seriesKeyTotals[j].id])
+
+            	if (j < series.length)
+        		{
+                	var newSerieOther = { key: label, values : []}
+                	_.each(series[seriesKeyTotals[j].id].values, function(valueObj) {
+                		newSerieOther.values.push({x: valueObj.x, y: valueObj.y})
+                	})
+                	var totValues = series[0].values.length
+                	for (var k = j+1; k < series.length; k++)
+                		for (var i = 0; i < totValues; i++)
+                			newSerieOther.values[i].y += series[seriesKeyTotals[k].id].values[i].y
+                			
+                	newSeries.push(newSerieOther)
+        		}
+            	series = newSeries;
+        	}
+
+            if (scaleTo100Perc && series.length)
+        	{
+            	// perform extra steps to scale the values
+            	var tot = series[0].values.length
+            	var seriesTotals = []
+            	for (var i = 0; i < tot; i++)
+            		seriesTotals.push(_.reduce(series, function(memo, serie) { return memo + serie.values[i].y; }, 0))
+            		
+            	for (var i = 0; i < tot; i++)
+            		_.each(series, function(serie) {
+            			serie.values[i].y_orig = serie.values[i].y
+            			serie.values[i].y = Math.round(serie.values[i].y_orig/seriesTotals[i]*10000)/100
+            		});
+        	}
 
 
         return series;
@@ -5952,7 +6018,7 @@ this.recline.View = this.recline.View || {};
         				<div class="value-cell" style="float:left"><div class="kpi_value">{{{value}}}</div></div> \
     					<div class="aftershape" style="float:left">{{{afterShape}}}</div> \
     				</div> \
-                    <div class="title">&nbsp;&nbsp;{{{label}}}</div>\
+    				{{#label}}<div class="title">&nbsp;&nbsp;{{{label}}}</div>{{/label}}\
     			</div> \
     	    </div> \
         </div>',
@@ -6581,19 +6647,8 @@ this.recline.View = this.recline.View || {};
             this.model.queryState.bind('selection:done', this.redraw);
             this.model.bind('dimensions:change', this.changeDimensions);
 
-            if (this.options.state.options && this.options.state.options.loader)
-            	this.options.state.options.loader.bindChart(this);
-            
-            // remove unwanted options from original NVD3 options or an error line is logged each time
-            this.extraOptions = {
-        		timing: this.options.state.options.timing,
-        		scaleTo100Perc: this.options.state.options.scaleTo100Perc,
-            }
-            if (this.options.state.options.timing)
-            	delete this.options.state.options.timing
-            	
-            if (this.options.state.options.scaleTo100Perc)
-            	delete this.options.state.options.scaleTo100Perc
+            if (this.options.state && this.options.state.loader)
+            	this.options.state.loader.bindChart(this);
         },
 
         changeDimensions: function() {
@@ -6707,10 +6762,17 @@ this.recline.View = this.recline.View || {};
                 var graphModel = self.getGraphModel(self, graphType)
                 
                 if (self.options.state.options.noTicksX)
-                    self.chart.xAxis.tickFormat(function (d) { return ''; });                	
+                    self.chart.xAxis.tickFormat(function (d) { return ''; });
+                else
+            	{
+                	var xField = self.model.fields.get(self.options.state.group)
+                	if (xField.attributes.type == "date")
+                		self.chart.xAxis.tickFormat(function (d) {
+                			return d3.time.format("%d/%m/%y")(new Date(d)); 
+                		});
+            	}
                 if (self.options.state.options.noTicksY)
                     self.chart.yAxis.tickFormat(function (d) { return ''; });                	
-	
                 if (self.options.state.options.customTooltips)
             	{
                 	var leftOffset = 10;
@@ -6772,7 +6834,7 @@ this.recline.View = this.recline.View || {};
                 d3.select('#nvd3chart_' + self.uid + '  svg')
                     .datum(seriesNVD3)
                     .transition()
-                    .duration(self.extraOptions.timing || 500)
+                    .duration(self.options.state.timing || 500)
                     .call(self.chart);
 
                 nv.utils.windowResize(self.graphResize);
@@ -6900,6 +6962,9 @@ this.recline.View = this.recline.View || {};
             },
             "showControls":function(chart, value) {
                 chart.showControls(value);
+            },
+            "showMaxMin":function(chart, value) {
+                chart.showMaxMin(value);
             },
             showValues: function(chart, value) {
                 chart.showValues(value);
@@ -7448,8 +7513,44 @@ this.recline.View = this.recline.View || {};
             _.each(series, function(serie) {
             	serie.values = _.sortBy(serie.values, function(value) { return value.x }) 
             })
+            
+            if (self.options.state.groupAllSmallSeries)
+        	{
+            	// must group all small series into one. Note that the original records of the merged series are lost,
+            	// so the use of custom tooltips isn't possible at the moment 
+            	var mainSeriesCount = self.options.state.groupAllSmallSeries.mainSeriesCount
+            	var label = self.options.state.groupAllSmallSeries.labelForSmallSeries || "Other"
+            	var seriesKeyTotals = []
+            	_.each(series, function(serieObj) {
+            		seriesKeyTotals.push({
+            			id: seriesKeyTotals.length,
+            			key: serieObj.key,
+            			total: _.reduce(serieObj.values, function(memo, valueObj) { return memo + valueObj.y; }, 0)
+            		})
+            	})
+            	seriesKeyTotals = _.sortBy(seriesKeyTotals, function(serieObj){ return - serieObj.total; });
+            	var newSeries = []
+            	var j = 0
+            	for (j = 0; j < mainSeriesCount && j < seriesKeyTotals.length; j++)
+            		newSeries.push(series[seriesKeyTotals[j].id])
 
-            if (self.extraOptions.scaleTo100Perc && series.length)
+            	if (j < series.length)
+        		{
+                	var newSerieOther = { key: label, values : []}
+                	_.each(series[seriesKeyTotals[j].id].values, function(valueObj) {
+                		newSerieOther.values.push({x: valueObj.x, y: valueObj.y})
+                	})
+                	var totValues = series[0].values.length
+                	for (var k = j+1; k < series.length; k++)
+                		for (var i = 0; i < totValues; i++)
+                			newSerieOther.values[i].y += series[seriesKeyTotals[k].id].values[i].y
+                			
+                	newSeries.push(newSerieOther)
+        		}
+            	series = newSeries;
+        	}
+
+            if (self.options.state.scaleTo100Perc && series.length)
         	{
             	// perform extra steps to scale the values
             	var tot = series[0].values.length
@@ -7460,7 +7561,7 @@ this.recline.View = this.recline.View || {};
             	for (var i = 0; i < tot; i++)
             		_.each(series, function(serie) {
             			serie.values[i].y_orig = serie.values[i].y
-            			serie.values[i].y = serie.values[i].y_orig/seriesTotals[i]*100
+            			serie.values[i].y = Math.round(serie.values[i].y_orig/seriesTotals[i]*10000)/100
             		});
         	}
             return series;
@@ -7874,7 +7975,105 @@ this.recline.View = this.recline.View || {};
 
 
     });
-})(jQuery, recline.View);/*jshint multistr:true */
+})(jQuery, recline.View);this.recline = this.recline || {};
+this.recline.View = this.recline.View || {};
+
+(function($, view) {
+
+	view.SaveCSV = Backbone.View.extend({
+		template:'<a id="{{uid}}" style="text-decoration: none;cursor: pointer;"><i class="icon-download" title="Download as csv file"></i></a>',
+		id : 'save',
+
+		initialize:function (options) {
+		
+		    this.el = $(this.el);
+		    _.bindAll(this, 'render', 'redraw');
+		
+		
+			this.model.bind('change', this.render);
+			this.model.fields.bind('reset', this.render);
+			this.model.fields.bind('add', this.render);
+			
+			this.model.records.bind('reset', this.render);
+			this.model.queryState.bind('selection:done', this.render);
+			
+			this.uid = options.id || ("save_" + new Date().getTime() + Math.floor(Math.random() * 10000)); // generating an unique id
+			
+		    this.options = options;		    
+		},
+	    
+		initialize : function(options) {
+			this.el = $(this.el);
+		},
+
+		updateState: function(options) {
+			var self = this;
+			self.options.visibleColumns = options.visibleColumns;
+		},
+		render : function() {
+			 var self = this;
+			 var saveDataset = function() {
+				var res = []; // tmp array in which we store the dataset and then
+								// we use it to generate csv
+
+				var records = self.model.records;
+
+				// parse records of dataset and fill the array
+				var header = []
+				_.each(self.options.visibleColumns,
+						function(attribute) {
+							if (attribute.indexOf('_sum', attribute.length - '_sum'.length) !== -1) {
+								attribute = attribute.substring(0, attribute.length - 4);
+							}
+
+							if ( self.options.fieldLabels ){
+								var tmp = _.find( self.options.fieldLabels, function(x) {
+									return x.id == attribute;
+								});
+								if (tmp) {
+									header.push(tmp.label);
+								} else {
+									header.push(attribute);
+								}
+							} else {
+								header.push(attribute);
+							}
+						});
+				res.push(header);
+				_.each(records.models, function(record) {
+					var r = [];
+					_.each(self.options.visibleColumns, function(attribute) {
+						r.push(record.getFieldValueUnrendered(record.fields.get(attribute))); // str.replace(str.match('<[^>]*>'),'').replace(str.match('</[^>]*>'),'')
+					});
+					res.push(r);
+				});
+
+				// convert to comma separated value
+				var str = '';
+				var line = '';
+				for ( var i = 0; i < res.length; i++) {
+					var line = '';
+					for ( var index in res[i]) {
+						var value = res[i][index] + "";
+						line += '"' + value.replace(/"/g, '""') + '",';
+					}
+					line = line.slice(0, -1);
+					str += line + '\r\n';
+				}
+				
+				saveAs(new Blob([ str ], { type : "text/plain;charset=" + document.characterSet}), "data.csv"); // use FileSaver.js
+				
+			};
+			
+			var out = Mustache.render(this.template, self);
+			this.el.off('click');
+			this.el.click(function (){ return saveDataset() });
+			this.el.html(out);
+		},
+
+	});
+})(jQuery, recline.View);
+/*jshint multistr:true */
 
 this.recline = this.recline || {};
 this.recline.View = this.recline.View || {};
@@ -8911,7 +9110,9 @@ this.recline.View = this.recline.View || {};
                 state.unselectedColor,
                 self.model,
                 self.resultType,
-                state.group);
+                state.group,
+                state.scaleTo100Perc,
+                state.groupAllSmallSeries);
 
             var data = { main: [],
                 xScale: state.xScale,
@@ -13293,7 +13494,9 @@ this.recline.View = this.recline.View || {};
             var self = this;
             
             function getCurrDate(dateStr) {
-            	return Date.parse(dateStr) || Date.parse(dateStr.replace(/\.\d\d\d\+\d+$/, '')) || Date.parse(dateStr.split('T')[0]) || new Date(dateStr)
+            	if (dateStr.getDate)
+            		return dateStr // already a date obj
+            	else return Date.parse(dateStr) || Date.parse(dateStr.replace(/\.\d\d\d\+\d+$/, '')) || Date.parse(dateStr.split('T')[0]) || new Date(dateStr)
             }
             
             if (this.model.getRecords().length)
@@ -13310,7 +13513,7 @@ this.recline.View = this.recline.View || {};
     	            format = d3.time.format("%Y-%m-%d");
     	
     	        var color = d3.scale.quantize()
-    	            .domain([self.scaleDomain])
+    	            .domain(self.scaleDomain)
     	            .range(d3.range(11).map(function(d) { return "q" + d + "-11"; }));
     	        
     	        var records = this.model.getRecords()
@@ -13888,14 +14091,17 @@ this.recline.View = this.recline.View || {};
     	                	if (field)
     	                		val = selectedRecord.getFieldValue(field)
                     	}
-    	                var values = { x: region, y: val, xLabel: newXLabel, yLabel: selectedKpi }
-    	                var content = Mustache.render(self.options.state.customTooltipTemplate, values);
-    	                var $mapElem = $(self.el)
-    	                //console.log("Tooltip for "+region+" at "+pos.left+","+pos.top)
-    	                //var gravity = (pos.left < $mapElem[0].offsetLeft + $mapElem.width()/2 ? 'w' : 'e');
-    	                var gravity = (pos.top < $mapElem[0].offsetTop + $mapElem.height()/2 ? 'n' : 's');
+    	                if ( val.indexOf("N/A") == -1){
+    	                	var values = { x: region, y: val, xLabel: newXLabel, yLabel: selectedKpi }
+        	                var content = Mustache.render(self.options.state.customTooltipTemplate, values);
+        	                var $mapElem = $(self.el)
+        	                //console.log("Tooltip for "+region+" at "+pos.left+","+pos.top)
+        	                //var gravity = (pos.left < $mapElem[0].offsetLeft + $mapElem.width()/2 ? 'w' : 'e');
+        	                var gravity = (pos.top < $mapElem[0].offsetTop + $mapElem.height()/2 ? 'n' : 's');
+        	                
+        	                nv.tooltip.show([pos.left, pos.top], content, gravity, null, $mapElem[0]);	
+    	                }
     	                
-    	                nv.tooltip.show([pos.left, pos.top], content, gravity, null, $mapElem[0]);
     	            };
                 var mouseout = function () {
                 	nv.tooltip.cleanup();

@@ -247,7 +247,9 @@ this.recline.View = this.recline.View || {};
                 state.unselectedColor,
                 self.model,
                 self.resultType,
-                state.group);
+                state.group,
+                state.scaleTo100Perc,
+                state.groupAllSmallSeries);
 
             var data = { main: [],
                 xScale: state.xScale,
