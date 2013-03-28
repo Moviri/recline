@@ -50,19 +50,8 @@ this.recline.View = this.recline.View || {};
             this.model.queryState.bind('selection:done', this.redraw);
             this.model.bind('dimensions:change', this.changeDimensions);
 
-            if (this.options.state.options && this.options.state.options.loader)
-            	this.options.state.options.loader.bindChart(this);
-            
-            // remove unwanted options from original NVD3 options or an error line is logged each time
-            this.extraOptions = {
-        		timing: this.options.state.options.timing,
-        		scaleTo100Perc: this.options.state.options.scaleTo100Perc,
-            }
-            if (this.options.state.options.timing)
-            	delete this.options.state.options.timing
-            	
-            if (this.options.state.options.scaleTo100Perc)
-            	delete this.options.state.options.scaleTo100Perc
+            if (this.options.state && this.options.state.loader)
+            	this.options.state.loader.bindChart(this);
         },
 
         changeDimensions: function() {
@@ -176,10 +165,17 @@ this.recline.View = this.recline.View || {};
                 var graphModel = self.getGraphModel(self, graphType)
                 
                 if (self.options.state.options.noTicksX)
-                    self.chart.xAxis.tickFormat(function (d) { return ''; });                	
+                    self.chart.xAxis.tickFormat(function (d) { return ''; });
+                else
+            	{
+                	var xField = self.model.fields.get(self.options.state.group)
+                	if (xField.attributes.type == "date")
+                		self.chart.xAxis.tickFormat(function (d) {
+                			return d3.time.format("%d/%m/%y")(new Date(d)); 
+                		});
+            	}
                 if (self.options.state.options.noTicksY)
                     self.chart.yAxis.tickFormat(function (d) { return ''; });                	
-	
                 if (self.options.state.options.customTooltips)
             	{
                 	var leftOffset = 10;
@@ -241,7 +237,7 @@ this.recline.View = this.recline.View || {};
                 d3.select('#nvd3chart_' + self.uid + '  svg')
                     .datum(seriesNVD3)
                     .transition()
-                    .duration(self.extraOptions.timing || 500)
+                    .duration(self.options.state.timing || 500)
                     .call(self.chart);
 
                 nv.utils.windowResize(self.graphResize);
@@ -920,8 +916,44 @@ this.recline.View = this.recline.View || {};
             _.each(series, function(serie) {
             	serie.values = _.sortBy(serie.values, function(value) { return value.x }) 
             })
+            
+            if (self.options.state.groupAllSmallSeries)
+        	{
+            	// must group all small series into one. Note that the original records of the merged series are lost,
+            	// so the use of custom tooltips isn't possible at the moment 
+            	var mainSeriesCount = self.options.state.groupAllSmallSeries.mainSeriesCount
+            	var label = self.options.state.groupAllSmallSeries.labelForSmallSeries || "Other"
+            	var seriesKeyTotals = []
+            	_.each(series, function(serieObj) {
+            		seriesKeyTotals.push({
+            			id: seriesKeyTotals.length,
+            			key: serieObj.key,
+            			total: _.reduce(serieObj.values, function(memo, valueObj) { return memo + valueObj.y; }, 0)
+            		})
+            	})
+            	seriesKeyTotals = _.sortBy(seriesKeyTotals, function(serieObj){ return - serieObj.total; });
+            	var newSeries = []
+            	var j = 0
+            	for (j = 0; j < mainSeriesCount && j < seriesKeyTotals.length; j++)
+            		newSeries.push(series[seriesKeyTotals[j].id])
 
-            if (self.extraOptions.scaleTo100Perc && series.length)
+            	if (j < series.length)
+        		{
+                	var newSerieOther = { key: label, values : []}
+                	_.each(series[seriesKeyTotals[j].id].values, function(valueObj) {
+                		newSerieOther.values.push({x: valueObj.x, y: valueObj.y})
+                	})
+                	var totValues = series[0].values.length
+                	for (var k = j+1; k < series.length; k++)
+                		for (var i = 0; i < totValues; i++)
+                			newSerieOther.values[i].y += series[seriesKeyTotals[k].id].values[i].y
+                			
+                	newSeries.push(newSerieOther)
+        		}
+            	series = newSeries;
+        	}
+
+            if (self.options.state.scaleTo100Perc && series.length)
         	{
             	// perform extra steps to scale the values
             	var tot = series[0].values.length
@@ -932,7 +964,7 @@ this.recline.View = this.recline.View || {};
             	for (var i = 0; i < tot; i++)
             		_.each(series, function(serie) {
             			serie.values[i].y_orig = serie.values[i].y
-            			serie.values[i].y = serie.values[i].y_orig/seriesTotals[i]*100
+            			serie.values[i].y = Math.round(serie.values[i].y_orig/seriesTotals[i]*10000)/100
             		});
         	}
             return series;

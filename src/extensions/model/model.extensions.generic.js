@@ -74,7 +74,8 @@ recline.Model.Dataset.prototype = $.extend(recline.Model.Dataset.prototype, {
         return function (records, fields) {
             var self=this;
             var out = super_init.call(this, records, fields);
-            recline.Data.FieldsUtility.setFieldsAttributes(out.fields, self);
+            recline.Data.FieldsUtility.setFieldsAttributes(out.fields, self, (self.backend.__type__ == "csv" ? out.records : undefined));
+            	
             return out;
         };
     }(),
@@ -97,9 +98,7 @@ recline.Model.Dataset.prototype = $.extend(recline.Model.Dataset.prototype, {
                 self.fields.reset(queryResult.fields, options);
 
             }
-
             return super_init.call(this, queryResult);
-
         };
     }()
 

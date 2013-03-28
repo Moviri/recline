@@ -689,7 +689,8 @@ recline.Model.Query.prototype = $.extend(recline.Model.Query.prototype, {
         return function (records, fields) {
             var self=this;
             var out = super_init.call(this, records, fields);
-            recline.Data.FieldsUtility.setFieldsAttributes(out.fields, self);
+            recline.Data.FieldsUtility.setFieldsAttributes(out.fields, self, (self.backend.__type__ == "csv" ? out.records : undefined));
+            	
             return out;
         };
     }(),
@@ -712,9 +713,7 @@ recline.Model.Query.prototype = $.extend(recline.Model.Query.prototype, {
                 self.fields.reset(queryResult.fields, options);
 
             }
-
             return super_init.call(this, queryResult);
-
         };
     }()
 
@@ -3157,7 +3156,7 @@ this.recline.Data.FieldsUtility = this.recline.Data.FieldsUtility || {};
 
 (function($, my) {
 
-    my.setFieldsAttributes = function(fields, model) {
+    my.setFieldsAttributes = function(fields, model, records) {
 
 
         // if labels are declared in dataset properties merge it;
@@ -3193,8 +3192,22 @@ this.recline.Data.FieldsUtility = this.recline.Data.FieldsUtility || {};
                 var field = _.find(fields, function (f) {
                     return d.id === f.id
                 });
-                if (field != null && (typeof field.type == "undefined" || field.type == null))
+                if (field != null && (typeof field.type == "undefined" || field.type == null) && field.type != d.type)
+            	{
                     field.type = d.type;
+                    if (model.backend.__type__ == "csv" && records && field.type != "string")
+                	{
+                    	_.each(records, function(rec) {
+                    		if (field.type == "date")
+                    			rec[d.id] = new Date(rec[d.id])
+                    		else if (field.type == "integer")
+                    			rec[d.id] = parseInt(rec[d.id])
+                    		else if (field.type == "number")
+                    			rec[d.id] = parseFloat(rec[d.id])
+                    	})
+                	}
+            	}
+                	
             })
         }
 
@@ -3221,6 +3234,7 @@ this.recline.Data.FieldsUtility = this.recline.Data.FieldsUtility || {};
             })
         }
     }
+
 
 
 }(jQuery, this.recline.Data.FieldsUtility));
@@ -3746,7 +3760,7 @@ this.recline.Data.SeriesUtility = this.recline.Data.SeriesUtility || {};
 
  */
 (function($, my) {
-    my.createSeries = function (seriesAttr, unselectedColorValue, model, resultTypeValue, groupField) {
+    my.createSeries = function (seriesAttr, unselectedColorValue, model, resultTypeValue, groupField, scaleTo100Perc, groupAllSmallSeries) {
             var series = [];
 
             var fillEmptyValuesWith = seriesAttr.fillEmptyValuesWith;
@@ -3970,6 +3984,57 @@ this.recline.Data.SeriesUtility = this.recline.Data.SeriesUtility || {};
             _.each(series, function(serie) {
             	serie.values = _.sortBy(serie.values, function(value) { return value.x }) 
             })
+            
+            if (groupAllSmallSeries)
+        	{
+            	// must group all small series into one. Note that the original records of the merged series are lost,
+            	// so the use of custom tooltips isn't possible at the moment 
+            	var mainSeriesCount = groupAllSmallSeries.mainSeriesCount
+            	var label = groupAllSmallSeries.labelForSmallSeries || "Other"
+            	var seriesKeyTotals = []
+            	_.each(series, function(serieObj) {
+            		seriesKeyTotals.push({
+            			id: seriesKeyTotals.length,
+            			key: serieObj.key,
+            			total: _.reduce(serieObj.values, function(memo, valueObj) { return memo + valueObj.y; }, 0)
+            		})
+            	})
+            	seriesKeyTotals = _.sortBy(seriesKeyTotals, function(serieObj){ return - serieObj.total; });
+            	var newSeries = []
+            	var j = 0
+            	for (j = 0; j < mainSeriesCount && j < seriesKeyTotals.length; j++)
+            		newSeries.push(series[seriesKeyTotals[j].id])
+
+            	if (j < series.length)
+        		{
+                	var newSerieOther = { key: label, values : []}
+                	_.each(series[seriesKeyTotals[j].id].values, function(valueObj) {
+                		newSerieOther.values.push({x: valueObj.x, y: valueObj.y})
+                	})
+                	var totValues = series[0].values.length
+                	for (var k = j+1; k < series.length; k++)
+                		for (var i = 0; i < totValues; i++)
+                			newSerieOther.values[i].y += series[seriesKeyTotals[k].id].values[i].y
+                			
+                	newSeries.push(newSerieOther)
+        		}
+            	series = newSeries;
+        	}
+
+            if (scaleTo100Perc && series.length)
+        	{
+            	// perform extra steps to scale the values
+            	var tot = series[0].values.length
+            	var seriesTotals = []
+            	for (var i = 0; i < tot; i++)
+            		seriesTotals.push(_.reduce(series, function(memo, serie) { return memo + serie.values[i].y; }, 0))
+            		
+            	for (var i = 0; i < tot; i++)
+            		_.each(series, function(serie) {
+            			serie.values[i].y_orig = serie.values[i].y
+            			serie.values[i].y = Math.round(serie.values[i].y_orig/seriesTotals[i]*10000)/100
+            		});
+        	}
 
 
         return series;
@@ -6581,19 +6646,8 @@ this.recline.View = this.recline.View || {};
             this.model.queryState.bind('selection:done', this.redraw);
             this.model.bind('dimensions:change', this.changeDimensions);
 
-            if (this.options.state.options && this.options.state.options.loader)
-            	this.options.state.options.loader.bindChart(this);
-            
-            // remove unwanted options from original NVD3 options or an error line is logged each time
-            this.extraOptions = {
-        		timing: this.options.state.options.timing,
-        		scaleTo100Perc: this.options.state.options.scaleTo100Perc,
-            }
-            if (this.options.state.options.timing)
-            	delete this.options.state.options.timing
-            	
-            if (this.options.state.options.scaleTo100Perc)
-            	delete this.options.state.options.scaleTo100Perc
+            if (this.options.state && this.options.state.loader)
+            	this.options.state.loader.bindChart(this);
         },
 
         changeDimensions: function() {
@@ -6707,10 +6761,17 @@ this.recline.View = this.recline.View || {};
                 var graphModel = self.getGraphModel(self, graphType)
                 
                 if (self.options.state.options.noTicksX)
-                    self.chart.xAxis.tickFormat(function (d) { return ''; });                	
+                    self.chart.xAxis.tickFormat(function (d) { return ''; });
+                else
+            	{
+                	var xField = self.model.fields.get(self.options.state.group)
+                	if (xField.attributes.type == "date")
+                		self.chart.xAxis.tickFormat(function (d) {
+                			return d3.time.format("%d/%m/%y")(new Date(d)); 
+                		});
+            	}
                 if (self.options.state.options.noTicksY)
                     self.chart.yAxis.tickFormat(function (d) { return ''; });                	
-	
                 if (self.options.state.options.customTooltips)
             	{
                 	var leftOffset = 10;
@@ -6772,7 +6833,7 @@ this.recline.View = this.recline.View || {};
                 d3.select('#nvd3chart_' + self.uid + '  svg')
                     .datum(seriesNVD3)
                     .transition()
-                    .duration(self.extraOptions.timing || 500)
+                    .duration(self.options.state.timing || 500)
                     .call(self.chart);
 
                 nv.utils.windowResize(self.graphResize);
@@ -7451,8 +7512,44 @@ this.recline.View = this.recline.View || {};
             _.each(series, function(serie) {
             	serie.values = _.sortBy(serie.values, function(value) { return value.x }) 
             })
+            
+            if (self.options.state.groupAllSmallSeries)
+        	{
+            	// must group all small series into one. Note that the original records of the merged series are lost,
+            	// so the use of custom tooltips isn't possible at the moment 
+            	var mainSeriesCount = self.options.state.groupAllSmallSeries.mainSeriesCount
+            	var label = self.options.state.groupAllSmallSeries.labelForSmallSeries || "Other"
+            	var seriesKeyTotals = []
+            	_.each(series, function(serieObj) {
+            		seriesKeyTotals.push({
+            			id: seriesKeyTotals.length,
+            			key: serieObj.key,
+            			total: _.reduce(serieObj.values, function(memo, valueObj) { return memo + valueObj.y; }, 0)
+            		})
+            	})
+            	seriesKeyTotals = _.sortBy(seriesKeyTotals, function(serieObj){ return - serieObj.total; });
+            	var newSeries = []
+            	var j = 0
+            	for (j = 0; j < mainSeriesCount && j < seriesKeyTotals.length; j++)
+            		newSeries.push(series[seriesKeyTotals[j].id])
 
-            if (self.extraOptions.scaleTo100Perc && series.length)
+            	if (j < series.length)
+        		{
+                	var newSerieOther = { key: label, values : []}
+                	_.each(series[seriesKeyTotals[j].id].values, function(valueObj) {
+                		newSerieOther.values.push({x: valueObj.x, y: valueObj.y})
+                	})
+                	var totValues = series[0].values.length
+                	for (var k = j+1; k < series.length; k++)
+                		for (var i = 0; i < totValues; i++)
+                			newSerieOther.values[i].y += series[seriesKeyTotals[k].id].values[i].y
+                			
+                	newSeries.push(newSerieOther)
+        		}
+            	series = newSeries;
+        	}
+
+            if (self.options.state.scaleTo100Perc && series.length)
         	{
             	// perform extra steps to scale the values
             	var tot = series[0].values.length
@@ -7463,7 +7560,7 @@ this.recline.View = this.recline.View || {};
             	for (var i = 0; i < tot; i++)
             		_.each(series, function(serie) {
             			serie.values[i].y_orig = serie.values[i].y
-            			serie.values[i].y = serie.values[i].y_orig/seriesTotals[i]*100
+            			serie.values[i].y = Math.round(serie.values[i].y_orig/seriesTotals[i]*10000)/100
             		});
         	}
             return series;
@@ -9012,7 +9109,9 @@ this.recline.View = this.recline.View || {};
                 state.unselectedColor,
                 self.model,
                 self.resultType,
-                state.group);
+                state.group,
+                state.scaleTo100Perc,
+                state.groupAllSmallSeries);
 
             var data = { main: [],
                 xScale: state.xScale,
@@ -11842,6 +11941,162 @@ this.recline.View = this.recline.View || {};
 
 (function ($, my) {
 
+    my.JQueryMobileFilter = Backbone.View.extend({
+        filterTemplates:{
+            toggle:' \
+      <div class="filter-{{type}} filter" id="{{ctrlId}}"> \
+        <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
+            <legend style="display:{{useLegend}}">{{label}}</legend>  \
+    		<div style="float:left;padding-right:10px;padding-top:2px;display:{{useLeftLabel}}">{{label}}</div> \
+          <input type="text" value="{{term}}" name="term" class="data-control-id" /> \
+          <input type="button" class="btn" id="setFilterValueButton" value="Set"></input> \
+        </fieldset> \
+      </div> \
+    ',
+            slider:' \
+	<script> \
+		$(document).ready(function(){ \
+			$( "#slider{{ctrlId}}" ).slider({ \
+				min: {{min}}, \
+				max: {{max}}, \
+				value: {{term}}, \
+				slide: function( event, ui ) { \
+					$( "#amount{{ctrlId}}" ).html( "{{label}}: "+ ui.value ); \
+				} \
+			}); \
+			$( "#amount{{ctrlId}}" ).html( "{{label}}: "+ $( "#slider{{ctrlId}}" ).slider( "value" ) ); \
+		}); \
+	</script> \
+      <div class="filter-{{type}} filter" id="{{ctrlId}}" style="min-width:100px"> \
+        <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
+            <legend style="display:{{useLegend}}">{{label}} \
+			<a class="js-remove-filter" href="#" title="Remove this filter">&times;</a> \
+		</legend>  \
+		  <label id="amount{{ctrlId}}">{{label}}: </label> \
+		  <div id="slider{{ctrlId}}" class="data-control-id"></div> \
+		  <br> \
+          <input type="button" class="btn" id="setFilterValueButton" value="Set"></input> \
+        </fieldset> \
+      </div> \
+    '
+        },
+        events:{
+            'change .slider-styled':'onStyledSliderValueChanged'
+        },
+        initialize:function (args) {
+            this.el = $(this.el);
+            _.bindAll(this, 'render', 'update', 'doAction');
+
+            this.model = args.model;
+            this.uid = args.id || Math.floor(Math.random() * 100000); // unique id of the view containing all filters
+
+            if (this.model) {
+                this.model.bind('query:done', this.render);
+                this.model.queryState.bind('selection:done', this.update);
+            }
+        },
+
+        render:function () {
+            var self = this;
+            var tmplData = {};
+
+            //  map them to the correct controlType and retain their values (start/from/term/...)
+//            if (self.model) {
+//                _.each(self.model.queryState.get('selections'), function (filter) {
+//                    for (var j in tmplData.filters) {
+//                        if (tmplData.filters[j].field == filter.field) {
+//                            tmplData.filters[j].list = filter.list
+//                            tmplData.filters[j].term = filter.term
+//                            tmplData.filters[j].start = filter.start
+//                            tmplData.filters[j].stop = filter.stop
+//                            self.fixHierarchicRadiobuttonsSelections(tmplData.filters[j])
+//                        }
+//                    }
+//                });
+//
+//                tmplData.fields = this.model.fields.toJSON();
+//
+//            }
+//
+//            var resultType = self.options.resultType || "filtered";
+//
+//            tmplData.filterRender = self.filterRender;
+//
+//            var out = Mustache.render(currTemplate, tmplData);
+//            this.el.html(out);
+            
+        },
+        update:function () {
+            var self = this;
+            // retrieve filter values (start/from/term/...)
+//            _.each(this.model.queryState.get('selections'), function (filter) {
+//                for (var j in self.activeFilters) {
+//                    if (self.activeFilters[j].field == filter.field) {
+//                        self.activeFilters[j].list = filter.list
+//                        self.activeFilters[j].term = filter.term
+//                        self.activeFilters[j].start = filter.start
+//                        self.activeFilters[j].stop = filter.stop
+//                        self.fixHierarchicRadiobuttonsSelections(self.activeFilters[j])
+//                    }
+//                }
+//            });
+        },
+        // action could be add or remove
+        doAction:function (eventType, fieldName, values, actionType, currFilter) {
+            var self=this;
+
+//            var res = [];
+//            // make sure you use all values, even 2nd or 3rd level if present (hierarchic radiobuttons only)
+//            var allValues = currFilter.values
+//            // TODO it is not efficient, record must be indexed by term
+//            // TODO conversion to string is not correct, original value must be used
+//            _.each(allValues, function(v) {
+//              if(v.record) {
+//                  var field = v.record.fields.get(currFilter.field);
+//                  if(_.contains(values,v.record.getFieldValueUnrendered(field).toString()))
+//                    res.push(v.record);
+//              };
+//            });
+//            var actions = this.options.actions;
+//            actions.forEach(function(currAction){
+//                currAction.action.doAction(res, currAction.mapping);
+//            });
+        },
+
+        onStyledSliderValueChanged:function (e, value) {
+//            e.preventDefault();
+//            var $target = $(e.target).parent().parent();
+//            var fieldId = $target.attr('data-filter-field');
+//            var fieldType = $target.attr('data-filter-type');
+//            var controlType = $target.attr('data-control-type');
+//            if (fieldType == "term") {
+//                var term = value;
+//                var activeFilter = this.findActiveFilterByField(fieldId, controlType);
+//                activeFilter.userChanged = true;
+//                activeFilter.term = term;
+//                activeFilter.list = [term];
+//                this.doAction("onStyledSliderValueChanged", fieldId, [term], "add", activeFilter);
+//            }
+//            else if (fieldType == "range") {
+//                var activeFilter = this.findActiveFilterByField(fieldId, controlType);
+//                activeFilter.userChanged = true;
+//                var fromTo = value.split(";");
+//                var from = fromTo[0];
+//                var to = fromTo[1];
+//                activeFilter.from = from;
+//                activeFilter.to = to;
+//                this.doAction("onStyledSliderValueChanged", fieldId, [from, to], "add", activeFilter);
+//            }
+        },
+    });
+
+})(jQuery, recline.View);
+/*jshint multistr:true */
+this.recline = this.recline || {};
+this.recline.View = this.recline.View || {};
+
+(function ($, my) {
+
     my.MultiButtonDropdownFilter = Backbone.View.extend({
         template: '<div class="btn-toolbar"> \
         				<div class="btn-group data-control-id"> \
@@ -13394,7 +13649,9 @@ this.recline.View = this.recline.View || {};
             var self = this;
             
             function getCurrDate(dateStr) {
-            	return Date.parse(dateStr) || Date.parse(dateStr.replace(/\.\d\d\d\+\d+$/, '')) || Date.parse(dateStr.split('T')[0]) || new Date(dateStr)
+            	if (dateStr.getDate)
+            		return dateStr // already a date obj
+            	else return Date.parse(dateStr) || Date.parse(dateStr.replace(/\.\d\d\d\+\d+$/, '')) || Date.parse(dateStr.split('T')[0]) || new Date(dateStr)
             }
             
             if (this.model.getRecords().length)

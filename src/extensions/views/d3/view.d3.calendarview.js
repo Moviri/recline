@@ -52,7 +52,9 @@ this.recline.View = this.recline.View || {};
             var self = this;
             
             function getCurrDate(dateStr) {
-            	return Date.parse(dateStr) || Date.parse(dateStr.replace(/\.\d\d\d\+\d+$/, '')) || Date.parse(dateStr.split('T')[0]) || new Date(dateStr)
+            	if (dateStr.getDate)
+            		return dateStr // already a date obj
+            	else return Date.parse(dateStr) || Date.parse(dateStr.replace(/\.\d\d\d\+\d+$/, '')) || Date.parse(dateStr.split('T')[0]) || new Date(dateStr)
             }
             
             if (this.model.getRecords().length)

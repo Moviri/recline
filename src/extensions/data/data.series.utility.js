@@ -22,7 +22,7 @@ this.recline.Data.SeriesUtility = this.recline.Data.SeriesUtility || {};
 
  */
 (function($, my) {
-    my.createSeries = function (seriesAttr, unselectedColorValue, model, resultTypeValue, groupField) {
+    my.createSeries = function (seriesAttr, unselectedColorValue, model, resultTypeValue, groupField, scaleTo100Perc, groupAllSmallSeries) {
             var series = [];
 
             var fillEmptyValuesWith = seriesAttr.fillEmptyValuesWith;
@@ -246,6 +246,57 @@ this.recline.Data.SeriesUtility = this.recline.Data.SeriesUtility || {};
             _.each(series, function(serie) {
             	serie.values = _.sortBy(serie.values, function(value) { return value.x }) 
             })
+            
+            if (groupAllSmallSeries)
+        	{
+            	// must group all small series into one. Note that the original records of the merged series are lost,
+            	// so the use of custom tooltips isn't possible at the moment 
+            	var mainSeriesCount = groupAllSmallSeries.mainSeriesCount
+            	var label = groupAllSmallSeries.labelForSmallSeries || "Other"
+            	var seriesKeyTotals = []
+            	_.each(series, function(serieObj) {
+            		seriesKeyTotals.push({
+            			id: seriesKeyTotals.length,
+            			key: serieObj.key,
+            			total: _.reduce(serieObj.values, function(memo, valueObj) { return memo + valueObj.y; }, 0)
+            		})
+            	})
+            	seriesKeyTotals = _.sortBy(seriesKeyTotals, function(serieObj){ return - serieObj.total; });
+            	var newSeries = []
+            	var j = 0
+            	for (j = 0; j < mainSeriesCount && j < seriesKeyTotals.length; j++)
+            		newSeries.push(series[seriesKeyTotals[j].id])
+
+            	if (j < series.length)
+        		{
+                	var newSerieOther = { key: label, values : []}
+                	_.each(series[seriesKeyTotals[j].id].values, function(valueObj) {
+                		newSerieOther.values.push({x: valueObj.x, y: valueObj.y})
+                	})
+                	var totValues = series[0].values.length
+                	for (var k = j+1; k < series.length; k++)
+                		for (var i = 0; i < totValues; i++)
+                			newSerieOther.values[i].y += series[seriesKeyTotals[k].id].values[i].y
+                			
+                	newSeries.push(newSerieOther)
+        		}
+            	series = newSeries;
+        	}
+
+            if (scaleTo100Perc && series.length)
+        	{
+            	// perform extra steps to scale the values
+            	var tot = series[0].values.length
+            	var seriesTotals = []
+            	for (var i = 0; i < tot; i++)
+            		seriesTotals.push(_.reduce(series, function(memo, serie) { return memo + serie.values[i].y; }, 0))
+            		
+            	for (var i = 0; i < tot; i++)
+            		_.each(series, function(serie) {
+            			serie.values[i].y_orig = serie.values[i].y
+            			serie.values[i].y = Math.round(serie.values[i].y_orig/seriesTotals[i]*10000)/100
+            		});
+        	}
 
 
         return series;
