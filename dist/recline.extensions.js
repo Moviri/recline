@@ -3604,13 +3604,14 @@ this.recline.Data = this.recline.Data || {};
         },
         date: function(val, field, doc) {
             var format = field.get('format');
-            if(format == null || format == "date")
-                return val;
-            if(format === "localeTimeString") {
+            if(format == null || format == "date"){
+            	return val;
+            } else if(format === "localeTimeString") {
                 return (new Date(val)).toLocaleString();
+            } else if(format === "timeString"){
+            	return (new Date(val)).toUTCString();
             }
-
-            return new Date(val).toLocaleString();
+            return new Date(val).toUTCString();
         },
         geo_point: function(val, field, doc) {
             return JSON.stringify(val);
@@ -13909,14 +13910,17 @@ this.recline.View = this.recline.View || {};
     	                	if (field)
     	                		val = selectedRecord.getFieldValue(field)
                     	}
-    	                var values = { x: region, y: val, xLabel: newXLabel, yLabel: selectedKpi }
-    	                var content = Mustache.render(self.options.state.customTooltipTemplate, values);
-    	                var $mapElem = $(self.el)
-    	                //console.log("Tooltip for "+region+" at "+pos.left+","+pos.top)
-    	                //var gravity = (pos.left < $mapElem[0].offsetLeft + $mapElem.width()/2 ? 'w' : 'e');
-    	                var gravity = (pos.top < $mapElem[0].offsetTop + $mapElem.height()/2 ? 'n' : 's');
+    	                if ( val.indexOf("N/A") == -1){
+    	                	var values = { x: region, y: val, xLabel: newXLabel, yLabel: selectedKpi }
+        	                var content = Mustache.render(self.options.state.customTooltipTemplate, values);
+        	                var $mapElem = $(self.el)
+        	                //console.log("Tooltip for "+region+" at "+pos.left+","+pos.top)
+        	                //var gravity = (pos.left < $mapElem[0].offsetLeft + $mapElem.width()/2 ? 'w' : 'e');
+        	                var gravity = (pos.top < $mapElem[0].offsetTop + $mapElem.height()/2 ? 'n' : 's');
+        	                
+        	                nv.tooltip.show([pos.left, pos.top], content, gravity, null, $mapElem[0]);	
+    	                }
     	                
-    	                nv.tooltip.show([pos.left, pos.top], content, gravity, null, $mapElem[0]);
     	            };
                 var mouseout = function () {
                 	nv.tooltip.cleanup();
