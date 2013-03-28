@@ -11741,162 +11741,6 @@ this.recline.View = this.recline.View || {};
 
 (function ($, my) {
 
-    my.JQueryMobileFilter = Backbone.View.extend({
-        filterTemplates:{
-            toggle:' \
-      <div class="filter-{{type}} filter" id="{{ctrlId}}"> \
-        <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
-            <legend style="display:{{useLegend}}">{{label}}</legend>  \
-    		<div style="float:left;padding-right:10px;padding-top:2px;display:{{useLeftLabel}}">{{label}}</div> \
-          <input type="text" value="{{term}}" name="term" class="data-control-id" /> \
-          <input type="button" class="btn" id="setFilterValueButton" value="Set"></input> \
-        </fieldset> \
-      </div> \
-    ',
-            slider:' \
-	<script> \
-		$(document).ready(function(){ \
-			$( "#slider{{ctrlId}}" ).slider({ \
-				min: {{min}}, \
-				max: {{max}}, \
-				value: {{term}}, \
-				slide: function( event, ui ) { \
-					$( "#amount{{ctrlId}}" ).html( "{{label}}: "+ ui.value ); \
-				} \
-			}); \
-			$( "#amount{{ctrlId}}" ).html( "{{label}}: "+ $( "#slider{{ctrlId}}" ).slider( "value" ) ); \
-		}); \
-	</script> \
-      <div class="filter-{{type}} filter" id="{{ctrlId}}" style="min-width:100px"> \
-        <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
-            <legend style="display:{{useLegend}}">{{label}} \
-			<a class="js-remove-filter" href="#" title="Remove this filter">&times;</a> \
-		</legend>  \
-		  <label id="amount{{ctrlId}}">{{label}}: </label> \
-		  <div id="slider{{ctrlId}}" class="data-control-id"></div> \
-		  <br> \
-          <input type="button" class="btn" id="setFilterValueButton" value="Set"></input> \
-        </fieldset> \
-      </div> \
-    '
-        },
-        events:{
-            'change .slider-styled':'onStyledSliderValueChanged'
-        },
-        initialize:function (args) {
-            this.el = $(this.el);
-            _.bindAll(this, 'render', 'update', 'doAction');
-
-            this.model = args.model;
-            this.uid = args.id || Math.floor(Math.random() * 100000); // unique id of the view containing all filters
-
-            if (this.model) {
-                this.model.bind('query:done', this.render);
-                this.model.queryState.bind('selection:done', this.update);
-            }
-        },
-
-        render:function () {
-            var self = this;
-            var tmplData = {};
-
-            //  map them to the correct controlType and retain their values (start/from/term/...)
-//            if (self.model) {
-//                _.each(self.model.queryState.get('selections'), function (filter) {
-//                    for (var j in tmplData.filters) {
-//                        if (tmplData.filters[j].field == filter.field) {
-//                            tmplData.filters[j].list = filter.list
-//                            tmplData.filters[j].term = filter.term
-//                            tmplData.filters[j].start = filter.start
-//                            tmplData.filters[j].stop = filter.stop
-//                            self.fixHierarchicRadiobuttonsSelections(tmplData.filters[j])
-//                        }
-//                    }
-//                });
-//
-//                tmplData.fields = this.model.fields.toJSON();
-//
-//            }
-//
-//            var resultType = self.options.resultType || "filtered";
-//
-//            tmplData.filterRender = self.filterRender;
-//
-//            var out = Mustache.render(currTemplate, tmplData);
-//            this.el.html(out);
-            
-        },
-        update:function () {
-            var self = this;
-            // retrieve filter values (start/from/term/...)
-//            _.each(this.model.queryState.get('selections'), function (filter) {
-//                for (var j in self.activeFilters) {
-//                    if (self.activeFilters[j].field == filter.field) {
-//                        self.activeFilters[j].list = filter.list
-//                        self.activeFilters[j].term = filter.term
-//                        self.activeFilters[j].start = filter.start
-//                        self.activeFilters[j].stop = filter.stop
-//                        self.fixHierarchicRadiobuttonsSelections(self.activeFilters[j])
-//                    }
-//                }
-//            });
-        },
-        // action could be add or remove
-        doAction:function (eventType, fieldName, values, actionType, currFilter) {
-            var self=this;
-
-//            var res = [];
-//            // make sure you use all values, even 2nd or 3rd level if present (hierarchic radiobuttons only)
-//            var allValues = currFilter.values
-//            // TODO it is not efficient, record must be indexed by term
-//            // TODO conversion to string is not correct, original value must be used
-//            _.each(allValues, function(v) {
-//              if(v.record) {
-//                  var field = v.record.fields.get(currFilter.field);
-//                  if(_.contains(values,v.record.getFieldValueUnrendered(field).toString()))
-//                    res.push(v.record);
-//              };
-//            });
-//            var actions = this.options.actions;
-//            actions.forEach(function(currAction){
-//                currAction.action.doAction(res, currAction.mapping);
-//            });
-        },
-
-        onStyledSliderValueChanged:function (e, value) {
-//            e.preventDefault();
-//            var $target = $(e.target).parent().parent();
-//            var fieldId = $target.attr('data-filter-field');
-//            var fieldType = $target.attr('data-filter-type');
-//            var controlType = $target.attr('data-control-type');
-//            if (fieldType == "term") {
-//                var term = value;
-//                var activeFilter = this.findActiveFilterByField(fieldId, controlType);
-//                activeFilter.userChanged = true;
-//                activeFilter.term = term;
-//                activeFilter.list = [term];
-//                this.doAction("onStyledSliderValueChanged", fieldId, [term], "add", activeFilter);
-//            }
-//            else if (fieldType == "range") {
-//                var activeFilter = this.findActiveFilterByField(fieldId, controlType);
-//                activeFilter.userChanged = true;
-//                var fromTo = value.split(";");
-//                var from = fromTo[0];
-//                var to = fromTo[1];
-//                activeFilter.from = from;
-//                activeFilter.to = to;
-//                this.doAction("onStyledSliderValueChanged", fieldId, [from, to], "add", activeFilter);
-//            }
-        },
-    });
-
-})(jQuery, recline.View);
-/*jshint multistr:true */
-this.recline = this.recline || {};
-this.recline.View = this.recline.View || {};
-
-(function ($, my) {
-
     my.MultiButtonDropdownFilter = Backbone.View.extend({
         template: '<div class="btn-toolbar"> \
         				<div class="btn-group data-control-id"> \
@@ -13558,6 +13402,343 @@ this.recline.View = this.recline.View || {};
 
 })(jQuery, recline.View);
 
+this.recline = this.recline || {};
+this.recline.View = this.recline.View || {};
+
+(function ($, view) {
+
+    "use strict";
+
+    view.D3Chord = Backbone.View.extend({
+        template: '<div id="{{uid}}" style="width: {{width}}px; height: {{height}}px;"></div>',
+
+        initialize: function (options) {
+
+            this.el = $(this.el);
+            _.bindAll(this, 'render', 'redraw');
+
+            this.model.bind('change', this.render);
+            this.model.fields.bind('reset', this.render);
+            this.model.fields.bind('add', this.render);
+
+            this.model.bind('query:done', this.redraw);
+            this.model.queryState.bind('selection:done', this.redraw);
+
+            this.uid = options.id || ("d3_" + new Date().getTime() + Math.floor(Math.random() * 10000)); // generating an unique id for the chart
+
+
+            this.width = options.width;
+            this.height = options.height;
+
+
+            var out = Mustache.render(this.template, this);
+            this.el.html(out);
+        },
+
+        render: function () {
+            var self = this;
+            self.trigger("chart:startDrawing")
+            var graphid = "#" + this.uid;
+
+            if (self.graph) {
+                jQuery(graphid).empty();
+            }
+
+            self.graph = d3.select(graphid);
+            self.trigger("chart:endDrawing")
+        },
+
+
+        redraw: function () {
+            if (!this.visible) {
+                return
+            }
+
+            var self = this;
+            self.trigger("chart:startDrawing")
+            var state = self.options.state;
+
+            var type;
+            if (this.options.resultType) {
+                type = this.options.resultType;
+            }
+
+            var nodes_map = {};
+            var nodes = [];
+            var size = 0;
+            var matrix = [];
+
+            var valueField = this.options.model.fields.get(state.valueField);
+            if (!valueField)
+                throw "d3.chord.js: unable to fiend field [" + state.valueField + "] in model";
+
+            _.each(this.options.model.getRecords(type), function (record) {
+                var i = nodes_map[record.attributes[state.startField]];
+
+
+                if (i == null) {
+                     nodes_map[record.attributes[state.startField]] = size;
+                    i = size;
+
+                    nodes[size] = record.attributes[state.startField];
+                    size++;
+
+                }
+                var j = nodes_map[record.attributes[state.endField]];
+                if (j == null) {
+                    j = size;
+                    nodes_map[record.attributes[state.endField]] = size;
+                    nodes[size] = record.attributes[state.endField];
+                    size++;
+
+                }
+
+                if (!matrix[i])
+                    matrix[i] = [];
+
+
+                matrix[i][j] = record.getFieldValueUnrendered(valueField);
+            });
+
+            for (var i = 0; i < size; i++) {
+                for (var j = 0; j < size; j++) {
+                    if (!matrix[i])
+                        matrix[i] = [];
+
+                    if (!matrix[i][j])
+                        matrix[i][j] = 0;
+                }
+            }
+
+            self.graph = d3.select("#" + self.uid);
+
+            this.drawD3(nodes, matrix);
+
+            self.trigger("chart:endDrawing")
+        },
+
+
+        drawD3: function (nodes, matrix) {
+
+            var self = this;
+            var state = self.options.state;
+
+            var colorScale = d3.scale.category20();
+
+
+            var outerRadius = Math.min(self.width, self.height) / 2 - 10,
+                innerRadius = outerRadius - 24;
+
+
+
+            var formatPercent = d3.format(".1%");
+
+            var arc = d3.svg.arc()
+                .innerRadius(innerRadius)
+                .outerRadius(outerRadius);
+
+            var layout = d3.layout.chord()
+                .padding(.04)
+                .sortSubgroups(d3.descending)
+                .sortChords(d3.ascending);
+
+
+            var path = d3.svg.chord()
+                .radius(innerRadius);
+
+            var svg =  self.graph.append("svg")
+                .attr("width", self.width)
+                .attr("height", self.height)
+                .append("g")
+                .attr("id", "circle")
+                .attr("transform", "translate(" + self.width / 2 + "," + self.height / 2 + ")");
+
+            svg.append("circle")
+                .attr("r", outerRadius);
+
+
+            // Compute the chord layout.
+            layout.matrix(matrix);
+
+            // Add a group per neighborhood.
+            var group = svg.selectAll(".group")
+                .data(layout.groups)
+                .enter().append("g")
+                .attr("class", "group")
+                .on("mouseover", mouseover);
+
+            // Add a mouseover title.
+            group.append("title").text(function (d, i) {
+                return nodes[i] + ": " + formatPercent(d.value) + " of origins";
+            });
+
+            // Add the group arc.
+            var groupPath = group.append("path")
+                .attr("id", function (d, i) {
+                    return "group" + i;
+                })
+                .attr("d", arc)
+                .style("fill", function (d, i) {
+                    return colorScale(i);
+                });
+
+            // Add a text label.
+            var groupText = group.append("text")
+                .attr("x", 6)
+                .attr("dy", 15);
+
+            groupText.append("textPath")
+                .attr("xlink:href", function (d, i) {
+                    return "#group" + i;
+                })
+                .text(function (d, i) {
+                    return nodes[i];
+                });
+
+            // Remove the labels that don't fit. :(
+            groupText.filter(function (d, i) {
+                return groupPath[0][i].getTotalLength() / 2 - 16 < this.getComputedTextLength();
+            })
+                .remove();
+
+            // Add the chords.
+            var chord = svg.selectAll(".chord")
+                .data(layout.chords)
+                .enter().append("path")
+                .attr("class", "chord")
+                .style("fill", function (d) {
+                    return colorScale(d.source.index);
+                })
+                .attr("d", path);
+
+            // Add an elaborate mouseover title for each chord.
+            chord.append("title").text(function (d) {
+                return nodes[d.source.index]
+                    + " → " + nodes[d.target.index]
+                    + ": " + formatPercent(d.source.value)
+                    + "\n" + nodes[d.target.index]
+                    + " → " + nodes[d.source.index]
+                    + ": " + formatPercent(d.target.value);
+            });
+
+            function mouseover(d, i) {
+                chord.classed("fade", function (p) {
+                    return p.source.index != i
+                        && p.target.index != i;
+                });
+            }
+
+
+            /*       var chord = d3.layout.chord()
+             .padding(.05)
+             .sortSubgroups(d3.descending)
+             .matrix(matrix);
+
+
+             var fill = d3.scale.ordinal()
+             .domain(d3.range(4))
+             .range(["#000000", "#FFDD89", "#957244", "#F26223"]);
+
+             var svg = self.graph.append("svg")
+             .attr("width", self.width)
+             .attr("height", self.height)
+             .append("g")
+             .attr("transform", "translate(" + self.width / 2 + "," + self.height / 2 + ")");
+
+             svg.append("g").selectAll("path")
+             .data(chord.groups)
+             .enter().append("path")
+             .style("fill", function (d) {
+             return fill(d.index);
+             })
+             .style(" stroke", function (d) {
+             return fill(d.index);
+             })
+             .attr("d", d3.svg.arc().innerRadius(innerRadius).outerRadius(outerRadius))
+             .on("mouseover", fade(.1))
+             .on("mouseout", fade(1));
+
+
+             var ticks = svg.append("g").selectAll("g")
+             .data(chord.groups)
+             .enter().append("g").selectAll("g")
+             .data(groupTicks)
+             .enter().append("g")
+             .attr("transform", function (d) {
+             return "rotate(" + (d.angle * 180 / Math.PI - 90) + ")"
+             + "translate(" + outerRadius + ",0)";
+             });
+
+
+             ticks.append("line")
+             .attr("x1", 1)
+             .attr("y1", 0)
+             .attr("x2", 5)
+             .attr("y2", 0)
+             .style("stroke", "#000");
+
+             ticks.append("text")
+             .attr("x", 8)
+             .attr("dy", ".35em")
+             .attr("transform", function (d) {
+             return d.angle > Math.PI ? "rotate(180)translate(-16)" : null;
+             })
+             .style("text-anchor", function (d) {
+             return d.angle > Math.PI ? "end" : null;
+             })
+             .text(function (d) {
+             return d.label;
+             });
+
+             svg.append("g")
+             .attr("class", "chord")
+             .selectAll("path")
+             .data(chord.chords)
+             .enter().append("path")
+             .attr("d", d3.svg.chord().radius(innerRadius))
+             .style("fill", function (d) {
+             return fill(d.target.index);
+             })
+             .style("opacity", 1);
+
+
+             Returns an array of tick angles and labels, given a group.
+             function groupTicks(d) {
+             var k = (d.endAngle - d.startAngle) / d.value;
+             return d3.range(0, d.value, 1000).map(function (v, i) {
+             return {
+             angle: v * k + d.startAngle,
+             label: "ciccio"
+             };
+             });
+             }
+
+             Returns an event handler for fading a given chord group.
+             function fade(opacity) {
+             return function (g, i) {
+             svg.selectAll(".chord path")
+             .filter(function (d) {
+             return d.source.index != i && d.target.index != i;
+             })
+             .transition()
+             .style("opacity", opacity);
+             };
+             }
+             */
+
+            self.alreadyDrawed = true;
+
+        }
+
+
+
+
+
+
+    });
+
+
+})(jQuery, recline.View);
 /*jshint multistr:true */
 
 this.recline = this.recline || {};
