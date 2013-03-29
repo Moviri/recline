@@ -1,0 +1,170 @@
+---
+layout: moviri-release
+title: Demos - D3 Chord
+recline-deps: true
+root: ../../
+---
+
+
+<body>
+
+
+
+<style>
+
+#circle circle {
+  fill: none;
+  pointer-events: all;
+}
+
+.group path {
+  fill-opacity: .5;
+}
+
+path.chord {
+  stroke: #000;
+  stroke-width: .25px;
+}
+
+svg {
+  font: 10px sans-serif;
+}
+
+#circle:hover path.fade {
+  display: none;
+}
+
+</style>
+
+
+<div class="container-fluid">
+    <style>
+    .bs
+    {
+    position: relative;
+    margin: 15px 0;
+    padding: 39px 19px 14px;
+    background-color: white;
+    border: 1px solid #DDD;
+    -webkit-border-radius: 4px;
+    -moz-border-radius: 4px;
+    border-radius: 4px;
+    }
+
+    .bs::after
+    {
+    content: "D3";
+    position: absolute;
+    top: -1px;
+    left: -1px;
+    padding: 3px 7px;
+    font-size: 12px;
+    font-weight: bold;
+    background-color: whiteSmoke;
+    border: 1px solid #DDD;
+    color: #9DA0A4;
+    -webkit-border-radius: 4px 0 4px 0;
+    -moz-border-radius: 4px 0 4px 0;
+    border-radius: 4px 0 4px 0;
+    }
+
+    .border-free-table td, th {
+        border: 0 !important;
+    }
+
+
+</style>
+
+    <div class="row-fluid">
+
+        <div class="span3"><div id="grid2"  style="height: 30px;"></div><div id="grid1" style="height: 800px;"></div></div>
+        <div class="span8">
+
+            <div class="bs">
+                  <div id="d3_graph"></div>
+            </div>
+            </div>
+    </div>
+
+
+
+
+
+
+
+</div>
+
+
+<script>
+
+    var dataset = new recline.Model.Dataset({
+        records: [
+            {stateStart:'Alabama', stateEnd: 'Alaska', value: 0.15},
+            {stateStart:'Alaska', stateEnd: 'Alabama', value: 1},
+            {stateStart:'Alabama', stateEnd: 'American Samoa', value: 0.15},
+            {stateStart:'American Samoa', stateEnd: 'Alabama', value: 1},
+            {stateStart:'Alabama', stateEnd: 'Kansas', value: 0.15},
+            {stateStart:'Kansas', stateEnd: 'Alabama', value: 1},
+            {stateStart:'Alabama', stateEnd: 'Colorado', value: 0.15},
+            {stateStart:'Colorado', stateEnd: 'Alabama', value: 1},
+	    {stateStart:'Alabama', stateEnd: 'Virginia', value: 0.15},
+            {stateStart:'Virginia', stateEnd: 'Alabama', value: 1},
+            {stateStart:'Alabama', stateEnd: 'Idaho', value: 0.10},
+	    {stateStart:'Idaho', stateEnd: 'Alabama', value: 0.1}
+        ],
+        fields: [
+            {id: 'stateStart', type: "string"},
+            {id: 'stateEnd', type: "string"},
+            {id: 'value', type: 'integer'},
+        ]
+    });
+
+
+var colorSchema = new recline.Data.ColorSchema({
+    type: "fixedLimits",
+    colors: ['red', 'black'],
+    limits: [5000, 10000, 30000]
+});
+
+colorSchema.setDataset(dataset, "value");
+dataset.queryState.addFacetNoEvent("value", true);
+
+
+var $el = $('#grid1');
+var grid1 = new recline.View.SlickGridGraph({
+    model: dataset,
+    el: $el,
+    state: {  fitColumns:true,
+        useHoverStyle: true,
+        useStripedStyle: true,
+        useCondensedStyle: true
+    }
+});
+grid1.visible = true;
+grid1.render();
+
+
+
+
+    var d = new recline.View.D3Chord({
+        model: dataset,
+        state: {
+            startField: "stateStart",
+            endField: "stateEnd",
+            valueField: "value",
+        },
+	el: $('#d3_graph'),
+        height: 720,
+        width:  720
+
+    });
+
+    d.visible = true;
+
+
+dataset.fetch();
+
+</script>
+
+</body>
+
