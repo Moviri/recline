@@ -6768,7 +6768,7 @@ this.recline.View = this.recline.View || {};
                 	var xField = self.model.fields.get(self.options.state.group)
                 	if (xField.attributes.type == "date")
                 		self.chart.xAxis.tickFormat(function (d) {
-                			return d3.time.format("%d/%m/%y")(new Date(d)); 
+                			return d3.time.format("%d-%b")(new Date(d)); 
                 		});
             	}
                 if (self.options.state.options.noTicksY)
@@ -6852,7 +6852,7 @@ this.recline.View = this.recline.View || {};
             // this only works by previously setting the body height to a numeric pixel size (percentage size don't work)
             // so we assign the window height to the body height with the command below
             var container = self.el;
-            while (!container.hasClass('container-fluid') && !container.hasClass('container'))
+            while (!container.hasClass('container-fluid') && !container.hasClass('container') && container.length)
             	container = container.parent();
             
             if (typeof container != "undefined" && container != null 
