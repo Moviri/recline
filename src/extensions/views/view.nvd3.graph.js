@@ -39,7 +39,7 @@ this.recline.View = this.recline.View || {};
 
             this.uid = options.id || ("" + new Date().getTime() + Math.floor(Math.random() * 10000)); // generating an unique id for the chart
             this.el = $(this.el);
-            _.bindAll(this, 'render', 'redraw', 'graphResize', 'changeDimensions');
+            _.bindAll(this, 'render', 'redraw', 'graphResize', 'changeDimensions', 'getFormatter');
 
 
             this.model.bind('change', this.render);
@@ -196,7 +196,8 @@ this.recline.View = this.recline.View || {};
                 		{
                         	values = { 
                             		x: e.point.x,
-                            		y: (yfield ? self.getFormatter[yfield.get('type')](e.point.y) : e.point.y), 
+                            		y: (yfield ? self.getFormatter(yfield.get('type'))(e.point.y) : e.point.y),
+                            		y_orig: e.point.y_orig || e.point.y,
                     				yLabel: e.series.key,
                     				xLabel: (xfield ? xfield.get("label") : "") 
                     			}
@@ -204,8 +205,9 @@ this.recline.View = this.recline.View || {};
                     	else
                 		{
                         	values = { 
-                            		x: (xfield ? self.getFormatter[xfield.get('type')](e.point.x) : e.point.x),
+                            		x: (xfield ? self.getFormatter(xfield.get('type'))(e.point.x) : e.point.x),
                             		y: e.point.y,
+                            		y_orig: e.point.y_orig || e.point.y,
                     				xLabel: e.series.key,
                     				yLabel: (yfield ? yfield.get("label") : "")
                     			}
@@ -291,7 +293,7 @@ this.recline.View = this.recline.View || {};
             	if (self.state.get("graphType").indexOf("Horizontal") < 0)
         		{
                     var xfield = self.model.fields.get(self.state.attributes.group);
-            		xAxisFormat = self.getFormatter[xfield.get('type')];
+            		xAxisFormat = self.getFormatter(xfield.get('type'));
 
             		if (xLabel == null || xLabel == "" || typeof xLabel == 'undefined')
                         xLabel = xfield.get('label');
@@ -313,7 +315,7 @@ this.recline.View = this.recline.View || {};
                 if (self.state.get("graphType").indexOf("Horizontal") >= 0)
             	{
                 	var yfield = self.model.fields.get(self.state.attributes.group);            	
-                	yAxisFormat = self.getFormatter[yfield.get('type')]
+                	yAxisFormat = self.getFormatter(yfield.get('type'))
             		yLabel = self.state.get("xLabel");
             	}
                 else
@@ -328,14 +330,15 @@ this.recline.View = this.recline.View || {};
             }
         },
 
-        getFormatter:{
-            "string":d3.format(',s'),
-            "float":d3.format(',r'),
-            "integer":d3.format(',r'),
-            "date":function (d) {
-                return d3.time.format('%x')(new Date(d));
+        getFormatter: function(type) {
+        	var self = this;
+        	switch(type)
+        	{
+        	case "string": return d3.format(',s');
+        	case "float": return d3.format(',r');
+        	case "integer": return d3.format(',r');
+        	case "date": return d3.time.format(self.state.get("tickFormatDate") || '%x');
             }
-
         },
 
         addOption:{
