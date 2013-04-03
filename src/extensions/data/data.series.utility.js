@@ -243,9 +243,9 @@ this.recline.Data.SeriesUtility = this.recline.Data.SeriesUtility || {};
                 });
             }
             // force sorting of values or scrambled series may generate a wrong chart  
-            _.each(series, function(serie) {
-            	serie.values = _.sortBy(serie.values, function(value) { return value.x }) 
-            })
+//            _.each(series, function(serie) {
+//            	serie.values = _.sortBy(serie.values, function(value) { return value.x }) 
+//            })
             
             if (groupAllSmallSeries)
         	{

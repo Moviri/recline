@@ -388,6 +388,7 @@ this.recline.View = this.recline.View || {};
 
         getGraph:{
             "multiBarChart":function (view) {
+            	var actions = view.getActionsForEvent("selection");
                 var chart;
                 if (view.chart != null)
                     chart = view.chart;
@@ -395,6 +396,11 @@ this.recline.View = this.recline.View || {};
                     chart = nv.models.multiBarChart();
 
                 view.setAxis("all", chart);
+                if (actions.length > 0)
+                    chart.multibar.dispatch.on('elementClick', function (e) {
+                    	view.doActions(actions, [e.point.record]);
+                    });
+
                 return chart;
             },
             "lineChart":function (view) {
@@ -457,7 +463,21 @@ this.recline.View = this.recline.View || {};
                 else
                     chart = nv.models.multiBarHorizontalChart();
                 view.setAxis("all", chart);
-
+                
+            	var actions = view.getActionsForEvent("selection");
+                if (actions.length > 0)
+            	{
+                    chart.multibar.dispatch.on('elementClick', function (e) {
+                    	view.doActions(actions, [e.point.record]);
+                    });
+            	}
+            	var actionsH = view.getActionsForEvent("hover");
+                if (actionsH.length > 0)
+            	{
+                    chart.multibar.dispatch.on('elementMouseover', function (e) {
+                    	view.doActions(actionsH, [e.point.record]);
+                    });
+            	}
                 return chart;
             },
             "legend":function (view) {
@@ -913,9 +933,9 @@ this.recline.View = this.recline.View || {};
                 });
             }
             // force sorting of values or scrambled series may generate a wrong chart  
-            _.each(series, function(serie) {
-            	serie.values = _.sortBy(serie.values, function(value) { return value.x }) 
-            })
+//            _.each(series, function(serie) {
+//            	serie.values = _.sortBy(serie.values, function(value) { return value.x }) 
+//            })
             
             if (self.options.state.groupAllSmallSeries)
         	{

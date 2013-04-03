@@ -101,6 +101,9 @@ this.recline.View = this.recline.View || {};
     	            .rollup(function(d) { return d[0].attributes[self.valueField] || 0; })
     	            .map(records);
     	
+    	        // clear all old values to allow redraw
+    	        d3.select(this.el).selectAll("svg").data([]).exit().remove()
+    	        
     	        var svg = d3.select(this.el).selectAll("svg")
     	            .data(yearRange)
     	          .enter()
