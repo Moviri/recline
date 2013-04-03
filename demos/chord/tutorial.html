@@ -99,18 +99,24 @@ svg {
 
     var dataset = new recline.Model.Dataset({
         records: [
-            {stateStart:'Alabama', stateEnd: 'Alaska', value: 0.15},
-            {stateStart:'Alaska', stateEnd: 'Alabama', value: 1},
-            {stateStart:'Alabama', stateEnd: 'American Samoa', value: 0.15},
-            {stateStart:'American Samoa', stateEnd: 'Alabama', value: 1},
-            {stateStart:'Alabama', stateEnd: 'Kansas', value: 0.15},
-            {stateStart:'Kansas', stateEnd: 'Alabama', value: 1},
-            {stateStart:'Alabama', stateEnd: 'Colorado', value: 0.15},
-            {stateStart:'Colorado', stateEnd: 'Alabama', value: 1},
-	    {stateStart:'Alabama', stateEnd: 'Virginia', value: 0.15},
-            {stateStart:'Virginia', stateEnd: 'Alabama', value: 1},
-            {stateStart:'Alabama', stateEnd: 'Idaho', value: 0.10},
-	    {stateStart:'Idaho', stateEnd: 'Alabama', value: 0.1}
+            {stateStart:'You', stateEnd: 'Leisure at 00144', 	value: 0.1},
+            {stateStart:'You', stateEnd: 'Bar at 00144', 	value: 0.05}, 
+	    {stateStart:'You', stateEnd: 'Fashion at 00144', 	value: 0.07}, 
+	    {stateStart:'You', stateEnd: 'Distribution at 00144', value: 0.18},
+ 	    {stateStart:'You', stateEnd: 'Sport at 00144', value: 0.02},  
+	    {stateStart:'Distribution at 00144', stateEnd: 'You', value: 0.15},
+            {stateStart:'Bar at 00144', stateEnd: 'You', value: 0.15}, 
+	    {stateStart:'Fashion at 00144', stateEnd: 'You', value: 0.15}, 
+	    {stateStart:'Leisure at 00144', stateEnd: 'You', value: 0.15}, 
+	    {stateStart:'Sport at 00144', stateEnd: 'You', value: 0.15},
+
+ {stateStart:'Distribution at 00144', stateEnd: 'Distribution at 00144', value: 0.15},
+ {stateStart:'Bar at 00144', stateEnd: 'Bar at 00144', value: 0.3}, 
+ {stateStart:'Fashion at 00144', stateEnd: 'Fashion at 00144', value: 0.4}, 
+	    {stateStart:'Leisure at 00144', stateEnd: 'Leisure at 00144', value: 0.6}, 
+	    {stateStart:'Sport at 00144', stateEnd: 'Sport at 00144', value: 0.7},
+
+
         ],
         fields: [
             {id: 'stateStart', type: "string"},

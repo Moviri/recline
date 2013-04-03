@@ -39,6 +39,10 @@ def minify():
     cmd = 'uglifyjs -o %s %s' % ('dist/recline.dataset.min.js', 'dist/recline.dataset.js')
     os.system(cmd)
 
+    cmd = 'uglifyjs -o %s %s' % ('dist/recline.extensions.min.js', 'dist/recline.extensions.js')
+    os.system(cmd)
+
+
 if __name__ == '__main__':
     if not len(sys.argv) > 1:
         print 'make cat | docs | minify | all'
