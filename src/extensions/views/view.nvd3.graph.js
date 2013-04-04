@@ -170,6 +170,8 @@ this.recline.View = this.recline.View || {};
                 self.chart = self.getGraph[graphType](self);
                 var svgElem = self.el.find('#nvd3chart_' + self.uid+ ' svg')
                 var graphModel = self.getGraphModel(self, graphType)
+                if (typeof graphModel == "undefined")
+                	throw "NVD3 Graph type "+graphType+" not found!"
                 
                 if (self.options.state.options.noTicksX)
                     self.chart.xAxis.tickFormat(function (d) { return ''; });
@@ -709,6 +711,7 @@ this.recline.View = this.recline.View || {};
             case "scatterChart":
         		return self.chart.scatter;
             case "stackedAreaChart":
+            	return self.chart.stacked;
             case "pieChart":
         		return self.chart.pie;
             case "discreteBarChart":
