@@ -107,7 +107,10 @@ this.recline.Data.SeriesUtility = this.recline.Data.SeriesUtility || {};
                 var y_formatted = doc.getFieldValue(fieldValue);
                 
                 if (y == null || typeof y == "undefined" && fillEmptyValuesWith != null)
+            	{
                 	y = fillEmptyValuesWith;
+                	y_formatted = y
+            	}
 
                 if (y != null && typeof y != "undefined" && !isNaN(y)) {
 
@@ -297,8 +300,11 @@ this.recline.Data.SeriesUtility = this.recline.Data.SeriesUtility || {};
         		
         	for (var i = 0; i < tot; i++)
         		_.each(series, function(serie) {
-        			serie.values[i].y_orig = serie.values[i].y
-        			serie.values[i].y = Math.round(serie.values[i].y_orig/seriesTotals[i]*10000)/100
+        			if (seriesTotals[i]) // avoid divide by zero
+    				{
+            			serie.values[i].y_orig = serie.values[i].y
+            			serie.values[i].y = Math.round(serie.values[i].y_orig/seriesTotals[i]*10000)/100
+    				}
         		});
     	}
         return series;
