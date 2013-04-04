@@ -6010,6 +6010,25 @@ this.recline.View = this.recline.View || {};
     	        if (self.options.state.infoWindowTemplate)
     	        	google.maps.event.addListener(mark, 'click', function() {self.openInfoWindow(mark)});
 
+    	        if (self.options.actions)
+	        	{
+    	        	var markerClickActions = self.getActionsForEvent("selection");
+					var mappings = self.options.state.mapping
+					google.maps.event.addListener(mark, 'click', function() {
+						var rec = this.record
+						markerClickActions.forEach(function (currAction) {
+		                    currAction.action.doAction([rec], currAction.mapping);
+		                });
+					});
+    	        	var markerHoverActions = self.getActionsForEvent("hover");
+					var mappings = self.options.state.mapping
+					google.maps.event.addListener(mark, 'mouseover', function() {
+						var rec = this.record
+						markerHoverActions.forEach(function (currAction) {
+		                    currAction.action.doAction([rec], currAction.mapping);
+		                });
+					});
+	        	}
     	        if (self.options.events && self.options.events.markerClick)
         	    	google.maps.event.addListener(mark, 'click', self.options.events.markerClick);
         	    
@@ -6027,6 +6046,16 @@ this.recline.View = this.recline.View || {};
                 mc.repaint();	
         	}
 	    },
+        getActionsForEvent:function (eventType) {
+            var self = this;
+            var actions = [];
+
+            _.each(self.options.actions, function (d) {
+                if (_.contains(d.event, eventType))
+                    actions.push(d);
+            });
+            return actions;
+        },
 	    openInfoWindow: function(marker) {
 	    	var tmplData = {
 	    		value: marker.value,
