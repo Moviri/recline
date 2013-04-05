@@ -3761,283 +3761,291 @@ this.recline.Data.SeriesUtility = this.recline.Data.SeriesUtility || {};
 
  */
 (function($, my) {
-    my.createSeries = function (seriesAttr, unselectedColorValue, model, resultTypeValue, groupField, scaleTo100Perc, groupAllSmallSeries) {
-            var series = [];
+    my.createSeries = function (seriesAttr, unselectedColorValue, model, resultTypeValue, groupField, scaleTo100Perc, groupAllSmallSeries, NVD3Mode) {
+        var series = [];
 
-            var fillEmptyValuesWith = seriesAttr.fillEmptyValuesWith;
-            var requiredXValues = seriesAttr.requiredXValues;
-            
-            var unselectedColor = "#C0C0C0";
-            if (unselectedColorValue)
-                unselectedColor = unselectedColorValue;
-            var selectionActive = false;
-            if (model.queryState.isSelected())
-                selectionActive = true;
-
-            var resultType = "filtered";
-            if (resultTypeValue)
-                resultType = resultTypeValue;
-
-            var records = model.getRecords(resultType);  //self.model.records.models;
-
-            var xfield = model.fields.get(groupField);
-
-        if (!xfield) {
-            throw "data.series.utility.CreateSeries: unable to find field [" + groupField + "] in model [" + model.id + "]";
-        }
-
-
-        var uniqueX = [];
-        if (requiredXValues != null){
-        	uniqueX = requiredXValues;
-        }
+        var fillEmptyValuesWith = seriesAttr.fillEmptyValuesWith;
+        var requiredXValues = seriesAttr.requiredXValues;
         
-            var sizeField;
-            if (seriesAttr.sizeField) {
-                sizeField = model.fields.get(seriesAttr.sizeField);
+        var unselectedColor = "#C0C0C0";
+        if (unselectedColorValue)
+            unselectedColor = unselectedColorValue;
+        var selectionActive = false;
+        if (model.queryState.isSelected())
+            selectionActive = true;
+
+        var resultType = "filtered";
+        if (resultTypeValue)
+            resultType = resultTypeValue;
+
+        var records = model.getRecords(resultType);
+
+        var xfield = model.fields.get(groupField);
+
+	    if (!xfield)
+	        throw "data.series.utility.CreateSeries: unable to find field [" + groupField + "] in model [" + model.id + "]";
+	
+	
+	    var uniqueX = [];
+	    if (requiredXValues) {
+	    	uniqueX = requiredXValues;
+	    }
+    
+        var sizeField;
+        if (seriesAttr.sizeField) {
+            sizeField = model.fields.get(seriesAttr.sizeField);
+            if(!sizeField)
+                throw "data.series.utility.CreateSeries: unable to find field [" + seriesAttr.sizeField + "] on model"
+        }
+
+
+        // series are calculated on data, data should be analyzed in order to create series
+        if (seriesAttr.type == "byFieldValue") {
+            var seriesTmp = {};
+            var seriesNameField = model.fields.get(seriesAttr.seriesField);
+            var fieldValue = model.fields.get(seriesAttr.valuesField);
+
+
+            if (!fieldValue) {
+                throw "data.series.utility.CreateSeries: unable to find field [" + seriesAttr.valuesField + "] in model [" + model.id + "]";
+            }
+
+            if (!seriesNameField) {
+                throw "data.series.utility.CreateSeries: unable to find field [" + seriesAttr.seriesField + "] in model [" + model.id + "]";
             }
 
 
-            // series are calculated on data, data should be analyzed in order to create series
-            if (seriesAttr.type == "byFieldValue") {
-                var seriesTmp = {};
-                var seriesNameField = model.fields.get(seriesAttr.seriesField);
-                var fieldValue = model.fields.get(seriesAttr.valuesField);
+            _.each(records, function (doc, index) {
 
+                // key is the field that identiy the value that "build" series
+                var key = doc.getFieldValueUnrendered(seriesNameField);
+                var keyLabel = doc.getFieldValue(seriesNameField);
+                var tmpS;
 
-                if (!fieldValue) {
-                    throw "data.series.utility.CreateSeries: unable to find field [" + seriesAttr.valuesField + "] in model [" + model.id + "]";
-                }
-
-                if (!seriesNameField) {
-                    throw "data.series.utility.CreateSeries: unable to find field [" + seriesAttr.seriesField + "] in model [" + model.id + "]";
-                }
-
-
-                _.each(records, function (doc, index) {
-
-                    // key is the field that identiy the value that "build" series
-                    var key = doc.getFieldValueUnrendered(seriesNameField);
-                    var keyLabel = doc.getFieldValue(seriesNameField);
-                    var tmpS;
-
-                    // verify if the serie is already been initialized
-                    if (seriesTmp[key] != null) {
-                        tmpS = seriesTmp[key]
-                    }
-                    else {
-                        tmpS = {name:key, label: keyLabel, data:[], field:fieldValue};
-
-                        var color = doc.getFieldColor(seriesNameField);
-
-
-                        if (color != null)
-                            tmpS["color"] = color;
-
-
-                    }
-                    var shape = doc.getFieldShapeName(seriesNameField);
-
-                    var x = doc.getFieldValueUnrendered(xfield);
-                    var x_formatted = doc.getFieldValue(xfield);
-
-                    var y = doc.getFieldValueUnrendered(fieldValue);
-                    var y_formatted = doc.getFieldValue(fieldValue);
-                    
-                    if (y == null || typeof y == "undefined" && fillEmptyValuesWith != null)
-                    	y = fillEmptyValuesWith;
-
-                    if (y != null && typeof y != "undefined" && !isNaN(y)) {
-
-                        var point = {x:x, y:y, record:doc, y_formatted:y_formatted, x_formatted:x_formatted, legendField: seriesNameField.attributes.label || seriesNameField.attributes.id, legendValue: keyLabel };
-                        if (sizeField)
-                            point["size"] = doc.getFieldValueUnrendered(sizeField);
-                        if (shape != null)
-                            point["shape"] = shape;
-
-                        tmpS.data.push(point);
-
-                        if (fillEmptyValuesWith != null) {
-                            uniqueX.push(x);
-                        }
-
-                        seriesTmp[key] = tmpS;
-                    }
-                });
-
-                for (var j in seriesTmp) {
-                    series.push(seriesTmp[j]);
-                }
-
-            }
-            else if (seriesAttr.type == "byFieldName" || seriesAttr.type == "byPartitionedField") {
-                var serieNames;
-
-                // if partitions are active we need to retrieve the list of partitions
-                if (seriesAttr.type == "byFieldName") {
-                    serieNames = seriesAttr.valuesField;
+                // verify if the serie is already been initialized
+                if (seriesTmp[key] != null) {
+                    tmpS = seriesTmp[key]
                 }
                 else {
-                    serieNames = [];
-                    _.each(seriesAttr.aggregationFunctions, function (a) {
-                        _.each(model.getPartitionedFieldsForAggregationFunction(a, seriesAttr.aggregatedField), function (f) {
-                            serieNames.push(f.get("id"));
-                        })
+                    tmpS = {key:key, label: keyLabel, values:[], field:fieldValue};
 
-                    });
+                    var color = doc.getFieldColor(seriesNameField);
+
+
+                    if (color != null)
+                        tmpS["color"] = color;
+
 
                 }
+                var shape = doc.getFieldShapeName(seriesNameField);
 
-                _.each(serieNames, function (field) {
+                var x = doc.getFieldValueUnrendered(xfield);
+                var x_formatted = doc.getFieldValue(xfield);
 
-                    var yfield;
-                    if (seriesAttr.type == "byFieldName")
-                        yfield = model.fields.get(field);
+                var y = doc.getFieldValueUnrendered(fieldValue);
+                var y_formatted = doc.getFieldValue(fieldValue);
+                
+                if (y == null || typeof y == "undefined" && fillEmptyValuesWith != null)
+            	{
+                	y = fillEmptyValuesWith;
+                	y_formatted = y
+            	}
 
-                    var fixedColor;
-                    if (field.fieldColor)
-                        fixedColor = field.fieldColor;
+                if (y != null && typeof y != "undefined" && !isNaN(y)) {
 
-                    var points = [];
+                    var point = {x:x, y:y, record:doc, y_formatted:y_formatted, x_formatted:x_formatted, legendField: seriesNameField.attributes.label || seriesNameField.attributes.id, legendValue: keyLabel };
+                    if (sizeField)
+                        point["size"] = doc.getFieldValueUnrendered(sizeField);
+                    if (shape != null)
+                        point["shape"] = shape;
 
-                    _.each(records, function (doc, index) {
-                        var x = doc.getFieldValueUnrendered(xfield);
-                        var x_formatted = doc.getFieldValue(xfield); // rickshaw don't use millis
+                    tmpS.values.push(point);
 
-
-                        try {
-
-                            var y = doc.getFieldValueUnrendered(yfield);
-                            var y_formatted = doc.getFieldValue(yfield);
-                            if (y == null || typeof y == "undefined" && fillEmptyValuesWith != null)
-                            	y = fillEmptyValuesWith;
-
-                            if (y != null && !isNaN(y)) {
-                                var color;
-
-                                var calculatedColor = doc.getFieldColor(yfield);
-
-                                if (selectionActive) {
-                                    if (doc.isRecordSelected())
-                                        color = calculatedColor;
-                                    else
-                                        color = unselectedColor;
-                                } else
-                                    color = calculatedColor;
-
-                                var shape = doc.getFieldShapeName(yfield);
-
-                                var point = {x:x, y:y, record:doc, y_formatted:y_formatted, x_formatted:x_formatted};
-
-                                if (color != null)
-                                    point["color"] = color;
-                                if (shape != null)
-                                    point["shape"] = shape;
-
-                                if (sizeField)
-                                    point["size"] = doc.getFieldValueUnrendered(sizeField);
-
-                                points.push(point);
-
-                                if (fillEmptyValuesWith != null) {
-                                    uniqueX.push(x);
-                                }
-                            }
-
-                        }
-                        catch (err) {
-                            //console.log("Can't add field [" + field + "] to graph, filtered?")
-                        }
-                    });
-
-                    if (points.length > 0) {
-                        var color;
-                        if (fixedColor)
-                            color = fixedColor;
-                        else
-                            color = yfield.getColorForPartition();
-                        var ret = {data:points, name: recline.Data.Formatters.getFieldLabel(yfield, model.attributes.fieldLabels)};
-                        if (color)
-                            ret["color"] = color;
-                        series.push(ret);
+                    if (fillEmptyValuesWith != null) {
+                        uniqueX.push(x);
                     }
 
-                });
+                    seriesTmp[key] = tmpS;
+                }
+            });
 
-            } else throw "data.series.utility.CreateSeries: unsupported or not defined type " + seriesAttr.type;
-
-            // foreach series fill empty values
-            if (fillEmptyValuesWith != null) {
-                uniqueX = _.unique(uniqueX);
-                _.each(series, function (s) {
-                    // foreach series obtain the unique list of x
-                    var tmpValues = _.unique(_.map(s.data, function (d) {
-                        return d.x
-                    }));
-                    // foreach non present field set the value
-                    _.each(_.difference(uniqueX, tmpValues), function (diff) {
-                        s.data.push({x:diff, y:fillEmptyValuesWith});
-                    });
-
-                });
+            for (var j in seriesTmp) {
+                series.push(seriesTmp[j]);
             }
-            // force sorting of values or scrambled series may generate a wrong chart  
-//            _.each(series, function(serie) {
-//            	serie.values = _.sortBy(serie.values, function(value) { return value.x }) 
-//            })
-            
-            if (groupAllSmallSeries)
-        	{
-            	// must group all small series into one. Note that the original records of the merged series are lost,
-            	// so the use of custom tooltips isn't possible at the moment 
-            	var mainSeriesCount = groupAllSmallSeries.mainSeriesCount
-            	var label = groupAllSmallSeries.labelForSmallSeries || "Other"
-            	var seriesKeyTotals = []
-            	_.each(series, function(serieObj) {
-            		seriesKeyTotals.push({
-            			id: seriesKeyTotals.length,
-            			key: serieObj.key,
-            			total: _.reduce(serieObj.values, function(memo, valueObj) { return memo + valueObj.y; }, 0)
-            		})
+
+        }
+        else if (seriesAttr.type == "byFieldName" || seriesAttr.type == "byPartitionedField") {
+            var serieNames;
+
+            // if partitions are active we need to retrieve the list of partitions
+            if (seriesAttr.type == "byFieldName") {
+                serieNames = seriesAttr.valuesField;
+            }
+            else {
+                serieNames = [];
+                _.each(seriesAttr.aggregationFunctions, function (a) {
+                    _.each(model.getPartitionedFieldsForAggregationFunction(a, seriesAttr.aggregatedField), function (f) {
+                        serieNames.push(f.get("id"));
+                    })
+
+                });
+
+            }
+
+            _.each(serieNames, function (field) {
+
+                var yfield;
+                //if (seriesAttr.type == "byFieldName")
+				//{
+                    yfield = model.fields.get(field);
+					if(!yfield)
+						throw "data.series.utility.CreateSeries: unable to find field [" + field + "] on model"
+				//}
+                var fixedColor;
+                if (field.fieldColor)
+                    fixedColor = field.fieldColor;
+
+                var points = [];
+
+                _.each(records, function (doc, index) {
+                    var x = doc.getFieldValueUnrendered(xfield);
+                    var x_formatted = doc.getFieldValue(xfield); // rickshaw don't use millis
+
+
+                    try {
+
+                        var y = doc.getFieldValueUnrendered(yfield);
+                        var y_formatted = doc.getFieldValue(yfield);
+                        if (y == null || typeof y == "undefined" && fillEmptyValuesWith != null)
+                        	y = fillEmptyValuesWith;
+
+                        if (y != null && !isNaN(y)) {
+                            var color;
+
+                            var calculatedColor = doc.getFieldColor(yfield);
+
+                            if (selectionActive) {
+                                if (doc.isRecordSelected())
+                                    color = calculatedColor;
+                                else
+                                    color = unselectedColor;
+                            } else
+                                color = calculatedColor;
+
+                            var shape = doc.getFieldShapeName(yfield);
+
+                            var point = {x:x, y:y, record:doc, y_formatted:y_formatted, x_formatted:x_formatted};
+
+                            if (color != null)
+                                point["color"] = color;
+                            if (shape != null)
+                                point["shape"] = shape;
+
+                            if (sizeField)
+                                point["size"] = doc.getFieldValueUnrendered(sizeField);
+
+                            points.push(point);
+
+                            if (fillEmptyValuesWith != null) {
+                                uniqueX.push(x);
+                            }
+                        }
+
+                    }
+                    catch (err) {
+                        //console.log("Can't add field [" + field + "] to graph, filtered?")
+                    }
+                });
+
+                if (points.length > 0) {
+                    var color;
+                    if (fixedColor)
+                        color = fixedColor;
+                    else
+                        color = yfield.getColorForPartition();
+                    var ret = {values:points, key: recline.Data.Formatters.getFieldLabel(yfield, model.attributes.fieldLabels)};
+                    if (color)
+                        ret["color"] = color;
+                    series.push(ret);
+                }
+
+            });
+
+        } else throw "data.series.utility.CreateSeries: unsupported or not defined type " + seriesAttr.type;
+
+        // foreach series fill empty values
+        if (fillEmptyValuesWith != null) {
+            uniqueX = _.unique(uniqueX);
+            _.each(series, function (s) {
+                // foreach series obtain the unique list of x
+                var tmpValues = _.unique(_.map(s.values, function (d) {
+                    return d.x
+                }));
+                // foreach non present field set the value
+                _.each(_.difference(uniqueX, tmpValues), function (diff) {
+                    s.values.push({x:diff, y:fillEmptyValuesWith});
+                });
+
+            });
+        }
+        // force sorting of values or scrambled series may generate a wrong chart  
+//        _.each(series, function(serie) {
+//        	serie.values = _.sortBy(serie.values, function(value) { return value.x }) 
+//        })
+        
+        if (groupAllSmallSeries)
+    	{
+        	// must group all small series into one. Note that the original records of the merged series are lost,
+        	// so the use of custom tooltips isn't possible at the moment 
+        	var mainSeriesCount = groupAllSmallSeries.mainSeriesCount
+        	var label = groupAllSmallSeries.labelForSmallSeries || "Other"
+        	var seriesKeyTotals = []
+        	_.each(series, function(serieObj) {
+        		seriesKeyTotals.push({
+        			id: seriesKeyTotals.length,
+        			key: serieObj.key,
+        			total: _.reduce(serieObj.values, function(memo, valueObj) { return memo + valueObj.y; }, 0)
+        		})
+        	})
+        	seriesKeyTotals = _.sortBy(seriesKeyTotals, function(serieObj){ return - serieObj.total; });
+        	var newSeries = []
+        	var j = 0
+        	for (j = 0; j < mainSeriesCount && j < seriesKeyTotals.length; j++)
+        		newSeries.push(series[seriesKeyTotals[j].id])
+
+        	if (j < series.length)
+    		{
+            	var newSerieOther = { key: label, values : []}
+            	_.each(series[seriesKeyTotals[j].id].values, function(valueObj) {
+            		newSerieOther.values.push({x: valueObj.x, y: valueObj.y})
             	})
-            	seriesKeyTotals = _.sortBy(seriesKeyTotals, function(serieObj){ return - serieObj.total; });
-            	var newSeries = []
-            	var j = 0
-            	for (j = 0; j < mainSeriesCount && j < seriesKeyTotals.length; j++)
-            		newSeries.push(series[seriesKeyTotals[j].id])
+            	var totValues = series[0].values.length
+            	for (var k = j+1; k < series.length; k++)
+            		for (var i = 0; i < totValues; i++)
+            			newSerieOther.values[i].y += series[seriesKeyTotals[k].id].values[i].y
+            			
+            	newSeries.push(newSerieOther)
+    		}
+        	series = newSeries;
+    	}
 
-            	if (j < series.length)
-        		{
-                	var newSerieOther = { key: label, values : []}
-                	_.each(series[seriesKeyTotals[j].id].values, function(valueObj) {
-                		newSerieOther.values.push({x: valueObj.x, y: valueObj.y})
-                	})
-                	var totValues = series[0].values.length
-                	for (var k = j+1; k < series.length; k++)
-                		for (var i = 0; i < totValues; i++)
-                			newSerieOther.values[i].y += series[seriesKeyTotals[k].id].values[i].y
-                			
-                	newSeries.push(newSerieOther)
-        		}
-            	series = newSeries;
-        	}
-
-            if (scaleTo100Perc && series.length)
-        	{
-            	// perform extra steps to scale the values
-            	var tot = series[0].values.length
-            	var seriesTotals = []
-            	for (var i = 0; i < tot; i++)
-            		seriesTotals.push(_.reduce(series, function(memo, serie) { return memo + serie.values[i].y; }, 0))
-            		
-            	for (var i = 0; i < tot; i++)
-            		_.each(series, function(serie) {
+        if (scaleTo100Perc && series.length)
+    	{
+        	// perform extra steps to scale the values
+        	var tot = series[0].values.length
+        	var seriesTotals = []
+        	for (var i = 0; i < tot; i++)
+        		seriesTotals.push(_.reduce(series, function(memo, serie) { return memo + serie.values[i].y; }, 0))
+        		
+        	for (var i = 0; i < tot; i++)
+        		_.each(series, function(serie) {
+        			if (seriesTotals[i]) // avoid divide by zero
+    				{
             			serie.values[i].y_orig = serie.values[i].y
             			serie.values[i].y = Math.round(serie.values[i].y_orig/seriesTotals[i]*10000)/100
-            		});
-        	}
-
-
+    				}
+        		});
+    	}
         return series;
     };
 
@@ -5460,6 +5468,167 @@ this.recline.Backend.ParallelUnionBackend = this.recline.Backend.ParallelUnionBa
 
 
 }(jQuery, this.recline.Backend.ParallelUnionBackend));
+/*jshint multistr:true */
+
+this.recline = this.recline || {};
+this.recline.View = this.recline.View || {};
+
+(function ($, my) {
+
+    my.GoogleMaps = Backbone.View.extend({
+        iconaMarker: 'http://chart.googleapis.com/chart?chst=d_simple_text_icon_above&chld={TEXT}|14|{TEXTCOLOR}|{MARKERICON}|{ICONSIZE}|{ICONCOLOR}|404040',
+        initialize:function (options) {
+            _.bindAll(this, 'render', 'redraw', 'clearAllMarkers', 'getMarkerColor', 'openInfoWindow');
+            this.model.bind('query:done', this.redraw);
+            this.mapEl = document.getElementById(this.options.el);
+            this.render();
+        },
+	    clearAllMarkers: function() {
+	        _.each(this.markers, function (marker) {
+	            marker.setMap(null);
+	        })
+	        this.markers = []
+	    },
+        getMarkerColor : function(val, htmlType) {
+            var self = this;
+        	var min, max;
+        	if (self.options.state.redThreshold.indexOf("min") >= 0 || self.options.state.redThreshold.indexOf("max") >= 0
+        		|| self.options.state.greenThreshold.indexOf("min") >= 0 || self.options.state.greenThreshold.indexOf("max") >= 0)
+    		{
+                var fieldValues = _.map(this.model.getRecords(), function(rec) { return rec.attributes[self.options.state.valueField] })
+                min = _.min(fieldValues);
+                max = _.max(fieldValues);
+    		}
+        	if (val <= eval(self.options.state.redThreshold))
+        		return (htmlType ? "#FF0000": "red")
+        	else if (val <= eval(self.options.state.greenThreshold))
+        		return (htmlType ? "#FFFF00" : "yellow")
+        	else return (htmlType ? "#00FF00" : "green");
+        },
+        render:function() {
+            var self = this;
+
+            var googleOptions = {};
+            if (this.options.state.googleOptions)
+            	googleOptions = _.extend(googleOptions, this.options.state.googleOptions)
+            if (this.options.state.mapCenter)
+            	googleOptions.center = new google.maps.LatLng(this.options.state.mapCenter[0], this.options.state.mapCenter[1])
+            if (this.options.state.mapType)
+            	googleOptions.mapTypeId = google.maps.MapTypeId[this.options.state.mapType]
+
+            this.map = new google.maps.Map(this.mapEl, googleOptions);
+    	    if (this.options.state.clustererOptions)
+    	    	mc = new MarkerClusterer(this.map,[], this.options.state.clustererOptions);
+    	    
+    	    if (this.options.events && this.options.events.mapClick)
+    	    	google.maps.event.addListener(this.map, 'click', this.options.events.mapClick);
+    	    
+    	    if (this.options.events && this.options.events.mapDblClick)
+    	    	google.maps.event.addListener(this.map, 'dblclick', this.options.events.mapDblClick);
+
+    	    if (this.options.events && this.options.events.mapRightClick)
+    	    	google.maps.event.addListener(this.map, 'rightclick', this.options.events.mapRightClick);
+    	    
+            if (this.options.state.infoWindowTemplate)
+        	{
+            	this.infowindow = new google.maps.InfoWindow({ content: '' });
+            	this.infowindow.close();
+        	}
+    	    this.redraw();
+        },
+
+	    redraw: function() {
+	    	var self = this;
+	    	
+        	this.clearAllMarkers();
+        	if (mc)
+        		mc.clearMarkers();
+        	
+        	var latField = self.options.state.latField;
+        	var longField = self.options.state.longField;
+        	var valueField = self.options.state.valueField;
+        	var markerIconName = self.options.state.markerIcon;
+        	var iconSize = 
+        	
+            _.each(this.model.getRecords("unfiltered"), function(rec) {
+    	        var latlng = new google.maps.LatLng(rec.attributes[latField], rec.attributes[longField]);
+    	        var color = self.getMarkerColor(rec.attributes[valueField], true).replace("#","")
+    			var text = self.iconaMarker.replace("{TEXT}", (self.options.state.showValue ? rec.attributes[valueField].toString() : ""))
+    			text = text.replace("{ICONCOLOR}", color)
+    			text = text.replace("{TEXTCOLOR}", color)
+    			text = text.replace("{MARKERICON}", self.options.state.markerIcon)
+    			text = text.replace("{ICONSIZE}", self.options.state.markerSize)
+    			
+    	        var mark = new google.maps.Marker({position:latlng, map:self.map, animation:null, icon:text, value: rec.attributes[valueField], color: self.getMarkerColor(rec.attributes[valueField]), record: rec});
+        	    
+    	        if (self.options.state.infoWindowTemplate)
+    	        	google.maps.event.addListener(mark, 'click', function() {self.openInfoWindow(mark)});
+
+    	        if (self.options.actions)
+	        	{
+    	        	var markerClickActions = self.getActionsForEvent("selection");
+					var mappings = self.options.state.mapping
+					google.maps.event.addListener(mark, 'click', function() {
+						var rec = this.record
+						markerClickActions.forEach(function (currAction) {
+		                    currAction.action.doAction([rec], currAction.mapping);
+		                });
+					});
+    	        	var markerHoverActions = self.getActionsForEvent("hover");
+					var mappings = self.options.state.mapping
+					google.maps.event.addListener(mark, 'mouseover', function() {
+						var rec = this.record
+						markerHoverActions.forEach(function (currAction) {
+		                    currAction.action.doAction([rec], currAction.mapping);
+		                });
+					});
+	        	}
+    	        if (self.options.events && self.options.events.markerClick)
+        	    	google.maps.event.addListener(mark, 'click', self.options.events.markerClick);
+        	    
+        	    if (self.options.events && self.options.events.markerDblClick)
+        	    	google.maps.event.addListener(mark, 'dblclick', self.options.events.markerDblClick);
+
+        	    if (self.options.events && self.options.events.markerRightClick)
+        	    	google.maps.event.addListener(mark, 'rightclick', self.options.events.markerRightClick);    	        
+
+        	    self.markers.push(mark)
+            })
+            if (mc)
+        	{
+                mc.addMarkers(this.markers);
+                mc.repaint();	
+        	}
+	    },
+        getActionsForEvent:function (eventType) {
+            var self = this;
+            var actions = [];
+
+            _.each(self.options.actions, function (d) {
+                if (_.contains(d.event, eventType))
+                    actions.push(d);
+            });
+            return actions;
+        },
+	    openInfoWindow: function(marker) {
+	    	var tmplData = {
+	    		value: marker.value,
+	    		color: marker.color,
+	    	}
+	    	tmplData = _.extend(tmplData, marker.record.attributes);
+            var html = Mustache.render(this.options.state.infoWindowTemplate, tmplData);
+            this.infowindow.setContent(html);
+            this.infowindow.setPosition(marker.position);
+            this.infowindow.open(this.map);
+	    },
+	    closeInfoWindow : function() {
+	    	this.infowindow.setContent('')
+	        this.infowindow.close();	    	
+	    }
+    });
+
+
+})(jQuery, recline.View);
 this.recline = this.recline || {};
 this.recline.View = this.recline.View || {};
 
@@ -6730,7 +6899,14 @@ this.recline.View = this.recline.View || {};
         	var height = svgElem.height()
 
             var state = this.state;
-            var seriesNVD3 = this.createSeriesNVD3();
+            var seriesNVD3 = recline.Data.SeriesUtility.createSeries(this.state.attributes.series, 
+            														this.state.attributes.unselectedColor, 
+            														this.model, 
+            														this.options.resultType, 
+            														this.state.attributes.group, 
+            														this.options.state.scaleTo100Perc, 
+            														this.options.state.groupAllSmallSeries)
+            														
         	var totalValues = 0;
             if (seriesNVD3)
         	{
@@ -6760,6 +6936,8 @@ this.recline.View = this.recline.View || {};
                 self.chart = self.getGraph[graphType](self);
                 var svgElem = self.el.find('#nvd3chart_' + self.uid+ ' svg')
                 var graphModel = self.getGraphModel(self, graphType)
+                if (typeof graphModel == "undefined")
+                	throw "NVD3 Graph type "+graphType+" not found!"
                 
                 if (self.options.state.options.noTicksX)
                     self.chart.xAxis.tickFormat(function (d) { return ''; });
@@ -7299,6 +7477,7 @@ this.recline.View = this.recline.View || {};
             case "scatterChart":
         		return self.chart.scatter;
             case "stackedAreaChart":
+            	return self.chart.stacked;
             case "pieChart":
         		return self.chart.pie;
             case "discreteBarChart":
@@ -7330,267 +7509,6 @@ this.recline.View = this.recline.View || {};
 
             return fieldLabel;
         },
-
-
-        createSeriesNVD3:function () {
-
-            var self = this;
-            var series = [];
-
-            //  {type: "byFieldName", fieldvaluesField: ["y", "z"]}
-            var seriesAttr = this.state.attributes.series;
-
-            var fillEmptyValuesWith = seriesAttr.fillEmptyValuesWith;
-
-            //var seriesNameField = self.model.fields.get(this.state.attributes.seriesNameField) ;
-            //var seriesValues = self.model.fields.get(this.state.attributes.seriesValues);
-            //if(seriesValues == null)
-            //var seriesValues = this.state.get("seriesValues") ;
-
-            var xAxisIsDate = false;
-            var unselectedColor = "#C0C0C0";
-            if (self.state.attributes.unselectedColor)
-                unselectedColor = self.state.attributes.unselectedColor;
-            var selectionActive = false;
-            if (self.model.queryState.isSelected())
-                selectionActive = true;
-
-            var resultType = "filtered";
-            if(self.options.resultType)
-                resultType = self.options.resultType;
-
-            var records = self.model.getRecords(resultType); 
-
-            var xfield = self.model.fields.get(self.state.attributes.group);
-            if(!xfield)
-                throw "View.nvd3: unable to find field [" + self.state.attributes.group + "] on model"
-
-            if (xfield.get('type') === 'date') {
-                xAxisIsDate = true;
-            }
-
-            var uniqueX = [];
-            var sizeField;
-            if (seriesAttr.sizeField) {
-                sizeField = self.model.fields.get(seriesAttr.sizeField);
-
-                if(!sizeField)
-                    throw "View.nvd3: unable to find field [" + seriesAttr.sizeField + "] on model"
-            }
-
-
-            // series are calculated on data, data should be analyzed in order to create series
-            if (seriesAttr.type == "byFieldValue") {
-                var seriesTmp = {};
-                var seriesNameField = self.model.fields.get(seriesAttr.seriesField);
-                if(!seriesNameField)
-                    throw "View.nvd3: unable to find field [" + seriesAttr.seriesField + "] on model"
-
-                var fieldValue = self.model.fields.get(seriesAttr.valuesField);
-                if(!fieldValue)
-                    throw "View.nvd3: unable to find field [" + seriesAttr.valuesField + "] on model"
-
-            	_.each(records, function (doc, index) {
-
-                    // key is the field that identiy the value that "build" series
-                    var key = doc.getFieldValueUnrendered(seriesNameField);
-                    var tmpS;
-
-                    // verify if the serie is already been initialized
-                    if (seriesTmp[key] != null) {
-                        tmpS = seriesTmp[key]
-                    }
-                    else {
-                        tmpS = {key:key, values:[]};
-
-                        var color = doc.getFieldColor(seriesNameField);
-
-                        if (color != null)
-                            tmpS["color"] = color;
-
-
-                    }
-                    var shape = doc.getFieldShapeName(seriesNameField);
-
-                    var x = doc.getFieldValueUnrendered(xfield);
-                    var y = doc.getFieldValueUnrendered(fieldValue)
-                    if (y == null || typeof y == "undefined" && fillEmptyValuesWith != null)
-                    	y = fillEmptyValuesWith;
-
-                    var point = {x:x, y:y, record:doc};
-                    if (sizeField)
-                        point["size"] = doc.getFieldValueUnrendered(sizeField);
-                    if(shape != null)
-                        point["shape"] = shape;
-
-                    tmpS.values.push(point);
-
-                    if (fillEmptyValuesWith != null) {
-                        uniqueX.push(x);
-
-                    }
-
-                    seriesTmp[key] = tmpS;
-
-                });
-                
-
-                for (var j in seriesTmp) {
-                    series.push(seriesTmp[j]);
-                }
-
-            }
-            else if (seriesAttr.type == "byFieldName" || seriesAttr.type == "byPartitionedField") {
-                var serieNames;
-
-                // if partitions are active we need to retrieve the list of partitions
-                if (seriesAttr.type == "byFieldName")
-                    serieNames = seriesAttr.valuesField;
-                else {
-                    serieNames = [];
-                    _.each(seriesAttr.aggregationFunctions, function (a) {
-                        _.each(self.model.getPartitionedFieldsForAggregationFunction(a, seriesAttr.aggregatedField), function (f) {
-                            serieNames.push(f.get("id"));
-                        })
-
-                    });
-
-                }
-
-                _.each(serieNames, function (field) {
-                    var yfield = self.model.fields.get(field);
-
-                    if(!yfield)
-                        throw "View.nvd3: unable to find field [" + field + "] on model"
-
-                    var points = [];
-
-                    _.each(records, function (doc, index) {
-
-                        var x = doc.getFieldValueUnrendered(xfield);
-
-                        try {
-
-                            var y = doc.getFieldValueUnrendered(yfield) ;
-                            if (y == null || typeof y == "undefined" && fillEmptyValuesWith != null)
-                            	y = fillEmptyValuesWith;
-
-                            if (y != null) {
-                                var color;
-
-                                if (selectionActive) {
-                                    if (doc.isRecordSelected())
-                                        color = doc.getFieldColor(yfield);
-                                    else
-                                        color = unselectedColor;
-                                } else
-                                    color = doc.getFieldColor(yfield);
-
-                                var shape = doc.getFieldShapeName(yfield);
-
-                                var point = {x:x, y:y, record:doc};
-
-                                if(color != null)
-                                    point["color"] = color;
-                                if(shape != null)
-                                    point["shape"] = shape;
-
-                                if (sizeField)
-                                    point["size"] = doc.getFieldValueUnrendered(sizeField);
-
-                                points.push(point);
-
-                                if (fillEmptyValuesWith != null) {
-                                    uniqueX.push(x);
-                                }
-                            }
-
-                        }
-                        catch (err) {
-                            //console.log("Can't add field [" + field + "] to graph, filtered?")
-                        }
-                    });
-
-                    if (points.length > 0)
-                        series.push({values:points, key:self.getFieldLabel(yfield), color:yfield.getColorForPartition()});
-                });
-
-            } else throw "views.nvd3.graph.js: unsupported or not defined type " + seriesAttr.type;
-
-            // foreach series fill empty values
-            if (fillEmptyValuesWith != null) {
-                uniqueX = _.unique(uniqueX);
-                _.each(series, function (s) {
-                    // foreach series obtain the unique list of x
-                    var tmpValues = _.map(s.values, function (d) {
-                        return d.x
-                    });
-                    // foreach non present field set the value
-                    _.each(_.difference(uniqueX, tmpValues), function (diff) {
-                        s.values.push({x:diff, y:fillEmptyValuesWith});
-                    });
-
-                });
-            }
-            // force sorting of values or scrambled series may generate a wrong chart  
-//            _.each(series, function(serie) {
-//            	serie.values = _.sortBy(serie.values, function(value) { return value.x }) 
-//            })
-            
-            if (self.options.state.groupAllSmallSeries)
-        	{
-            	// must group all small series into one. Note that the original records of the merged series are lost,
-            	// so the use of custom tooltips isn't possible at the moment 
-            	var mainSeriesCount = self.options.state.groupAllSmallSeries.mainSeriesCount
-            	var label = self.options.state.groupAllSmallSeries.labelForSmallSeries || "Other"
-            	var seriesKeyTotals = []
-            	_.each(series, function(serieObj) {
-            		seriesKeyTotals.push({
-            			id: seriesKeyTotals.length,
-            			key: serieObj.key,
-            			total: _.reduce(serieObj.values, function(memo, valueObj) { return memo + valueObj.y; }, 0)
-            		})
-            	})
-            	seriesKeyTotals = _.sortBy(seriesKeyTotals, function(serieObj){ return - serieObj.total; });
-            	var newSeries = []
-            	var j = 0
-            	for (j = 0; j < mainSeriesCount && j < seriesKeyTotals.length; j++)
-            		newSeries.push(series[seriesKeyTotals[j].id])
-
-            	if (j < series.length)
-        		{
-                	var newSerieOther = { key: label, values : []}
-                	_.each(series[seriesKeyTotals[j].id].values, function(valueObj) {
-                		newSerieOther.values.push({x: valueObj.x, y: valueObj.y})
-                	})
-                	var totValues = series[0].values.length
-                	for (var k = j+1; k < series.length; k++)
-                		for (var i = 0; i < totValues; i++)
-                			newSerieOther.values[i].y += series[seriesKeyTotals[k].id].values[i].y
-                			
-                	newSeries.push(newSerieOther)
-        		}
-            	series = newSeries;
-        	}
-
-            if (self.options.state.scaleTo100Perc && series.length)
-        	{
-            	// perform extra steps to scale the values
-            	var tot = series[0].values.length
-            	var seriesTotals = []
-            	for (var i = 0; i < tot; i++)
-            		seriesTotals.push(_.reduce(series, function(memo, serie) { return memo + serie.values[i].y; }, 0))
-            		
-            	for (var i = 0; i < tot; i++)
-            		_.each(series, function(serie) {
-            			serie.values[i].y_orig = serie.values[i].y
-            			serie.values[i].y = Math.round(serie.values[i].y_orig/seriesTotals[i]*10000)/100
-            		});
-        	}
-            return series;
-        }
-
-
     });
 
 
@@ -9142,7 +9060,7 @@ this.recline.View = this.recline.View || {};
                 yScale: state.yScale
             };
             _.each( series, function(d) {
-                var serie = {color:d.color, name:d.name, label: d.label, data:_.map(d.data, function(c) { return {x:c.x, y:c.y, x_formatted: c.x_formatted, y_formatted: c.y_formatted, legendField: c.legendField, legendValue: c.legendValue } })};
+                var serie = {color:d.color, name:d.key, label: d.label, data:_.map(d.values, function(c) { return {x:c.x, y:c.y, x_formatted: c.x_formatted, y_formatted: c.y_formatted, legendField: c.legendField, legendValue: c.legendValue } })};
                 data.main.push(serie);
             });
 
@@ -9465,8 +9383,8 @@ this.recline.View = this.recline.View || {};
                                 var sundayDateStr = self.retrieveDateStr(sunday)
                                 $('.dr1.from').val(mondayDateStr)
                                 $('.dr1.to').val(sundayDateStr)
-                                self.applyTextInputDateChange(mondayDateStr, self, true, true)
-                                self.applyTextInputDateChange(sundayDateStr, self, true, false)
+                                self.applyTextInputDateChange(monday, mondayDateStr, self, true, true)
+                                self.applyTextInputDateChange(sunday, sundayDateStr, self, true, false)
                             }
                             else if (self.options.monthlyMode) {
                                 var firstDay = self.calculateFirstDayOfMonth($(this).val())
@@ -9475,10 +9393,14 @@ this.recline.View = this.recline.View || {};
                                 var lastDayDateStr = self.retrieveDateStr(lastDay)
                                 $('.dr1.from').val(firstDayDateStr)
                                 $('.dr1.to').val(lastDayDateStr)
-                                self.applyTextInputDateChange(firstDayDateStr, self, true, true)
-                                self.applyTextInputDateChange(lastDayDateStr, self, true, false)
+                                self.applyTextInputDateChange(firstDay, firstDayDateStr, self, true, true)
+                                self.applyTextInputDateChange(lastDay, lastDayDateStr, self, true, false)
                             }
-                            else self.applyTextInputDateChange($(this).val(), self, true, true)
+                            else
+                        	{
+                            	var d = retrieveDMYDate($(this).val()).getTime()
+                            	self.applyTextInputDateChange(d, $(this).val(), self, true, true)
+                        	}
                             self.maindateFromChanged = false
                         }
                     })
@@ -9491,8 +9413,8 @@ this.recline.View = this.recline.View || {};
                                 var sundayDateStr = self.retrieveDateStr(sunday)
                                 $('.dr1.from').val(mondayDateStr)
                                 $('.dr1.to').val(sundayDateStr)
-                                self.applyTextInputDateChange(mondayDateStr, self, true, true)
-                                self.applyTextInputDateChange(sundayDateStr, self, true, false)
+                                self.applyTextInputDateChange(monday, mondayDateStr, self, true, true)
+                                self.applyTextInputDateChange(sunday, sundayDateStr, self, true, false)
                             }
                             else if (self.options.monthlyMode) {
                                 var firstDay = self.calculateFirstDayOfMonth($(this).val())
@@ -9501,10 +9423,14 @@ this.recline.View = this.recline.View || {};
                                 var lastDayDateStr = self.retrieveDateStr(lastDay)
                                 $('.dr1.from').val(firstDayDateStr)
                                 $('.dr1.to').val(lastDayDateStr)
-                                self.applyTextInputDateChange(firstDayDateStr, self, true, true)
-                                self.applyTextInputDateChange(lastDayDateStr, self, true, false)
+                                self.applyTextInputDateChange(firstDay, firstDayDateStr, self, true, true)
+                                self.applyTextInputDateChange(lastDay, lastDayDateStr, self, true, false)
                             }
-                            else self.applyTextInputDateChange($(this).val(), self, true, false)
+                            else
+                        	{
+                            	var d = retrieveDMYDate($(this).val()).getTime() + 24 * 3600000 - 1
+                            	self.applyTextInputDateChange(d, $(this).val(), self, true, false)
+                        	}
                             self.maindateToChanged = false
                         }
                     })
@@ -9589,8 +9515,8 @@ this.recline.View = this.recline.View || {};
                                     var sundayDateStr = self.retrieveDateStr(sunday)
                                     $('.dr2.from').val(mondayDateStr)
                                     $('.dr2.to').val(sundayDateStr)
-                                    self.applyTextInputDateChange(mondayDateStr, self, false, true)
-                                    self.applyTextInputDateChange(sundayDateStr, self, false, false)
+                                    self.applyTextInputDateChange(monday, mondayDateStr, self, false, true)
+                                    self.applyTextInputDateChange(sunday, sundayDateStr, self, false, false)
                                 }
                                 else if (self.options.monthlyMode) {
                                     var firstDay = self.calculateFirstDayOfMonth($(this).val())
@@ -9599,10 +9525,14 @@ this.recline.View = this.recline.View || {};
                                     var lastDayDateStr = self.retrieveDateStr(lastDay)
                                     $('.dr2.from').val(firstDayDateStr)
                                     $('.dr2.to').val(lastDayDateStr)
-                                    self.applyTextInputDateChange(firstDayDateStr, self, false, true)
-                                    self.applyTextInputDateChange(lastDayDateStr, self, false, false)
+                                    self.applyTextInputDateChange(firstDay, firstDayDateStr, self, false, true)
+                                    self.applyTextInputDateChange(lastDay, lastDayDateStr, self, false, false)
                                 }
-                                else self.applyTextInputDateChange($(this).val(), self, false, true)
+                                else
+                            	{
+                                	var d = retrieveDMYDate($(this).val()).getTime()
+                                	self.applyTextInputDateChange(d, $(this).val(), self, false, true)
+                            	}
                                 self.comparedateFromChanged = false
                             }
                         })
@@ -9615,8 +9545,8 @@ this.recline.View = this.recline.View || {};
                                     var sundayDateStr = self.retrieveDateStr(sunday)
                                     $('.dr2.from').val(mondayDateStr)
                                     $('.dr2.to').val(sundayDateStr)
-                                    self.applyTextInputDateChange(mondayDateStr, self, false, true)
-                                    self.applyTextInputDateChange(sundayDateStr, self, false, false)
+                                    self.applyTextInputDateChange(monday, mondayDateStr, self, false, true)
+                                    self.applyTextInputDateChange(sunday, sundayDateStr, self, false, false)
                                 }
                                 else if (self.options.monthlyMode) {
                                     var firstDay = self.calculateFirstDayOfMonth($(this).val())
@@ -9625,10 +9555,14 @@ this.recline.View = this.recline.View || {};
                                     var lastDayDateStr = self.retrieveDateStr(lastDay)
                                     $('.dr2.from').val(firstDayDateStr)
                                     $('.dr2.to').val(lastDayDateStr)
-                                    self.applyTextInputDateChange(firstDayDateStr, self, false, true)
-                                    self.applyTextInputDateChange(lastDayDateStr, self, false, false)
-                                }                                
-                                else self.applyTextInputDateChange($(this).val(), self, false, false)
+                                    self.applyTextInputDateChange(firstDay, firstDayDateStr, self, false, true)
+                                    self.applyTextInputDateChange(lastDay, lastDayDateStr, self, false, false)
+                                } 
+                                else
+                            	{
+                                	var d = retrieveDMYDate($(this).val()).getTime() + 24 * 3600000 - 1
+                                	self.applyTextInputDateChange(d, $(this).val(), self, false, false)
+                            	}
                                 self.comparedateToChanged = false
                             }
                         })
@@ -9656,7 +9590,7 @@ this.recline.View = this.recline.View || {};
             return new Date(d.getTime() + diff * 24 * 3600000);
         },
         calculateSundayFromMonday:function (monday) {
-            return new Date(monday.getTime() + 6 * 24 * 3600000);
+            return new Date(monday.getTime() + 7 * 24 * 3600000 - 1); // returns sunday at 23:59:59.999
         },
         calculateFirstDayOfMonth:function (dateStr) {
             var d = this.retrieveDMYDate(dateStr);
@@ -9673,7 +9607,7 @@ this.recline.View = this.recline.View || {};
             	d.setFullYear(d.getFullYear()+1)
         	}
             else d.setMonth(month)
-            return new Date(d.getTime() - 24 * 3600000);
+            return new Date(d.getTime() - 1);
         },
         retrieveDMYDate:function (dateStr) {
             // Expect input as d/m/y
@@ -9687,54 +9621,48 @@ this.recline.View = this.recline.View || {};
             else return null;
         },
         retrieveDateStr:function (d) {
-            return d.getDate() + '/' + (d.getMonth() + 1) + '/' + d.getFullYear()
+            return d3.time.format("%d/%m/%Y")(d)
         },
-        applyTextInputDateChange:function (currVal, self, isMain, isFrom) {
-            //console.log(currVal)
-            var d = self.retrieveDMYDate(currVal)
-            if (d) {
-                //console.log(currVal+ " is VALID!: "+d.toLocaleDateString())
-                var options = self.datepicker.data("DateRangesWidget").options
-                var datepickerOptions = $(".datepicker.selectableRange").data('datepicker')
-                var values = options.values;
-                if (isMain) {
-                    if (isFrom) {
-                        values.dr1from = currVal
-                        values.dr1from_millis = d.getTime()
-                        $('.dr1.from_millis').val(d.getTime());
-                        datepickerOptions.date[0] = d.getTime()
-                    }
-                    else {
-                        values.dr1to = currVal
-                        values.dr1to_millis = d.getTime()
-                        $('.dr1.to_millis').val(d.getTime());
-                        datepickerOptions.date[1] = d.getTime()
-                    }
-                    if (datepickerOptions.mode == 'tworanges')
-                        datepickerOptions.lastSel = 2
+        applyTextInputDateChange:function (d, currVal, self, isMain, isFrom) {
+            var options = self.datepicker.data("DateRangesWidget").options
+            var datepickerOptions = $(".datepicker.selectableRange").data('datepicker')
+            var values = options.values;
+            if (isMain) {
+                if (isFrom) {
+                    values.dr1from = currVal
+                    values.dr1from_millis = d.getTime()
+                    $('.dr1.from_millis').val(d.getTime());
+                    datepickerOptions.date[0] = d.getTime()
                 }
                 else {
-                    if (isFrom) {
-                        values.dr2from = currVal
-                        values.dr2from_millis = d.getTime()
-                        $('.dr2.from_millis').val(d.getTime());
-                        datepickerOptions.date[2] = d.getTime()
-                    }
-                    else {
-                        values.dr2to = currVal
-                        values.dr2to_millis = d.getTime()
-                        $('.dr2.to_millis').val(d.getTime());
-                        datepickerOptions.date[3] = d.getTime()
-                    }
-                    if (datepickerOptions.mode == 'tworanges')
-                        datepickerOptions.lastSel = 0
+                    values.dr1to = currVal
+                    values.dr1to_millis = d.getTime()
+                    $('.dr1.to_millis').val(d.getTime());
+                    datepickerOptions.date[1] = d.getTime()
                 }
-                // scroll month accordingly inside calendar section on the left
-                datepickerOptions.current = d;
-                // this hack is used to force a refresh of the month calendar, since setmode calls fill() method
-                $('.date-ranges-picker').DatePickerSetMode($('.date-ranges-picker').DatePickerGetMode());
+                if (datepickerOptions.mode == 'tworanges')
+                    datepickerOptions.lastSel = 2
             }
-            //else console.log(currVal+ " is NOT VALID!")
+            else {
+                if (isFrom) {
+                    values.dr2from = currVal
+                    values.dr2from_millis = d.getTime()
+                    $('.dr2.from_millis').val(d.getTime());
+                    datepickerOptions.date[2] = d.getTime()
+                }
+                else {
+                    values.dr2to = currVal
+                    values.dr2to_millis = d.getTime()
+                    $('.dr2.to_millis').val(d.getTime());
+                    datepickerOptions.date[3] = d.getTime()
+                }
+                if (datepickerOptions.mode == 'tworanges')
+                    datepickerOptions.lastSel = 0
+            }
+            // scroll month accordingly inside calendar section on the left
+            datepickerOptions.current = d;
+            // this hack is used to force a refresh of the month calendar, since setmode calls fill() method
+            $('.date-ranges-picker').DatePickerSetMode($('.date-ranges-picker').DatePickerGetMode());
         },
 
         getActionsForEvent:function (eventType) {

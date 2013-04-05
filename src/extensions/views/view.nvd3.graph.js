@@ -133,7 +133,14 @@ this.recline.View = this.recline.View || {};
         	var height = svgElem.height()
 
             var state = this.state;
-            var seriesNVD3 = this.createSeriesNVD3();
+            var seriesNVD3 = recline.Data.SeriesUtility.createSeries(this.state.attributes.series, 
+            														this.state.attributes.unselectedColor, 
+            														this.model, 
+            														this.options.resultType, 
+            														this.state.attributes.group, 
+            														this.options.state.scaleTo100Perc, 
+            														this.options.state.groupAllSmallSeries)
+            														
         	var totalValues = 0;
             if (seriesNVD3)
         	{
@@ -163,6 +170,8 @@ this.recline.View = this.recline.View || {};
                 self.chart = self.getGraph[graphType](self);
                 var svgElem = self.el.find('#nvd3chart_' + self.uid+ ' svg')
                 var graphModel = self.getGraphModel(self, graphType)
+                if (typeof graphModel == "undefined")
+                	throw "NVD3 Graph type "+graphType+" not found!"
                 
                 if (self.options.state.options.noTicksX)
                     self.chart.xAxis.tickFormat(function (d) { return ''; });
@@ -702,6 +711,7 @@ this.recline.View = this.recline.View || {};
             case "scatterChart":
         		return self.chart.scatter;
             case "stackedAreaChart":
+            	return self.chart.stacked;
             case "pieChart":
         		return self.chart.pie;
             case "discreteBarChart":
@@ -733,267 +743,6 @@ this.recline.View = this.recline.View || {};
 
             return fieldLabel;
         },
-
-
-        createSeriesNVD3:function () {
-
-            var self = this;
-            var series = [];
-
-            //  {type: "byFieldName", fieldvaluesField: ["y", "z"]}
-            var seriesAttr = this.state.attributes.series;
-
-            var fillEmptyValuesWith = seriesAttr.fillEmptyValuesWith;
-
-            //var seriesNameField = self.model.fields.get(this.state.attributes.seriesNameField) ;
-            //var seriesValues = self.model.fields.get(this.state.attributes.seriesValues);
-            //if(seriesValues == null)
-            //var seriesValues = this.state.get("seriesValues") ;
-
-            var xAxisIsDate = false;
-            var unselectedColor = "#C0C0C0";
-            if (self.state.attributes.unselectedColor)
-                unselectedColor = self.state.attributes.unselectedColor;
-            var selectionActive = false;
-            if (self.model.queryState.isSelected())
-                selectionActive = true;
-
-            var resultType = "filtered";
-            if(self.options.resultType)
-                resultType = self.options.resultType;
-
-            var records = self.model.getRecords(resultType); 
-
-            var xfield = self.model.fields.get(self.state.attributes.group);
-            if(!xfield)
-                throw "View.nvd3: unable to find field [" + self.state.attributes.group + "] on model"
-
-            if (xfield.get('type') === 'date') {
-                xAxisIsDate = true;
-            }
-
-            var uniqueX = [];
-            var sizeField;
-            if (seriesAttr.sizeField) {
-                sizeField = self.model.fields.get(seriesAttr.sizeField);
-
-                if(!sizeField)
-                    throw "View.nvd3: unable to find field [" + seriesAttr.sizeField + "] on model"
-            }
-
-
-            // series are calculated on data, data should be analyzed in order to create series
-            if (seriesAttr.type == "byFieldValue") {
-                var seriesTmp = {};
-                var seriesNameField = self.model.fields.get(seriesAttr.seriesField);
-                if(!seriesNameField)
-                    throw "View.nvd3: unable to find field [" + seriesAttr.seriesField + "] on model"
-
-                var fieldValue = self.model.fields.get(seriesAttr.valuesField);
-                if(!fieldValue)
-                    throw "View.nvd3: unable to find field [" + seriesAttr.valuesField + "] on model"
-
-            	_.each(records, function (doc, index) {
-
-                    // key is the field that identiy the value that "build" series
-                    var key = doc.getFieldValueUnrendered(seriesNameField);
-                    var tmpS;
-
-                    // verify if the serie is already been initialized
-                    if (seriesTmp[key] != null) {
-                        tmpS = seriesTmp[key]
-                    }
-                    else {
-                        tmpS = {key:key, values:[]};
-
-                        var color = doc.getFieldColor(seriesNameField);
-
-                        if (color != null)
-                            tmpS["color"] = color;
-
-
-                    }
-                    var shape = doc.getFieldShapeName(seriesNameField);
-
-                    var x = doc.getFieldValueUnrendered(xfield);
-                    var y = doc.getFieldValueUnrendered(fieldValue)
-                    if (y == null || typeof y == "undefined" && fillEmptyValuesWith != null)
-                    	y = fillEmptyValuesWith;
-
-                    var point = {x:x, y:y, record:doc};
-                    if (sizeField)
-                        point["size"] = doc.getFieldValueUnrendered(sizeField);
-                    if(shape != null)
-                        point["shape"] = shape;
-
-                    tmpS.values.push(point);
-
-                    if (fillEmptyValuesWith != null) {
-                        uniqueX.push(x);
-
-                    }
-
-                    seriesTmp[key] = tmpS;
-
-                });
-                
-
-                for (var j in seriesTmp) {
-                    series.push(seriesTmp[j]);
-                }
-
-            }
-            else if (seriesAttr.type == "byFieldName" || seriesAttr.type == "byPartitionedField") {
-                var serieNames;
-
-                // if partitions are active we need to retrieve the list of partitions
-                if (seriesAttr.type == "byFieldName")
-                    serieNames = seriesAttr.valuesField;
-                else {
-                    serieNames = [];
-                    _.each(seriesAttr.aggregationFunctions, function (a) {
-                        _.each(self.model.getPartitionedFieldsForAggregationFunction(a, seriesAttr.aggregatedField), function (f) {
-                            serieNames.push(f.get("id"));
-                        })
-
-                    });
-
-                }
-
-                _.each(serieNames, function (field) {
-                    var yfield = self.model.fields.get(field);
-
-                    if(!yfield)
-                        throw "View.nvd3: unable to find field [" + field + "] on model"
-
-                    var points = [];
-
-                    _.each(records, function (doc, index) {
-
-                        var x = doc.getFieldValueUnrendered(xfield);
-
-                        try {
-
-                            var y = doc.getFieldValueUnrendered(yfield) ;
-                            if (y == null || typeof y == "undefined" && fillEmptyValuesWith != null)
-                            	y = fillEmptyValuesWith;
-
-                            if (y != null) {
-                                var color;
-
-                                if (selectionActive) {
-                                    if (doc.isRecordSelected())
-                                        color = doc.getFieldColor(yfield);
-                                    else
-                                        color = unselectedColor;
-                                } else
-                                    color = doc.getFieldColor(yfield);
-
-                                var shape = doc.getFieldShapeName(yfield);
-
-                                var point = {x:x, y:y, record:doc};
-
-                                if(color != null)
-                                    point["color"] = color;
-                                if(shape != null)
-                                    point["shape"] = shape;
-
-                                if (sizeField)
-                                    point["size"] = doc.getFieldValueUnrendered(sizeField);
-
-                                points.push(point);
-
-                                if (fillEmptyValuesWith != null) {
-                                    uniqueX.push(x);
-                                }
-                            }
-
-                        }
-                        catch (err) {
-                            //console.log("Can't add field [" + field + "] to graph, filtered?")
-                        }
-                    });
-
-                    if (points.length > 0)
-                        series.push({values:points, key:self.getFieldLabel(yfield), color:yfield.getColorForPartition()});
-                });
-
-            } else throw "views.nvd3.graph.js: unsupported or not defined type " + seriesAttr.type;
-
-            // foreach series fill empty values
-            if (fillEmptyValuesWith != null) {
-                uniqueX = _.unique(uniqueX);
-                _.each(series, function (s) {
-                    // foreach series obtain the unique list of x
-                    var tmpValues = _.map(s.values, function (d) {
-                        return d.x
-                    });
-                    // foreach non present field set the value
-                    _.each(_.difference(uniqueX, tmpValues), function (diff) {
-                        s.values.push({x:diff, y:fillEmptyValuesWith});
-                    });
-
-                });
-            }
-            // force sorting of values or scrambled series may generate a wrong chart  
-//            _.each(series, function(serie) {
-//            	serie.values = _.sortBy(serie.values, function(value) { return value.x }) 
-//            })
-            
-            if (self.options.state.groupAllSmallSeries)
-        	{
-            	// must group all small series into one. Note that the original records of the merged series are lost,
-            	// so the use of custom tooltips isn't possible at the moment 
-            	var mainSeriesCount = self.options.state.groupAllSmallSeries.mainSeriesCount
-            	var label = self.options.state.groupAllSmallSeries.labelForSmallSeries || "Other"
-            	var seriesKeyTotals = []
-            	_.each(series, function(serieObj) {
-            		seriesKeyTotals.push({
-            			id: seriesKeyTotals.length,
-            			key: serieObj.key,
-            			total: _.reduce(serieObj.values, function(memo, valueObj) { return memo + valueObj.y; }, 0)
-            		})
-            	})
-            	seriesKeyTotals = _.sortBy(seriesKeyTotals, function(serieObj){ return - serieObj.total; });
-            	var newSeries = []
-            	var j = 0
-            	for (j = 0; j < mainSeriesCount && j < seriesKeyTotals.length; j++)
-            		newSeries.push(series[seriesKeyTotals[j].id])
-
-            	if (j < series.length)
-        		{
-                	var newSerieOther = { key: label, values : []}
-                	_.each(series[seriesKeyTotals[j].id].values, function(valueObj) {
-                		newSerieOther.values.push({x: valueObj.x, y: valueObj.y})
-                	})
-                	var totValues = series[0].values.length
-                	for (var k = j+1; k < series.length; k++)
-                		for (var i = 0; i < totValues; i++)
-                			newSerieOther.values[i].y += series[seriesKeyTotals[k].id].values[i].y
-                			
-                	newSeries.push(newSerieOther)
-        		}
-            	series = newSeries;
-        	}
-
-            if (self.options.state.scaleTo100Perc && series.length)
-        	{
-            	// perform extra steps to scale the values
-            	var tot = series[0].values.length
-            	var seriesTotals = []
-            	for (var i = 0; i < tot; i++)
-            		seriesTotals.push(_.reduce(series, function(memo, serie) { return memo + serie.values[i].y; }, 0))
-            		
-            	for (var i = 0; i < tot; i++)
-            		_.each(series, function(serie) {
-            			serie.values[i].y_orig = serie.values[i].y
-            			serie.values[i].y = Math.round(serie.values[i].y_orig/seriesTotals[i]*10000)/100
-            		});
-        	}
-            return series;
-        }
-
-
     });
 
 

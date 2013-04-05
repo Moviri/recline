@@ -206,8 +206,8 @@ this.recline.View = this.recline.View || {};
                                 var sundayDateStr = self.retrieveDateStr(sunday)
                                 $('.dr1.from').val(mondayDateStr)
                                 $('.dr1.to').val(sundayDateStr)
-                                self.applyTextInputDateChange(mondayDateStr, self, true, true)
-                                self.applyTextInputDateChange(sundayDateStr, self, true, false)
+                                self.applyTextInputDateChange(monday, mondayDateStr, self, true, true)
+                                self.applyTextInputDateChange(sunday, sundayDateStr, self, true, false)
                             }
                             else if (self.options.monthlyMode) {
                                 var firstDay = self.calculateFirstDayOfMonth($(this).val())
@@ -216,10 +216,14 @@ this.recline.View = this.recline.View || {};
                                 var lastDayDateStr = self.retrieveDateStr(lastDay)
                                 $('.dr1.from').val(firstDayDateStr)
                                 $('.dr1.to').val(lastDayDateStr)
-                                self.applyTextInputDateChange(firstDayDateStr, self, true, true)
-                                self.applyTextInputDateChange(lastDayDateStr, self, true, false)
+                                self.applyTextInputDateChange(firstDay, firstDayDateStr, self, true, true)
+                                self.applyTextInputDateChange(lastDay, lastDayDateStr, self, true, false)
                             }
-                            else self.applyTextInputDateChange($(this).val(), self, true, true)
+                            else
+                        	{
+                            	var d = retrieveDMYDate($(this).val()).getTime()
+                            	self.applyTextInputDateChange(d, $(this).val(), self, true, true)
+                        	}
                             self.maindateFromChanged = false
                         }
                     })
@@ -232,8 +236,8 @@ this.recline.View = this.recline.View || {};
                                 var sundayDateStr = self.retrieveDateStr(sunday)
                                 $('.dr1.from').val(mondayDateStr)
                                 $('.dr1.to').val(sundayDateStr)
-                                self.applyTextInputDateChange(mondayDateStr, self, true, true)
-                                self.applyTextInputDateChange(sundayDateStr, self, true, false)
+                                self.applyTextInputDateChange(monday, mondayDateStr, self, true, true)
+                                self.applyTextInputDateChange(sunday, sundayDateStr, self, true, false)
                             }
                             else if (self.options.monthlyMode) {
                                 var firstDay = self.calculateFirstDayOfMonth($(this).val())
@@ -242,10 +246,14 @@ this.recline.View = this.recline.View || {};
                                 var lastDayDateStr = self.retrieveDateStr(lastDay)
                                 $('.dr1.from').val(firstDayDateStr)
                                 $('.dr1.to').val(lastDayDateStr)
-                                self.applyTextInputDateChange(firstDayDateStr, self, true, true)
-                                self.applyTextInputDateChange(lastDayDateStr, self, true, false)
+                                self.applyTextInputDateChange(firstDay, firstDayDateStr, self, true, true)
+                                self.applyTextInputDateChange(lastDay, lastDayDateStr, self, true, false)
                             }
-                            else self.applyTextInputDateChange($(this).val(), self, true, false)
+                            else
+                        	{
+                            	var d = retrieveDMYDate($(this).val()).getTime() + 24 * 3600000 - 1
+                            	self.applyTextInputDateChange(d, $(this).val(), self, true, false)
+                        	}
                             self.maindateToChanged = false
                         }
                     })
@@ -330,8 +338,8 @@ this.recline.View = this.recline.View || {};
                                     var sundayDateStr = self.retrieveDateStr(sunday)
                                     $('.dr2.from').val(mondayDateStr)
                                     $('.dr2.to').val(sundayDateStr)
-                                    self.applyTextInputDateChange(mondayDateStr, self, false, true)
-                                    self.applyTextInputDateChange(sundayDateStr, self, false, false)
+                                    self.applyTextInputDateChange(monday, mondayDateStr, self, false, true)
+                                    self.applyTextInputDateChange(sunday, sundayDateStr, self, false, false)
                                 }
                                 else if (self.options.monthlyMode) {
                                     var firstDay = self.calculateFirstDayOfMonth($(this).val())
@@ -340,10 +348,14 @@ this.recline.View = this.recline.View || {};
                                     var lastDayDateStr = self.retrieveDateStr(lastDay)
                                     $('.dr2.from').val(firstDayDateStr)
                                     $('.dr2.to').val(lastDayDateStr)
-                                    self.applyTextInputDateChange(firstDayDateStr, self, false, true)
-                                    self.applyTextInputDateChange(lastDayDateStr, self, false, false)
+                                    self.applyTextInputDateChange(firstDay, firstDayDateStr, self, false, true)
+                                    self.applyTextInputDateChange(lastDay, lastDayDateStr, self, false, false)
                                 }
-                                else self.applyTextInputDateChange($(this).val(), self, false, true)
+                                else
+                            	{
+                                	var d = retrieveDMYDate($(this).val()).getTime()
+                                	self.applyTextInputDateChange(d, $(this).val(), self, false, true)
+                            	}
                                 self.comparedateFromChanged = false
                             }
                         })
@@ -356,8 +368,8 @@ this.recline.View = this.recline.View || {};
                                     var sundayDateStr = self.retrieveDateStr(sunday)
                                     $('.dr2.from').val(mondayDateStr)
                                     $('.dr2.to').val(sundayDateStr)
-                                    self.applyTextInputDateChange(mondayDateStr, self, false, true)
-                                    self.applyTextInputDateChange(sundayDateStr, self, false, false)
+                                    self.applyTextInputDateChange(monday, mondayDateStr, self, false, true)
+                                    self.applyTextInputDateChange(sunday, sundayDateStr, self, false, false)
                                 }
                                 else if (self.options.monthlyMode) {
                                     var firstDay = self.calculateFirstDayOfMonth($(this).val())
@@ -366,10 +378,14 @@ this.recline.View = this.recline.View || {};
                                     var lastDayDateStr = self.retrieveDateStr(lastDay)
                                     $('.dr2.from').val(firstDayDateStr)
                                     $('.dr2.to').val(lastDayDateStr)
-                                    self.applyTextInputDateChange(firstDayDateStr, self, false, true)
-                                    self.applyTextInputDateChange(lastDayDateStr, self, false, false)
-                                }                                
-                                else self.applyTextInputDateChange($(this).val(), self, false, false)
+                                    self.applyTextInputDateChange(firstDay, firstDayDateStr, self, false, true)
+                                    self.applyTextInputDateChange(lastDay, lastDayDateStr, self, false, false)
+                                } 
+                                else
+                            	{
+                                	var d = retrieveDMYDate($(this).val()).getTime() + 24 * 3600000 - 1
+                                	self.applyTextInputDateChange(d, $(this).val(), self, false, false)
+                            	}
                                 self.comparedateToChanged = false
                             }
                         })
@@ -397,7 +413,7 @@ this.recline.View = this.recline.View || {};
             return new Date(d.getTime() + diff * 24 * 3600000);
         },
         calculateSundayFromMonday:function (monday) {
-            return new Date(monday.getTime() + 6 * 24 * 3600000);
+            return new Date(monday.getTime() + 7 * 24 * 3600000 - 1); // returns sunday at 23:59:59.999
         },
         calculateFirstDayOfMonth:function (dateStr) {
             var d = this.retrieveDMYDate(dateStr);
@@ -414,7 +430,7 @@ this.recline.View = this.recline.View || {};
             	d.setFullYear(d.getFullYear()+1)
         	}
             else d.setMonth(month)
-            return new Date(d.getTime() - 24 * 3600000);
+            return new Date(d.getTime() - 1);
         },
         retrieveDMYDate:function (dateStr) {
             // Expect input as d/m/y
@@ -428,54 +444,48 @@ this.recline.View = this.recline.View || {};
             else return null;
         },
         retrieveDateStr:function (d) {
-            return d.getDate() + '/' + (d.getMonth() + 1) + '/' + d.getFullYear()
+            return d3.time.format("%d/%m/%Y")(d)
         },
-        applyTextInputDateChange:function (currVal, self, isMain, isFrom) {
-            //console.log(currVal)
-            var d = self.retrieveDMYDate(currVal)
-            if (d) {
-                //console.log(currVal+ " is VALID!: "+d.toLocaleDateString())
-                var options = self.datepicker.data("DateRangesWidget").options
-                var datepickerOptions = $(".datepicker.selectableRange").data('datepicker')
-                var values = options.values;
-                if (isMain) {
-                    if (isFrom) {
-                        values.dr1from = currVal
-                        values.dr1from_millis = d.getTime()
-                        $('.dr1.from_millis').val(d.getTime());
-                        datepickerOptions.date[0] = d.getTime()
-                    }
-                    else {
-                        values.dr1to = currVal
-                        values.dr1to_millis = d.getTime()
-                        $('.dr1.to_millis').val(d.getTime());
-                        datepickerOptions.date[1] = d.getTime()
-                    }
-                    if (datepickerOptions.mode == 'tworanges')
-                        datepickerOptions.lastSel = 2
+        applyTextInputDateChange:function (d, currVal, self, isMain, isFrom) {
+            var options = self.datepicker.data("DateRangesWidget").options
+            var datepickerOptions = $(".datepicker.selectableRange").data('datepicker')
+            var values = options.values;
+            if (isMain) {
+                if (isFrom) {
+                    values.dr1from = currVal
+                    values.dr1from_millis = d.getTime()
+                    $('.dr1.from_millis').val(d.getTime());
+                    datepickerOptions.date[0] = d.getTime()
                 }
                 else {
-                    if (isFrom) {
-                        values.dr2from = currVal
-                        values.dr2from_millis = d.getTime()
-                        $('.dr2.from_millis').val(d.getTime());
-                        datepickerOptions.date[2] = d.getTime()
-                    }
-                    else {
-                        values.dr2to = currVal
-                        values.dr2to_millis = d.getTime()
-                        $('.dr2.to_millis').val(d.getTime());
-                        datepickerOptions.date[3] = d.getTime()
-                    }
-                    if (datepickerOptions.mode == 'tworanges')
-                        datepickerOptions.lastSel = 0
+                    values.dr1to = currVal
+                    values.dr1to_millis = d.getTime()
+                    $('.dr1.to_millis').val(d.getTime());
+                    datepickerOptions.date[1] = d.getTime()
                 }
-                // scroll month accordingly inside calendar section on the left
-                datepickerOptions.current = d;
-                // this hack is used to force a refresh of the month calendar, since setmode calls fill() method
-                $('.date-ranges-picker').DatePickerSetMode($('.date-ranges-picker').DatePickerGetMode());
+                if (datepickerOptions.mode == 'tworanges')
+                    datepickerOptions.lastSel = 2
             }
-            //else console.log(currVal+ " is NOT VALID!")
+            else {
+                if (isFrom) {
+                    values.dr2from = currVal
+                    values.dr2from_millis = d.getTime()
+                    $('.dr2.from_millis').val(d.getTime());
+                    datepickerOptions.date[2] = d.getTime()
+                }
+                else {
+                    values.dr2to = currVal
+                    values.dr2to_millis = d.getTime()
+                    $('.dr2.to_millis').val(d.getTime());
+                    datepickerOptions.date[3] = d.getTime()
+                }
+                if (datepickerOptions.mode == 'tworanges')
+                    datepickerOptions.lastSel = 0
+            }
+            // scroll month accordingly inside calendar section on the left
+            datepickerOptions.current = d;
+            // this hack is used to force a refresh of the month calendar, since setmode calls fill() method
+            $('.date-ranges-picker').DatePickerSetMode($('.date-ranges-picker').DatePickerGetMode());
         },
 
         getActionsForEvent:function (eventType) {
