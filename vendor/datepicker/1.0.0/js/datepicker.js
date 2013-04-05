@@ -833,9 +833,10 @@
                   date.push(((new Date(date[0])).setHours(23,59,59,0)).valueOf());
                 }
               } else {
-                for (var i = 0; i < date.length; i++) {
-                  date[i] = ((new Date(date[i])).setHours(0,0,0,0)).valueOf();
-                }
+            	  if (mode != 'tworanges')
+            		  for (var i = 0; i < date.length; i++) {
+            			  date[i] = ((new Date(date[i])).setHours(0,0,0,0)).valueOf();
+            		  }
                 if (mode == 'range') {
                   // for range mode, create the other end of the range
                   if(date.length == 1) date.push(new Date(date[0]));
