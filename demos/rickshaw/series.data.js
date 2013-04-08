@@ -6,7 +6,7 @@ function randomData(timeInterval) {
 
     var lastRandomValue = 200;
 
-    var timeBase = Math.floor(new Date().getTime() / 1000);
+    var timeBase = new Date().getTime()
 
     this.addData = function(data) {
 
@@ -49,7 +49,8 @@ var dataset = new recline.Model.Dataset({
         {id:'y', type:"float"},
         {id:'z', type:"float"}
     ],
-    fieldLabels: [{id: "x", label: "Date"}]
+    fieldLabels: [{id: "x", label: "Date"}],
+    fieldsFormat: [{id: "x", format: "localeTimeString"}]
 });
 
 colorSchema.setDataset(dataset);

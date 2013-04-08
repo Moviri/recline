@@ -95,8 +95,8 @@ var records = [];
 for(var i = 0; i < 10; i++ ){
     var start = dataset.getRecords()[Math.floor(Math.random()*dataset.getRecords().length)].attributes.x;
     var what = "Manteinance " + i;
-    var end = start + Math.floor(1000*Math.random());
-    records.push({When: start, What: what, end: end});
+    var end = start + Math.floor(3000*Math.random());
+    records.push({When: new Date(start), What: what, end: new Date(end)});
 }
 
 var datasetevents = new recline.Model.Dataset({

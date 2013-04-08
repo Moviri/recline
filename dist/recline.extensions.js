@@ -7581,6 +7581,9 @@ this.recline.View = this.recline.View || {};
             self.graph.update();
             //self.graph.render();
         },
+        convertDateValueWithoutMillis:function(value) {
+    		return Math.round(value.valueOf()/1000);
+        },
 
         renderGraph:function () {
             var self = this;
@@ -7638,9 +7641,9 @@ this.recline.View = this.recline.View || {};
 
                 _.each(self.options.state.events.dataset.getRecords(self.options.state.events.resultType), function (d) {
                     if (endField)
-                        self.annotator.add(d.attributes[timeField], d.attributes[valueField], d.attributes[endField]);
+                        self.annotator.add(self.convertDateValueWithoutMillis(d.attributes[timeField]), d.attributes[valueField], self.convertDateValueWithoutMillis(d.attributes[endField]));
                     else
-                        self.annotator.add(d.attributes[timeField], d.attributes[valueField]);
+                        self.annotator.add(self.convertDateValueWithoutMillis(d.attributes[timeField]), d.attributes[valueField]);
 
                 })
 
