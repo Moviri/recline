@@ -283,7 +283,7 @@ this.recline.View = this.recline.View || {};
                 _.each(serieNames, function (field) {
 
                     var yfield;
-                    if (seriesAttr.type == "byFieldName")
+                    if (seriesAttr.type == "byFieldName" && field.fieldName)
                         yfield = self.model.fields.get(field.fieldName);
                     else
                         yfield = self.model.fields.get(field);
