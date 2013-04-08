@@ -407,7 +407,7 @@ this.recline.View = this.recline.View || {};
                 else
                     chart = nv.models.multiBarChart();
 
-                view.setAxis("all", chart);
+                view.setAxis(view.options.state.axisTitlePresent || "all", chart);
                 if (actions.length > 0)
                     chart.multibar.dispatch.on('elementClick', function (e) {
                     	view.doActions(actions, [e.point.record]);
@@ -421,7 +421,7 @@ this.recline.View = this.recline.View || {};
                     chart = view.chart;
                 else
                     chart = nv.models.lineChart();
-                view.setAxis("all", chart);
+                view.setAxis(view.options.state.axisTitlePresent || "all", chart);
                 return chart;
             },
             "lineDottedChart":function (view) {
@@ -430,7 +430,7 @@ this.recline.View = this.recline.View || {};
                     chart = view.chart;
                 else
                     chart = nv.models.lineDottedChart();
-                view.setAxis("all", chart);
+                view.setAxis(view.options.state.axisTitlePresent || "all", chart);
                 return chart;
             },
             "lineWithFocusChart":function (view) {
@@ -440,7 +440,7 @@ this.recline.View = this.recline.View || {};
                 else
                     chart = nv.models.lineWithFocusChart();
 
-                view.setAxis("all", chart);
+                view.setAxis(view.options.state.axisTitlePresent || "all", chart);
                 return chart;
             },
             "indentedTree":function (view) {
@@ -456,7 +456,7 @@ this.recline.View = this.recline.View || {};
                     chart = view.chart;
                 else
                     chart = nv.models.stackedAreaChart();
-                view.setAxis("all", chart);
+                view.setAxis(view.options.state.axisTitlePresent || "all", chart);
                 return chart;
             },
 
@@ -474,7 +474,7 @@ this.recline.View = this.recline.View || {};
                     chart = view.chart;
                 else
                     chart = nv.models.multiBarHorizontalChart();
-                view.setAxis("all", chart);
+                view.setAxis(view.options.state.axisTitlePresent || "all", chart);
                 
             	var actions = view.getActionsForEvent("selection");
                 if (actions.length > 0)
@@ -549,7 +549,7 @@ this.recline.View = this.recline.View || {};
                     chart = view.chart;
                 else
                     chart = nv.models.linePlusBarChart();
-                view.setAxis("all", chart);
+                view.setAxis(view.options.state.axisTitlePresent || "all", chart);
                 return chart;
             },
             "cumulativeLineChart":function (view) {
@@ -558,7 +558,7 @@ this.recline.View = this.recline.View || {};
                     chart = view.chart;
                 else
                     chart = nv.models.cumulativeLineChart();
-                view.setAxis("all", chart);
+                view.setAxis(view.options.state.axisTitlePresent || "all", chart);
                 return chart;
             },
             "scatterChart":function (view) {
@@ -569,7 +569,7 @@ this.recline.View = this.recline.View || {};
                     chart = nv.models.scatterChart();
                 chart.showDistX(true)
                     .showDistY(true);
-                view.setAxis("all", chart);
+                view.setAxis(view.options.state.axisTitlePresent || "all", chart);
                 return chart;
             },
             "discreteBarChart":function (view) {
@@ -579,7 +579,7 @@ this.recline.View = this.recline.View || {};
                     chart = view.chart;
                 else
                     chart = nv.models.discreteBarChart();
-                view.setAxis("all", chart);
+                view.setAxis(view.options.state.axisTitlePresent || "all", chart);
 
                 if (actions.length > 0)
                     chart.discretebar.dispatch.on('elementClick', function (e) {
@@ -627,7 +627,7 @@ this.recline.View = this.recline.View || {};
                     chart = view.chart;
                 else
                     chart = nv.models.lineWithBrushChart(options);
-                view.setAxis("all", chart);
+                view.setAxis(view.options.state.axisTitlePresent || "all", chart);
                 return  chart
             },
             "multiBarWithBrushChart":function (view) {
