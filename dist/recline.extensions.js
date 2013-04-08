@@ -5468,6 +5468,167 @@ this.recline.Backend.ParallelUnionBackend = this.recline.Backend.ParallelUnionBa
 
 
 }(jQuery, this.recline.Backend.ParallelUnionBackend));
+/*jshint multistr:true */
+
+this.recline = this.recline || {};
+this.recline.View = this.recline.View || {};
+
+(function ($, my) {
+
+    my.GoogleMaps = Backbone.View.extend({
+        iconaMarker: 'http://chart.googleapis.com/chart?chst=d_simple_text_icon_above&chld={TEXT}|14|{TEXTCOLOR}|{MARKERICON}|{ICONSIZE}|{ICONCOLOR}|404040',
+        initialize:function (options) {
+            _.bindAll(this, 'render', 'redraw', 'clearAllMarkers', 'getMarkerColor', 'openInfoWindow');
+            this.model.bind('query:done', this.redraw);
+            this.mapEl = document.getElementById(this.options.el);
+            this.render();
+        },
+	    clearAllMarkers: function() {
+	        _.each(this.markers, function (marker) {
+	            marker.setMap(null);
+	        })
+	        this.markers = []
+	    },
+        getMarkerColor : function(val, htmlType) {
+            var self = this;
+        	var min, max;
+        	if (self.options.state.redThreshold.indexOf("min") >= 0 || self.options.state.redThreshold.indexOf("max") >= 0
+        		|| self.options.state.greenThreshold.indexOf("min") >= 0 || self.options.state.greenThreshold.indexOf("max") >= 0)
+    		{
+                var fieldValues = _.map(this.model.getRecords(), function(rec) { return rec.attributes[self.options.state.valueField] })
+                min = _.min(fieldValues);
+                max = _.max(fieldValues);
+    		}
+        	if (val <= eval(self.options.state.redThreshold))
+        		return (htmlType ? "#FF0000": "red")
+        	else if (val <= eval(self.options.state.greenThreshold))
+        		return (htmlType ? "#FFFF00" : "yellow")
+        	else return (htmlType ? "#00FF00" : "green");
+        },
+        render:function() {
+            var self = this;
+
+            var googleOptions = {};
+            if (this.options.state.googleOptions)
+            	googleOptions = _.extend(googleOptions, this.options.state.googleOptions)
+            if (this.options.state.mapCenter)
+            	googleOptions.center = new google.maps.LatLng(this.options.state.mapCenter[0], this.options.state.mapCenter[1])
+            if (this.options.state.mapType)
+            	googleOptions.mapTypeId = google.maps.MapTypeId[this.options.state.mapType]
+
+            this.map = new google.maps.Map(this.mapEl, googleOptions);
+    	    if (this.options.state.clustererOptions)
+    	    	mc = new MarkerClusterer(this.map,[], this.options.state.clustererOptions);
+    	    
+    	    if (this.options.events && this.options.events.mapClick)
+    	    	google.maps.event.addListener(this.map, 'click', this.options.events.mapClick);
+    	    
+    	    if (this.options.events && this.options.events.mapDblClick)
+    	    	google.maps.event.addListener(this.map, 'dblclick', this.options.events.mapDblClick);
+
+    	    if (this.options.events && this.options.events.mapRightClick)
+    	    	google.maps.event.addListener(this.map, 'rightclick', this.options.events.mapRightClick);
+    	    
+            if (this.options.state.infoWindowTemplate)
+        	{
+            	this.infowindow = new google.maps.InfoWindow({ content: '' });
+            	this.infowindow.close();
+        	}
+    	    this.redraw();
+        },
+
+	    redraw: function() {
+	    	var self = this;
+	    	
+        	this.clearAllMarkers();
+        	if (mc)
+        		mc.clearMarkers();
+        	
+        	var latField = self.options.state.latField;
+        	var longField = self.options.state.longField;
+        	var valueField = self.options.state.valueField;
+        	var markerIconName = self.options.state.markerIcon;
+        	var iconSize = 
+        	
+            _.each(this.model.getRecords("unfiltered"), function(rec) {
+    	        var latlng = new google.maps.LatLng(rec.attributes[latField], rec.attributes[longField]);
+    	        var color = self.getMarkerColor(rec.attributes[valueField], true).replace("#","")
+    			var text = self.iconaMarker.replace("{TEXT}", (self.options.state.showValue ? rec.attributes[valueField].toString() : ""))
+    			text = text.replace("{ICONCOLOR}", color)
+    			text = text.replace("{TEXTCOLOR}", color)
+    			text = text.replace("{MARKERICON}", self.options.state.markerIcon)
+    			text = text.replace("{ICONSIZE}", self.options.state.markerSize)
+    			
+    	        var mark = new google.maps.Marker({position:latlng, map:self.map, animation:null, icon:text, value: rec.attributes[valueField], color: self.getMarkerColor(rec.attributes[valueField]), record: rec});
+        	    
+    	        if (self.options.state.infoWindowTemplate)
+    	        	google.maps.event.addListener(mark, 'click', function() {self.openInfoWindow(mark)});
+
+    	        if (self.options.actions)
+	        	{
+    	        	var markerClickActions = self.getActionsForEvent("selection");
+					var mappings = self.options.state.mapping
+					google.maps.event.addListener(mark, 'click', function() {
+						var rec = this.record
+						markerClickActions.forEach(function (currAction) {
+		                    currAction.action.doAction([rec], currAction.mapping);
+		                });
+					});
+    	        	var markerHoverActions = self.getActionsForEvent("hover");
+					var mappings = self.options.state.mapping
+					google.maps.event.addListener(mark, 'mouseover', function() {
+						var rec = this.record
+						markerHoverActions.forEach(function (currAction) {
+		                    currAction.action.doAction([rec], currAction.mapping);
+		                });
+					});
+	        	}
+    	        if (self.options.events && self.options.events.markerClick)
+        	    	google.maps.event.addListener(mark, 'click', self.options.events.markerClick);
+        	    
+        	    if (self.options.events && self.options.events.markerDblClick)
+        	    	google.maps.event.addListener(mark, 'dblclick', self.options.events.markerDblClick);
+
+        	    if (self.options.events && self.options.events.markerRightClick)
+        	    	google.maps.event.addListener(mark, 'rightclick', self.options.events.markerRightClick);    	        
+
+        	    self.markers.push(mark)
+            })
+            if (mc)
+        	{
+                mc.addMarkers(this.markers);
+                mc.repaint();	
+        	}
+	    },
+        getActionsForEvent:function (eventType) {
+            var self = this;
+            var actions = [];
+
+            _.each(self.options.actions, function (d) {
+                if (_.contains(d.event, eventType))
+                    actions.push(d);
+            });
+            return actions;
+        },
+	    openInfoWindow: function(marker) {
+	    	var tmplData = {
+	    		value: marker.value,
+	    		color: marker.color,
+	    	}
+	    	tmplData = _.extend(tmplData, marker.record.attributes);
+            var html = Mustache.render(this.options.state.infoWindowTemplate, tmplData);
+            this.infowindow.setContent(html);
+            this.infowindow.setPosition(marker.position);
+            this.infowindow.open(this.map);
+	    },
+	    closeInfoWindow : function() {
+	    	this.infowindow.setContent('')
+	        this.infowindow.close();	    	
+	    }
+    });
+
+
+})(jQuery, recline.View);
 this.recline = this.recline || {};
 this.recline.View = this.recline.View || {};
 
@@ -5923,167 +6084,6 @@ this.recline.View = this.recline.View || {};
 
     });
 })(jQuery, recline.View);/*jshint multistr:true */
-
-this.recline = this.recline || {};
-this.recline.View = this.recline.View || {};
-
-(function ($, my) {
-
-    my.GoogleMaps = Backbone.View.extend({
-        iconaMarker: 'http://chart.googleapis.com/chart?chst=d_simple_text_icon_above&chld={TEXT}|14|{TEXTCOLOR}|{MARKERICON}|{ICONSIZE}|{ICONCOLOR}|404040',
-        initialize:function (options) {
-            _.bindAll(this, 'render', 'redraw', 'clearAllMarkers', 'getMarkerColor', 'openInfoWindow');
-            this.model.bind('query:done', this.redraw);
-            this.mapEl = document.getElementById(this.options.el);
-            this.render();
-        },
-	    clearAllMarkers: function() {
-	        _.each(this.markers, function (marker) {
-	            marker.setMap(null);
-	        })
-	        this.markers = []
-	    },
-        getMarkerColor : function(val, htmlType) {
-            var self = this;
-        	var min, max;
-        	if (self.options.state.redThreshold.indexOf("min") >= 0 || self.options.state.redThreshold.indexOf("max") >= 0
-        		|| self.options.state.greenThreshold.indexOf("min") >= 0 || self.options.state.greenThreshold.indexOf("max") >= 0)
-    		{
-                var fieldValues = _.map(this.model.getRecords(), function(rec) { return rec.attributes[self.options.state.valueField] })
-                min = _.min(fieldValues);
-                max = _.max(fieldValues);
-    		}
-        	if (val <= eval(self.options.state.redThreshold))
-        		return (htmlType ? "#FF0000": "red")
-        	else if (val <= eval(self.options.state.greenThreshold))
-        		return (htmlType ? "#FFFF00" : "yellow")
-        	else return (htmlType ? "#00FF00" : "green");
-        },
-        render:function() {
-            var self = this;
-
-            var googleOptions = {};
-            if (this.options.state.googleOptions)
-            	googleOptions = _.extend(googleOptions, this.options.state.googleOptions)
-            if (this.options.state.mapCenter)
-            	googleOptions.center = new google.maps.LatLng(this.options.state.mapCenter[0], this.options.state.mapCenter[1])
-            if (this.options.state.mapType)
-            	googleOptions.mapTypeId = google.maps.MapTypeId[this.options.state.mapType]
-
-            this.map = new google.maps.Map(this.mapEl, googleOptions);
-    	    if (this.options.state.clustererOptions)
-    	    	mc = new MarkerClusterer(this.map,[], this.options.state.clustererOptions);
-    	    
-    	    if (this.options.events && this.options.events.mapClick)
-    	    	google.maps.event.addListener(this.map, 'click', this.options.events.mapClick);
-    	    
-    	    if (this.options.events && this.options.events.mapDblClick)
-    	    	google.maps.event.addListener(this.map, 'dblclick', this.options.events.mapDblClick);
-
-    	    if (this.options.events && this.options.events.mapRightClick)
-    	    	google.maps.event.addListener(this.map, 'rightclick', this.options.events.mapRightClick);
-    	    
-            if (this.options.state.infoWindowTemplate)
-        	{
-            	this.infowindow = new google.maps.InfoWindow({ content: '' });
-            	this.infowindow.close();
-        	}
-    	    this.redraw();
-        },
-
-	    redraw: function() {
-	    	var self = this;
-	    	
-        	this.clearAllMarkers();
-        	if (mc)
-        		mc.clearMarkers();
-        	
-        	var latField = self.options.state.latField;
-        	var longField = self.options.state.longField;
-        	var valueField = self.options.state.valueField;
-        	var markerIconName = self.options.state.markerIcon;
-        	var iconSize = 
-        	
-            _.each(this.model.getRecords("unfiltered"), function(rec) {
-    	        var latlng = new google.maps.LatLng(rec.attributes[latField], rec.attributes[longField]);
-    	        var color = self.getMarkerColor(rec.attributes[valueField], true).replace("#","")
-    			var text = self.iconaMarker.replace("{TEXT}", (self.options.state.showValue ? rec.attributes[valueField].toString() : ""))
-    			text = text.replace("{ICONCOLOR}", color)
-    			text = text.replace("{TEXTCOLOR}", color)
-    			text = text.replace("{MARKERICON}", self.options.state.markerIcon)
-    			text = text.replace("{ICONSIZE}", self.options.state.markerSize)
-    			
-    	        var mark = new google.maps.Marker({position:latlng, map:self.map, animation:null, icon:text, value: rec.attributes[valueField], color: self.getMarkerColor(rec.attributes[valueField]), record: rec});
-        	    
-    	        if (self.options.state.infoWindowTemplate)
-    	        	google.maps.event.addListener(mark, 'click', function() {self.openInfoWindow(mark)});
-
-    	        if (self.options.actions)
-	        	{
-    	        	var markerClickActions = self.getActionsForEvent("selection");
-					var mappings = self.options.state.mapping
-					google.maps.event.addListener(mark, 'click', function() {
-						var rec = this.record
-						markerClickActions.forEach(function (currAction) {
-		                    currAction.action.doAction([rec], currAction.mapping);
-		                });
-					});
-    	        	var markerHoverActions = self.getActionsForEvent("hover");
-					var mappings = self.options.state.mapping
-					google.maps.event.addListener(mark, 'mouseover', function() {
-						var rec = this.record
-						markerHoverActions.forEach(function (currAction) {
-		                    currAction.action.doAction([rec], currAction.mapping);
-		                });
-					});
-	        	}
-    	        if (self.options.events && self.options.events.markerClick)
-        	    	google.maps.event.addListener(mark, 'click', self.options.events.markerClick);
-        	    
-        	    if (self.options.events && self.options.events.markerDblClick)
-        	    	google.maps.event.addListener(mark, 'dblclick', self.options.events.markerDblClick);
-
-        	    if (self.options.events && self.options.events.markerRightClick)
-        	    	google.maps.event.addListener(mark, 'rightclick', self.options.events.markerRightClick);    	        
-
-        	    self.markers.push(mark)
-            })
-            if (mc)
-        	{
-                mc.addMarkers(this.markers);
-                mc.repaint();	
-        	}
-	    },
-        getActionsForEvent:function (eventType) {
-            var self = this;
-            var actions = [];
-
-            _.each(self.options.actions, function (d) {
-                if (_.contains(d.event, eventType))
-                    actions.push(d);
-            });
-            return actions;
-        },
-	    openInfoWindow: function(marker) {
-	    	var tmplData = {
-	    		value: marker.value,
-	    		color: marker.color,
-	    	}
-	    	tmplData = _.extend(tmplData, marker.record.attributes);
-            var html = Mustache.render(this.options.state.infoWindowTemplate, tmplData);
-            this.infowindow.setContent(html);
-            this.infowindow.setPosition(marker.position);
-            this.infowindow.open(this.map);
-	    },
-	    closeInfoWindow : function() {
-	    	this.infowindow.setContent('')
-	        this.infowindow.close();	    	
-	    }
-    });
-
-
-})(jQuery, recline.View);
-/*jshint multistr:true */
 
 this.recline = this.recline || {};
 this.recline.View = this.recline.View || {};
@@ -11884,162 +11884,6 @@ this.recline.View = this.recline.View || {};
         },
 
 
-    });
-
-})(jQuery, recline.View);
-/*jshint multistr:true */
-this.recline = this.recline || {};
-this.recline.View = this.recline.View || {};
-
-(function ($, my) {
-
-    my.JQueryMobileFilter = Backbone.View.extend({
-        filterTemplates:{
-            toggle:' \
-      <div class="filter-{{type}} filter" id="{{ctrlId}}"> \
-        <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
-            <legend style="display:{{useLegend}}">{{label}}</legend>  \
-    		<div style="float:left;padding-right:10px;padding-top:2px;display:{{useLeftLabel}}">{{label}}</div> \
-          <input type="text" value="{{term}}" name="term" class="data-control-id" /> \
-          <input type="button" class="btn" id="setFilterValueButton" value="Set"></input> \
-        </fieldset> \
-      </div> \
-    ',
-            slider:' \
-	<script> \
-		$(document).ready(function(){ \
-			$( "#slider{{ctrlId}}" ).slider({ \
-				min: {{min}}, \
-				max: {{max}}, \
-				value: {{term}}, \
-				slide: function( event, ui ) { \
-					$( "#amount{{ctrlId}}" ).html( "{{label}}: "+ ui.value ); \
-				} \
-			}); \
-			$( "#amount{{ctrlId}}" ).html( "{{label}}: "+ $( "#slider{{ctrlId}}" ).slider( "value" ) ); \
-		}); \
-	</script> \
-      <div class="filter-{{type}} filter" id="{{ctrlId}}" style="min-width:100px"> \
-        <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
-            <legend style="display:{{useLegend}}">{{label}} \
-			<a class="js-remove-filter" href="#" title="Remove this filter">&times;</a> \
-		</legend>  \
-		  <label id="amount{{ctrlId}}">{{label}}: </label> \
-		  <div id="slider{{ctrlId}}" class="data-control-id"></div> \
-		  <br> \
-          <input type="button" class="btn" id="setFilterValueButton" value="Set"></input> \
-        </fieldset> \
-      </div> \
-    '
-        },
-        events:{
-            'change .slider-styled':'onStyledSliderValueChanged'
-        },
-        initialize:function (args) {
-            this.el = $(this.el);
-            _.bindAll(this, 'render', 'update', 'doAction');
-
-            this.model = args.model;
-            this.uid = args.id || Math.floor(Math.random() * 100000); // unique id of the view containing all filters
-
-            if (this.model) {
-                this.model.bind('query:done', this.render);
-                this.model.queryState.bind('selection:done', this.update);
-            }
-        },
-
-        render:function () {
-            var self = this;
-            var tmplData = {};
-
-            //  map them to the correct controlType and retain their values (start/from/term/...)
-//            if (self.model) {
-//                _.each(self.model.queryState.get('selections'), function (filter) {
-//                    for (var j in tmplData.filters) {
-//                        if (tmplData.filters[j].field == filter.field) {
-//                            tmplData.filters[j].list = filter.list
-//                            tmplData.filters[j].term = filter.term
-//                            tmplData.filters[j].start = filter.start
-//                            tmplData.filters[j].stop = filter.stop
-//                            self.fixHierarchicRadiobuttonsSelections(tmplData.filters[j])
-//                        }
-//                    }
-//                });
-//
-//                tmplData.fields = this.model.fields.toJSON();
-//
-//            }
-//
-//            var resultType = self.options.resultType || "filtered";
-//
-//            tmplData.filterRender = self.filterRender;
-//
-//            var out = Mustache.render(currTemplate, tmplData);
-//            this.el.html(out);
-            
-        },
-        update:function () {
-            var self = this;
-            // retrieve filter values (start/from/term/...)
-//            _.each(this.model.queryState.get('selections'), function (filter) {
-//                for (var j in self.activeFilters) {
-//                    if (self.activeFilters[j].field == filter.field) {
-//                        self.activeFilters[j].list = filter.list
-//                        self.activeFilters[j].term = filter.term
-//                        self.activeFilters[j].start = filter.start
-//                        self.activeFilters[j].stop = filter.stop
-//                        self.fixHierarchicRadiobuttonsSelections(self.activeFilters[j])
-//                    }
-//                }
-//            });
-        },
-        // action could be add or remove
-        doAction:function (eventType, fieldName, values, actionType, currFilter) {
-            var self=this;
-
-//            var res = [];
-//            // make sure you use all values, even 2nd or 3rd level if present (hierarchic radiobuttons only)
-//            var allValues = currFilter.values
-//            // TODO it is not efficient, record must be indexed by term
-//            // TODO conversion to string is not correct, original value must be used
-//            _.each(allValues, function(v) {
-//              if(v.record) {
-//                  var field = v.record.fields.get(currFilter.field);
-//                  if(_.contains(values,v.record.getFieldValueUnrendered(field).toString()))
-//                    res.push(v.record);
-//              };
-//            });
-//            var actions = this.options.actions;
-//            actions.forEach(function(currAction){
-//                currAction.action.doAction(res, currAction.mapping);
-//            });
-        },
-
-        onStyledSliderValueChanged:function (e, value) {
-//            e.preventDefault();
-//            var $target = $(e.target).parent().parent();
-//            var fieldId = $target.attr('data-filter-field');
-//            var fieldType = $target.attr('data-filter-type');
-//            var controlType = $target.attr('data-control-type');
-//            if (fieldType == "term") {
-//                var term = value;
-//                var activeFilter = this.findActiveFilterByField(fieldId, controlType);
-//                activeFilter.userChanged = true;
-//                activeFilter.term = term;
-//                activeFilter.list = [term];
-//                this.doAction("onStyledSliderValueChanged", fieldId, [term], "add", activeFilter);
-//            }
-//            else if (fieldType == "range") {
-//                var activeFilter = this.findActiveFilterByField(fieldId, controlType);
-//                activeFilter.userChanged = true;
-//                var fromTo = value.split(";");
-//                var from = fromTo[0];
-//                var to = fromTo[1];
-//                activeFilter.from = from;
-//                activeFilter.to = to;
-//                this.doAction("onStyledSliderValueChanged", fieldId, [from, to], "add", activeFilter);
-//            }
-        },
     });
 
 })(jQuery, recline.View);
