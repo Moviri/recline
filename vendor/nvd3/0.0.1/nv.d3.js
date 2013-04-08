@@ -503,6 +503,37 @@ nv.models.axis = function() {
               .select('text')
                 .style('opacity', 1);
           }
+          // add tooltips to the left tick labels if they're truncated
+          g.selectAll('text')
+		      .on('mouseover', function(d,i) {
+		          var currTick = d3.select(this).classed('hover', true);
+		          //console.log(currTick.node().offsetLeft+" - "+currTick.node().clientWidth)
+		          var currTickContainer = d3.select(currTick.node().parentNode);
+		          var coordStr = currTickContainer.attr("transform")
+		          var regex = /translate\(([\d\.]+),([\d\.]+)\)/;
+		          var coordX = coordStr.replace(regex, "$1");
+		          var coordY = coordStr.replace(regex, "$2");
+		          var mainGContainer = d3.select(container.node().ownerSVGElement).select("g.nvd3.nv-wrap")
+		          var marginStr = mainGContainer.attr("transform")
+		          var marginX = marginStr.replace(regex, "$1");
+		          var marginY = marginStr.replace(regex, "$2");	          
+		          
+		          var tooltipText = "<div class='tick-tooltip'>"+axis.tickFormat()(d)+"</div>"
+		          var offsetLeft = this.offsetLeft+parseInt(coordX)
+		          if (offsetLeft < 0)
+		        	  offsetLeft= 0;
+	
+		          var offsetTop = this.offsetTop+parseInt(coordY)+parseInt(marginY)
+		          if (offsetTop < 0)
+		        	  offsetTop= 0;
+		          
+		          if (parseInt(marginX) < currTick.node().clientWidth)
+		        	  nv.tooltip.show([offsetLeft, offsetTop], tooltipText, 'w', null, container.node().ownerSVGElement.parentNode);
+		        })
+		      .on('mouseout', function(d,i) {
+			      d3.select(this).classed('hover', false);
+			      nv.tooltip.cleanup();
+		        });
           break;
       }
       axisLabel
