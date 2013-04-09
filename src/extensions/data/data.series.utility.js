@@ -22,7 +22,7 @@ this.recline.Data.SeriesUtility = this.recline.Data.SeriesUtility || {};
 
  */
 (function($, my) {
-    my.createSeries = function (seriesAttr, unselectedColorValue, model, resultTypeValue, groupField, scaleTo100Perc, groupAllSmallSeries, NVD3Mode) {
+    my.createSeries = function (seriesAttr, unselectedColorValue, model, resultTypeValue, groupField, scaleTo100Perc, groupAllSmallSeries) {
         var series = [];
 
         var fillEmptyValuesWith = seriesAttr.fillEmptyValuesWith;
@@ -309,5 +309,55 @@ this.recline.Data.SeriesUtility = this.recline.Data.SeriesUtility || {};
     	}
         return series;
     };
+    
+    my.createSerieAnnotations = function(model, dateFieldname, textFieldname, series) {
+        var annotations = []
+    	if (model && dateFieldname && textFieldname)
+    	{
+        	var dateField = model.fields.get(dateFieldname)
+        	if (typeof dateField == "undefined" || dateField == null)
+        		throw "data.series.utility.CreateSerieAnnotations: field "+dateFieldname+" not found in model"
+        		
+        	var textField = model.fields.get(textFieldname)
+        	if (typeof textField == "undefined" || textField == null)
+        		throw "data.series.utility.CreateSerieAnnotations: field "+textFieldname+" not found in model"
+
+    		_.each(model.getRecords(), function(rec) {
+    			var allY = []
+    			var timestamp = rec.getFieldValueUnrendered(dateField).valueOf()
+    			_.each(series, function(serie, sIndex) {
+    				var recordSameTimestamp = _.find(serie.data, function(v) {return v.x == timestamp })
+    				if (recordSameTimestamp)
+    					allY.push(recordSameTimestamp.y)
+    				else
+					{
+    					for (var j = 1; j < serie.data.length; j++)
+    						if (serie.data[j-1].x < timestamp && serie.data[j].x > timestamp)
+							{
+    	    					var interpol = d3.scale.linear().domain([serie.data[j-1].x,serie.data[j].x]).range([serie.data[j-1].y,serie.data[j].y])
+    							allY.push({y: interpol(timestamp), serie: sIndex})
+    							break;
+							}
+					}
+    			})
+    			var maxY = _.max(allY, function(curr){ return curr.y; });
+    			var annotationAtSameTime = _.find(annotations, function(ann) { return ann.x == timestamp });
+    			if (annotationAtSameTime)
+    				annotationAtSameTime.text += "<br>"+rec.getFieldValue(textField)
+    			else
+    			{
+    				var i = annotations.length 
+        			var letter = String.fromCharCode(i % 27 +65);
+        			if (i > 26)
+        				letter += Math.floor(i/27)
+
+        			annotations.push({x: timestamp, text: rec.getFieldValue(textField), letter: letter, y: maxY.y || 0, serie: maxY.serie || 0 })
+    			} 
+    		})
+    		_.each(series, function(serie, sIndex) {
+    			serie.annotations = _.filter(annotations, function(ann) { return ann.serie == sIndex }) 
+    		})
+    	}
+    }
 
 }(jQuery, this.recline.Data.SeriesUtility));

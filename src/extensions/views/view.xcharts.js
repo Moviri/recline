@@ -127,6 +127,26 @@ this.recline.View = this.recline.View || {};
 
             if (self.options.state.yAxisTitle)
                 state.opts.paddingLeft = 90;  // accomodate space for y-axis title (original values was 60)
+            
+            if (state.useAnnotations)
+        	{
+                var mouseoverAnnotation = function (d) {
+                    var leftOffset = -($('html').css('padding-left').replace('px', '') + $('body').css('margin-left').replace('px', ''))+10;
+                    var topOffset = -5;
+                    var pos = $(this).offset();
+                    var content = '<div class="moda_tooltip annotation-description">'+d.text+'</div>'
+
+                    var topOffsetAbs = topOffset + pos.top;
+                    if (topOffsetAbs < 0) topOffsetAbs = -topOffsetAbs; 
+                    nv.tooltip.show([pos.left + leftOffset, topOffset + pos.top], content, (pos.left < self.el[0].offsetLeft + self.el.width()/2 ? 'w' : 'e'), null, self.el[0]);
+                }
+                var mouseoutAnnotation = function () {
+                	nv.tooltip.cleanup();
+                }
+                state.opts.mouseoverAnnotation = mouseoverAnnotation;
+                state.opts.mouseoutAnnotation = mouseoutAnnotation;
+        	}
+            
         },
 
         updateOptions: function() {
@@ -250,6 +270,7 @@ this.recline.View = this.recline.View || {};
                 state.group,
                 state.scaleTo100Perc,
                 state.groupAllSmallSeries);
+            
 
             var data = { main: [],
                 xScale: state.xScale,
@@ -259,6 +280,8 @@ this.recline.View = this.recline.View || {};
                 var serie = {color:d.color, name:d.key, label: d.label, data:_.map(d.values, function(c) { return {x:c.x, y:c.y, x_formatted: c.x_formatted, y_formatted: c.y_formatted, legendField: c.legendField, legendValue: c.legendValue } })};
                 data.main.push(serie);
             });
+            if (self.options.state.useAnnotations && series.length)
+            	recline.Data.SeriesUtility.createSerieAnnotations(self.options.state.useAnnotations.dataset, self.options.state.useAnnotations.dateField, self.options.state.useAnnotations.textField, data.main)
 
             self.series = data;
         }
