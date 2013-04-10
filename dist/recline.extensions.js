@@ -4080,18 +4080,21 @@ this.recline.Data.SeriesUtility = this.recline.Data.SeriesUtility || {};
 					}
     			})
     			var maxY = _.max(allY, function(curr){ return curr.y; });
-    			var annotationAtSameTime = _.find(annotations, function(ann) { return ann.x == timestamp });
-    			if (annotationAtSameTime)
-    				annotationAtSameTime.text += "<br>"+rec.getFieldValue(textField)
-    			else
-    			{
-    				var i = annotations.length 
-        			var letter = String.fromCharCode(i % 27 +65);
-        			if (i > 26)
-        				letter += Math.floor(i/27)
+    			if (maxY)
+				{
+        			var annotationAtSameTime = _.find(annotations, function(ann) { return ann.x == timestamp });
+        			if (annotationAtSameTime)
+        				annotationAtSameTime.text += "<br>"+rec.getFieldValue(textField)
+        			else
+        			{
+        				var i = annotations.length 
+            			var letter = String.fromCharCode(i % 27 +65);
+            			if (i > 26)
+            				letter += Math.floor(i/27)
 
-        			annotations.push({x: timestamp, text: rec.getFieldValue(textField), letter: letter, y: maxY.y || 0, serie: maxY.serie || 0 })
-    			} 
+            			annotations.push({x: timestamp, text: rec.getFieldValue(textField), letter: letter, y: maxY.y || 0, serie: maxY.serie || 0 })
+        			} 
+				}
     		})
     		_.each(series, function(serie, sIndex) {
     			serie.annotations = _.filter(annotations, function(ann) { return ann.serie == sIndex }) 
