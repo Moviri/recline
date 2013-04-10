@@ -368,7 +368,7 @@
 				/**
 				 * Handle change of datePreset
 				 */
-				$daterangePreset.change(function() {
+				$daterangePreset.change(function(ev) {
 					var date_preset = internal.getDaterangePreset();
 					if (date_preset.parameters) {
 						//console.log(internal.getParameter1());
@@ -383,8 +383,13 @@
 					internal.recalculateDaterange();
 
 					// customization. When daterangePreset changes, comparisonPreset reverts to previous period
-					$comparisonPreset.val("previousperiod");
-					$comparisonPreset.change();
+					// the IF condition checks if the caller is actually the daterangePreset dropdown and not
+					// some other control that bubbled the event all the way through
+					if (ev && ev.originalEvent && ev.originalEvent.currentTarget == this)
+					{
+						$comparisonPreset.val("previousperiod");
+						$comparisonPreset.change();
+					}
 				});
 				
 				$parameter1.change(function() {
