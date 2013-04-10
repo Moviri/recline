@@ -491,7 +491,9 @@ var _scales = {
     }
     if (storage.lineAnnotationTexts)
 	{
-        fontsize = storage.lineAnnotationTexts.node().clientHeight || 12;
+    	var firstTextNode = storage.lineAnnotationTexts.node()
+    	if (firstTextNode)
+    		fontsize = firstTextNode.clientHeight;
 
         storage.lineAnnotationTexts.transition().duration(timing)
 	    	.style('opacity', 1)
