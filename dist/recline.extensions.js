@@ -9477,7 +9477,7 @@ this.recline.View = this.recline.View || {};
                             }
                             else
                         	{
-                            	var d = retrieveDMYDate($(this).val()).getTime()
+                            	var d = self.retrieveDMYDate($(this).val())
                             	self.applyTextInputDateChange(d, $(this).val(), self, true, true)
                         	}
                             self.maindateFromChanged = false
@@ -9507,8 +9507,8 @@ this.recline.View = this.recline.View || {};
                             }
                             else
                         	{
-                            	var d = retrieveDMYDate($(this).val()).getTime() + 24 * 3600000 - 1
-                            	self.applyTextInputDateChange(d, $(this).val(), self, true, false)
+                            	var d = self.retrieveDMYDate($(this).val()).getTime() + 24 * 3600000 - 1
+                            	self.applyTextInputDateChange(new Date(d), $(this).val(), self, true, false)
                         	}
                             self.maindateToChanged = false
                         }
@@ -9609,7 +9609,7 @@ this.recline.View = this.recline.View || {};
                                 }
                                 else
                             	{
-                                	var d = retrieveDMYDate($(this).val()).getTime()
+                                	var d = self.retrieveDMYDate($(this).val())
                                 	self.applyTextInputDateChange(d, $(this).val(), self, false, true)
                             	}
                                 self.comparedateFromChanged = false
@@ -9639,8 +9639,8 @@ this.recline.View = this.recline.View || {};
                                 } 
                                 else
                             	{
-                                	var d = retrieveDMYDate($(this).val()).getTime() + 24 * 3600000 - 1
-                                	self.applyTextInputDateChange(d, $(this).val(), self, false, false)
+                                	var d = self.retrieveDMYDate($(this).val()).getTime() + 24 * 3600000 - 1
+                                	self.applyTextInputDateChange(new Date(d), $(this).val(), self, false, false)
                             	}
                                 self.comparedateToChanged = false
                             }

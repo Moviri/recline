@@ -380,8 +380,11 @@
 						$parameters.hide();
 					}
 					$('.dr1', $dropdown).prop('disabled', ($daterangePreset.val() == 'custom' ? false : true));
-					
 					internal.recalculateDaterange();
+
+					// customization. When daterangePreset changes, comparisonPreset reverts to previous period
+					$comparisonPreset.val("previousperiod");
+					$comparisonPreset.change();
 				});
 				
 				$parameter1.change(function() {

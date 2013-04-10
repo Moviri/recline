@@ -629,19 +629,20 @@
 	                      // get the very end of the day clicked
 	                      val = (tmp.setHours(23,59,59,0)).valueOf();
 	                      
-	                      if (val < options.date[other]) {
-	                        // second range click < first
-	                        options.date[1] = options.date[0] + 86399000;  // starting date + 1 day
-	                        options.date[0] = val - 86399000;  // minus 1 day
-
-	                        options.date[second] = options.date[first] + 86399000;  // starting date + 1 day
-	                        options.date[first] = val - 86399000;  // minus 1 day
-	                      } else {
+// DO NOT CHANGE THE OTHER DATES!! Only change the one currently selected by the user
+//	                      if (val < options.date[other].valueOf()) {
+//	                        // second range click < first
+//	                        options.date[1] = options.date[0].valueOf() + 86399000;  // starting date + 1 day
+//	                        options.date[0] = val - 86399000;  // minus 1 day
+//
+//	                        options.date[second] = options.date[first].valueOf() + 86399000;  // starting date + 1 day
+//	                        options.date[first] = val - 86399000;  // minus 1 day
+//	                      } else {
 	                        // initial range click, or final range click >= first
 	  					  options.date[second] = val;  
-	                      }
-	                      options.lastSel = !options.lastSel;
-	                      changedRange = !options.lastSel;
+//	                      }
+                        options.lastSel = !options.lastSel;
+	                    changedRange = !options.lastSel;
 	  	                var modulo = options.mode == 'range' ? 2 : 4;
 		                options.lastSel = (current + 1) % modulo;
 					}
@@ -836,7 +837,7 @@
             	  if (mode != 'tworanges')
             		  for (var i = 0; i < date.length; i++) {
             			  date[i] = ((new Date(date[i])).setHours(0,0,0,0)).valueOf();
-            		  }
+            		  }            	  
                 if (mode == 'range') {
                   // for range mode, create the other end of the range
                   if(date.length == 1) date.push(new Date(date[0]));
