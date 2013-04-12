@@ -1,3 +1,3 @@
-function showMe() { /*FOLD_ME*/
+function showMe() {
 	alert($('#myTextInput').val());
 }

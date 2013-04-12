@@ -8,6 +8,7 @@
 .w40  {width:40%;}
 .w48  {width:48%;}
 .w50  {width:50%;}
+.w58  {width:58%;}
 .w60  {width:60%;}
 .w70  {width:70%;}
 .w75  {width:75%;}
@@ -71,3 +72,7 @@
 .btn.dimmed {
 	opacity: 0.7;	
 }
+
+.css-treeview a i {
+	margin-left: 8px;
+} 

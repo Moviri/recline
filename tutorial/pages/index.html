@@ -14,7 +14,7 @@ root: ../../
 					{% include treeview.html %}
 				</div>
 				<div class="w80 right h100" >
-					<div id="__leftPanel" class="w50 left h100" >
+					<div id="__leftPanel" class="w40 left h100" >
 						<div id="__htmlPanel" class="h30 greyborder">
 							<div class="w100 h100">
 								<span class="label label-info dimmed" style="position:relative;top:0px;right:0px">HTML</span>
@@ -36,8 +36,8 @@ root: ../../
 						</div>
 					</div>
 					<div id="__verticalDivider" class="h100 left vertic-divider"></div>
-					<div id="__rightPanel" class="w48 right h100">
-						<div id="__cssPanel" class="h30 greyborder">
+					<div id="__rightPanel" class="w58 right h100">
+						<div id="__cssPanel" class="h20 greyborder">
 							<div class="w100  h100">
 								<span class="label label-info dimmed" style="position:relative;top:0px;right:0px">CSS</span>
 								<button type="button" class="btn btn-info btn-mini dimmed" onclick="__minimizePanel('__cssPanel', '__resultPanel')" style="position:relative;top:0px;left:10px"><i class="icon-chevron-up icon-white"></i></button>
@@ -47,7 +47,7 @@ root: ../../
 							</div>
 						</div>
 						<div id="__horizRightDivider" class="w100 horiz-divider"></div>
-						<div id="__resultPanel" class="h70 greyborder">
+						<div id="__resultPanel" class="h80 greyborder">
 							<button type="button" class="btn btn-primary btn-mini" onclick="__runCode()" style="position:relative;top:0px;right:0px">RUN</button>
 							<button type="button" class="btn btn-info btn-mini dimmed" onclick="__minimizePanel('__resultPanel', '__cssPanel')" style="position:relative;top:0px;left:10px"><i class="icon-chevron-down icon-white"></i></button>
 							<button type="button" class="btn btn-info btn-mini dimmed" onclick="__maximizePanel('__resultPanel', '__cssPanel')" style="position:relative;top:0px;left:5px"><i class="icon-chevron-up icon-white"></i></button>
@@ -246,6 +246,10 @@ root: ../../
 			if (helpCodename)
 				$("#__helpDialogContent").html(__IO("help", helpCodename))
 			else $("#__helpDialogContent").html("")
+			
+			$("#__div_result").empty()
+			
+			__runCode();
 		}
 		
 		var __MIN_HEIGHT = 80;
