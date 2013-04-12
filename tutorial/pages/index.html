@@ -1,0 +1,215 @@
+---
+layout: moviri-release
+title: Tutorial
+recline-deps: true
+root: ../../
+---
+<link href="style.css" rel="stylesheet" type="text/css">
+<link href="treeview.css" rel="stylesheet" type="text/css">
+
+		<div style="width:1920px;height:950px">
+			<form style="width:98%;height:98%">
+				<div class="w20 left h100 greyborder">
+					<h4>Tutorial List</h4>
+					{% include treeview.html %}
+				</div>
+				<div class="w75 right h100" >
+					<div class="w100 h100">
+						<div id="leftPanel" class="w50 left h100" >
+							<div id="htmlPanel" class="h30 greyborder">
+								<div class="w100 h100">
+									<span class="label label-info" style="opacity:0.5;position:relative;top:0px;right:0px">HTML</span>
+									<textarea id="areaHtml" class="w100 h100"></textarea>
+								</div>
+							</div>
+							<div id="horizLeftDivider" class="w100 horiz-divider"></div>
+							<div id="jsPanel" class="h70 greyborder">
+								<div class="w100  h100">
+									<span class="label label-info" style="opacity:0.5;position:relative;top:0px;right:0px">Javascript</span>
+									<textarea id="areaJS" class="w100 h100"></textarea>
+								</div>
+							</div>
+						</div>
+						<div id="verticalDivider" class="h100 left vertic-divider"></div>
+						<div id="rightPanel" class="w48 right h100">
+							<div id="cssPanel" class="h30 greyborder">
+								<div class="w100  h100">
+									<span class="label label-info" style="opacity:0.5;position:relative;top:0px;right:0px">CSS</span>
+									<textarea id="areaCSS" class="w100 h100"></textarea>
+								</div>
+							</div>
+							<div id="horizRightDivider" class="w100 horiz-divider"></div>
+							<div id="resultPanel" class="h70 greyborder">
+								<button type="button" class="btn btn-primary btn-mini" onclick="runCode()" style="position:relative;top:0px;right:0px">RUN</button>
+								<div id="div_result" class="w100 h100"></div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</form>
+		</div>
+		
+		<script type="text/javascript">
+
+		var scriptElem = null;
+		var hiddenScriptElem = null;
+		var cssElem = null;
+		
+		var jsCodeMirror = CodeMirror.fromTextArea(document.getElementById('areaJS'), {
+			mode: 'javascript',
+			indentWithTabs: true,
+			smartIndent: true,
+			lineNumbers: true,
+			matchBrackets : true,
+			autoCloseBrackets: true,
+			autofocus: true,
+			lineWrapping: true
+		});
+		
+//		jsCodeMirror.setValue("function showMe() { alert($('#myTextInput').val());}")
+
+		var htmlCodeMirror = CodeMirror.fromTextArea(document.getElementById('areaHtml'), {
+			mode: 'text/html',
+			indentWithTabs: true,
+			smartIndent: true,
+			lineNumbers: true,
+			matchBrackets : true,
+			autoCloseTags: true,
+			autofocus: true,
+			lineWrapping: true
+		});
+
+		//htmlCodeMirror.setValue("<input type='text' id='myTextInput' value='CIAO!!!'></input><br><button type='button' id='myButton' onclick='showMe()'>TEST ME!</button>")
+
+		var cssCodeMirror = CodeMirror.fromTextArea(document.getElementById('areaCSS'), {
+			mode: 'css',
+			indentWithTabs: true,
+			smartIndent: true,
+			lineNumbers: true,
+			matchBrackets : true,
+			autoCloseBrackets: true,
+			autofocus: true,
+			lineWrapping: true
+		});
+		
+// 		cssCodeMirror.setValue("#myTextInput { \
+//   margin:100px; \
+// } \
+// \
+// #myButton { \
+//   margin:100px; \
+// }")
+
+		function assignDividerEvents($elem, $panel1, $panel2, horiz) {
+			$elem.data('dragMode', 0)
+			//console.log($elem[0].id+ " DRAGMODE = "+$elem.data('dragMode'))
+			
+			$elem.on('mousedown', function(event) {
+				$elem.data('dragMode', 1)
+				//console.log($elem[0].id+ " DRAGMODE = "+$elem.data('dragMode'))
+			});
+
+			$(document.body).on('mouseup', function(event) {
+				$elem.data('dragMode', 0)
+				//console.log($elem[0].id+ " DRAGMODE = "+$elem.data('dragMode'))
+			});
+
+			$(document.body).on('mousemove', function(event) {
+				if ($elem.data('dragMode') == 1)
+				{
+					//console.dir(event.originalEvent)
+					event.stopPropagation();
+					
+					function fixDelta(delta) {
+						if (delta > 0 && delta > 20)
+							delta = 20
+						else if (delta < 0 && delta < -20)
+							delta = -20;
+						
+						return delta;
+					}
+					if (horiz)
+					{
+						var deltaY = fixDelta(event.originalEvent.mozMovementY || event.originalEvent.webkitMovementY || event.originalEvent.offsetY - $panel1.height())
+						var topH = $panel1.height()+deltaY
+						var bottomH = $panel2.height()-deltaY
+						if (topH > 50 && bottomH > 50)
+						{
+							$panel1.height(topH)
+							$panel2.height(bottomH)
+						}
+					}
+					else
+					{
+						var deltaX = fixDelta(event.originalEvent.mozMovementX || event.originalEvent.webkitMovementX || event.originalEvent.offsetX - $panel1.width())
+						var leftW = $panel1.width()+deltaX
+						var rightW = $panel2.width()-deltaX
+						if (leftW > 50 && rightW > 50)
+						{
+							$panel1.width(leftW)
+							$panel2.width(rightW)
+						}
+					}
+					
+				}
+			});
+		}
+		
+		assignDividerEvents($('#horizLeftDivider'), $('#htmlPanel'), $('#jsPanel'), true)
+		assignDividerEvents($('#horizRightDivider'), $('#cssPanel'), $('#resultPanel'), true)
+		assignDividerEvents($('#verticalDivider'), $('#leftPanel'), $('#rightPanel'), false)
+		
+		loadPanels("demo", "demo", "demo")
+
+		function runCode() {
+			if (scriptElem)
+				document.body.removeChild(scriptElem);
+
+			$("#div_result").empty()
+			$("#div_result").append("<style>"+cssCodeMirror.getValue()+"</style> "+htmlCodeMirror.getValue())
+				
+			scriptElem = document.createElement('script');
+			scriptElem.textContent = jsCodeMirror.getValue();
+			document.body.appendChild(scriptElem);
+		}
+		
+		function IO(path, filename) {
+			var ext;
+			switch(path) {
+				case "css" : ext = ".css";break;
+				case "html" : ext = ".html";break;
+				default : ext = ".js";
+			}
+			var pathname = "../code/"+path+"/"+filename+ext
+			var X = !window.XMLHttpRequest ? new ActiveXObject("Microsoft.XMLHTTP") : new XMLHttpRequest;
+			X.open("GET", pathname, false);
+			X.send("");
+			
+			return X.responseText;
+		}
+		
+		function loadPanels(htmlCodename, jsCodename, cssCodename, hiddenCodename) {
+			if (hiddenCodename)
+			{
+				if (hiddenScriptElem)
+					document.body.removeChild(hiddenScriptElem);
+				
+				hiddenScriptElem = document.createElement('script');
+				hiddenScriptElem.textContent = IO("hidden", hiddenCodename);
+				document.body.appendChild(hiddenScriptElem);
+			}
+			if (htmlCodename)
+				htmlCodeMirror.setValue(IO("html", htmlCodename))
+			else htmlCodeMirror.setValue("")
+			
+			if (jsCodename)
+				jsCodeMirror.setValue(IO("js",jsCodename))	
+			else jsCodeMirror.setValue("")
+
+			if (cssCodename)
+				cssCodeMirror.setValue(IO("css", cssCodename))
+			else cssCodeMirror.setValue("")
+				
+		}
+
+		</script>
