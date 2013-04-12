@@ -1,0 +1,4 @@
+<p>
+This shows two slickgrids populated by a model and an aggegated virtual model.
+First model variable is "dataset". Virtual model variable is "virtual"
+</p> 
