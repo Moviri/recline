@@ -8707,26 +8707,6 @@ this.recline.View = this.recline.View || {};
                 self.discardSelectionEvents = false
             });
             
-            this.grid.onClick.subscribe(function (e, args) {
-            	if (e.type == "click" && e.ctrlKey == false && e.shiftKey == false && e.button == 0)
-        		{
-            		var activeCell = args.grid.getActiveCell();
-				    if (activeCell && activeCell.row == args.row)
-				    {
-//				    	var rows = args.grid.getSelectedRows();
-//				    	for (var j = 0; j < rows.length; j++)
-//				    		if (rows[j] == activeCell.row)
-//							  {
-//				    			  rows.splice(j, 1)
-//				    			  break;
-//							  }
-//				    	  args.grid.setSelectedRows(rows);	  
-//				    	  args.grid.resetActiveCell();
-				    	args.grid.invalidate();
-				      }
-        		}
-            });
-
             // Column sorting
 //    var sortInfo = this.model.queryState.get('sort');
 //    // TODO sort is not present in slickgrid
@@ -8999,7 +8979,7 @@ this.recline.View = this.recline.View || {};
         template:'<figure style="clear:both; width: {{width}}px; height: {{height}}px;" id="{{uid}}"></figure><div class="xCharts-title-x" style="width:{{width}}px;text-align:center;margin-left:50px">{{xAxisTitle}}</div>',
 
         initialize:function (options) {
-
+console.log('initialize xchart');
             this.el = $(this.el);
             _.bindAll(this, 'render', 'redraw');
 
@@ -9008,8 +8988,8 @@ this.recline.View = this.recline.View || {};
             this.model.fields.bind('reset', this.render);
             this.model.fields.bind('add', this.render);
 
-            //this.model.bind('query:done', this.redraw);
-            this.model.records.bind('reset', this.redraw);
+            this.model.bind('query:done', this.redraw);
+           // this.model.records.bind('reset', this.redraw);
             this.model.queryState.bind('selection:done', this.redraw);
 
             this.uid = options.id || ("d3_" + new Date().getTime() + Math.floor(Math.random() * 10000)); // generating an unique id for the chart
@@ -9030,7 +9010,7 @@ this.recline.View = this.recline.View || {};
         },
 
         render:function (width) {
-//            console.log("View.xCharts: render");
+        	console.log("View.xCharts: render");
             if (!isNaN(width)){
         		this.width = width;	
         	}
@@ -9055,10 +9035,12 @@ this.recline.View = this.recline.View || {};
         },
 
         redraw:function () {
-            var self = this;
+        	console.log("View.xCharts: redraw");
+        	
+        	var self = this;
             self.trigger("chart:startDrawing")
 
-//            console.log("View.xCharts: redraw");
+            console.log(self.model.records.toJSON());
 
             if (false /*self.graph*/)
                 self.updateGraph();
@@ -9069,7 +9051,7 @@ this.recline.View = this.recline.View || {};
         },
 
         updateGraph:function () {
-            //console.log("View.xCharts: updateGraph");
+            console.log("View.xCharts: updateGraph");
             var self = this;
             self.updateSeries();
             
@@ -9154,6 +9136,31 @@ this.recline.View = this.recline.View || {};
             }
         },
 
+        changeDataset: function(model) {
+        	
+        	_.bindAll(this, 'render', 'redraw');
+
+//        	this.model.off('change', this.render);
+//        	this.model.fields.off('reset', this.render);
+//        	this.model.fields.off('add', this.render);
+//
+//        	this.model.off('query:done', this.redraw);
+//        	this.model.queryState.off('selection:done', this.redraw);
+
+        	this.model.unbind();
+        	
+        	this.model = model;
+
+        	this.model.bind('change', this.render);
+        	this.model.fields.bind('reset', this.render);
+        	this.model.fields.bind('add', this.render);
+
+        	this.model.bind('query:done', this.redraw);
+        	this.model.queryState.bind('selection:done', this.redraw);
+
+        	
+    	},
+        	
         renderGraph:function () {
             //console.log("View.xCharts: renderGraph");
 
@@ -12115,6 +12122,7 @@ this.recline.View = this.recline.View || {};
         			</div> \
         		</div>',
         buttonTemplate: '<button class="btn btn-mini grouped-button {{selected}}" val="{{value}}">{{valueLabel}}</button>',
+        buttonTemplate2: '<button class="btn btn-mini btn-tooltip grouped-button {{selected}}"  data-toggle="tooltip" title="{{valueLabel}}" val="{{value}}">{{index}}</button>',
         dropdownTemplate: '<select id="dropdown{{uid}}_{{numId}}" multiple="multiple"> \
         					{{#options}} \
         						<option value="{{fullValue}}" {{#selected}}selected="selected"{{/selected}}>{{value}}</option> \
@@ -12141,7 +12149,9 @@ this.recline.View = this.recline.View || {};
             this.noAllButton = args.sourceField.noAllButton || false;
             this.exclusiveButtonValue = args.sourceField.exclusiveButtonValue || (!this.noAllButton ? "All" : undefined);
             this.separator = this.sourceField.separator
-
+            this.tooltipsOnly = args.tooltipsOnly;
+            this.tooltipValueSeparator = args.tooltipValueSeparator;
+            this.tooltipButtonLabelField = args.tooltipButtonLabelField;
             if (this._sourceDataset) {
                 this._sourceDataset.bind('query:done', this.render);
                 this._sourceDataset.queryState.bind('selection:done', this.update);
@@ -12171,7 +12181,7 @@ this.recline.View = this.recline.View || {};
             tmplData.allButtonSelected = (records && self.sourceField.list && records.length == self.sourceField.list.length && !self.noAllButton)
             
             var alreadyInsertedValues = []
-        	_.each(records, function(record) {
+        	_.each(records, function(record, index) {
                 var field = self._sourceDataset.fields.get(self.sourceField.field);
                 if(!field) {
                     throw "widget.genericfilter: unable to find field ["+self.sourceField.field+"] in dataset";
@@ -12179,19 +12189,29 @@ this.recline.View = this.recline.View || {};
 
                 var fullLevelValue = record.getFieldValue(field);
                 var valueUnrendered = record.getFieldValueUnrendered(field);
+                
+                var indexLabel;
+                if (self.tooltipButtonLabelField){
+                	indexLabel = record.getFieldValue(self._sourceDataset.fields.get(self.tooltipButtonLabelField));
+                }
+                if (indexLabel == null || indexLabel == ''){
+                	indexLabel = index;
+                }
+                
+                
                 if (!_.contains(alreadyInsertedValues, fullLevelValue))
             	{
                     if (self.separator && fullLevelValue.indexOf(self.separator) > 0)
                 	{
                     	var levelValues = fullLevelValue.split(self.separator, 2);
                     	if (self.buttonsData[levelValues[0]] && self.buttonsData[levelValues[0]].options)
-                    		self.buttonsData[levelValues[0]].options.push({fullValue: fullLevelValue, value: levelValues[1], record: record, selected: !tmplData.allButtonSelected && _.contains(self.sourceField.list, fullLevelValue)})
+                    		self.buttonsData[levelValues[0]].options.push({fullValue: fullLevelValue, value: levelValues[1], record: record, selected: !tmplData.allButtonSelected && _.contains(self.sourceField.list, fullLevelValue), index: indexLabel})
                     	else
-                    		self.buttonsData[levelValues[0]] = { self: self, options: [{fullValue: fullLevelValue, value: levelValues[1], record: record, selected: !tmplData.allButtonSelected && _.contains(self.sourceField.list, fullLevelValue)}]}
+                    		self.buttonsData[levelValues[0]] = { self: self, options: [{fullValue: fullLevelValue, value: levelValues[1], record: record, selected: !tmplData.allButtonSelected && _.contains(self.sourceField.list, fullLevelValue), index: indexLabel}]}
                 	}
                     else
                 	{
-                    	self.buttonsData[valueUnrendered] = { value: fullLevelValue, valueUnrendered: valueUnrendered, record: record, selected: !tmplData.allButtonSelected && _.contains(self.sourceField.list, valueUnrendered), self: self }
+                    	self.buttonsData[valueUnrendered] = { value: fullLevelValue, valueUnrendered: valueUnrendered, record: record, selected: !tmplData.allButtonSelected && _.contains(self.sourceField.list, valueUnrendered), self: self, index: indexLabel }
                 	}
                     alreadyInsertedValues.push(fullLevelValue)
             	}
@@ -12223,6 +12243,9 @@ this.recline.View = this.recline.View || {};
 
             var out = Mustache.render(this.template, tmplData);
             this.el.html(out);
+            
+            
+            self.el.find(".btn-tooltip").tooltip({html:true, placement:"bottom"});
             
 			var buttonText = function(options) {
 				var $select = $(options.context);
@@ -12308,12 +12331,21 @@ this.recline.View = this.recline.View || {};
     		}
         	else
     		{
+            	tmplData.index = buttonData.index;
         		tmplData.value = buttonData.valueUnrendered;
-        		tmplData.valueLabel = buttonData.value;
+        		
         		if (buttonData.selected)
         			tmplData.selected = " "+self._selectedClassName+" "; 
-        				
-                return Mustache.render(self.buttonTemplate, tmplData);
+        		
+        		if (self.tooltipsOnly){
+        			if (buttonData.value && self.tooltipValueSeparator) 
+        				tmplData.valueLabel = buttonData.value.split(self.tooltipValueSeparator).join('<br/>') 
+        			else tmplData.valueLabel = buttonData.value || "";
+        			return Mustache.render(self.buttonTemplate2, tmplData);
+        		} else {
+        			tmplData.valueLabel = buttonData.value;
+        			 return Mustache.render(self.buttonTemplate, tmplData);
+        		}
     		}
         },
 
@@ -12820,6 +12852,7 @@ this.recline.View = this.recline.View || {};
 
         redraw: function () {
             var self = this;
+            if(!self.visible)  { return }
             var state = self.options.state;
 
             var type;
@@ -14180,6 +14213,7 @@ this.recline.View = this.recline.View || {};
         render:function () {
             var self = this;
 
+
             var mapJson = this.options.state["mapJson"];
             var layer = this.options.state["layer"];
             var showRegionNames = this.options.state["showRegionNames"]
@@ -14541,15 +14575,16 @@ this.recline.View = this.recline.View || {};
 	    var domain = [Infinity, -Infinity];
 
             var records = _.map(this.options.model.getRecords(type), function (record) {
- 		domain = [
-                    Math.min(domain[0], record.attributes[state.dimensionField]),
-                    Math.max(domain[1], record.attributes[state.dimensionField])
-                ];
 
                 return { key: record.attributes[state.wordField], value: record.attributes[state.dimensionField]};
             });
 
-		if (domain[0] == domain[1]) {
+        records =  _.sortBy(records, function(f){ return -f.value; });
+
+            domain = [records[0].value, records[records.length-1].value];
+
+
+            if (domain[0] == domain[1]) {
 			domain = [domain[0] / 2, domain[0] * 2];
 		}
             	self.graph = d3.select("#" + self.uid);
