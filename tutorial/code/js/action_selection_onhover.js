@@ -1,50 +1,39 @@
 var dataset = new recline.Model.Dataset({ /*FOLD_ME*/
-    url:'../data/Noleggi5.csv',
+    url:'../data/Noleggi6.csv',
     backend:'csv',
     id: 'model_noleggi',
     fieldsType: [
             {id:'Data', type:'date'},
-            {id:'Regione', type:'string'},
             {id:'Noleggi auto',   type:'number'},
             {id:'Noleggi moto',   type:'number'},
-            {id:'Noleggi bici',   type:'number'}
+            {id:'Noleggi bici',   type:'number'},
+            {id:'Num noleggi auto',   type:'number'},
+            {id:'Num noleggi moto',   type:'number'},
+            {id:'Num noleggi bici',   type:'number'}
            ]
 });
 
-var datasetSomme = new recline.Model.VirtualDataset({ /*FOLD_ME*/
-	dataset: dataset, 
-	aggregation: { 
-		dimensions: ["Regione"], 
-		measures: ["Noleggi auto", "Noleggi moto", "Noleggi bici"], 
-		aggregationFunctions: ["sum"] 
-	},
-	fieldLabelForFields: "{originalFieldLabel}"   // ensure field names are retained (don't add "_sum" to the label)
-});
-
-var filteredDataset= new recline.Model.FilteredDataset({ dataset: dataset });
-
 dataset.fetch();
-filteredDataset.query();
 
 var myAction = new recline.Action({
     filters:{
         filter_country: {type:"term", field:"Regione", fieldType:"string"}
     },
     models: [{
-        model: filteredDataset,
+        model: dataset,
         filters:["filter_country"]
         }],
-    type:["filter"]
+    type:["selection"]
 });
 
 var $el = $('#chart_noleggi'); 
 var graphNoleggi = new recline.View.NVD3Graph({
-    model: datasetSomme,
+    model: dataset,
     state:{
-        group: 'dimension',
+        group: 'Regione',
         series: {
             type: "byFieldName", 
-            valuesField: ['Noleggi auto_sum', 'Noleggi moto_sum', 'Noleggi bici_sum']
+            valuesField: ['Noleggi auto', 'Noleggi moto', 'Noleggi bici']
         }, 
         graphType: 'multiBarHorizontalChart',
         width: 800,
@@ -67,14 +56,15 @@ graphNoleggi.render();
 
 var $el1 = $('#grid1');
 var grid1 = new recline.View.SlickGridGraph({
-    model: filteredDataset,
+    model: dataset,
     el:$el1,
     state:{  fitColumns:true,
         useHoverStyle:true,
         useStripedStyle:true,
-        useCondensedStyle:true
+        useCondensedStyle:true,
+        selectedCellFocus: true
     }
-
 });
 grid1.visible = true;
 grid1.render();
+
