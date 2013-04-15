@@ -82,13 +82,15 @@ root: ../../
 
 		var __jsCodeMirror = CodeMirror.fromTextArea(document.getElementById('__areaJS'), {
 			mode: 'javascript',
+			gutters: ["CodeMirror-lint-markers"],
 			indentWithTabs: true,
 			smartIndent: true,
 			lineNumbers: true,
 			matchBrackets : true,
 			autoCloseBrackets: true,
 			autofocus: true,
-			lineWrapping: true
+			lineWrapping: true,
+			lintWith: CodeMirror.javascriptValidator			
 		});
 		__jsCodeMirror.on("gutterClick", __foldFuncJS_CSS);
 		
@@ -179,13 +181,30 @@ root: ../../
 
 		function __runCode() {
 			if (__scriptElem)
-				document.body.removeChild(__scriptElem);
+			{
+				$(document.body).remove("#__myRunningCode")
+				//console.log($("#__myRunningCode"))
+				__scriptElem = undefined
+			}
 
 			$("#__div_result").empty()
 			$("#__div_result").append("<style>"+__cssCodeMirror.getValue()+"</style> "+__htmlCodeMirror.getValue())
 				
 			__scriptElem = document.createElement('script');
-			__scriptElem.textContent = __jsCodeMirror.getValue();
+			__scriptElem.id = "__myRunningCode"
+			__scriptElem.async = "async"
+			__scriptElem.defer = "defer"
+			try {
+				eval(__jsCodeMirror.getValue())	
+			}
+			catch(_err1)
+			{
+				alert(_err1)
+				return
+			}
+			
+//			__scriptElem.textContent = "try {"+__jsCodeMirror.getValue()+"} catch(__err) { alert('code is wrong!') }"
+			__scriptElem.textContent = __jsCodeMirror.getValue()
 			document.body.appendChild(__scriptElem);
 		}
 		

@@ -173,66 +173,68 @@ this.recline.View = this.recline.View || {};
                 if (typeof graphModel == "undefined")
                 	throw "NVD3 Graph type "+graphType+" not found!"
                 
-                if (self.options.state.options.noTicksX)
-                    self.chart.xAxis.tickFormat(function (d) { return ''; });
-                else
+                if (self.options.state.options)
             	{
-                	var xField = self.model.fields.get(self.options.state.group)
-                	if (xField.attributes.type == "date")
-                		self.chart.xAxis.tickFormat(function (d) {
-                			return d3.time.format("%d-%b")(new Date(d)); 
-                		});
+	                if (self.options.state.options.noTicksX)
+	                    self.chart.xAxis.tickFormat(function (d) { return ''; });
+	                else
+	            	{
+	                	var xField = self.model.fields.get(self.options.state.group)
+	                	if (xField.attributes.type == "date")
+	                		self.chart.xAxis.tickFormat(function (d) {
+	                			return d3.time.format("%d-%b")(new Date(d)); 
+	                		});
+	            	}
+	                if (self.options.state.options.noTicksY)
+	                    self.chart.yAxis.tickFormat(function (d) { return ''; });                	
+	                if (self.options.state.options.customTooltips)
+	            	{
+	                	var leftOffset = 10;
+	                	var topOffset = 0;
+	                    //console.log("Replacing original tooltips")
+	                    
+	                    var xfield = self.model.fields.get(self.state.attributes.group);
+	                    var yfield = self.model.fields.get(self.state.attributes.series);
+	                    
+	                    graphModel.dispatch.on('elementMouseover.tooltip', function(e) {
+	                    	var pos;
+	                    	if (e.e && e.e.pageY && e.e.pageX)
+	                    		pos = {top: e.e.pageY, left: e.e.pageX}
+	                    	else pos = {left: e.pos[0] + +svgElem.offset().left + 50, top: e.pos[1]+svgElem.offset().top}
+	                    	
+	                        var values;
+	                    	if (graphType.indexOf("Horizontal") >= 0)
+	                		{
+	                        	values = { 
+	                            		x: e.point.x,
+	                            		y: (yfield ? self.getFormatter(yfield.get('type'))(e.point.y) : e.point.y),
+	                            		y_orig: e.point.y_orig || e.point.y,
+	                    				yLabel: e.series.key,
+	                    				xLabel: (xfield ? xfield.get("label") : "") 
+	                    			}
+	                		}
+	                    	else
+	                		{
+	                        	values = { 
+	                            		x: (xfield ? self.getFormatter(xfield.get('type'))(e.point.x) : e.point.x),
+	                            		y: e.point.y,
+	                            		y_orig: e.point.y_orig || e.point.y,
+	                    				xLabel: e.series.key,
+	                    				yLabel: (yfield ? yfield.get("label") : "")
+	                    			}
+	                		}
+	                    	values["record"] = e.point.record.attributes;
+	                    		
+	                        var content = Mustache.render(self.options.state.options.customTooltips, values);
+	
+	                        nv.tooltip.show([pos.left+leftOffset, pos.top+topOffset], content, (pos.left < self.el[0].offsetLeft + self.el.width()/2 ? 'w' : 'e'), null, self.el[0]);
+	                      });
+	                    
+	                    graphModel.dispatch.on('elementMouseout.tooltip', function(e) {
+	                    	nv.tooltip.cleanup();
+	                    });
+	            	}
             	}
-                if (self.options.state.options.noTicksY)
-                    self.chart.yAxis.tickFormat(function (d) { return ''; });                	
-                if (self.options.state.options.customTooltips)
-            	{
-                	var leftOffset = 10;
-                	var topOffset = 0;
-                    //console.log("Replacing original tooltips")
-                    
-                    var xfield = self.model.fields.get(self.state.attributes.group);
-                    var yfield = self.model.fields.get(self.state.attributes.series);
-                    
-                    graphModel.dispatch.on('elementMouseover.tooltip', function(e) {
-                    	var pos;
-                    	if (e.e && e.e.pageY && e.e.pageX)
-                    		pos = {top: e.e.pageY, left: e.e.pageX}
-                    	else pos = {left: e.pos[0] + +svgElem.offset().left + 50, top: e.pos[1]+svgElem.offset().top}
-                    	
-                        var values;
-                    	if (graphType.indexOf("Horizontal") >= 0)
-                		{
-                        	values = { 
-                            		x: e.point.x,
-                            		y: (yfield ? self.getFormatter(yfield.get('type'))(e.point.y) : e.point.y),
-                            		y_orig: e.point.y_orig || e.point.y,
-                    				yLabel: e.series.key,
-                    				xLabel: (xfield ? xfield.get("label") : "") 
-                    			}
-                		}
-                    	else
-                		{
-                        	values = { 
-                            		x: (xfield ? self.getFormatter(xfield.get('type'))(e.point.x) : e.point.x),
-                            		y: e.point.y,
-                            		y_orig: e.point.y_orig || e.point.y,
-                    				xLabel: e.series.key,
-                    				yLabel: (yfield ? yfield.get("label") : "")
-                    			}
-                		}
-                    	values["record"] = e.point.record.attributes;
-                    		
-                        var content = Mustache.render(self.options.state.options.customTooltips, values);
-
-                        nv.tooltip.show([pos.left+leftOffset, pos.top+topOffset], content, (pos.left < self.el[0].offsetLeft + self.el.width()/2 ? 'w' : 'e'), null, self.el[0]);
-                      });
-                    
-                    graphModel.dispatch.on('elementMouseout.tooltip', function(e) {
-                    	nv.tooltip.cleanup();
-                    });
-            	}
-
                 if (self.state.attributes.options) {
                     _.each(_.keys(self.state.attributes.options), function (d) {
                         try {

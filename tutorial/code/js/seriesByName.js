@@ -1,5 +1,3 @@
-var graphNoleggi = undefined;
-
 var dataset = new recline.Model.Dataset({
     url:'../data/Noleggi1.csv',
     backend:'csv',
@@ -8,22 +6,22 @@ var dataset = new recline.Model.Dataset({
             {id:'Data', type:'date'},
             {id:'Noleggi auto',   type:'integer'},
             {id:'Noleggi moto',   type:'integer'},
-            {id:'Noleggi bici',   type:'integer'},
-           ],
+            {id:'Noleggi bici',   type:'integer'}
+           ]
 });
 
 dataset.fetch();
 
-var $el = $('#chart_noleggi') 
-$el.addClass("recline-graph");
-graphNoleggi = new recline.View.xCharts({
+var $el = $('#chart_noleggi'); 
+$el.addClass("recline-graph"); // this applies the same styles to NVD3 and xCharts
+var graphNoleggi = new recline.View.xCharts({
     model: dataset,
     el: $el,
     state:{
         group: 'Data',
         series: {
-        	type: "byFieldName", 
-        	valuesField: ['Noleggi auto', 'Noleggi moto', 'Noleggi bici'],
+            type: "byFieldName", 
+            valuesField: ['Noleggi auto', 'Noleggi moto', 'Noleggi bici']
 		},
         type: 'line-dotted',
         interpolation:'linear',
@@ -32,10 +30,10 @@ graphNoleggi = new recline.View.xCharts({
         width: 850,
         height: 300,
         xAxisTitle: 'Giorno',
-        yAxisTitle: 'Noleggi (euro)',
+        yAxisTitle: 'Noleggi (euro)'
     },
     opts: {
-    	tickFormatX: d3.time.format('%d-%b')
+        tickFormatX: d3.time.format('%d-%b')
     }
 });
 graphNoleggi.render();

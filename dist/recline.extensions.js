@@ -6993,66 +6993,68 @@ this.recline.View = this.recline.View || {};
                 if (typeof graphModel == "undefined")
                 	throw "NVD3 Graph type "+graphType+" not found!"
                 
-                if (self.options.state.options.noTicksX)
-                    self.chart.xAxis.tickFormat(function (d) { return ''; });
-                else
+                if (self.options.state.options)
             	{
-                	var xField = self.model.fields.get(self.options.state.group)
-                	if (xField.attributes.type == "date")
-                		self.chart.xAxis.tickFormat(function (d) {
-                			return d3.time.format("%d-%b")(new Date(d)); 
-                		});
+	                if (self.options.state.options.noTicksX)
+	                    self.chart.xAxis.tickFormat(function (d) { return ''; });
+	                else
+	            	{
+	                	var xField = self.model.fields.get(self.options.state.group)
+	                	if (xField.attributes.type == "date")
+	                		self.chart.xAxis.tickFormat(function (d) {
+	                			return d3.time.format("%d-%b")(new Date(d)); 
+	                		});
+	            	}
+	                if (self.options.state.options.noTicksY)
+	                    self.chart.yAxis.tickFormat(function (d) { return ''; });                	
+	                if (self.options.state.options.customTooltips)
+	            	{
+	                	var leftOffset = 10;
+	                	var topOffset = 0;
+	                    //console.log("Replacing original tooltips")
+	                    
+	                    var xfield = self.model.fields.get(self.state.attributes.group);
+	                    var yfield = self.model.fields.get(self.state.attributes.series);
+	                    
+	                    graphModel.dispatch.on('elementMouseover.tooltip', function(e) {
+	                    	var pos;
+	                    	if (e.e && e.e.pageY && e.e.pageX)
+	                    		pos = {top: e.e.pageY, left: e.e.pageX}
+	                    	else pos = {left: e.pos[0] + +svgElem.offset().left + 50, top: e.pos[1]+svgElem.offset().top}
+	                    	
+	                        var values;
+	                    	if (graphType.indexOf("Horizontal") >= 0)
+	                		{
+	                        	values = { 
+	                            		x: e.point.x,
+	                            		y: (yfield ? self.getFormatter(yfield.get('type'))(e.point.y) : e.point.y),
+	                            		y_orig: e.point.y_orig || e.point.y,
+	                    				yLabel: e.series.key,
+	                    				xLabel: (xfield ? xfield.get("label") : "") 
+	                    			}
+	                		}
+	                    	else
+	                		{
+	                        	values = { 
+	                            		x: (xfield ? self.getFormatter(xfield.get('type'))(e.point.x) : e.point.x),
+	                            		y: e.point.y,
+	                            		y_orig: e.point.y_orig || e.point.y,
+	                    				xLabel: e.series.key,
+	                    				yLabel: (yfield ? yfield.get("label") : "")
+	                    			}
+	                		}
+	                    	values["record"] = e.point.record.attributes;
+	                    		
+	                        var content = Mustache.render(self.options.state.options.customTooltips, values);
+	
+	                        nv.tooltip.show([pos.left+leftOffset, pos.top+topOffset], content, (pos.left < self.el[0].offsetLeft + self.el.width()/2 ? 'w' : 'e'), null, self.el[0]);
+	                      });
+	                    
+	                    graphModel.dispatch.on('elementMouseout.tooltip', function(e) {
+	                    	nv.tooltip.cleanup();
+	                    });
+	            	}
             	}
-                if (self.options.state.options.noTicksY)
-                    self.chart.yAxis.tickFormat(function (d) { return ''; });                	
-                if (self.options.state.options.customTooltips)
-            	{
-                	var leftOffset = 10;
-                	var topOffset = 0;
-                    //console.log("Replacing original tooltips")
-                    
-                    var xfield = self.model.fields.get(self.state.attributes.group);
-                    var yfield = self.model.fields.get(self.state.attributes.series);
-                    
-                    graphModel.dispatch.on('elementMouseover.tooltip', function(e) {
-                    	var pos;
-                    	if (e.e && e.e.pageY && e.e.pageX)
-                    		pos = {top: e.e.pageY, left: e.e.pageX}
-                    	else pos = {left: e.pos[0] + +svgElem.offset().left + 50, top: e.pos[1]+svgElem.offset().top}
-                    	
-                        var values;
-                    	if (graphType.indexOf("Horizontal") >= 0)
-                		{
-                        	values = { 
-                            		x: e.point.x,
-                            		y: (yfield ? self.getFormatter(yfield.get('type'))(e.point.y) : e.point.y),
-                            		y_orig: e.point.y_orig || e.point.y,
-                    				yLabel: e.series.key,
-                    				xLabel: (xfield ? xfield.get("label") : "") 
-                    			}
-                		}
-                    	else
-                		{
-                        	values = { 
-                            		x: (xfield ? self.getFormatter(xfield.get('type'))(e.point.x) : e.point.x),
-                            		y: e.point.y,
-                            		y_orig: e.point.y_orig || e.point.y,
-                    				xLabel: e.series.key,
-                    				yLabel: (yfield ? yfield.get("label") : "")
-                    			}
-                		}
-                    	values["record"] = e.point.record.attributes;
-                    		
-                        var content = Mustache.render(self.options.state.options.customTooltips, values);
-
-                        nv.tooltip.show([pos.left+leftOffset, pos.top+topOffset], content, (pos.left < self.el[0].offsetLeft + self.el.width()/2 ? 'w' : 'e'), null, self.el[0]);
-                      });
-                    
-                    graphModel.dispatch.on('elementMouseout.tooltip', function(e) {
-                    	nv.tooltip.cleanup();
-                    });
-            	}
-
                 if (self.state.attributes.options) {
                     _.each(_.keys(self.state.attributes.options), function (d) {
                         try {
@@ -11964,6 +11966,162 @@ this.recline.View = this.recline.View || {};
         },
 
 
+    });
+
+})(jQuery, recline.View);
+/*jshint multistr:true */
+this.recline = this.recline || {};
+this.recline.View = this.recline.View || {};
+
+(function ($, my) {
+
+    my.JQueryMobileFilter = Backbone.View.extend({
+        filterTemplates:{
+            toggle:' \
+      <div class="filter-{{type}} filter" id="{{ctrlId}}"> \
+        <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
+            <legend style="display:{{useLegend}}">{{label}}</legend>  \
+    		<div style="float:left;padding-right:10px;padding-top:2px;display:{{useLeftLabel}}">{{label}}</div> \
+          <input type="text" value="{{term}}" name="term" class="data-control-id" /> \
+          <input type="button" class="btn" id="setFilterValueButton" value="Set"></input> \
+        </fieldset> \
+      </div> \
+    ',
+            slider:' \
+	<script> \
+		$(document).ready(function(){ \
+			$( "#slider{{ctrlId}}" ).slider({ \
+				min: {{min}}, \
+				max: {{max}}, \
+				value: {{term}}, \
+				slide: function( event, ui ) { \
+					$( "#amount{{ctrlId}}" ).html( "{{label}}: "+ ui.value ); \
+				} \
+			}); \
+			$( "#amount{{ctrlId}}" ).html( "{{label}}: "+ $( "#slider{{ctrlId}}" ).slider( "value" ) ); \
+		}); \
+	</script> \
+      <div class="filter-{{type}} filter" id="{{ctrlId}}" style="min-width:100px"> \
+        <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
+            <legend style="display:{{useLegend}}">{{label}} \
+			<a class="js-remove-filter" href="#" title="Remove this filter">&times;</a> \
+		</legend>  \
+		  <label id="amount{{ctrlId}}">{{label}}: </label> \
+		  <div id="slider{{ctrlId}}" class="data-control-id"></div> \
+		  <br> \
+          <input type="button" class="btn" id="setFilterValueButton" value="Set"></input> \
+        </fieldset> \
+      </div> \
+    '
+        },
+        events:{
+            'change .slider-styled':'onStyledSliderValueChanged'
+        },
+        initialize:function (args) {
+            this.el = $(this.el);
+            _.bindAll(this, 'render', 'update', 'doAction');
+
+            this.model = args.model;
+            this.uid = args.id || Math.floor(Math.random() * 100000); // unique id of the view containing all filters
+
+            if (this.model) {
+                this.model.bind('query:done', this.render);
+                this.model.queryState.bind('selection:done', this.update);
+            }
+        },
+
+        render:function () {
+            var self = this;
+            var tmplData = {};
+
+            //  map them to the correct controlType and retain their values (start/from/term/...)
+//            if (self.model) {
+//                _.each(self.model.queryState.get('selections'), function (filter) {
+//                    for (var j in tmplData.filters) {
+//                        if (tmplData.filters[j].field == filter.field) {
+//                            tmplData.filters[j].list = filter.list
+//                            tmplData.filters[j].term = filter.term
+//                            tmplData.filters[j].start = filter.start
+//                            tmplData.filters[j].stop = filter.stop
+//                            self.fixHierarchicRadiobuttonsSelections(tmplData.filters[j])
+//                        }
+//                    }
+//                });
+//
+//                tmplData.fields = this.model.fields.toJSON();
+//
+//            }
+//
+//            var resultType = self.options.resultType || "filtered";
+//
+//            tmplData.filterRender = self.filterRender;
+//
+//            var out = Mustache.render(currTemplate, tmplData);
+//            this.el.html(out);
+            
+        },
+        update:function () {
+            var self = this;
+            // retrieve filter values (start/from/term/...)
+//            _.each(this.model.queryState.get('selections'), function (filter) {
+//                for (var j in self.activeFilters) {
+//                    if (self.activeFilters[j].field == filter.field) {
+//                        self.activeFilters[j].list = filter.list
+//                        self.activeFilters[j].term = filter.term
+//                        self.activeFilters[j].start = filter.start
+//                        self.activeFilters[j].stop = filter.stop
+//                        self.fixHierarchicRadiobuttonsSelections(self.activeFilters[j])
+//                    }
+//                }
+//            });
+        },
+        // action could be add or remove
+        doAction:function (eventType, fieldName, values, actionType, currFilter) {
+            var self=this;
+
+//            var res = [];
+//            // make sure you use all values, even 2nd or 3rd level if present (hierarchic radiobuttons only)
+//            var allValues = currFilter.values
+//            // TODO it is not efficient, record must be indexed by term
+//            // TODO conversion to string is not correct, original value must be used
+//            _.each(allValues, function(v) {
+//              if(v.record) {
+//                  var field = v.record.fields.get(currFilter.field);
+//                  if(_.contains(values,v.record.getFieldValueUnrendered(field).toString()))
+//                    res.push(v.record);
+//              };
+//            });
+//            var actions = this.options.actions;
+//            actions.forEach(function(currAction){
+//                currAction.action.doAction(res, currAction.mapping);
+//            });
+        },
+
+        onStyledSliderValueChanged:function (e, value) {
+//            e.preventDefault();
+//            var $target = $(e.target).parent().parent();
+//            var fieldId = $target.attr('data-filter-field');
+//            var fieldType = $target.attr('data-filter-type');
+//            var controlType = $target.attr('data-control-type');
+//            if (fieldType == "term") {
+//                var term = value;
+//                var activeFilter = this.findActiveFilterByField(fieldId, controlType);
+//                activeFilter.userChanged = true;
+//                activeFilter.term = term;
+//                activeFilter.list = [term];
+//                this.doAction("onStyledSliderValueChanged", fieldId, [term], "add", activeFilter);
+//            }
+//            else if (fieldType == "range") {
+//                var activeFilter = this.findActiveFilterByField(fieldId, controlType);
+//                activeFilter.userChanged = true;
+//                var fromTo = value.split(";");
+//                var from = fromTo[0];
+//                var to = fromTo[1];
+//                activeFilter.from = from;
+//                activeFilter.to = to;
+//                this.doAction("onStyledSliderValueChanged", fieldId, [from, to], "add", activeFilter);
+//            }
+        },
     });
 
 })(jQuery, recline.View);
