@@ -34,18 +34,4 @@ this.recline.Backend.CSV = this.recline.Backend.CSV || {};
         }
     }
 }(jQuery, this.recline.Backend.CSV));	
-    
-//recline.Backend.CSV.prototype = $.extend(recline.Backend.CSV.prototype, {
-//    _normalizeRecordsAndFields:function () {
-//        var super_init = recline.Model.Dataset.prototype._normalizeRecordsAndFields;
-//        return function (records, fields) {
-//            var self=this;
-//            var out = super_init.call(this, records, fields);
-//        	my.setFieldsAttributesCSV(out.fields, self, out.records);
-//
-//        	recline.Data.FieldsUtility.setFieldsAttributes(out.fields, self);
-//            return out;
-//        };
-//    }()
-//});    
 
