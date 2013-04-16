@@ -218,10 +218,16 @@ var grid3 = new recline.View.SlickGridGraph({
             {id:'country', type:'string'},
             {id:'gender', type:'string'},
             {id:'age', type:'integer' },
-            {id:'agebin', type:'integer', deriver:agebin},
+            {id:'agebin', type:'string', deriver:agebin},
             {id:'visits', type:'integer' }
         ]
     });
+    
+//     dataset.on("query:done", function() {
+//     	dataset.fields.get('agebin').deriver = agebin
+//     });
+    
+//     dataset.fetch();
 
    var virtual1 = new recline.Model.VirtualDataset(
             {

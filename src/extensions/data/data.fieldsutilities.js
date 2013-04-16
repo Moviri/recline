@@ -25,41 +25,18 @@ this.recline.Data.FieldsUtility = this.recline.Data.FieldsUtility || {};
         // if format is declared it is updated
         if (model.attributes.fieldsFormat) {
             // if format is declared in dataset properties merge it;
-            _.each(model.attributes.fieldsFormat, function (d) {
-                var field = _.find(fields, function (f) {
-                    return d.id === f.id
-                });
-                if (field != null)
-                    field.format = d.format;
-            })
+        	if (model.attributes.fieldsFormat.length)
+    		{
+                _.each(model.attributes.fieldsFormat, function (d) {
+                    var field = _.find(fields, function (f) {
+                        return d.id === f.id
+                    });
+                    if (field != null)
+                        field.format = d.format;
+                })
+    		}
+        	else throw "Wrong fieldsFormat parameter. Must be an array, not a single object!"
         }
-
-        // if type is declared and was unspecified (typical for CSV), it's updated 
-        if (model.attributes.fieldsType) {
-            // if type is declared in dataset properties merge it;
-            _.each(model.attributes.fieldsType, function (d) {
-                var field = _.find(fields, function (f) {
-                    return d.id === f.id
-                });
-                if (field != null && (typeof field.type == "undefined" || field.type == null) && field.type != d.type)
-            	{
-                    field.type = d.type;
-                    if (model.backend.__type__ == "csv" && records && field.type != "string")
-                	{
-                    	_.each(records, function(rec) {
-                    		if (field.type == "date")
-                    			rec[d.id] = new Date(rec[d.id])
-                    		else if (field.type == "integer")
-                    			rec[d.id] = parseInt(rec[d.id])
-                    		else if (field.type == "number")
-                    			rec[d.id] = parseFloat(rec[d.id])
-                    	})
-                	}
-            	}
-                	
-            })
-        }
-
 
         // assignment of color schema to fields
         if (model.attributes.colorSchema) {

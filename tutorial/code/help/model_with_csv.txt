@@ -1,0 +1,7 @@
+<h4>Model with CSV backend</h4>
+<p>When using a CSV file as data source, it's important to specify the
+exact field type in advance, since CSV doesn't store this piece of
+information with the data (like JSON, instead, does).</p>
+<p>This must be accomplished by using "fieldsType" option. Any field that's not listed
+inside this option will be treated as a string by default.</p>
+<p>Failing in doing so may cause your page to exhibit incorrect behaviour.</p>  

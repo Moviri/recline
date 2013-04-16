@@ -74,7 +74,6 @@ root: ../../
 		<script type="text/javascript">
 
 		var __scriptElem = null;
-		var __hiddenScriptElem = null;
 		var __cssElem = null;
 
 		var __foldFuncJS_CSS = CodeMirror.newFoldFunction(CodeMirror.braceRangeFinder);
@@ -177,14 +176,18 @@ root: ../../
 		__assignDividerEvents($('#__horizRightDivider'), $('#__cssPanel'), $('#__resultPanel'), true)
 		__assignDividerEvents($('#__verticalDivider'), $('#__leftPanel'), $('#__rightPanel'), false)
 		
-		__loadPanels("demo", "demo", "demo", "", "demo")
+		__loadPanels("demo", "demo", "demo", "demo")
 
 		function __runCode() {
 			if (__scriptElem)
 			{
-				$(document.body).remove("#__myRunningCode")
-				//console.log($("#__myRunningCode"))
-				__scriptElem = undefined
+				try
+				{
+					document.body.removeChild(__scriptElem)
+					//console.log($("#__myRunningCode"))
+					//__scriptElem = undefined
+				}
+				catch(__err) {}
 			}
 
 			$("#__div_result").empty()
@@ -194,16 +197,15 @@ root: ../../
 			__scriptElem.id = "__myRunningCode"
 			__scriptElem.async = "async"
 			__scriptElem.defer = "defer"
-			try {
-				eval(__jsCodeMirror.getValue())	
-			}
-			catch(_err1)
-			{
-				alert(_err1)
-				return
-			}
+// 			try {
+// 				eval(__jsCodeMirror.getValue())	
+// 			}
+// 			catch(__err1)
+// 			{
+// 				alert(__err1)
+// 				return
+// 			}
 			
-//			__scriptElem.textContent = "try {"+__jsCodeMirror.getValue()+"} catch(__err) { alert('code is wrong!') }"
 			__scriptElem.textContent = __jsCodeMirror.getValue()
 			document.body.appendChild(__scriptElem);
 		}
@@ -237,16 +239,7 @@ root: ../../
 			}
 		}
 		
-		function __loadPanels(htmlCodename, jsCodename, cssCodename, hiddenCodename, helpCodename) {
-			if (hiddenCodename)
-			{
-				if (__hiddenScriptElem)
-					document.body.removeChild(__hiddenScriptElem);
-				
-				__hiddenScriptElem = document.createElement('script');
-				__hiddenScriptElem.textContent = __IO("hidden", hiddenCodename);
-				document.body.appendChild(__hiddenScriptElem);
-			}
+		function __loadPanels(htmlCodename, jsCodename, cssCodename, helpCodename) {
 			if (htmlCodename)
 				__htmlCodeMirror.setValue(__IO("html", htmlCodename))
 			else __htmlCodeMirror.setValue("")
@@ -313,5 +306,6 @@ root: ../../
 				$panel1.width(oldW1+delta)
 				$panel2.width(oldW2-delta)
 			}
-		}		
+		}
+
 		</script>

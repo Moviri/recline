@@ -2,14 +2,14 @@
     <ul>
         <li><input type="checkbox" id="item-0" checked="checked"/><label for="item-0">MODELS</label>
             <ul>
-                <li><a href="#" onclick="__loadPanels('genderGrids', 'genderGrids', '', 'genderModels', 'model_with_jsonp')">Static Model</a></li>
-                <li><a href="#" >Model with JSONP Backend</a><a target="_blank" href="https://github.com/Moviri/recline/wiki/Model-with-Backend.jsonp"><i class="icon-question-sign"></i></a></li>
-                <li><a href="#">Model with CSV Backend</a></li>
+                <li><a href="#" onclick="__loadPanels('gridOnly', 'static_model', '', 'static_model')">Static Model</a></li>
+                <li><a href="#" onclick="__loadPanels('gridOnly', 'model_with_jsonp', '', 'model_with_jsonp')">Model with JSONP Backend</a><a target="_blank" href="https://github.com/Moviri/recline/wiki/Model-with-Backend.jsonp"><i class="icon-question-sign"></i></a></li>
+                <li><a href="#" onclick="__loadPanels('gridOnly', 'model_with_csv', '', 'model_with_csv')">Model with CSV Backend</a></li>
                 <li><input type="checkbox" id="item-0-0" /><label for="item-0-0">Virtual Model<a target="_blank" href="https://github.com/Moviri/recline/wiki/VirtualModel"><i class="icon-question-sign"></i></a></label>
 	                <ul>
 	                    <li><a href="#">Aggregations</a></li>
 	                    <li><a href="#">Partition By</a></li>
-	                    <li><a href="#">Totals and subtotals</a></li>
+	                    <li><a href="#" onclick="__loadPanels('genderGrids', 'genderGrids', '', '')">Totals and subtotals</a></li>
 	                </ul>
 	            </li>
                 <li><a href="#">JoinedModel</a><a target="_blank" href="https://github.com/Moviri/recline/wiki/JoinedModel"><i class="icon-question-sign"></i></a></li>
@@ -69,8 +69,8 @@
 		
         <li><input type="checkbox" id="item-3" checked="checked"/><label for="item-3">CHARTS</label>
             <ul>
-            	<li><a href="#" onclick="__loadPanels('seriesXcharts', 'seriesByName', 'seriesXcharts', '', '')">Using series by name</a></li>
-            	<li><a href="#" onclick="__loadPanels('seriesXcharts', 'seriesByValue', 'seriesXcharts', '', '')">Using series by value</a></li>
+            	<li><a href="#" onclick="__loadPanels('seriesXcharts', 'seriesByName', 'seriesXcharts', 'seriesByName')">Using series by name</a></li>
+            	<li><a href="#" onclick="__loadPanels('seriesXcharts', 'seriesByValue', 'seriesXcharts', 'seriesByValue')">Using series by value</a></li>
             	<li><a href="#">Using series by partition</a></li>
                 <li><input type="checkbox" id="item-3-0" /><label for="item-3-0">Timelines with xCharts<a target="_blank" href="https://github.com/Moviri/recline/wiki/View.xCharts"><i class="icon-question-sign"></i></a></label>
 	                <ul>
@@ -82,9 +82,9 @@
 	            </li>
                 <li><input type="checkbox" id="item-3-1" /><label for="item-3-1">NVD3 charts<a target="_blank" href="https://github.com/Moviri/recline/wiki/View.NVD3Graph"><i class="icon-question-sign"></i></a></label>
 	                <ul>
-	                    <li><a href="#" onclick="__loadPanels('chartOnly', 'NVD3barchart', '', '', '')">Barchart</a></li>
-	                    <li><a href="#" onclick="__loadPanels('chartOnly', 'NVD3horizbarchart', '', '', '')">Horizontal Barchart</a></li>
-	                    <li><a href="#" onclick="__loadPanels('chartOnly', 'NVD3piechart', '', '', '')">Pie Chart</a></li>
+	                    <li><a href="#" onclick="__loadPanels('chartOnly', 'NVD3barchart', '', '')">Barchart</a></li>
+	                    <li><a href="#" onclick="__loadPanels('chartOnly', 'NVD3horizbarchart', '', '')">Horizontal Barchart</a></li>
+	                    <li><a href="#" onclick="__loadPanels('chartOnly', 'NVD3piechart', '', '')">Pie Chart</a></li>
 	                    <li><a href="#">Scatter Charts</a></li>
 	                    <li><a href="#">Custom Tooltips</a></li>
 	                </ul>

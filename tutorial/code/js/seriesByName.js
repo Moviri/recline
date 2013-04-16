@@ -33,7 +33,7 @@ var graphNoleggi = new recline.View.xCharts({
         yAxisTitle: 'Noleggi (euro)'
     },
     opts: {
-        tickFormatX: d3.time.format('%d-%b')
+        tickFormatX: function(x) {return d3.time.format('%d-%b')(x); }
     }
 });
 graphNoleggi.render();
