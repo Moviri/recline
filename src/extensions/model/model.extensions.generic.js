@@ -74,13 +74,15 @@ recline.Model.Dataset.prototype = $.extend(recline.Model.Dataset.prototype, {
         return function (records, fields) {
             var self=this;
             var out = super_init.call(this, records, fields);
-            recline.Data.FieldsUtility.setFieldsAttributes(out.fields, self, (self.backend.__type__ == "csv" ? out.records : undefined));
+            if (self.backend.__type__ == "csv")
+            	recline.Backend.CSV.setFieldsAttributesCSV(out.fields, self, out.records);
             	
+        	recline.Data.FieldsUtility.setFieldsAttributes(out.fields, self);
             return out;
         };
     }(),
     
-    _handleQueryResult:function () {
+    _handleQueryResult:function (queryResult) {
         var super_init = recline.Model.Dataset.prototype._handleQueryResult;
 
         return function (queryResult) {
