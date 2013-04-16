@@ -710,7 +710,7 @@
 			}
 			
 			internal.loadValues($target);
-			
+			$datepicker.DatePickerSetLastSel(0);
 			
 			// retract all other dropdowns
 			$('.DRWOpened').each(function() {
