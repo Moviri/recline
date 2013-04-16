@@ -8297,7 +8297,8 @@ this.recline.View = this.recline.View || {};
                 showPartitionedData:this.state.get('showPartitionedData'),
                 selectedCellFocus:this.state.get('selectedCellFocus'),
                 customHtmlFormatters:this.state.get('customHtmlFormatters'), 
-                fieldFormatters:this.state.get('fieldFormatters')
+                fieldFormatters:this.state.get('fieldFormatters'),
+                onSelection:this.state.get('onSelection')
             };
             // We need all columns, even the hidden ones, to show on the column picker
             var columns = [];
@@ -8864,6 +8865,9 @@ this.recline.View = this.recline.View || {};
                 actions.forEach(function (currAction) {
                     currAction.action.doAction(selectedRecords, currAction.mapping);
                 });
+            if (this.options.onSelection){
+            	this.options.onSelection();
+            }
         },
         show:function () {
             // If the div is hidden, SlickGrid will calculate wrongly some
