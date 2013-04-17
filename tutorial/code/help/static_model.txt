@@ -1,4 +1,4 @@
-<h4>This is just a demo page</h4>
+<h4>Static model</h4>
 <p>
-This example initializes a static model and feeds a table with it.
-</p> 
+This example initializes a static model by listing all records and fields, then feeds the data to a table.
+</p>

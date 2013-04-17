@@ -1,4 +1,4 @@
-var dataset = new recline.Model.Dataset({
+var dataset = new recline.Model.Dataset({ /*FOLD_ME*/
     records:[
         {id:0, country:'Italy', gender:"Female", age:25,  visits: 10},
         {id:1, country:'Italy', gender:"Female", age:35,  visits: 20},
@@ -31,6 +31,24 @@ var dataset = new recline.Model.Dataset({
         ]
 });
 
+var virtual = new recline.Model.VirtualDataset({ 
+	dataset: dataset, 
+	aggregation: { 
+		dimensions: ["country"], 
+		measures: ["age", "visits"],
+		partitions: ["gender"],
+		aggregationFunctions: ["sum","avg"] 
+	} 
+});
+
+// change all underscrores to whitespace in all virtualmodel field
+// labels to ensure word wrapping in the slickgrid column headers    
+virtual.bind("query:done", function() {
+	_.each(virtual.fields.models, function(field) {
+		field.attributes.label = field.attributes.id.replace(/_/g, " ");
+	});
+});
+
 dataset.fetch();
 
 var $el = $('#grid1');
@@ -45,3 +63,16 @@ var grid1 = new recline.View.SlickGridGraph({
 });
 grid1.visible = true;
 grid1.render();
+
+var $el2 = $('#grid2');
+var grid2 = new recline.View.SlickGridGraph({
+    model:virtual,
+    el:$el2,
+    state:{  fitColumns:true,
+        useHoverStyle:true,
+        useStripedStyle:true,
+        useCondensedStyle:true
+    }
+});
+grid2.visible = true;
+grid2.render();
