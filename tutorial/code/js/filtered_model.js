@@ -1,4 +1,4 @@
-var dataset = new recline.Model.Dataset({ /*FOLD_ME*/
+var dataset1 = new recline.Model.Dataset({ /*FOLD_ME*/
     records:[
         {id:0, country:'Italy', gender:"Female", age:25,  visits: 10},
         {id:1, country:'Italy', gender:"Female", age:35,  visits: 20},
@@ -31,35 +31,53 @@ var dataset = new recline.Model.Dataset({ /*FOLD_ME*/
         ]
 });
 
+$("#ageSelect").on("change", function(e) {
+	dataset1.queryState.clearFilter("age");
+	var selection = $("#ageSelect").val();
+	console.log(selection);
+	if (selection !== "")
+	{
+		var filters = selection.split(",");
+		_.each(filters, function(flt) {
+			var filterParts = flt.split("|");
+			console.log("term="+filterParts[1]+" operator="+filterParts[0]);
+			dataset1.queryState.setFilter({type:"termAdvanced", field:"age", term: filterParts[1], operator: filterParts[0], fieldType: "string"});
+		});
+	}
+	dataset1.query();
+});
+
+var dataset2 = new recline.Model.FilteredDataset( { dataset: dataset1 } );
+
 $("#countrySelect").on("change", function(e) {
 	var selection = $("#countrySelect").val();
 	if (selection !== "")
-		dataset.queryState.setFilter({type:"term", field:"country", term: selection});
-	else dataset.queryState.clearFilter("country");
+		dataset2.queryState.setFilter({type:"term", field:"country", term: selection});
+	else dataset2.queryState.clearFilter("country");
 	
-	dataset.fetch();
+	dataset2.query();
 });
 
 $("#genderSelect").on("change", function(e) {
 	var selection = $("#genderSelect").val();
 	if (selection !== "")
-		dataset.queryState.setFilter({type:"term", field:"gender", term: selection});
-	else dataset.queryState.clearFilter("gender");
+		dataset2.queryState.setFilter({type:"term", field:"gender", term: selection});
+	else dataset2.queryState.clearFilter("gender");
 	
-	dataset.fetch();
+	dataset2.query();
 });
 
 $("#sortFieldSelect").on("change", function(e) {
-	dataset.queryState.clearSortCondition();
-	dataset.queryState.setSortCondition({field: $("#sortFieldSelect").val(), order:"asc"});
-	dataset.fetch();
+	dataset2.queryState.clearSortCondition();
+	dataset2.queryState.setSortCondition({field: $("#sortFieldSelect").val(), order:"asc"});
+	dataset2.query();
 });
 
-dataset.fetch();
+dataset1.fetch();
 
 var $el = $('#grid1');
 var grid1 = new recline.View.SlickGridGraph({
-    model:dataset,
+    model:dataset1,
     el:$el,
     state:{  fitColumns:true,
         useHoverStyle:true,
@@ -68,3 +86,15 @@ var grid1 = new recline.View.SlickGridGraph({
 });
 grid1.visible = true;
 grid1.render();
+
+var $el2 = $('#grid2');
+var grid2 = new recline.View.SlickGridGraph({
+    model:dataset2,
+    el:$el2,
+    state:{  fitColumns:true,
+        useHoverStyle:true,
+        useCondensedStyle:true
+    }
+});
+grid2.visible = true;
+grid2.render();

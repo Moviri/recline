@@ -1,0 +1,12 @@
+<h4>Filtered model</h4>
+<p>
+In this example there are two models:<br>
+- a main Dataset<br> 
+- a FilteredDataset that inherits completely the contents from the previous one<br>
+<br>
+The light-grey section shows the main dataset and allows filtering by age range only.<br>
+The light-yellow section shows the filtered dataset and allows filtering by country and gender (but not by age).<br>
+<br>
+It's easy to notice that, whenever a filter is applied to the main dataset, also the inheriting FilteredDataset is affected.<br>
+However, filtering the FilteredDataset in the light-yellow section doesn' affect the main Dataset in the top section.  
+</p>
