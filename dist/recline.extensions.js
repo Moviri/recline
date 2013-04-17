@@ -10813,11 +10813,12 @@ this.recline.View = this.recline.View || {};
                 }
                 if (currActiveFilter.showValueLabels)
             	{
-                    var maxWidth = 250;
+                    var maxWidth = self.$el.width() || 250;
                     currActiveFilter.lineHeight = 40;
                     
-	                for (var jj in currActiveFilter.tmpValues)
-	                	currActiveFilter.tmpValues[jj] = Math.floor(currActiveFilter.tmpValues[jj])
+	                if (currActiveFilter.fieldType == "float" || currActiveFilter.fieldType == "number" || currActiveFilter.fieldType == "integer")
+	                    for (var jj in currActiveFilter.tmpValues)
+		                	currActiveFilter.tmpValues[jj] = Math.floor(currActiveFilter.tmpValues[jj])
 	                	
 	                currActiveFilter.tmpValues = _.uniq(currActiveFilter.tmpValues)
 	
