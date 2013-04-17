@@ -25,6 +25,7 @@
 .h90  {height:90%;}
 .h100  {height:100%;}
 .h110  {height:110%;}
+
 .greyborder { 
 	padding:10px;
 	margin:0px 10px 10px 0px;
@@ -79,3 +80,7 @@
 	margin-left: 8px;
 }
 
+#__helpModalDialog {
+	width: 1024px;
+	margin-left: -512px;
+}

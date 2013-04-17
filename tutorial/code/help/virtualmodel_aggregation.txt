@@ -7,5 +7,6 @@ The virtual model has:<br>
 <li>Two aggregation functions ("sum" and "avg", that will be applied to the measures)</li>
 <li>Two aggregation measures ("age" and "visits", that will be computed with the functions above once grouped)</li>
 </ul>
-The resulting virtual model contents are visible in the bottom table
+The resulting virtual model contents are visible in the bottom table:<br>
+"age" and "visits" (measures) have generated respectively "age_avg", "age_sum" and "visits_avg", "visits_sum" (using all supplied aggregation functions) 
 </p> 

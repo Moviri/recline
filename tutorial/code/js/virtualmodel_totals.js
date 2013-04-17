@@ -34,16 +34,19 @@ var dataset = new recline.Model.Dataset({ /*FOLD_ME*/
 var virtual = new recline.Model.VirtualDataset({ 
 	dataset: dataset, 
 	aggregation: { 
-		dimensions: ["country"], 
-		measures: ["age", "visits"],
-		partitions: ["gender"],
-		aggregationFunctions: ["sum","avg"] 
+		dimensions: ["country", "gender"], 
+		measures: ["visits"],
+		aggregationFunctions: ["sum"] 
+	},
+	totals: { 
+		measures: ["visits_sum"],
+		aggregationFunctions: ["sum"] 
 	} 
 });
 
-//change all underscores to whitespace in all 
-//virtualmodel field labels to ensure word wrapping
-//in the slickgrid column headers      
+// change all underscores to whitespace in all 
+// virtualmodel field labels to ensure word wrapping
+// in the slickgrid column headers    
 virtual.bind("query:done", function() {
 	_.each(virtual.fields.models, function(field) {
 		field.attributes.label = field.attributes.id.replace(/_/g, " ");
@@ -59,7 +62,14 @@ var grid1 = new recline.View.SlickGridGraph({
     state:{  fitColumns:true,
         useHoverStyle:true,
         useStripedStyle:true,
-        useCondensedStyle:true
+        useCondensedStyle:true,
+        fieldFormatters: [
+          { id: "id", cssClass: "centered" },
+          { id: "country", cssClass: "centered" },
+          { id: "gender", cssClass: "centered" },
+          { id: "age", cssClass: "centered" },
+          { id: "visits", cssClass: "centered" }
+        ]
     }
 });
 grid1.visible = true;
@@ -72,7 +82,17 @@ var grid2 = new recline.View.SlickGridGraph({
     state:{  fitColumns:true,
         useHoverStyle:true,
         useStripedStyle:true,
-        useCondensedStyle:true
+        useCondensedStyle:true,
+        fieldFormatters: [
+         { id: "country", cssClass: "centered" },
+         { id: "gender", cssClass: "centered" },
+         { id: "visits_sum", cssClass: "centered" }
+         ],
+        showPartitionedData: {
+            measures:      [ {field: "visits", aggregation: "sum" } ],
+            showSubTotals: true
+        },
+        showTotals: [ {field: "visits_sum", aggregation: "sum" } ]        
     }
 });
 grid2.visible = true;
