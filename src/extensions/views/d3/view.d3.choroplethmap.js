@@ -72,6 +72,7 @@ this.recline.View = this.recline.View || {};
         render:function () {
             var self = this;
 
+
             var mapJson = this.options.state["mapJson"];
             var layer = this.options.state["layer"];
             var showRegionNames = this.options.state["showRegionNames"]

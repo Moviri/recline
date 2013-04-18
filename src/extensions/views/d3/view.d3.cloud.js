@@ -59,15 +59,16 @@ this.recline.View = this.recline.View || {};
 	    var domain = [Infinity, -Infinity];
 
             var records = _.map(this.options.model.getRecords(type), function (record) {
- 		domain = [
-                    Math.min(domain[0], record.attributes[state.dimensionField]),
-                    Math.max(domain[1], record.attributes[state.dimensionField])
-                ];
 
                 return { key: record.attributes[state.wordField], value: record.attributes[state.dimensionField]};
             });
 
-		if (domain[0] == domain[1]) {
+        records =  _.sortBy(records, function(f){ return -f.value; });
+
+            domain = [records[0].value, records[records.length-1].value];
+
+
+            if (domain[0] == domain[1]) {
 			domain = [domain[0] / 2, domain[0] * 2];
 		}
             	self.graph = d3.select("#" + self.uid);
