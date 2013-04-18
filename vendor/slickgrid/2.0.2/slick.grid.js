@@ -2422,12 +2422,25 @@ if (typeof Slick === "undefined") {
       if (e.isImmediatePropagationStopped()) {
         return;
       }
-
+      
       if ((activeCell != cell.cell || activeRow != cell.row) && canCellBeActive(cell.row, cell.cell)) {
         if (!getEditorLock().isActive() || getEditorLock().commitCurrentEdit()) {
           scrollRowIntoView(cell.row, false);
           setActiveCellInternal(getCellNode(cell.row, cell.cell), (cell.row === getDataLength()) || options.autoEdit);
         }
+      }
+      // desel
+      else if (activeRow == cell.row)
+      {
+    	  var rows = getSelectedRows();
+    	  for (var j = 0; j < rows.length; j++)
+    		  if (rows[j] == activeRow)
+			  {
+    			  rows.splice(j, 1)
+    			  break;
+			  }
+    	  setSelectedRows(rows);
+    	  resetActiveCell();
       }
     }
 
