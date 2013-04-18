@@ -241,7 +241,10 @@ root: ../../
 		
 		function __loadPanels(htmlCodename, jsCodename, cssCodename, helpCodename) {
 			if (htmlCodename)
+			{
 				__htmlCodeMirror.setValue(__IO("html", htmlCodename))
+				__enforceCodeFolding(__htmlCodeMirror, __foldFuncHtml)
+			}
 			else __htmlCodeMirror.setValue("")
 			
 			if (jsCodename)
