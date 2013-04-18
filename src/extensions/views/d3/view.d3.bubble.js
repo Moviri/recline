@@ -105,6 +105,7 @@ this.recline.View = this.recline.View || {};
 
         redraw: function () {
             var self = this;
+            if(!self.visible)  { return }
             var state = self.options.state;
 
             var type;
