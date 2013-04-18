@@ -84,3 +84,7 @@
 	width: 1024px;
 	margin-left: -512px;
 }
+
+div.modal-body {
+	max-height: 50%;
+}

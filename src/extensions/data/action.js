@@ -87,7 +87,7 @@ this.recline = this.recline || {};
                     facetTerms.forEach(function (obj) {
                     	obj.records.forEach(function(row) {
                     		var filterFieldValue = row[filterFieldName]
-                    		if (_.contains(valueList, filterFieldValue)) 
+                    		if (_.contains(valueList, filterFieldValue) && !_.contains(values, row[mapp.srcField])) 
                     			values.push(row[mapp.srcField]);
                     	});
                     });
