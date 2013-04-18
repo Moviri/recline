@@ -402,7 +402,6 @@ this.recline.View = this.recline.View || {};
 
         getGraph:{
             "multiBarChart":function (view) {
-            	var actions = view.getActionsForEvent("selection");
                 var chart;
                 if (view.chart != null)
                     chart = view.chart;
@@ -410,11 +409,18 @@ this.recline.View = this.recline.View || {};
                     chart = nv.models.multiBarChart();
 
                 view.setAxis(view.options.state.axisTitlePresent || "all", chart);
+            	var actions = view.getActionsForEvent("selection");
                 if (actions.length > 0)
                     chart.multibar.dispatch.on('elementClick', function (e) {
                     	view.doActions(actions, [e.point.record]);
                     });
-
+            	var actionsH = view.getActionsForEvent("hover");
+                if (actionsH.length > 0)
+            	{
+                    chart.multibar.dispatch.on('elementMouseover', function (e) {
+                    	view.doActions(actionsH, [e.point.record]);
+                    });
+            	}
                 return chart;
             },
             "lineChart":function (view) {
@@ -424,6 +430,20 @@ this.recline.View = this.recline.View || {};
                 else
                     chart = nv.models.lineChart();
                 view.setAxis(view.options.state.axisTitlePresent || "all", chart);
+            	var actions = view.getActionsForEvent("selection");
+                if (actions.length > 0)
+            	{
+                    chart.lines.dispatch.on('elementClick', function (e) {
+                    	view.doActions(actions, [e.point.record]);
+                    });
+            	}
+            	var actionsH = view.getActionsForEvent("hover");
+                if (actionsH.length > 0)
+            	{
+                    chart.lines.dispatch.on('elementMouseover', function (e) {
+                    	view.doActions(actionsH, [e.point.record]);
+                    });
+            	}
                 return chart;
             },
             "lineDottedChart":function (view) {
@@ -433,6 +453,20 @@ this.recline.View = this.recline.View || {};
                 else
                     chart = nv.models.lineDottedChart();
                 view.setAxis(view.options.state.axisTitlePresent || "all", chart);
+            	var actions = view.getActionsForEvent("selection");
+                if (actions.length > 0)
+            	{
+                    chart.lines.dispatch.on('elementClick', function (e) {
+                    	view.doActions(actions, [e.point.record]);
+                    });
+            	}
+            	var actionsH = view.getActionsForEvent("hover");
+                if (actionsH.length > 0)
+            	{
+                    chart.lines.dispatch.on('elementMouseover', function (e) {
+                    	view.doActions(actionsH, [e.point.record]);
+                    });
+            	}
                 return chart;
             },
             "lineWithFocusChart":function (view) {
@@ -443,7 +477,20 @@ this.recline.View = this.recline.View || {};
                     chart = nv.models.lineWithFocusChart();
 
                 view.setAxis(view.options.state.axisTitlePresent || "all", chart);
-                return chart;
+            	var actions = view.getActionsForEvent("selection");
+                if (actions.length > 0)
+            	{
+                    chart.lines.dispatch.on('elementClick', function (e) {
+                    	view.doActions(actions, [e.point.record]);
+                    });
+            	}
+            	var actionsH = view.getActionsForEvent("hover");
+                if (actionsH.length > 0)
+            	{
+                    chart.lines.dispatch.on('elementMouseover', function (e) {
+                    	view.doActions(actionsH, [e.point.record]);
+                    });
+            	}                return chart;
             },
             "indentedTree":function (view) {
                 var chart;
@@ -459,6 +506,20 @@ this.recline.View = this.recline.View || {};
                 else
                     chart = nv.models.stackedAreaChart();
                 view.setAxis(view.options.state.axisTitlePresent || "all", chart);
+            	var actions = view.getActionsForEvent("selection");
+                if (actions.length > 0)
+            	{
+                    chart.stacked.dispatch.on('elementClick', function (e) {
+                    	view.doActions(actions, [e.point.record]);
+                    });
+            	}
+            	var actionsH = view.getActionsForEvent("hover");
+                if (actionsH.length > 0)
+            	{
+                    chart.stacked.dispatch.on('elementMouseover', function (e) {
+                    	view.doActions(actionsH, [e.point.record]);
+                    });
+            	}
                 return chart;
             },
 
@@ -536,7 +597,6 @@ this.recline.View = this.recline.View || {};
                 return chart;
             },
 
-
             "bulletChart":function (view) {
                 var chart;
                 if (view.chart != null)
@@ -572,6 +632,20 @@ this.recline.View = this.recline.View || {};
                 chart.showDistX(true)
                     .showDistY(true);
                 view.setAxis(view.options.state.axisTitlePresent || "all", chart);
+            	var actions = view.getActionsForEvent("selection");
+                if (actions.length > 0)
+            	{
+                    chart.scatter.dispatch.on('elementClick', function (e) {
+                    	view.doActions(actions, [e.point.record]);
+                    });
+            	}
+            	var actionsH = view.getActionsForEvent("hover");
+                if (actionsH.length > 0)
+            	{
+                    chart.scatter.dispatch.on('elementMouseover', function (e) {
+                    	view.doActions(actionsH, [e.point.record]);
+                    });
+            	}                
                 return chart;
             },
             "discreteBarChart":function (view) {
@@ -588,7 +662,6 @@ this.recline.View = this.recline.View || {};
                         view.doActions(actions, [e.point.record]);
                     });
                 return chart;
-                var actions = view.getActionsForEvent("selection");
                 var options = {};
 
                 if (view.state.attributes.options) {
@@ -688,6 +761,20 @@ this.recline.View = this.recline.View || {};
                     });
                     return ret;
                 });
+            	var actions = view.getActionsForEvent("selection");
+                if (actions.length > 0)
+            	{
+                    chart.pie.dispatch.on('elementClick', function (e) {
+                    	view.doActions(actions, [e.point.record]);
+                    });
+            	}
+            	var actionsH = view.getActionsForEvent("hover");
+                if (actionsH.length > 0)
+            	{
+                    chart.pie.dispatch.on('elementMouseover', function (e) {
+                    	view.doActions(actionsH, [e.point.record]);
+                    });
+            	}
 
                 return chart;
             }
