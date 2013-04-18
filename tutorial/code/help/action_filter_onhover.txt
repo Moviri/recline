@@ -1,0 +1,5 @@
+<h4>Filter Actions - onHover</h4>
+<p>
+This example shows a NVD3 horizontal barchart linked to a model and a Slickgrid table linked to a filtered model.
+When you hover on the chart, the slickgrid is filtered and show the data pertaining the selected bar.
+</p>
