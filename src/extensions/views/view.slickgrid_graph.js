@@ -636,6 +636,7 @@ this.recline.View = this.recline.View || {};
             _.each(rows, function (row) {
             	var dataItem = self.grid.getDataItem(row);
                 selectedRecords.push(dataItem.__orig_record__);
+                dataItem.__orig_record__.is_selected = true;
             });
             var actions = this.options.actions;
             if (actions != null)
