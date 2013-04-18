@@ -8706,6 +8706,26 @@ this.recline.View = this.recline.View || {};
 
                 self.discardSelectionEvents = false
             });
+            
+            this.grid.onClick.subscribe(function (e, args) {
+            	if (e.type == "click" && e.ctrlKey == false && e.shiftKey == false && e.button == 0)
+        		{
+            		var activeCell = args.grid.getActiveCell();
+				    if (activeCell && activeCell.row == args.row)
+				    {
+//				    	var rows = args.grid.getSelectedRows();
+//				    	for (var j = 0; j < rows.length; j++)
+//				    		if (rows[j] == activeCell.row)
+//							  {
+//				    			  rows.splice(j, 1)
+//				    			  break;
+//							  }
+//				    	  args.grid.setSelectedRows(rows);	  
+//				    	  args.grid.resetActiveCell();
+				    	args.grid.invalidate();
+				      }
+        		}
+            });
 
             // Column sorting
 //    var sortInfo = this.model.queryState.get('sort');
@@ -8817,6 +8837,7 @@ this.recline.View = this.recline.View || {};
             _.each(rows, function (row) {
             	var dataItem = self.grid.getDataItem(row);
                 selectedRecords.push(dataItem.__orig_record__);
+                dataItem.__orig_record__.is_selected = true;
             });
             var actions = this.options.actions;
             if (actions != null)

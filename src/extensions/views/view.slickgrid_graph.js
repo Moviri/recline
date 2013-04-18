@@ -525,7 +525,7 @@ this.recline.View = this.recline.View || {};
 
                 self.discardSelectionEvents = false
             });
-
+            
             // Column sorting
 //    var sortInfo = this.model.queryState.get('sort');
 //    // TODO sort is not present in slickgrid
