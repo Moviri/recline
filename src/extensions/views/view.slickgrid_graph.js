@@ -619,11 +619,12 @@ this.recline.View = this.recline.View || {};
             this.discardSelectionEvents = true;
             var rowsToSelect = [];
             var myRecords = this.model.getRecords(this.resultType);
-            var selRow;
+            var selRow = null;
             for (row in myRecords)
                 if (myRecords[row].is_selected) {
                     rowsToSelect.push(row)
-                    selRow = row
+                    if (!selRow || row < selRow)
+                    	selRow = row
                 }
 
             this.grid.getSelectionModel().setSelectedRows(rowsToSelect)

@@ -8707,26 +8707,6 @@ this.recline.View = this.recline.View || {};
                 self.discardSelectionEvents = false
             });
             
-            this.grid.onClick.subscribe(function (e, args) {
-            	if (e.type == "click" && e.ctrlKey == false && e.shiftKey == false && e.button == 0)
-        		{
-            		var activeCell = args.grid.getActiveCell();
-				    if (activeCell && activeCell.row == args.row)
-				    {
-//				    	var rows = args.grid.getSelectedRows();
-//				    	for (var j = 0; j < rows.length; j++)
-//				    		if (rows[j] == activeCell.row)
-//							  {
-//				    			  rows.splice(j, 1)
-//				    			  break;
-//							  }
-//				    	  args.grid.setSelectedRows(rows);	  
-//				    	  args.grid.resetActiveCell();
-				    	args.grid.invalidate();
-				      }
-        		}
-            });
-
             // Column sorting
 //    var sortInfo = this.model.queryState.get('sort');
 //    // TODO sort is not present in slickgrid
@@ -8820,11 +8800,12 @@ this.recline.View = this.recline.View || {};
             this.discardSelectionEvents = true;
             var rowsToSelect = [];
             var myRecords = this.model.getRecords(this.resultType);
-            var selRow;
+            var selRow = null;
             for (row in myRecords)
                 if (myRecords[row].is_selected) {
                     rowsToSelect.push(row)
-                    selRow = row
+                    if (!selRow || row < selRow)
+                    	selRow = row
                 }
 
             this.grid.getSelectionModel().setSelectedRows(rowsToSelect)
@@ -12820,6 +12801,7 @@ this.recline.View = this.recline.View || {};
 
         redraw: function () {
             var self = this;
+            if(!self.visible)  { return }
             var state = self.options.state;
 
             var type;
@@ -14180,6 +14162,7 @@ this.recline.View = this.recline.View || {};
         render:function () {
             var self = this;
 
+
             var mapJson = this.options.state["mapJson"];
             var layer = this.options.state["layer"];
             var showRegionNames = this.options.state["showRegionNames"]
@@ -14541,15 +14524,16 @@ this.recline.View = this.recline.View || {};
 	    var domain = [Infinity, -Infinity];
 
             var records = _.map(this.options.model.getRecords(type), function (record) {
- 		domain = [
-                    Math.min(domain[0], record.attributes[state.dimensionField]),
-                    Math.max(domain[1], record.attributes[state.dimensionField])
-                ];
 
                 return { key: record.attributes[state.wordField], value: record.attributes[state.dimensionField]};
             });
 
-		if (domain[0] == domain[1]) {
+        records =  _.sortBy(records, function(f){ return -f.value; });
+
+            domain = [records[0].value, records[records.length-1].value];
+
+
+            if (domain[0] == domain[1]) {
 			domain = [domain[0] / 2, domain[0] * 2];
 		}
             	self.graph = d3.select("#" + self.uid);
