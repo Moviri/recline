@@ -1,0 +1,12 @@
+.s-table div.s-td.slick-cell {
+	border-right: 1px dotted grey;
+	border-bottom: 1px dotted grey;
+}
+
+.percent-complete-bar {
+	background-color: blue;
+}
+
+.percent-complete-bar-background {
+  background-color: lightgrey;
+}

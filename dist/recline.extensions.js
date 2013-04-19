@@ -8250,6 +8250,7 @@ this.recline.View = this.recline.View || {};
                 forceFitColumns:this.state.get('fitColumns'),
                 useInnerChart:isTrue(this.state.get('useInnerChart')) && isFalse(this.state.get('hideInnerChartScale')),
                 innerChartMax:this.state.get('innerChartMax'),
+                innerChartSerie2Name:this.state.get('innerChartSerie2'),
                 useStripedStyle:this.state.get('useStripedStyle'),
                 useCondensedStyle:this.state.get('useCondensedStyle'),
                 useHoverStyle:this.state.get('useHoverStyle'),
@@ -8599,10 +8600,10 @@ this.recline.View = this.recline.View || {};
                     _.each(self.model.getFields(self.resultType).models, function (field) {
                         row[field.id] = doc.getFieldValueUnrendered(field);
                         if (innerChartSerie1Name && field.id == innerChartSerie1Name)
-                            row.schema_colors[0] = doc.getFieldColor(field);
+                            row.schema_colors[0] = doc.getFieldColor(field) || "blue";
 
                         if (innerChartSerie2Name && field.id == innerChartSerie2Name)
-                            row.schema_colors[1] = doc.getFieldColor(field);
+                            row.schema_colors[1] = doc.getFieldColor(field) || "red";
                     });
 
                     if (self.state.get('useInnerChart') == true && innerChartSerie1Name) {
@@ -8980,7 +8981,7 @@ this.recline.View = this.recline.View || {};
         template:'<figure style="clear:both; width: {{width}}px; height: {{height}}px;" id="{{uid}}"></figure><div class="xCharts-title-x" style="width:{{width}}px;text-align:center;margin-left:50px">{{xAxisTitle}}</div>',
 
         initialize:function (options) {
-console.log('initialize xchart');
+
             this.el = $(this.el);
             _.bindAll(this, 'render', 'redraw');
 
@@ -9011,7 +9012,7 @@ console.log('initialize xchart');
         },
 
         render:function (width) {
-        	console.log("View.xCharts: render");
+        //	console.log("View.xCharts: render");
             if (!isNaN(width)){
         		this.width = width;	
         	}
@@ -9036,12 +9037,12 @@ console.log('initialize xchart');
         },
 
         redraw:function () {
-        	console.log("View.xCharts: redraw");
+       // 	console.log("View.xCharts: redraw");
         	
         	var self = this;
             self.trigger("chart:startDrawing")
 
-            console.log(self.model.records.toJSON());
+       //     console.log(self.model.records.toJSON());
 
             if (false /*self.graph*/)
                 self.updateGraph();
@@ -9052,7 +9053,7 @@ console.log('initialize xchart');
         },
 
         updateGraph:function () {
-            console.log("View.xCharts: updateGraph");
+     //       console.log("View.xCharts: updateGraph");
             var self = this;
             self.updateSeries();
             
@@ -14733,6 +14734,9 @@ this.recline.View = this.recline.View || {};
             var matrix = [];
             // filter records for the co-occurrence 
             var records = _.filter(this.model.getRecords(), function(rec) { return rec.attributes[self.filterField] == self.filterValue; });
+            if (records.length == 0)
+            	return null;
+            
             var series1Values = _.uniq(_.map(records, function(rec) { return rec.attributes[self.series1Field]})) 
             var series2Values = _.uniq(_.map(records, function(rec) { return rec.attributes[self.series2Field]})) 
             var seriesValues = _.uniq(series1Values.concat(series2Values))
@@ -14799,6 +14803,9 @@ this.recline.View = this.recline.View || {};
         render:function () {
         	var self = this;
         	var chartData = this.computeData();
+        	if (!chartData)
+        		return null;
+        	
         	var matrix = chartData.matrix;
         	var nodes = chartData.nodes;
         	var x = chartData.x;
@@ -14893,6 +14900,9 @@ this.recline.View = this.recline.View || {};
         redraw:function () {
             var self = this;
         	var chartData = this.computeData();
+        	if (!chartData)
+        		return null;
+        	
         	var matrix = chartData.matrix;
         	var nodes = chartData.nodes;
         	var x = chartData.x;

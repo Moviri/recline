@@ -1,0 +1,7 @@
+<h4>View.SlickGridGraph inner chart</h4>
+<p>
+This example shows how to create a SlickGrid from a virtual model and populate the last column with a TwinBar chart.<br>
+First we use a partitioned virtual model to partition by gender, so that all measure fields are split into "_by_Sesso_Maschio_avg", "_by_Sesso_Femmina_avg" and "_avg" (global for male and female).<br>
+Then we use the 4 inizialiting options for innerChart ("useInnerChart", "innerChartSerie1", "innerChartSerie2", "innerChartHeader").
+In the end we set field filtering options like "visibleColumns" (to only display wanted columns, since partitioning a model creates a lot of possibly unwanted fields), "columnsOrder" (to ensure table readability since the partitiones virtual model but have fields in random order) and "fieldLabels" (to replace the partitioned field names, which are full of underscores, with something more readable).     
+</p>
