@@ -69,6 +69,7 @@ this.recline.View = this.recline.View || {};
                 forceFitColumns:this.state.get('fitColumns'),
                 useInnerChart:isTrue(this.state.get('useInnerChart')) && isFalse(this.state.get('hideInnerChartScale')),
                 innerChartMax:this.state.get('innerChartMax'),
+                innerChartSerie2Name:this.state.get('innerChartSerie2'),
                 useStripedStyle:this.state.get('useStripedStyle'),
                 useCondensedStyle:this.state.get('useCondensedStyle'),
                 useHoverStyle:this.state.get('useHoverStyle'),
@@ -418,10 +419,10 @@ this.recline.View = this.recline.View || {};
                     _.each(self.model.getFields(self.resultType).models, function (field) {
                         row[field.id] = doc.getFieldValueUnrendered(field);
                         if (innerChartSerie1Name && field.id == innerChartSerie1Name)
-                            row.schema_colors[0] = doc.getFieldColor(field);
+                            row.schema_colors[0] = doc.getFieldColor(field) || "blue";
 
                         if (innerChartSerie2Name && field.id == innerChartSerie2Name)
-                            row.schema_colors[1] = doc.getFieldColor(field);
+                            row.schema_colors[1] = doc.getFieldColor(field) || "red";
                     });
 
                     if (self.state.get('useInnerChart') == true && innerChartSerie1Name) {

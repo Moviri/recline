@@ -65,6 +65,9 @@ this.recline.View = this.recline.View || {};
             var matrix = [];
             // filter records for the co-occurrence 
             var records = _.filter(this.model.getRecords(), function(rec) { return rec.attributes[self.filterField] == self.filterValue; });
+            if (records.length == 0)
+            	return null;
+            
             var series1Values = _.uniq(_.map(records, function(rec) { return rec.attributes[self.series1Field]})) 
             var series2Values = _.uniq(_.map(records, function(rec) { return rec.attributes[self.series2Field]})) 
             var seriesValues = _.uniq(series1Values.concat(series2Values))
@@ -131,6 +134,9 @@ this.recline.View = this.recline.View || {};
         render:function () {
         	var self = this;
         	var chartData = this.computeData();
+        	if (!chartData)
+        		return null;
+        	
         	var matrix = chartData.matrix;
         	var nodes = chartData.nodes;
         	var x = chartData.x;
@@ -225,6 +231,9 @@ this.recline.View = this.recline.View || {};
         redraw:function () {
             var self = this;
         	var chartData = this.computeData();
+        	if (!chartData)
+        		return null;
+        	
         	var matrix = chartData.matrix;
         	var nodes = chartData.nodes;
         	var x = chartData.x;
