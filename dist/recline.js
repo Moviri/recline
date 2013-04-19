@@ -1558,6 +1558,7 @@ my.Dataset = Backbone.Model.extend({
   // Resulting RecordList are used to reset this.records and are
   // also returned.
   query: function(queryObj) {
+	  console.log('start query');
     var self = this;
     var dfd = new Deferred();
     this.trigger('query:start');
@@ -1569,11 +1570,14 @@ my.Dataset = Backbone.Model.extend({
 
     this._store.query(actualQuery, this.toJSON())
       .done(function(queryResult) {
+    	  console.log('start done query');
         self._handleQueryResult(queryResult);
+        console.log('done query handle ');
         self.trigger('query:done');
         dfd.resolve(self.records);
       })
       .fail(function(arguments) {
+    	  console.log('fail query');
         self.trigger('query:fail', arguments);
         dfd.reject(arguments);
       });
