@@ -34,7 +34,7 @@ dataset2.fetch();
 
 var myAction = new recline.Action({
     filters:{
-    	filter_regione: {type:"term", field:"Regione", fieldType:"string"}
+        filter_regione: {type:"term", field:"Regione", fieldType:"string"}
     },
     models: [{
         model: dataset,
