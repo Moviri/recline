@@ -4260,7 +4260,7 @@ this.recline.Data.SeriesUtility = this.recline.Data.SeriesUtility || {};
     			_.each(series, function(serie, sIndex) {
     				var recordSameTimestamp = _.find(serie.data, function(v) {return v.x == timestamp })
     				if (recordSameTimestamp)
-    					allY.push(recordSameTimestamp.y)
+    					allY.push(recordSameTimestamp)
     				else
 					{
     					for (var j = 1; j < serie.data.length; j++)
