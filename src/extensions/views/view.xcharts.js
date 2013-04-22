@@ -19,6 +19,7 @@ this.recline.View = this.recline.View || {};
             this.model.fields.bind('add', this.render);
 
             this.model.bind('query:done', this.redraw);
+           // this.model.records.bind('reset', this.redraw);
             this.model.queryState.bind('selection:done', this.redraw);
 
             this.uid = options.id || ("d3_" + new Date().getTime() + Math.floor(Math.random() * 10000)); // generating an unique id for the chart
@@ -39,7 +40,7 @@ this.recline.View = this.recline.View || {};
         },
 
         render:function (width) {
-//            console.log("View.xCharts: render");
+        //	console.log("View.xCharts: render");
             if (!isNaN(width)){
         		this.width = width;	
         	}
@@ -63,35 +64,13 @@ this.recline.View = this.recline.View || {};
             self.trigger("chart:endDrawing")
         },
 
-        changeDataset: function(model) {
-            _.bindAll(this, 'render', 'redraw');
-
-            this.model.off('change', this.render);    addfacet
-            this.model.fields.off('reset', this.render);
-            this.model.fields.off('add', this.render);
-
-            this.model.off('query:done', this.redraw);
-            this.model.queryState.off('selection:done', this.redraw);
-
-
-            this.model = model;
-
-            this.model.bind('change', this.render);
-            this.model.fields.bind('reset', this.render);
-            this.model.fields.bind('add', this.render);
-
-            this.model.bind('query:done', this.redraw);
-            this.model.queryState.bind('selection:done', this.redraw);
-
-            this.render();
-            this.redraw();
-        },
-
         redraw:function () {
-            var self = this;
+       // 	console.log("View.xCharts: redraw");
+        	
+        	var self = this;
             self.trigger("chart:startDrawing")
 
-//            console.log("View.xCharts: redraw");
+       //     console.log(self.model.records.toJSON());
 
             if (false /*self.graph*/)
                 self.updateGraph();
@@ -102,7 +81,7 @@ this.recline.View = this.recline.View || {};
         },
 
         updateGraph:function () {
-            //console.log("View.xCharts: updateGraph");
+     //       console.log("View.xCharts: updateGraph");
             var self = this;
             self.updateSeries();
             
@@ -187,6 +166,31 @@ this.recline.View = this.recline.View || {};
             }
         },
 
+        changeDataset: function(model) {
+        	
+        	_.bindAll(this, 'render', 'redraw');
+
+//        	this.model.off('change', this.render);
+//        	this.model.fields.off('reset', this.render);
+//        	this.model.fields.off('add', this.render);
+//
+//        	this.model.off('query:done', this.redraw);
+//        	this.model.queryState.off('selection:done', this.redraw);
+
+        	this.model.unbind();
+        	
+        	this.model = model;
+
+        	this.model.bind('change', this.render);
+        	this.model.fields.bind('reset', this.render);
+        	this.model.fields.bind('add', this.render);
+
+        	this.model.bind('query:done', this.redraw);
+        	this.model.queryState.bind('selection:done', this.redraw);
+
+        	
+    	},
+        	
         renderGraph:function () {
             //console.log("View.xCharts: renderGraph");
 

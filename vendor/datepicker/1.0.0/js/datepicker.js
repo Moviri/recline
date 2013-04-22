@@ -607,6 +607,15 @@
 						var diff = (day == 0 ? -6 : 1) - day;
 						var monday = new Date(tmp.getTime()+diff*24*3600000); // return closest monday
 						var sunday = new Date(monday.getTime()+6*24*3600000); // return next sunday 
+						
+						var now = new Date();
+			        	now.setHours(0);
+			        	now.setMinutes(0);
+			        	now.setSeconds(0);
+			        	now.setMilliseconds(0);
+						if (sunday > now){
+							return false;
+						}
 						changedRange = true;
 						options.date[first] = (monday.setHours(0,0,0,0)).valueOf();
 						options.date[second] = (sunday.setHours(23,59,59,999)).valueOf();
@@ -625,6 +634,16 @@
 						}
 						var firstDayNextMonth = new Date(year, month, 1, 23, 59, 59 ,999);
 						var lastMonthDate = new Date(firstDayNextMonth.getTime()-24*3600000); // return last day of this month 
+						
+						var now = new Date();
+			        	now.setHours(0);
+			        	now.setMinutes(0);
+			        	now.setSeconds(0);
+			        	now.setMilliseconds(0);
+						if (lastMonthDate > now){
+							return false;
+						}
+						
 						changedRange = true;
 						options.date[first] = (tmp.setHours(0,0,0,0)).valueOf();
 						options.date[second] = lastMonthDate.valueOf();
