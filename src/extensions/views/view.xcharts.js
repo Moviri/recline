@@ -18,8 +18,7 @@ this.recline.View = this.recline.View || {};
             this.model.fields.bind('reset', this.render);
             this.model.fields.bind('add', this.render);
 
-            //this.model.bind('query:done', this.redraw);
-            this.model.records.bind('reset', this.redraw);
+            this.model.bind('query:done', this.redraw);
             this.model.queryState.bind('selection:done', this.redraw);
 
             this.uid = options.id || ("d3_" + new Date().getTime() + Math.floor(Math.random() * 10000)); // generating an unique id for the chart
@@ -62,6 +61,30 @@ this.recline.View = this.recline.View || {};
                 this.el.html(out);
         	}
             self.trigger("chart:endDrawing")
+        },
+
+        changeDataset: function(model) {
+            _.bindAll(this, 'render', 'redraw');
+
+            this.model.off('change', this.render);    addfacet
+            this.model.fields.off('reset', this.render);
+            this.model.fields.off('add', this.render);
+
+            this.model.off('query:done', this.redraw);
+            this.model.queryState.off('selection:done', this.redraw);
+
+
+            this.model = model;
+
+            this.model.bind('change', this.render);
+            this.model.fields.bind('reset', this.render);
+            this.model.fields.bind('add', this.render);
+
+            this.model.bind('query:done', this.redraw);
+            this.model.queryState.bind('selection:done', this.redraw);
+
+            this.render();
+            this.redraw();
         },
 
         redraw:function () {

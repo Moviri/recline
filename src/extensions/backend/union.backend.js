@@ -88,7 +88,7 @@ this.recline.Backend.ParallelUnionBackend = this.recline.Backend.ParallelUnionBa
 
     my.query = function (queryObj, dataset) {
         var dfd = new $.Deferred();
-        var data = { fields: [], hits: [], useMemoryStore: false, facets: []};
+        var data = { fields: [], hits: [], useMemoryStore: false, facets: [], total: 0};
 
         var backendsFetch = [];
 
@@ -111,7 +111,7 @@ this.recline.Backend.ParallelUnionBackend = this.recline.Backend.ParallelUnionBa
                     });
                     data.hits = $.merge(data.hits, res.hits);
                     data.facets = $.merge(data.facets, res.facets);
-                    data["total"] = data.hits.length;
+                    data["total"] = data["total"] + data.hits.length;
 
                 });
                 backendsFetch.push(deferred) ;
@@ -133,7 +133,7 @@ this.recline.Backend.ParallelUnionBackend = this.recline.Backend.ParallelUnionBa
                     });
                     data.hits = $.merge(data.hits, res.hits);
                     data.facets = $.merge(data.facets, res.facets);
-                    data["total"] = data.hits.length;
+                    data["total"] = data["total"] + data.hits.length;
 
                 });
                 backendsFetch.push(deferred) ;
@@ -189,6 +189,7 @@ this.recline.Backend.ParallelUnionBackend = this.recline.Backend.ParallelUnionBa
                 ret.push(r);
             })
             data.hits=ret;
+            data["total"] = data.hits.length;
             return data;
         }
     }
