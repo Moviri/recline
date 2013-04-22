@@ -26,7 +26,29 @@ var customHtmlFormatters = [
         }
     },
     {
-        id: "Delta Perc",
+    	id: "Operai",
+        formula: function (record) {
+            var value1 = record.attributes.Operai;
+            var value2 = record.attributes.Impiegati;
+            var formattedValue1 = accounting.formatMoney(value1, { symbol: "",  format: "%v %s", decimal : ".", thousand: ",", precision : 0 }) + "<small class='muted'>€</small>";
+            var formattedValue2 = accounting.formatMoney(value2, { symbol: "",  format: "%v %s", decimal : ".", thousand: ",", precision : 0 }) + "<small class='muted'>€</small>";
+            return   "<div class='split-top'  style='background-color:#F0F0E0'>"+formattedValue1 + "</div>"+
+                "<div class='split-bottom'  style='background-color:#E8E8E8'>"+formattedValue2 + "</div>";
+        }
+    },
+    {
+    	id: "Quadri",
+        formula: function (record) {
+            var value1 = record.attributes.Quadri;
+            var value2 = record.attributes.Dirigenti;
+            var formattedValue1 = accounting.formatMoney(value1, { symbol: "",  format: "%v %s", decimal : ".", thousand: ",", precision : 0 }) + "<small class='muted'>€</small>";
+            var formattedValue2 = accounting.formatMoney(value2, { symbol: "",  format: "%v %s", decimal : ".", thousand: ",", precision : 0 }) + "<small class='muted'>€</small>";
+            return   "<div class='split-top' style='background-color:#E8E8E8'>"+formattedValue1 + "</div>"+
+            "<div class='split-bottom'  style='background-color:#E0F0E0'>"+formattedValue2 + "</div>";
+        }
+    },
+    {
+        id: "Media",
         formula: function (record) {
             var value = record.attributes.Media;
             var formattedValue = accounting.formatMoney(value, { symbol: "",  format: "%v %s", decimal : ".", thousand: ",", precision : 0 }) + "<small class='muted'>€</small>";
@@ -44,9 +66,11 @@ var grid1 = new recline.View.SlickGridGraph({
     el: $('#grid1'),
     state:{  fitColumns:true,
         useHoverStyle:true,
-        useStripedStyle:true,
-        useCondensedStyle:true,
-        visibleColumns: ["Regione", "Sesso", "Operai", "Impiegati", "Quadri", "Dirigenti", "Freelance", "Delta Perc"],
+        //useStripedStyle:true,
+        //useCondensedStyle:true,
+        visibleColumns: ["Regione", "Sesso", "Operai", "Quadri", "Freelance", "Media"],
+        fieldLabels: [{id: "Operai", label: "Operai / Impiegati"}, {id: "Quadri", label: "Quadri / Dirigenti"}, {id: "Media", label: "Media / Delta %"}],
+        fieldFormatters: [{id: "Freelance", cssClass: 'freelance'}],
         customHtmlFormatters: customHtmlFormatters
     }
 });
