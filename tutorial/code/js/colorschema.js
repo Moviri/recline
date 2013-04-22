@@ -34,7 +34,8 @@ var graphNoleggi = new recline.View.xCharts({ /*FOLD_ME*/
         interpolation:'linear',
         xScale: 'time',
         yScale: 'linear',
-        width: 850,
+        legend: $('#legend'),
+        width: 650,
         height: 250,
         //xAxisTitle: 'Giorno',
         yAxisTitle: 'Noleggi (euro)'

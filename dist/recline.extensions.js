@@ -9177,20 +9177,23 @@ this.recline.View = this.recline.View || {};
 
             if (self.series.main && self.series.main.length && self.series.main[0].data && self.series.main[0].data.length)
         	{
-            		self.el.find('figure div.noData').remove() // remove no data msg (if any) 
-            		self.el.find('figure svg g').remove() // remove previous graph (if any)
+            	self.el.find('figure div.noData').remove() // remove no data msg (if any) 
+            	self.el.find('figure svg g').remove() // remove previous graph (if any)
             		
-                    self.updateState(state);
+                self.updateState(state);
 
                 if (state.interpolation)
                     state.opts.interpolation = state.interpolation;
+                
+                if (state.type == 'line-dotted' && state.dotRadius)
+                    state.opts.dotRadius = state.dotRadius;
 
-                    self.graph = new xChart(state.type, self.series, '#' + self.uid, state.opts);
-                    if (state.timing != null && typeof state.timing != "undefined")
-                    	self.graph._options.timing = state.timing;
+                self.graph = new xChart(state.type, self.series, '#' + self.uid, state.opts);
+                if (state.timing != null && typeof state.timing != "undefined")
+                	self.graph._options.timing = state.timing;
 
 
-                    self.updateOptions();
+                self.updateOptions();
 
             }
             else

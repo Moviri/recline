@@ -26,7 +26,7 @@ var customHtmlFormatters = [
         }
     },
     {
-    	id: "Operai",
+        id: "Operai",
         formula: function (record) {
             var value1 = record.attributes.Operai;
             var value2 = record.attributes.Impiegati;
@@ -37,7 +37,7 @@ var customHtmlFormatters = [
         }
     },
     {
-    	id: "Quadri",
+        id: "Quadri",
         formula: function (record) {
             var value1 = record.attributes.Quadri;
             var value2 = record.attributes.Dirigenti;

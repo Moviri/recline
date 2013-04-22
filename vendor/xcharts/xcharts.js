@@ -403,7 +403,7 @@ var _scales = {
       .style('opacity', 0)
       .attr('cx', storage.lineX)
       .attr('cy', storage.lineY)
-      .attr('r', 2)
+      .attr('r', self._options.dotRadius || 2)
       .on('mouseover', callbacks.mouseover)
       .on('mouseout', callbacks.mouseout)
       .on('click', callbacks.click);

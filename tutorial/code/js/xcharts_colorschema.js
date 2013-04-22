@@ -1,4 +1,4 @@
-var dataset = new recline.Model.Dataset({
+var dataset = new recline.Model.Dataset({/*FOLD_ME*/
     url:'../data/Noleggi2.csv',
     backend:'csv',
     id: 'model_noleggi',
@@ -7,6 +7,14 @@ var dataset = new recline.Model.Dataset({
             {id:'Valore',   type:'integer'}
            ]
 });
+
+var mycolorschema = new recline.Data.ColorSchema({   
+    type: "scaleWithDistinctData",   
+    colors: ['#FF0000', '#0000FF'] 
+});
+//possible values for "Tipo" are only ['Noleggi auto','Noleggi moto','Noleggi bici'] 
+// so the three color supplied will be assigned to these three values 
+mycolorschema.setDataset(dataset, "Tipo");  
 
 dataset.fetch();
 
@@ -26,27 +34,14 @@ var graphNoleggi = new recline.View.xCharts({
         interpolation:'linear',
         xScale: 'time',
         yScale: 'linear',
+        legend: $('#legend'),
         width: 850,
-        height: 300,
+        height: 500,
         xAxisTitle: 'Giorno',
-        yAxisTitle: 'Noleggi (euro)',
-        opts: {
-            tickFormatX: d3.time.format('%a %d-%b')
-        }
+        yAxisTitle: 'Noleggi (euro)'
+    },
+    opts: {
+        tickFormatX: function(x) {return d3.time.format('%d-%b')(x); }
     }
 });
 graphNoleggi.render();
-
-var $el1 = $('#grid1');
-var grid1 = new recline.View.SlickGridGraph({
-    model:dataset,
-    el:$el1,
-    state:{  fitColumns:true,
-        useHoverStyle:true,
-        useStripedStyle:true,
-        useCondensedStyle:true
-    }
-
-});
-grid1.visible = true;
-grid1.render();
