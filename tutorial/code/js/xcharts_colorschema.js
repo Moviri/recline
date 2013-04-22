@@ -38,10 +38,10 @@ var graphNoleggi = new recline.View.xCharts({
         width: 850,
         height: 500,
         xAxisTitle: 'Giorno',
-        yAxisTitle: 'Noleggi (euro)'
-    },
-    opts: {
-        tickFormatX: function(x) {return d3.time.format('%d-%b')(x); }
+        yAxisTitle: 'Noleggi (euro)',
+        opts: {
+            tickFormatX: function(x) {return d3.time.format('%d-%b')(x); }
+        }
     }
 });
 graphNoleggi.render();

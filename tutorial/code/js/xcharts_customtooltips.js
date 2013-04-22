@@ -12,8 +12,6 @@ var mycolorschema = new recline.Data.ColorSchema({
     type: "scaleWithDistinctData",   
     colors: ['#FF0000', '#0000FF'] 
 });
-//possible values for "Tipo" are only ['Noleggi auto','Noleggi moto','Noleggi bici'] 
-// so the three color supplied will be assigned to these three values 
 mycolorschema.setDataset(dataset, "Tipo");  
 
 dataset.fetch();
@@ -50,7 +48,7 @@ var $el = $('#chart_noleggi');
 var leftOffset = -($('html').css('padding-left').replace('px', '') + $('body').css('margin-left').replace('px', ''))+10;
 var topOffset = -32;
 
-var xChartTooltipTimeFormat = d3.time.format('%d-%m-%Y %H:%M')
+var xChartTooltipTimeFormat = d3.time.format('%d-%m-%Y %H:%M');
 
 $el.addClass("recline-graph"); // this applies the same styles to NVD3 and xCharts
 var graphNoleggi = new recline.View.xCharts({
@@ -77,7 +75,7 @@ var graphNoleggi = new recline.View.xCharts({
             tickFormatX: function(x) {return d3.time.format('%d-%b')(x); },
             mouseover: function (d, i) {
                 var pos = $(this).offset();
-                var values = { x: xChartTooltipTimeFormat(d.x), y: d.y_formatted, xLabel: 'Giorno:', yLabel: 'Valore:', legendField: d.legendField+':', legendValue: d.legendValue }
+                var values = { x: xChartTooltipTimeFormat(d.x), y: d.y_formatted, xLabel: 'Giorno:', yLabel: 'Valore:', legendField: d.legendField+':', legendValue: d.legendValue };
                 var content = Mustache.render(tooltipHtmlTemplate, values);
 
                 var topOffsetAbs = topOffset + pos.top;
@@ -85,11 +83,11 @@ var graphNoleggi = new recline.View.xCharts({
                 nv.tooltip.show([pos.left + leftOffset, topOffset + pos.top], content, (pos.left < $el[0].offsetLeft + $el.width()/2 ? 'w' : 'e'), null, $el[0]);
             },
             mouseout: function (d, i) {
-            	nv.tooltip.cleanup();
+                nv.tooltip.cleanup();
             }       
             
         }    
-	},
+	}
 });
 
 graphNoleggi.render();
