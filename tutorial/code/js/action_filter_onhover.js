@@ -37,7 +37,7 @@ var myAction = new recline.Action({
     type:["filter"]
 });
 
-var $el = $('#chart_noleggi'); 
+var $el = $('#chart1'); 
 var graphNoleggi = new recline.View.NVD3Graph({
     model: datasetSomme,
     state:{

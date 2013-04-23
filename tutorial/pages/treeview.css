@@ -32,7 +32,13 @@ http://experiments.wemakesites.net/css3-treeview.html
     color: #000;
     text-decoration: none;
 }
- 
+
+.css-treeview a.selected
+{
+    color: blue;
+    text-decoration: none;
+}
+
 .css-treeview a:hover
 {
     text-decoration: underline;

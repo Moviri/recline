@@ -12,7 +12,7 @@ var dataset = new recline.Model.Dataset({
 
 dataset.fetch();
 
-var $el = $('#chart_noleggi'); 
+var $el = $('#chart1'); 
 $el.addClass("recline-graph"); // this applies the same styles to NVD3 and xCharts
 var graphNoleggi = new recline.View.xCharts({
     model: dataset,

@@ -29,7 +29,7 @@ var tooltipHtmlTemplate = '<div style="white-space:nowrap;"> \
     </div> \
 </div>';
 
-var $el = $('#chart_noleggi'); 
+var $el = $('#chart1'); 
 var graphNoleggi = new recline.View.NVD3Graph({
     model: dataset,
     state:{

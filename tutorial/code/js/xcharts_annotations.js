@@ -60,7 +60,7 @@ var tooltipHtmlTemplate = '<div style="white-space:nowrap;" class="moda_tooltip"
     </div> \
 </div>';
 
-var $el = $('#chart_noleggi'); 
+var $el = $('#chart1'); 
 
 var leftOffset = -($('html').css('padding-left').replace('px', '') + $('body').css('margin-left').replace('px', ''))+10;
 var topOffset = -32;

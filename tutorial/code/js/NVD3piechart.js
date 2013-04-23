@@ -10,7 +10,7 @@ var dataset = new recline.Model.Dataset({ /*FOLD_ME*/
 });
 dataset.fetch();
 
-var $el = $('#chart_noleggi') ;
+var $el = $('#chart1') ;
 var graphNoleggi = new recline.View.NVD3Graph({
     model: dataset,
     state:{

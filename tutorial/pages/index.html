@@ -10,7 +10,7 @@ root: ../../
 		<div style="width:1920px;height:950px">
 			<form style="width:98%;height:98%">
 				<div class="w15 left h100 greyborder">
-					<h4>Tutorial List</h4>
+					<h4>Tutorial List<a class="btn btn-mini btn-info" href="gallery.html" style="margin-left:80px">Back&nbsp;<i class="icon-share-alt icon-white"></i><i class="icon-picture icon-white"></i></a></h4>
 					{% include treeview.html %}
 				</div>
 				<div class="w80 right h100" >
@@ -72,6 +72,18 @@ root: ../../
 	    </div>
 		
 		<script type="text/javascript">
+		
+		function __getQueryVariable(variable) {
+		    var query = window.location.search.substring(1);
+		    var vars = query.split('&');
+		    for (var i = 0; i < vars.length; i++) {
+		        var pair = vars[i].split('=');
+		        if (decodeURIComponent(pair[0]) == variable) {
+		            return decodeURIComponent(pair[1]);
+		        }
+		    }
+		    return null;
+		}
 
 		var __scriptElem = null;
 		var __cssElem = null;
@@ -176,7 +188,15 @@ root: ../../
 		__assignDividerEvents($('#__horizRightDivider'), $('#__cssPanel'), $('#__resultPanel'), true)
 		__assignDividerEvents($('#__verticalDivider'), $('#__leftPanel'), $('#__rightPanel'), false)
 		
-		__loadPanels("demo", "demo", "demo", "demo")
+ 		var __queryVariable = __getQueryVariable('q');
+ 		if (__queryVariable)
+ 		{
+ 			var $treeNode = $('#__tutorial_tree__ a[value$="#'+__queryVariable+'"]')
+ 			if ($treeNode.length)
+ 				$treeNode.click();
+ 		}
+		else 
+	__loadPanels(null, "demo", "demo", "demo", "demo")
 
 		function __runCode() {
 			if (__scriptElem)
@@ -239,7 +259,15 @@ root: ../../
 			}
 		}
 		
-		function __loadPanels(htmlCodename, jsCodename, cssCodename, helpCodename) {
+		function __loadPanels($this, htmlCodename, jsCodename, cssCodename, helpCodename) {
+			$("#__tutorial_tree__ a.selected").removeClass("selected") // deselect all previous tree nodes
+			if ($this)
+			{
+				$this.addClass("selected") // select this tree node
+				var $parentInput = $this.parent().parent().prev().prev("input");
+				if ($parentInput)
+					$parentInput.attr("checked", "checked") // also open parent folder
+			}
 			if (htmlCodename)
 			{
 				__htmlCodeMirror.setValue(__IO("html", htmlCodename))
