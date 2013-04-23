@@ -16,7 +16,7 @@ this.recline.View = this.recline.View || {};
         			</div> \
         		</div>',
         buttonTemplate: '<button class="btn btn-mini grouped-button {{selected}}" val="{{value}}">{{valueLabel}}</button>',
-        buttonTemplate2: '<button class="btn btn-mini btn-tooltip grouped-button {{selected}}"  data-toggle="tooltip" title="{{valueLabel}}" val="{{value}}">{{index}}</button>',
+        buttonTemplate2: '<button class="btn btn-mini btn-tooltip grouped-button {{selected}}"  data-toggle="tooltip" title="{{descLabel}}" val="{{value}}">{{index}}</button>',
         dropdownTemplate: '<select id="dropdown{{uid}}_{{numId}}" multiple="multiple"> \
         					{{#options}} \
         						<option value="{{fullValue}}" {{#selected}}selected="selected"{{/selected}}>{{value}}</option> \
@@ -46,6 +46,7 @@ this.recline.View = this.recline.View || {};
             this.tooltipsOnly = args.tooltipsOnly;
             this.tooltipValueSeparator = args.tooltipValueSeparator;
             this.tooltipButtonLabelField = args.tooltipButtonLabelField;
+            this.tooltipButtonDescriptionField = args.tooltipButtonDescriptionField;
             if (this._sourceDataset) {
                 this._sourceDataset.bind('query:done', this.render);
                 this._sourceDataset.queryState.bind('selection:done', this.update);
@@ -91,7 +92,10 @@ this.recline.View = this.recline.View || {};
                 if (indexLabel == null || indexLabel == ''){
                 	indexLabel = index;
                 }
-                
+                var descLabel;
+                if (self.tooltipButtonDescriptionField){
+                	descLabel = record.getFieldValue(self._sourceDataset.fields.get(self.tooltipButtonDescriptionField));
+                } 
                 
                 if (!_.contains(alreadyInsertedValues, fullLevelValue))
             	{
@@ -99,13 +103,13 @@ this.recline.View = this.recline.View || {};
                 	{
                     	var levelValues = fullLevelValue.split(self.separator, 2);
                     	if (self.buttonsData[levelValues[0]] && self.buttonsData[levelValues[0]].options)
-                    		self.buttonsData[levelValues[0]].options.push({fullValue: fullLevelValue, value: levelValues[1], record: record, selected: !tmplData.allButtonSelected && _.contains(self.sourceField.list, fullLevelValue), index: indexLabel})
+                    		self.buttonsData[levelValues[0]].options.push({fullValue: fullLevelValue, value: levelValues[1], record: record, selected: !tmplData.allButtonSelected && _.contains(self.sourceField.list, fullLevelValue), index: indexLabel, descLabel: descLabel})
                     	else
-                    		self.buttonsData[levelValues[0]] = { self: self, options: [{fullValue: fullLevelValue, value: levelValues[1], record: record, selected: !tmplData.allButtonSelected && _.contains(self.sourceField.list, fullLevelValue), index: indexLabel}]}
+                    		self.buttonsData[levelValues[0]] = { self: self, options: [{fullValue: fullLevelValue, value: levelValues[1], record: record, selected: !tmplData.allButtonSelected && _.contains(self.sourceField.list, fullLevelValue), index: indexLabel, descLabel: descLabel}]}
                 	}
                     else
                 	{
-                    	self.buttonsData[valueUnrendered] = { value: fullLevelValue, valueUnrendered: valueUnrendered, record: record, selected: !tmplData.allButtonSelected && _.contains(self.sourceField.list, valueUnrendered), self: self, index: indexLabel }
+                    	self.buttonsData[valueUnrendered] = { value: fullLevelValue, valueUnrendered: valueUnrendered, record: record, selected: !tmplData.allButtonSelected && _.contains(self.sourceField.list, valueUnrendered), self: self, index: indexLabel, descLabel: descLabel }
                 	}
                     alreadyInsertedValues.push(fullLevelValue)
             	}
@@ -138,8 +142,10 @@ this.recline.View = this.recline.View || {};
             var out = Mustache.render(this.template, tmplData);
             this.el.html(out);
             
+            if (self.tooltipsOnly){
+            	self.el.find(".btn-tooltip").tooltip({html:true, placement:"bottom"});	
+            }
             
-            self.el.find(".btn-tooltip").tooltip({html:true, placement:"bottom"});
             
 			var buttonText = function(options) {
 				var $select = $(options.context);
@@ -232,9 +238,20 @@ this.recline.View = this.recline.View || {};
         			tmplData.selected = " "+self._selectedClassName+" "; 
         		
         		if (self.tooltipsOnly){
-        			if (buttonData.value && self.tooltipValueSeparator) 
-        				tmplData.valueLabel = buttonData.value.split(self.tooltipValueSeparator).join('<br/>') 
-        			else tmplData.valueLabel = buttonData.value || "";
+        			
+        			if ((buttonData.descLabel || buttonData.value) && self.tooltipValueSeparator){
+        				if (buttonData.descLabel){
+        					tmplData.descLabel = buttonData.descLabel.split(self.tooltipValueSeparator).join('<br/>');
+        				} else {
+        					tmplData.descLabel = buttonData.value.split(self.tooltipValueSeparator).join('<br/>');	
+        				}        				
+        			} else {
+        				if (buttonData.descLabel){
+        					tmplData.descLabel = buttonData.descLabel || "";
+        				} else {
+        					tmplData.descLabel = buttonData.value || "";	
+        				}        				
+        			}
         			return Mustache.render(self.buttonTemplate2, tmplData);
         		} else {
         			tmplData.valueLabel = buttonData.value;
