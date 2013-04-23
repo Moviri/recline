@@ -2,18 +2,22 @@
 	margin-left: -50px;
 }
 
+#chart2 {
+	margin-left: -50px;
+}
+
 #legend {
 	border: 1px solid black;
 	box-shadow: 5px 5px 3px #888888;	
 }
 
-.legend_item{
+.legend_item {
 	margin-left:15px;
 	font-size:90%;
 	float:left;		
 	cursor:pointer;
 }
-.legend_item_value{
+.legend_item_value {
 	height: 6px;
 	width: 6px;
 	border: 1px solid;

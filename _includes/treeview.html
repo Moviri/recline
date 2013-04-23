@@ -53,14 +53,14 @@
 		
         <li><input type="checkbox" id="item-3" checked="checked"/><label for="item-3">CHARTS</label>
             <ul>
-            	<li><a value="#seriesByName" onclick="__loadPanels($(this), 'Xcharts_grid', 'seriesByName', 'Xcharts_grid', 'seriesByName')">Using series by name</a></li>
-            	<li><a value="#seriesByValue" onclick="__loadPanels($(this), 'Xcharts_grid', 'seriesByValue', 'Xcharts_grid', 'seriesByValue')">Using series by value</a></li>
+            	<li><a value="#seriesByName" onclick="__loadPanels($(this), 'xcharts_grid', 'seriesByName', 'xcharts_grid', 'seriesByName')">Using series by name</a></li>
+            	<li><a value="#seriesByValue" onclick="__loadPanels($(this), 'xcharts_grid', 'seriesByValue', 'xcharts_grid', 'seriesByValue')">Using series by value</a></li>
             	<li><a value="#seriesByPartition" onclick="__loadPanels($(this), 'NVD3chart_grid', 'seriesByPartition', '', 'seriesByPartition')">Using series by partition</a></li>
                 <li><input type="checkbox" id="item-3-0" /><label for="item-3-0">Timelines with xCharts<a target="_blank" href="https://github.com/Moviri/recline/wiki/View.xCharts"><i class="icon-question-sign"></i></a></label>
 	                <ul>
-	                    <li><a value="#xcharts_colorschema" onclick="__loadPanels($(this), 'Xcharts_legend_grid', 'xcharts_colorschema', 'xcharts', 'xcharts_colorschema')">Color series</a></li>
-	                    <li><a value="#xcharts_customtooltips" onclick="__loadPanels($(this), 'Xcharts_legend_grid', 'xcharts_customtooltips', 'xcharts', 'xcharts_customtooltips')">Custom Tooltips</a></li>
-	                    <li><a value="#xcharts_annotations" onclick="__loadPanels($(this), 'Xcharts_legend_grid', 'xcharts_annotations', 'xcharts', 'xcharts_annotations')">Annotations</a></li>
+	                    <li><a value="#xcharts_colorschema" onclick="__loadPanels($(this), 'xcharts_legend_grid', 'xcharts_colorschema', 'xcharts', 'xcharts_colorschema')">Color series</a></li>
+	                    <li><a value="#xcharts_customtooltips" onclick="__loadPanels($(this), 'xcharts_legend_grid', 'xcharts_customtooltips', 'xcharts', 'xcharts_customtooltips')">Custom Tooltips</a></li>
+	                    <li><a value="#xcharts_annotations" onclick="__loadPanels($(this), 'xcharts_legend_grid', 'xcharts_annotations', 'xcharts', 'xcharts_annotations')">Annotations</a></li>
 	                </ul>
 	            </li>
                 <li><input type="checkbox" id="item-3-1" /><label for="item-3-1">NVD3 charts<a target="_blank" href="https://github.com/Moviri/recline/wiki/View.NVD3Graph"><i class="icon-question-sign"></i></a></label>
@@ -82,7 +82,7 @@
 		
         <li><input type="checkbox" id="item-1" checked="checked"/><label for="item-1">CONTROLS</label>
             <ul>
-                <li><a value="#">View.DatePicker</a><a target="_blank" href="https://github.com/Moviri/recline/wiki/View.DatePicker"><i class="icon-question-sign"></i></a></li>
+                <li><a value="#view_datepicker" onclick="__loadPanels($(this), 'xcharts_datepicker', 'view_datepicker', 'xcharts', 'view_datepicker')">View.DatePicker</a><a target="_blank" href="https://github.com/Moviri/recline/wiki/View.DatePicker"><i class="icon-question-sign"></i></a></li>
                 <li><input type="checkbox" id="item-1-0" /><label for="item-1-0">View.GenericFilter<a target="_blank" href="https://github.com/Moviri/recline/wiki/View.GenericFilter"><i class="icon-question-sign"></i></a></label>
 	                <ul>
 	                    <li><a value="#">term</a></li>
