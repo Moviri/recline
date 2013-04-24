@@ -9985,7 +9985,7 @@ this.recline.View = this.recline.View || {};
 			$( "#slider{{ctrlId}}" ).jslider({ \
 				from: {{min}}, \
 				to: {{max}}, \
-				scale: [{{min}},"|","{{step1}}","|","{{mean}}","|","{{step3}}","|",{{max}}], \
+				scale: [{{min}},"|","{{step1}}","|","{{mean}}","|","{{step2}}","|",{{max}}], \
             	{{#step}}step: {{step}}{{/step}}, \
 				limits: false, \
 				skin: "plastic" \
@@ -10048,18 +10048,6 @@ this.recline.View = this.recline.View || {};
 	<style> \
 	 .layout-slider { padding-bottom:15px;width:150px } \
 	</style> \
-	<script> \
-		$(document).ready(function(){ \
-			$( "#slider{{ctrlId}}" ).jslider({ \
-				from: {{min}}, \
-				to: {{max}}, \
-				scale: [{{min}},"|","{{step1}}","|","{{mean}}","|","{{step3}}","|",{{max}}], \
-				limits: false, \
-            	{{#step}}step: {{step}}{{/step}}, \
-				skin: "round_plastic", \
-			}); \
-		}); \
-	</script> \
       <div class="filter-{{type}} filter" id="{{ctrlId}}"> \
         <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
             <legend style="display:{{useLegend}}">{{label}} \
@@ -10430,7 +10418,6 @@ this.recline.View = this.recline.View || {};
             _.bindAll(this, 'onRemoveFilter');
             _.bindAll(this, 'onPeriodChanged');
             _.bindAll(this, 'findActiveFilterByField');
-
             _.bindAll(this, 'updateDropdown');
             _.bindAll(this, 'updateDropdownStyled');
             _.bindAll(this, 'updateSlider');
@@ -11496,6 +11483,22 @@ this.recline.View = this.recline.View || {};
             var out = Mustache.render(currTemplate, tmplData);
             this.el.html(out);
             
+            // ensure range_slider_styled is attached correctly to the event
+            for (var jj in tmplData.filters)
+            	if (tmplData.filters[jj].controlType == "range_slider_styled") {
+            		var currData = tmplData.filters[jj];
+        			$( "#slider"+currData.ctrlId).jslider({
+        				from: currData.min,
+        				to: currData.max,
+        				scale: [currData.min,"|",currData.step1,"|",currData.mean,"|", currData.step2,"|",currData.max],
+        				limits: false,
+                    	step: currData.step,
+        				skin: "round_plastic",
+                    	onstatechange: self.onStyledRangeSliderValueChanged
+        			});
+        			$( "#slider"+currData.ctrlId).data("self", self);
+            	}
+            
             // ensures previous hierarchic_radiobutton selections are retained, if any (coming from the session cookie) [PART 2]
             _.each(tmplData.filters, function(currActiveFilter) {
                 if (currActiveFilter.controlType == "hierarchic_radiobuttons" && currActiveFilter.type == "list" 
@@ -11800,6 +11803,10 @@ this.recline.View = this.recline.View || {};
             var self=this;
 
             var res = [];
+            if (currFilter.fieldType == "integer" || currFilter.fieldType == "number" || currFilter.fieldType == "float")
+            	for (var j in values)
+            		values[j] = parseFloat(values[j]);
+            
             // make sure you use all values, even 2nd or 3rd level if present (hierarchic radiobuttons only)
             var allValues = currFilter.values
             if (currFilter.valuesLev3)
@@ -11854,24 +11861,31 @@ this.recline.View = this.recline.View || {};
             var fieldId = $target.attr('data-filter-field');
             var fieldType = $target.attr('data-filter-type');
             var controlType = $target.attr('data-control-type');
-            if (fieldType == "term") {
-                var term = value;
-                var activeFilter = this.findActiveFilterByField(fieldId, controlType);
-                activeFilter.userChanged = true;
-                activeFilter.term = term;
-                activeFilter.list = [term];
-                this.doAction("onStyledSliderValueChanged", fieldId, [term], "add", activeFilter);
-            }
-            else if (fieldType == "range") {
-                var activeFilter = this.findActiveFilterByField(fieldId, controlType);
+            var term = value;
+            var activeFilter = this.findActiveFilterByField(fieldId, controlType);
+            activeFilter.userChanged = true;
+            activeFilter.term = term;
+            activeFilter.list = [term];
+            this.doAction("onStyledSliderValueChanged", fieldId, [term], "add", activeFilter);
+        },
+        onStyledRangeSliderValueChanged:function (value) {
+        	var self = this.inputNode.data("self");
+        	if (self)
+    		{
+                var $target = this.domNode.parent().parent();
+                var fieldId = $target.attr('data-filter-field');
+                var fieldType = $target.attr('data-filter-type');
+                var controlType = $target.attr('data-control-type');
+
+                var activeFilter = self.findActiveFilterByField(fieldId, controlType);
                 activeFilter.userChanged = true;
                 var fromTo = value.split(";");
                 var from = fromTo[0];
                 var to = fromTo[1];
                 activeFilter.from = from;
                 activeFilter.to = to;
-                this.doAction("onStyledSliderValueChanged", fieldId, [from, to], "add", activeFilter);
-            }
+                self.doAction("onStyledRangeSliderValueChanged", fieldId, [from, to], "add", activeFilter);
+    		}
         },
         onFilterValueChanged:function (e) {
             e.preventDefault();
@@ -12191,7 +12205,7 @@ this.recline.View = this.recline.View || {};
         	_.each(records, function(record, index) {
                 var field = self._sourceDataset.fields.get(self.sourceField.field);
                 if(!field) {
-                    throw "widget.genericfilter: unable to find field ["+self.sourceField.field+"] in dataset";
+                    throw "widget.multibutton_dropdown_filter: unable to find field ["+self.sourceField.field+"] in dataset";
                 }
 
                 var fullLevelValue = record.getFieldValue(field);

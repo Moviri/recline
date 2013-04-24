@@ -79,7 +79,7 @@ this.recline.View = this.recline.View || {};
         	_.each(records, function(record, index) {
                 var field = self._sourceDataset.fields.get(self.sourceField.field);
                 if(!field) {
-                    throw "widget.genericfilter: unable to find field ["+self.sourceField.field+"] in dataset";
+                    throw "widget.multibutton_dropdown_filter: unable to find field ["+self.sourceField.field+"] in dataset";
                 }
 
                 var fullLevelValue = record.getFieldValue(field);
