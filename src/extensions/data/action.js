@@ -114,6 +114,18 @@ this.recline = this.recline || {};
                 });
                     this._internalDoAction(params);
             },
+            doActionWithValueArray:function (valuesarray, mapping) {
+            	// no check. Pass the raw data (useful in type "range", 
+            	// when you may not have an exact record match) 
+            	var params = [];
+                mapping.forEach(function (mapp) {
+                    params.push({
+                        filter:mapp.filter,
+                        value:valuesarray
+                    });
+                });
+                this._internalDoAction(params);
+            },            
 
 
             // action could be add/remove

@@ -65,8 +65,7 @@ var myAction_filter = new recline.Action({
 
 var filterIdCtrl = new recline.View.GenericFilter({
     sourceDataset: dataset,
-    sourceFields:[ {field:"id", controlType:'range', fieldType:"integer", label: "Id", labelPosition:"top" } ],
-    //state: { showBackground:false },
+    sourceFields:[ {field:"id", controlType:'range', fieldType:"integer", label: "ID", labelPosition:"top" } ],
     actions: [{
                 action: myAction_filter,
                 mapping:[ {srcField:"id", filter:"filter_id"} ],
