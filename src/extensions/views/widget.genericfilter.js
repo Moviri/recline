@@ -581,7 +581,7 @@ this.recline.View = this.recline.View || {};
                 return true;
             if (b && a == b.valueOf())
                 return true;
-            if (a && b && a.valueOf == b.valueOf())
+            if (a && b && a.valueOf() == b.valueOf())
                 return true;
 
             return false;
@@ -1899,28 +1899,10 @@ this.recline.View = this.recline.View || {};
         // action could be add or remove
         doAction:function (eventType, fieldName, values, actionType, currFilter) {
             var self=this;
-
-            var res = [];
             if (currFilter.fieldType == "integer" || currFilter.fieldType == "number" || currFilter.fieldType == "float")
             	for (var j in values)
             		values[j] = parseFloat(values[j]);
-            
-            // make sure you use all values, even 2nd or 3rd level if present (hierarchic radiobuttons only)
-            var allValues = currFilter.values
-            if (currFilter.valuesLev3)
-            	allValues = currFilter.values.concat(currFilter.valuesLev2, currFilter.valuesLev3)
-            else if (currFilter.valuesLev2)
-            	allValues = currFilter.values.concat(currFilter.valuesLev2)
-            	
-            // TODO it is not efficient, record must be indexed by term
-            // TODO conversion to string is not correct, original value must be used
-            _.each(allValues, function(v) {
-              if(v.record) {
-                  var field = v.record.fields.get(currFilter.field);
-                  if(_.contains(values,v.record.getFieldValueUnrendered(field).toString()))
-                    res.push(v.record);
-              };
-            });
+
             var actions = this.options.actions;
             if (currFilter.facet) 
             {
@@ -1931,6 +1913,29 @@ this.recline.View = this.recline.View || {};
             else
             {
             	// I'm using record (not facet) so I can pass it to actions
+                var res = [];
+                
+                // make sure you use all values, even 2nd or 3rd level if present (hierarchic radiobuttons only)
+                var allValues = currFilter.values
+                if (currFilter.valuesLev3)
+                	allValues = currFilter.values.concat(currFilter.valuesLev2, currFilter.valuesLev3)
+                else if (currFilter.valuesLev2)
+                	allValues = currFilter.values.concat(currFilter.valuesLev2)
+                	
+                // TODO it is not efficient, record must be indexed by term
+                _.each(allValues, function(v) {
+                  if (v.record) {
+                      var field = v.record.fields.get(currFilter.field);
+                      var recordValue = v.record.getFieldValueUnrendered(field);
+                      for (var jj in values)
+                    	  if (self.areValuesEqual(recordValue, values[jj]))
+                    	  {
+                    		  res.push(v.record);
+                    		  break;
+                    	  }
+                  }
+                });            	
+            	
                 actions.forEach(function(currAction){
                     currAction.action.doAction(res, currAction.mapping);
                 });
