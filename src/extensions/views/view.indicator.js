@@ -175,7 +175,12 @@ this.recline.View = this.recline.View || {};
                 field = self.model.getFields(self.options.state.kpi.type).get(self.options.state.kpi.field);
 
             if (!field){
-            	throw "View.Indicator: unable to find field [" + self.options.state.kpi.field + "] on model"
+            	if (self.model.attributes.dataset && self.model.attributes.dataset.recordCount == 0)
+        		{
+            		// virtual model has no valid fields since starting model has no record. Must only display N/A
+        		
+        		}
+            	else throw "View.Indicator: unable to find field [" + self.options.state.kpi.field + "] on model"
             }     
                 
             var textField = null;
@@ -193,7 +198,7 @@ this.recline.View = this.recline.View || {};
             var kpiValue;
 
 
-            if (kpi.length > 0) {
+            if (kpi.length > 0 && field) {
                 kpiValue = kpi[0].getFieldValueUnrendered(field);
                 tmplData["value"] = kpi[0].getFieldValue(field);
                 tmplData["shape"] = kpi[0].getFieldShape(field, true, false);
