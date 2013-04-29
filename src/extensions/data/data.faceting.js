@@ -23,7 +23,7 @@ my.Faceting = {};
                 var fieldId = query.terms.field;
                 var val = doc[fieldId];
                 var tmp = facetResults[facetId];
-                if (val) {
+                if (val != null && typeof val != "undefined") {
                     if( tmp.termsall[val] ) {
                         tmp.termsall[val].records.push(doc);
                         tmp.termsall[val].count = tmp.termsall[val].count + 1;

@@ -3082,7 +3082,7 @@ my.Faceting = {};
                 var fieldId = query.terms.field;
                 var val = doc[fieldId];
                 var tmp = facetResults[facetId];
-                if (val) {
+                if (val != null && typeof val != "undefined") {
                     if( tmp.termsall[val] ) {
                         tmp.termsall[val].records.push(doc);
                         tmp.termsall[val].count = tmp.termsall[val].count + 1;
@@ -9975,6 +9975,7 @@ this.recline.View = this.recline.View || {};
 			$( "#slider{{ctrlId}}" ).slider({ \
 				min: {{min}}, \
 				max: {{max}}, \
+            	{{#step}}step: {{step}}{{/step}}, \
 				value: {{term}}, \
 				slide: function( event, ui ) { \
 					$( "#amount{{ctrlId}}" ).html( "{{label}}: "+ ui.value ); \
@@ -11221,7 +11222,8 @@ this.recline.View = this.recline.View || {};
             }
             else {
                 var lastV = null;
-                currActiveFilter.step = null;
+                if (typeof currActiveFilter.step == "undefined") // do not reset if user specified its own step value
+                	currActiveFilter.step = null;
 
                 if(facetTerms) {
                     for (var i in facetTerms) {
