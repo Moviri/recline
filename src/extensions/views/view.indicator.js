@@ -175,10 +175,9 @@ this.recline.View = this.recline.View || {};
                 field = self.model.getFields(self.options.state.kpi.type).get(self.options.state.kpi.field);
 
             if (!field){
-            	if (self.model.attributes.dataset && self.model.attributes.dataset.recordCount == 0)
+            	if (self.model.attributes.dataset && !self.model.attributes.dataset.recordCount)
         		{
             		// virtual model has no valid fields since starting model has no record. Must only display N/A
-        		
         		}
             	else throw "View.Indicator: unable to find field [" + self.options.state.kpi.field + "] on model"
             }     

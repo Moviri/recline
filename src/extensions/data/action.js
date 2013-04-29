@@ -86,7 +86,7 @@ this.recline = this.recline || {};
                     	obj.records.forEach(function(row) {
                     		var filterFieldValue = row[filterFieldName]
                     		valueList.forEach(function(currSelValue) {
-                    			if (currSelValue == filterFieldValue || currSelValue.valueOf() == filterFieldValue.valueOf())
+                    			if (currSelValue == filterFieldValue || (currSelValue && filterFieldValue && currSelValue.valueOf() == filterFieldValue.valueOf()))
                     				if (!_.contains(values, row[mapp.srcField]))
                             			values.push(row[mapp.srcField]);
                     		})

@@ -2149,7 +2149,7 @@ this.recline = this.recline || {};
                     	obj.records.forEach(function(row) {
                     		var filterFieldValue = row[filterFieldName]
                     		valueList.forEach(function(currSelValue) {
-                    			if (currSelValue == filterFieldValue || currSelValue.valueOf() == filterFieldValue.valueOf())
+                    			if (currSelValue == filterFieldValue || (currSelValue && filterFieldValue && currSelValue.valueOf() == filterFieldValue.valueOf()))
                     				if (!_.contains(values, row[mapp.srcField]))
                             			values.push(row[mapp.srcField]);
                     		})
@@ -6349,10 +6349,9 @@ this.recline.View = this.recline.View || {};
                 field = self.model.getFields(self.options.state.kpi.type).get(self.options.state.kpi.field);
 
             if (!field){
-            	if (self.model.attributes.dataset && self.model.attributes.dataset.recordCount == 0)
+            	if (self.model.attributes.dataset && !self.model.attributes.dataset.recordCount)
         		{
             		// virtual model has no valid fields since starting model has no record. Must only display N/A
-        		
         		}
             	else throw "View.Indicator: unable to find field [" + self.options.state.kpi.field + "] on model"
             }     
