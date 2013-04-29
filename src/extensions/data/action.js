@@ -287,6 +287,24 @@ this.recline = this.recline || {};
 
                     return filter;
                 },
+                termAdvanced:function (filter, data) {
+                	if (filter.operator) {
+                        if (data.length === 0) {
+                            filter["term"] = null;
+                    		filter["remove"] = true;
+                        } else if (data.length === 1) {
+                        	if(data[0] == null)
+                        		filter["remove"] = true;
+                        	else
+                        		filter["term"] = data[0];
+                        } else {
+                            throw "Data passed for filtertype termAdvanced not valid. Data lenght should be 1 or empty but is " + data.length;
+                        }
+                	}
+                	else throw "Data passed for filtertype termAdvanced not valid. Operator clause is missing";
+                	
+                    return filter;
+                },                
                 range:function (filter, data) {
 
                     if (data.length === 0) {
