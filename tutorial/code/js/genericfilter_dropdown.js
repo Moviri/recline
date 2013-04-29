@@ -14,26 +14,26 @@ var dataset = new recline.Model.Dataset({ /*FOLD_ME*/
 var filteredDataset = new recline.Model.FilteredDataset({dataset: dataset});
 
 var virtual = new recline.Model.VirtualDataset({ 
-	dataset: filteredDataset, 
-	aggregation: { 
-		//dimensions: ["UserId"], 
-		measures: ["Accessi", "Download", "Upload"], 
-		aggregationFunctions: ["sum"] 
-	} 
+    dataset: filteredDataset, 
+    aggregation: { 
+        //dimensions: ["UserId"], 
+        measures: ["Accessi", "Download", "Upload"], 
+        aggregationFunctions: ["sum"] 
+    } 
 });
 
 dataset.queryState.addFacetNoEvent("UserId");
 dataset.fetch();
 
 var myAction = new recline.Action({
-	 filters:{
-	     filter_userId: {type:"term", field:"UserId", fieldType:"string"}
-	 },
-	 models: [{
-	     model: filteredDataset,
-	     filters:["filter_userId"]
-	     }],
-	 type:["filter"]
+     filters:{
+         filter_userId: {type:"term", field:"UserId", fieldType:"string"}
+     },
+     models: [{
+         model: filteredDataset,
+         filters:["filter_userId"]
+         }],
+     type:["filter"]
 });
 
 var filterDateCtrl = new recline.View.GenericFilter({
@@ -61,7 +61,7 @@ var graph1 = new recline.View.xCharts({
             type: "byFieldValue", 
             seriesField: "UserId", 
             valuesField: "Download"
-		},
+        },
         type: 'line-dotted',
         interpolation:'linear',
         xScale: 'time',
@@ -73,39 +73,39 @@ var graph1 = new recline.View.xCharts({
         opts: {
             tickFormatX: function(x) {return d3.time.format('%d-%b')(x); }
         }    
-	}
+    }
 });
 graph1.render();
 
 var indicator1 = new recline.View.Indicator({
-	 model: virtual,
-	 state: {
-	     label: "DOWNLOAD",
-	     description: "Download totali utente selezionato",
-	     kpi: {field: "Download_sum"}
-	 }
+     model: virtual,
+     state: {
+         label: "DOWNLOAD",
+         description: "Download totali utente selezionato",
+         kpi: {field: "Download_sum"}
+     }
 });
 $("#my_indicator1").append(indicator1.el);
 indicator1.render();
 
 var indicator2 = new recline.View.Indicator({
-	 model: virtual,
-	 state: {
-	     label: "UPLOAD",
-	     description: "Upload totali utente selezionato",
-	     kpi: {field: "Upload_sum"}
-	 }
+     model: virtual,
+     state: {
+         label: "UPLOAD",
+         description: "Upload totali utente selezionato",
+         kpi: {field: "Upload_sum"}
+     }
 });
 $("#my_indicator2").append(indicator2.el);
 indicator2.render();
 
 var indicator3 = new recline.View.Indicator({
-	 model: virtual,
-	 state: {
-	     label: "ACCESSI",
-	     description: "Accessi totali utente selezionato",
-	     kpi: {field: "Accessi_sum"}
-	 }
+     model: virtual,
+     state: {
+         label: "ACCESSI",
+         description: "Accessi totali utente selezionato",
+         kpi: {field: "Accessi_sum"}
+     }
 });
 $("#my_indicator3").append(indicator3.el);
 indicator3.render();
