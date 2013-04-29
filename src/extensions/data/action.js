@@ -68,13 +68,12 @@ this.recline = this.recline || {};
                 var params = [];
                 mapping.forEach(function (mapp) {
                     var values = [];
-                    //{srcField: "daydate", filter: "filter_daydate"}
                     records.forEach(function (row) {
                         values.push(row.getFieldValueUnrendered({id:mapp.srcField}));
                     });
                     params.push({
                         filter:mapp.filter,
-                        value:values
+                        value:values,
                     });
                 });
                 this._internalDoAction(params);
@@ -83,17 +82,20 @@ this.recline = this.recline || {};
                 var params = [];
                 mapping.forEach(function (mapp) {
                     var values = [];
-                    //{srcField: "daydate", filter: "filter_daydate"}
                     facetTerms.forEach(function (obj) {
                     	obj.records.forEach(function(row) {
                     		var filterFieldValue = row[filterFieldName]
-                    		if (_.contains(valueList, filterFieldValue) && !_.contains(values, row[mapp.srcField])) 
-                    			values.push(row[mapp.srcField]);
+                    		valueList.forEach(function(currSelValue) {
+                    			if (currSelValue == filterFieldValue || currSelValue.valueOf() == filterFieldValue.valueOf())
+                    				if (!_.contains(values, row[mapp.srcField]))
+                            			values.push(row[mapp.srcField]);
+                    		})
                     	});
                     });
                     params.push({
                         filter:mapp.filter,
-                        value:values
+                        value:values,
+                        origValueList: valueList
                     });
                 });
                 this._internalDoAction(params);
@@ -102,12 +104,12 @@ this.recline = this.recline || {};
                 var params = [];
                 mapping.forEach(function (mapp) {
                     var values = [];
-                    //{srcField: "daydate", filter: "filter_daydate"}
                     _.each(valuesarray, function (row) {
                         if (row.field === mapp.srcField)
                             params.push({
                                 filter:mapp.filter,
-                                value:row.value
+                                value:row.value,
+                                origValueList: valuesarray
                             });
                     });
 
@@ -149,9 +151,10 @@ this.recline = this.recline || {};
                     currentFilter["name"] = f.filter;
                     if (self.filters[currentFilter.type] == null)
                         throw "Filter not implemented for type " + currentFilter.type;
-
-                    targetFilters.push(self.filters[currentFilter.type](currentFilter, f.value));
-
+                    
+                	if (currentFilter.type == "range" && f.value.length < 2 && f.origValueList)
+                		targetFilters.push(self.filters[currentFilter.type](currentFilter, f.origValueList)); // fallback to orig values if some range value has been filtered (missing in the model)
+                	else targetFilters.push(self.filters[currentFilter.type](currentFilter, f.value)); // general case
                 });
 
                 // foreach type and dataset add all filters and trigger events

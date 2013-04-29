@@ -181,7 +181,7 @@ this.recline.View = this.recline.View || {};
 				{{/periodValues}} \
 			</select> \
 			<br> \
-			<div style="max-height:500px;width:100%;border:1px solid grey;overflow:auto;"> \
+			<div class="month_week_scroller" style="max-height:500px;width:100%;border:1px solid grey;overflow:auto;"> \
 				<table class="table table-striped table-hover table-condensed" style="width:100%" data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
 				<tbody>\
 				{{#values}} \
@@ -679,6 +679,12 @@ this.recline.View = this.recline.View || {};
         redrawGenericControl:function (filterContainer, currActiveFilter) {
             var out = this.createSingleFilter(currActiveFilter);
             filterContainer.parent().html(out);
+            if (currActiveFilter.controlType == "month_week_calendar" && currActiveFilter.period == "Weeks")
+        	{
+            	var $scroller = $("#"+currActiveFilter.ctrlId).find(".month_week_scroller")
+            	var $tableRow = $scroller.first("table tr")
+            	$scroller.scrollTop((currActiveFilter.term -1) * parseInt($tableRow.css("line-height")))
+        	}
         },
 
         updateDropdown:function (filterContainer, currActiveFilter, filterCtrl) {
@@ -869,10 +875,7 @@ this.recline.View = this.recline.View || {};
 
             if (currActiveFilter.controlType == "month_week_calendar") {
                 currActiveFilter.weekValues = [];
-                currActiveFilter.periodValues = [
-                    {val:"Months", selected:(currActiveFilter.period == "Months" ? "selected" : "")},
-                    {val:"Weeks", selected:(currActiveFilter.period == "Weeks" ? "selected" : "")}
-                ]
+
                 var currYear = currActiveFilter.year;
                 var januaryFirst = new Date(currYear, 0, 1);
                 var januaryFirst_time = januaryFirst.getTime();
@@ -888,12 +891,22 @@ this.recline.View = this.recline.View || {};
                         weekEndTime = new Date(currYear + 1, 0, 1).getTime();
                         finished = true;
                     }
-                    currActiveFilter.weekValues.push({val:w + 1,
-                        label:"" + (w + 1) + " [" + d3.time.format("%x")(new Date(weekStartTime)) + " -> " + d3.time.format("%x")(new Date(weekEndTime - 1000)) + "]",
-                        startDate:new Date(weekStartTime),
-                        stopDate:new Date(weekEndTime),
-                        selected:(currActiveFilter.term == w + 1 ? self._selectedClassName : "")
-                    });
+                    var currWeekValues = {
+                    		val:w + 1,
+                            label:"" + (w + 1) + " [" + d3.time.format("%x")(new Date(weekStartTime)) + " -> " + d3.time.format("%x")(new Date(weekEndTime - 1000)) + "]",
+                            startDate:new Date(weekStartTime),
+                            stopDate:new Date(weekEndTime)
+                    }
+                    if (currActiveFilter.term == w + 1 || 
+                    	(currActiveFilter.start && currActiveFilter.start.getTime() == weekStartTime
+                    	&& currActiveFilter.stop && currActiveFilter.stop.getTime() == weekEndTime)) 
+                    {
+                    	currWeekValues.selected = self._selectedClassName;
+                    	currActiveFilter.term = w + 1;
+                        if (currActiveFilter.period == "")
+                        	currActiveFilter.period = "Weeks";
+                    }
+                    currActiveFilter.weekValues.push(currWeekValues);
                 }
 
                 currActiveFilter.monthValues = [];
@@ -904,13 +917,26 @@ this.recline.View = this.recline.View || {};
                         endYear = currYear + 1;
                         endMonth = 0;
                     }
-                    currActiveFilter.monthValues.push({ val:d3.format("02d")(m),
+                    var currMonthValues = {
+                		val:d3.format("02d")(m),
                         label:d3.time.format("%B")(new Date(m + "/01/2012")) + " " + currYear,
                         startDate:new Date(currYear, m - 1, 1, 0, 0, 0, 0),
                         stopDate:new Date(endYear, endMonth, 1, 0, 0, 0, 0),
-                        selected:(currActiveFilter.term == m ? self._selectedClassName : "")
-                    });
+                    }
+                    if (currActiveFilter.term == m || 
+                    	(currActiveFilter.start && currActiveFilter.start.getTime() == currMonthValues.startDate.getTime()
+                    	&& currActiveFilter.stop && currActiveFilter.stop.getTime() == currMonthValues.stopDate.getTime())) 
+                    {
+                    	currMonthValues.selected = self._selectedClassName;
+                        if (currActiveFilter.period == "")
+                        	currActiveFilter.period = "Months";
+                    }
+                    currActiveFilter.monthValues.push(currMonthValues);
                 }
+                currActiveFilter.periodValues = [
+                     {val:"Months", selected:(currActiveFilter.period == "Months" ? "selected" : "")},
+                     {val:"Weeks", selected:(currActiveFilter.period == "Weeks" ? "selected" : "")}
+                ]
                 if (currActiveFilter.period == "Months")
                     currActiveFilter.values = currActiveFilter.monthValues;
                 else if (currActiveFilter.period == "Weeks")
@@ -921,7 +947,6 @@ this.recline.View = this.recline.View || {};
                 var endYear = parseInt(d3.time.format("%Y")(new Date()))
                 for (var y = startYear; y <= endYear; y++)
                     currActiveFilter.yearValues.push({val:y, selected:(currActiveFilter.year == y ? "selected" : "")});
-
             }
             else if (currActiveFilter.controlType == "dropdown_date_range") {
                 currActiveFilter.date_values = [];
@@ -1881,8 +1906,8 @@ this.recline.View = this.recline.View || {};
                 if (type == "range") {
                     // case month_week_calendar
                     var year = parseInt($combo.val());
-                    var startDate = $targetTD.attr('startDate');
-                    var endDate = $targetTD.attr('stopDate');
+                    var startDate = new Date($targetTD.attr('startDate'));
+                    var endDate = new Date($targetTD.attr('stopDate'));
 
                     currFilter.term = $targetTD.attr('myValue'); // save selected item for re-rendering later
 
