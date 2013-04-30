@@ -403,7 +403,8 @@ this.recline.View = this.recline.View || {};
 					border-top:2px solid black;border-left:2px solid black; \
 					border-bottom:2px solid darkgrey;border-right:2px solid darkgrey; \
 					width:16px;height:16px;padding:1px;margin:5px; \
-					opacity: 0.85 \
+					opacity: 0.85; \
+            		cursor: pointer; \
 					}  \
 	 .legend-item.not-selected { background-color:transparent !important; } /* the idea is that the color "not-selected" overrides the original color (this way we may use a global style) */ \
 	  </style> \
@@ -415,7 +416,7 @@ this.recline.View = this.recline.View || {};
 			{{#values}} \
 				<tr> \
 				<td style="width:25px"><div class="legend-item {{notSelected}}" myValue="{{val}}" style="background-color:{{color}}"></td> \
-				<td style="vertical-align:middle"><label style="color:{{color}};text-shadow: black 1px 1px, black -1px -1px, black -1px 1px, black 1px -1px, black 0px 1px, black 0px -1px, black 1px 0px, black -1px 0px">{{val}}</label></td>\
+				<td style="vertical-align:middle"><label class="legend-label" style="color:{{color}};text-shadow: black 1px 1px, black -1px -1px, black -1px 1px, black 1px -1px, black 0px 1px, black 0px -1px, black 1px 0px, black -1px 0px">{{val}}</label></td>\
 				<td><label style="text-align:right">[{{count}}]</label></td>\
 				</tr>\
 			{{/values}}\
@@ -485,6 +486,7 @@ this.recline.View = this.recline.View || {};
             'click #addFilterButton':'onAddFilter',
             'click .list-filter-item':'onListItemClicked',
             'click .legend-item':'onLegendItemClicked',
+            'click .legend-label':'onLegendItemClicked',
             'click #setFilterValueButton':'onFilterValueChanged',
             'change .drop-down':'onFilterValueChanged',
             'change .chzn-select-deselect':'onFilterValueChanged',
@@ -1833,6 +1835,10 @@ this.recline.View = this.recline.View || {};
         onLegendItemClicked:function (e) {
             e.preventDefault();
             var $target = $(e.currentTarget);
+            // switch to checkbox if user pressed on label
+            if ($target.is("label"))
+            	$target = $target.parent().prev().children('.legend-item')
+            	
             var $fieldSet = $target.parent().parent().parent().parent().parent();
             var type = $fieldSet.attr('data-filter-type');
             var fieldId = $fieldSet.attr('data-filter-field');

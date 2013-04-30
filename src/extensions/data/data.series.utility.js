@@ -249,10 +249,17 @@ this.recline.Data.SeriesUtility = this.recline.Data.SeriesUtility || {};
 
             });
         }
-        // force sorting of values or scrambled series may generate a wrong chart  
-//        _.each(series, function(serie) {
-//        	serie.values = _.sortBy(serie.values, function(value) { return value.x }) 
-//        })
+        // force sorting of values or scrambled series may generate a wrong chart
+        // since there may already be a sorting clause, we must apply to all series the same sort order of the first
+        if (series.length > 1)
+    	{
+        	var sortWeight = [];
+        	_.each(series[0].values, function(value, weight) { sortWeight[value.x] = weight+1; })
+            _.each(series, function(serie, num) {
+            	if (num > 0) // skip first serie
+            		serie.values = _.sortBy(serie.values, function(value) { return sortWeight[value.x] || 1000000000 }) 
+            })
+    	}
         
         if (groupAllSmallSeries)
     	{
