@@ -73,7 +73,7 @@ var myAction = new recline.Action({
 
 var filterDateCtrl = new recline.View.GenericFilter({
 sourceDataset: percentModel,
-sourceFields:[ {field:"percent", controlType:'slider', fieldType:"integer", labelPosition:"left", step: STEP }],
+sourceFields:[ {field:"percent", controlType:'slider_styled', fieldType:"integer", labelPosition:"left", step: STEP }],
 state: { showBackground:false },
 actions: [{
             action: myAction,
