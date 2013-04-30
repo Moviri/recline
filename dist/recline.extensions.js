@@ -3464,7 +3464,16 @@ this.recline.Data = this.recline.Data || {};
                 },
                 bw:function (value, term) {
                     return _.contains(term, value)
-                }
+                },
+                like:function (value, term) {
+                    return value.indexOf(term) >= 0
+                },
+                rlike:function (value, term) {
+                    return value.indexOf(term) == 0
+                },
+                llike:function (value, term) {
+                    return value.indexOf(term) > 0
+                },
             };
 
             return operation[operator](value, term);
@@ -7181,12 +7190,16 @@ this.recline.View = this.recline.View || {};
             	if (self.state.get("graphType").indexOf("Horizontal") < 0)
         		{
                     var xfield = self.model.fields.get(self.state.attributes.group);
-            		xAxisFormat = self.getFormatter(xfield.get('type'));
-
+            		xAxisFormat = self.state.get("tickFormatX") || self.getFormatter(xfield.get('type'));
             		if (xLabel == null || xLabel == "" || typeof xLabel == 'undefined')
                         xLabel = xfield.get('label');
         		}
-            	else xLabel = self.state.get("yLabel");
+            	else
+        		{
+            		xLabel = self.state.get("yLabel");
+            		if (self.state.get("tickFormatY"))
+            			xAxisFormat = self.state.get("tickFormatY");
+        		}
 
                 // set data format
                 chart.xAxis
@@ -7197,18 +7210,20 @@ this.recline.View = this.recline.View || {};
             if (axis == "all" || axis == "y") {
                 var yLabel = self.state.get("yLabel");
 
-                // todo yaxis format must be passed as prop
                 var yAxisFormat = function(str) {return str;}
             	// axis are switched when using horizontal bar chart
                 if (self.state.get("graphType").indexOf("Horizontal") >= 0)
             	{
                 	var yfield = self.model.fields.get(self.state.attributes.group);            	
-                	yAxisFormat = self.getFormatter(yfield.get('type'))
+                	yAxisFormat = self.state.get("tickFormatX") || self.getFormatter(yfield.get('type'))
             		yLabel = self.state.get("xLabel");
             	}
                 else
             	{
-                    if (yLabel == null || yLabel == "" || typeof yLabel == 'undefined')
+                	if (self.state.get("tickFormatY"))
+                		yAxisFormat = self.state.get("tickFormatY");
+
+                	if (yLabel == null || yLabel == "" || typeof yLabel == 'undefined')
                         yLabel = self.state.attributes.seriesValues.join("/");
             	}
                 	
@@ -7225,7 +7240,7 @@ this.recline.View = this.recline.View || {};
         	case "string": return d3.format(',s');
         	case "float": return d3.format(',r');
         	case "integer": return d3.format(',r');
-        	case "date": return d3.time.format(self.state.get("tickFormatDate") || '%x');
+        	case "date": return d3.time.format('%x');
             }
         },
 
@@ -11068,8 +11083,10 @@ this.recline.View = this.recline.View || {};
                 
                 if (currActiveFilter.term || (currActiveFilter.list && currActiveFilter.list.length < self._sourceDataset.getRecords()))
                 	currActiveFilter.all1Selected = ""
-                	
-            	_.each(self._sourceDataset.getRecords(), function(record) {
+                
+
+                var storedValues = []; // to avoid dulicates
+                _.each(self._sourceDataset.getRecords(), function(record) {
                     var field = self._sourceDataset.fields.get(currActiveFilter.field);
                     if(!field) {
                         throw "widget.genericfilter: unable to find field ["+currActiveFilter.field+"] in dataset";
@@ -11077,21 +11094,25 @@ this.recline.View = this.recline.View || {};
 
                     var v = record.getFieldValue(field);
                     var vUnrendered = record.getFieldValueUnrendered(field);
-                    var shape = record.getFieldShape(field, false, false);
-                    fullLevelValues.push(v);
-                    if (v.indexOf(currActiveFilter.separator) < 0)
-                    	lev1Values.push({value: v, valueUnrendered: vUnrendered, record: record, shape: shape});
-                    else
+                    if (!_.contains(storedValues, vUnrendered))
                 	{
-                    	var valueSet = v.split(currActiveFilter.separator);
-                        var lev1Val = valueSet[0]
-                        if (_.find(lev1Values, function(currVal){ return currVal.value == lev1Val }))
-                        	{ /* skip already present */ }
-                        else 
+                    	storedValues.push(vUnrendered);
+                        var shape = record.getFieldShape(field, false, false);
+                        fullLevelValues.push(v);
+                        if (v.indexOf(currActiveFilter.separator) < 0)
+                        	lev1Values.push({value: v, valueUnrendered: vUnrendered, record: record, shape: shape});
+                        else
                     	{
-                        	lev1Values.push({value: lev1Val, valueUnrendered: lev1Val, record: null, shape: shape});
-                        	if (valueSet.length > totLevels)
-                        		totLevels = valueSet.length
+                        	var valueSet = v.split(currActiveFilter.separator);
+                            var lev1Val = valueSet[0]
+                            if (_.find(lev1Values, function(currVal){ return currVal.value == lev1Val }))
+                            	{ /* skip already present */ }
+                            else 
+                        	{
+                            	lev1Values.push({value: lev1Val, valueUnrendered: lev1Val, record: null, shape: shape});
+                            	if (valueSet.length > totLevels)
+                            		totLevels = valueSet.length
+                        	}
                     	}
                 	}
             	});
@@ -11691,7 +11712,7 @@ this.recline.View = this.recline.View || {};
                             if (currSelectedValue == "")
                             	searchString = prefix;
                             
-                            if (currV.indexOf(searchString) == 0)
+                            if (currV.indexOf(searchString) == 0  && !_.contains(listaValori, currV))
                             	listaValori.push(currV)
                     	});
                     	// must also send currSelectedValue to all models!!!!

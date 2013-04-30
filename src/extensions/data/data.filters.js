@@ -211,7 +211,16 @@ this.recline.Data = this.recline.Data || {};
                 },
                 bw:function (value, term) {
                     return _.contains(term, value)
-                }
+                },
+                like:function (value, term) {
+                    return value.indexOf(term) >= 0
+                },
+                rlike:function (value, term) {
+                    return value.indexOf(term) == 0
+                },
+                llike:function (value, term) {
+                    return value.indexOf(term) > 0
+                },
             };
 
             return operation[operator](value, term);

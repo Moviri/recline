@@ -304,12 +304,16 @@ this.recline.View = this.recline.View || {};
             	if (self.state.get("graphType").indexOf("Horizontal") < 0)
         		{
                     var xfield = self.model.fields.get(self.state.attributes.group);
-            		xAxisFormat = self.getFormatter(xfield.get('type'));
-
+            		xAxisFormat = self.state.get("tickFormatX") || self.getFormatter(xfield.get('type'));
             		if (xLabel == null || xLabel == "" || typeof xLabel == 'undefined')
                         xLabel = xfield.get('label');
         		}
-            	else xLabel = self.state.get("yLabel");
+            	else
+        		{
+            		xLabel = self.state.get("yLabel");
+            		if (self.state.get("tickFormatY"))
+            			xAxisFormat = self.state.get("tickFormatY");
+        		}
 
                 // set data format
                 chart.xAxis
@@ -320,18 +324,20 @@ this.recline.View = this.recline.View || {};
             if (axis == "all" || axis == "y") {
                 var yLabel = self.state.get("yLabel");
 
-                // todo yaxis format must be passed as prop
                 var yAxisFormat = function(str) {return str;}
             	// axis are switched when using horizontal bar chart
                 if (self.state.get("graphType").indexOf("Horizontal") >= 0)
             	{
                 	var yfield = self.model.fields.get(self.state.attributes.group);            	
-                	yAxisFormat = self.getFormatter(yfield.get('type'))
+                	yAxisFormat = self.state.get("tickFormatX") || self.getFormatter(yfield.get('type'))
             		yLabel = self.state.get("xLabel");
             	}
                 else
             	{
-                    if (yLabel == null || yLabel == "" || typeof yLabel == 'undefined')
+                	if (self.state.get("tickFormatY"))
+                		yAxisFormat = self.state.get("tickFormatY");
+
+                	if (yLabel == null || yLabel == "" || typeof yLabel == 'undefined')
                         yLabel = self.state.attributes.seriesValues.join("/");
             	}
                 	
@@ -348,7 +354,7 @@ this.recline.View = this.recline.View || {};
         	case "string": return d3.format(',s');
         	case "float": return d3.format(',r');
         	case "integer": return d3.format(',r');
-        	case "date": return d3.time.format(self.state.get("tickFormatDate") || '%x');
+        	case "date": return d3.time.format('%x');
             }
         },
 

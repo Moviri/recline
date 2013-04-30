@@ -1125,8 +1125,10 @@ this.recline.View = this.recline.View || {};
                 
                 if (currActiveFilter.term || (currActiveFilter.list && currActiveFilter.list.length < self._sourceDataset.getRecords()))
                 	currActiveFilter.all1Selected = ""
-                	
-            	_.each(self._sourceDataset.getRecords(), function(record) {
+                
+
+                var storedValues = []; // to avoid dulicates
+                _.each(self._sourceDataset.getRecords(), function(record) {
                     var field = self._sourceDataset.fields.get(currActiveFilter.field);
                     if(!field) {
                         throw "widget.genericfilter: unable to find field ["+currActiveFilter.field+"] in dataset";
@@ -1134,21 +1136,25 @@ this.recline.View = this.recline.View || {};
 
                     var v = record.getFieldValue(field);
                     var vUnrendered = record.getFieldValueUnrendered(field);
-                    var shape = record.getFieldShape(field, false, false);
-                    fullLevelValues.push(v);
-                    if (v.indexOf(currActiveFilter.separator) < 0)
-                    	lev1Values.push({value: v, valueUnrendered: vUnrendered, record: record, shape: shape});
-                    else
+                    if (!_.contains(storedValues, vUnrendered))
                 	{
-                    	var valueSet = v.split(currActiveFilter.separator);
-                        var lev1Val = valueSet[0]
-                        if (_.find(lev1Values, function(currVal){ return currVal.value == lev1Val }))
-                        	{ /* skip already present */ }
-                        else 
+                    	storedValues.push(vUnrendered);
+                        var shape = record.getFieldShape(field, false, false);
+                        fullLevelValues.push(v);
+                        if (v.indexOf(currActiveFilter.separator) < 0)
+                        	lev1Values.push({value: v, valueUnrendered: vUnrendered, record: record, shape: shape});
+                        else
                     	{
-                        	lev1Values.push({value: lev1Val, valueUnrendered: lev1Val, record: null, shape: shape});
-                        	if (valueSet.length > totLevels)
-                        		totLevels = valueSet.length
+                        	var valueSet = v.split(currActiveFilter.separator);
+                            var lev1Val = valueSet[0]
+                            if (_.find(lev1Values, function(currVal){ return currVal.value == lev1Val }))
+                            	{ /* skip already present */ }
+                            else 
+                        	{
+                            	lev1Values.push({value: lev1Val, valueUnrendered: lev1Val, record: null, shape: shape});
+                            	if (valueSet.length > totLevels)
+                            		totLevels = valueSet.length
+                        	}
                     	}
                 	}
             	});
@@ -1748,7 +1754,7 @@ this.recline.View = this.recline.View || {};
                             if (currSelectedValue == "")
                             	searchString = prefix;
                             
-                            if (currV.indexOf(searchString) == 0)
+                            if (currV.indexOf(searchString) == 0  && !_.contains(listaValori, currV))
                             	listaValori.push(currV)
                     	});
                     	// must also send currSelectedValue to all models!!!!
