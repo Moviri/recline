@@ -12230,15 +12230,15 @@ this.recline.View = this.recline.View || {};
         template: '<div class="btn-toolbar"> \
         				<div class="btn-group data-control-id"> \
         				{{^noAllButton}} \
-        					<button class="btn btn-mini grouped-button AllButton {{allButtonSelected}}" val="All">All</button> \
+        					<button type="button" class="btn btn-mini grouped-button AllButton {{allButtonSelected}}" val="All">All</button> \
         				{{/noAllButton}} \
     					{{#buttonsData}} \
         					{{{buttonRender}}} \
         				{{/buttonsData}} \
         			</div> \
         		</div>',
-        buttonTemplate: '<button class="btn btn-mini grouped-button {{selected}}" val="{{value}}">{{valueLabel}}</button>',
-        buttonTemplate2: '<button class="btn btn-mini btn-tooltip grouped-button {{selected}}"  data-toggle="tooltip" title="{{descLabel}}" val="{{value}}">{{index}}</button>',
+        buttonTemplate: '<button type="button" class="btn btn-mini grouped-button {{selected}}" val="{{value}}">{{valueLabel}}</button>',
+        buttonTemplate2: '<button type="button" class="btn btn-mini btn-tooltip grouped-button {{selected}}"  data-toggle="tooltip" title="{{descLabel}}" val="{{value}}">{{index}}</button>',
         dropdownTemplate: '<select id="dropdown{{uid}}_{{numId}}" multiple="multiple"> \
         					{{#options}} \
         						<option value="{{fullValue}}" {{#selected}}selected="selected"{{/selected}}>{{value}}</option> \
