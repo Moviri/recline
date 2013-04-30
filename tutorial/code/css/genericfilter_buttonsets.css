@@ -4,11 +4,7 @@
 
 #my_filter {
 	margin-top:5px;
-	max-width:300px;
-}
-
-#my_filter select {
-	width: 140px;
+	margin-bottom:5px;
 }
 
 #my_indicator1, #my_indicator2, #my_indicator3 {

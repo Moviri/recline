@@ -38,7 +38,7 @@ var myAction = new recline.Action({
 
 var filterDateCtrl = new recline.View.GenericFilter({
  sourceDataset: dataset,
- sourceFields:[ {field:"UserId", controlType:'dropdown', fieldType:"string", labelPosition:"left" }],
+ sourceFields:[ {field:"UserId", controlType:'radiobuttons', fieldType:"string", labelPosition:"left" }],
  state: { showBackground:false },
  actions: [{
              action: myAction,

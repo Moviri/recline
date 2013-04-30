@@ -475,7 +475,7 @@ this.recline.View = this.recline.View || {};
             "range_slider_styled":{ needFacetedField:true},
             "color_legend":{ needFacetedField:true},
             "multibutton":{ needFacetedField:true},
-            "radiobuttons":{ needFacetedField:false},
+            "radiobuttons":{ needFacetedField:true},
             "hierarchic_radiobuttons":{ needFacetedField:false}
         },
 
@@ -1801,7 +1801,9 @@ this.recline.View = this.recline.View || {};
                 }
                 var listaValori = [];
                 $fieldSet.find('div.btn-group button.' + classToUse).each(function () {
-                    listaValori.push($(this).attr('val').valueOf()); // in case there's a date, convert it with valueOf
+                	var currVal = $(this).attr('val'); 
+                	if (currVal != null && typeof currVal != "undefined")
+                		listaValori.push(currVal.valueOf()); // in case there's a date, convert it with valueOf
                 });
                 currActiveFilter.userChanged = true;
                 if (controlType == "multibutton")
@@ -1812,7 +1814,12 @@ this.recline.View = this.recline.View || {};
 	                        listaValori = [];
 	                        currActiveFilter.term = "";
                     }
-                    else currActiveFilter.term = $target.attr('val').valueOf();
+                    else 
+                    {
+                    	var currVal = $(this).attr('val'); 
+                    	if (currVal != null && typeof currVal != "undefined")
+                    		currActiveFilter.term = currVal.valueOf();
+                    }
                 }
                 this.doAction("onButtonsetClicked", fieldId, listaValori, "add", currActiveFilter);
         	}
