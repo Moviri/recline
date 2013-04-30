@@ -27,7 +27,7 @@ dataset.fetch();
 
 var myAction = new recline.Action({
      filters:{
-         filter_userId: {type:"term", field:"UserId", fieldType:"string"}
+         filter_userId: {type:"list", field:"UserId", fieldType:"string"}
      },
      models: [{
          model: filteredDataset,
@@ -38,7 +38,7 @@ var myAction = new recline.Action({
 
 var filterDateCtrl = new recline.View.GenericFilter({
  sourceDataset: dataset,
- sourceFields:[ {field:"UserId", controlType:'dropdown', fieldType:"string", labelPosition:"left" }],
+ sourceFields:[ {field:"UserId", controlType:'multibutton', fieldType:"string", labelPosition:"left", selectedClassName: "btn-primary" }],
  state: { showBackground:false },
  actions: [{
              action: myAction,
@@ -67,7 +67,7 @@ var graph1 = new recline.View.xCharts({
         xScale: 'time',
         yScale: 'exponential',
         width: 850,
-        height: 300,
+        height: 250,
         xAxisTitle: 'Giorno',
         yAxisTitle: 'Download',
         opts: {

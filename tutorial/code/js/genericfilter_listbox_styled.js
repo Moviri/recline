@@ -81,7 +81,7 @@ var indicator1 = new recline.View.Indicator({
      model: virtual,
      state: {
          label: "DOWNLOAD",
-         description: "Download totali utente selezionato",
+         description: "Download totali utente selezionato (byte)",
          kpi: {field: "Download_sum"}
      }
 });
@@ -92,7 +92,7 @@ var indicator2 = new recline.View.Indicator({
      model: virtual,
      state: {
          label: "UPLOAD",
-         description: "Upload totali utente selezionato",
+         description: "Upload totali utente selezionato (byte)",
          kpi: {field: "Upload_sum"}
      }
 });
