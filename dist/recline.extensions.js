@@ -10018,18 +10018,6 @@ this.recline.View = this.recline.View || {};
 	<style> \
 		 .layout-slider { padding-bottom:15px;width:150px } \
 	</style> \
-	<script> \
-		$(document).ready(function(){ \
-			$( "#slider{{ctrlId}}" ).jslider({ \
-				from: {{min}}, \
-				to: {{max}}, \
-				scale: [{{min}},"|","{{step1}}","|","{{mean}}","|","{{step2}}","|",{{max}}], \
-            	{{#step}}step: {{step}}{{/step}}, \
-				limits: false, \
-				skin: "plastic" \
-			}); \
-		}); \
-	</script> \
       <div class="filter-{{type}} filter" id="{{ctrlId}}"> \
         <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
             <legend style="display:{{useLegend}}">{{label}} \
@@ -10421,6 +10409,7 @@ this.recline.View = this.recline.View || {};
             "term":{ needFacetedField:false},
             "range":{ needFacetedField:true},
             "slider":{ needFacetedField:true},
+            "slider_styled":{ needFacetedField:true},
             "range_slider":{ needFacetedField:true},
             "range_slider_styled":{ needFacetedField:true},
             "color_legend":{ needFacetedField:true},
@@ -10441,7 +10430,6 @@ this.recline.View = this.recline.View || {};
             'change .drop-down2':'onListItemClicked',
             'change .drop-down3':'onPeriodChanged',
             'click .grouped-button':'onButtonsetClicked',
-            'change .slider-styled':'onStyledSliderValueChanged'
         },
 
         activeFilters:new Array(),
@@ -11550,7 +11538,7 @@ this.recline.View = this.recline.View || {};
             
             // ensure range_slider_styled is attached correctly to the event
             for (var jj in tmplData.filters)
-            	if (tmplData.filters[jj].controlType == "range_slider_styled") {
+            	if (tmplData.filters[jj].controlType.indexOf("slider_styled") >= 0) {
             		var currData = tmplData.filters[jj];
         			$( "#slider"+currData.ctrlId).jslider({
         				from: currData.min,
@@ -11558,8 +11546,8 @@ this.recline.View = this.recline.View || {};
         				scale: [currData.min,"|",currData.step1,"|",currData.mean,"|", currData.step2,"|",currData.max],
         				limits: false,
                     	step: currData.step,
-        				skin: "round_plastic",
-                    	onstatechange: self.onStyledRangeSliderValueChanged
+        				skin: (tmplData.filters[jj].controlType.indexOf("range") == 0 ? "round_plastic" : "plastic"),
+                    	onstatechange: self.onStyledSliderValueChanged
         			});
         			$( "#slider"+currData.ctrlId).data("self", self);
             	}
@@ -11935,21 +11923,7 @@ this.recline.View = this.recline.View || {};
                 return d;
             }
         },
-
-        onStyledSliderValueChanged:function (e, value) {
-            e.preventDefault();
-            var $target = $(e.target).parent().parent();
-            var fieldId = $target.attr('data-filter-field');
-            var fieldType = $target.attr('data-filter-type');
-            var controlType = $target.attr('data-control-type');
-            var term = value;
-            var activeFilter = this.findActiveFilterByField(fieldId, controlType);
-            activeFilter.userChanged = true;
-            activeFilter.term = term;
-            activeFilter.list = [term];
-            this.doAction("onStyledSliderValueChanged", fieldId, [term], "add", activeFilter);
-        },
-        onStyledRangeSliderValueChanged:function (value) {
+        onStyledSliderValueChanged:function (value) {
         	var self = this.inputNode.data("self");
         	if (self)
     		{
@@ -11960,12 +11934,21 @@ this.recline.View = this.recline.View || {};
 
                 var activeFilter = self.findActiveFilterByField(fieldId, controlType);
                 activeFilter.userChanged = true;
-                var fromTo = value.split(";");
-                var from = fromTo[0];
-                var to = fromTo[1];
-                activeFilter.from = from;
-                activeFilter.to = to;
-                self.doAction("onStyledRangeSliderValueChanged", fieldId, [from, to], "add", activeFilter);
+                if (controlType == "range_slider_styled")
+            	{
+                    var fromTo = value.split(";");
+                    var from = fromTo[0];
+                    var to = fromTo[1];
+                    activeFilter.from = from;
+                    activeFilter.to = to;
+                    self.doAction("onStyledRangeSliderValueChanged", fieldId, [from, to], "add", activeFilter);
+            	}
+                else
+            	{
+                  activeFilter.term = value;
+                  activeFilter.list = [value];
+                  self.doAction("onStyledSliderValueChanged", fieldId, [value], "add", activeFilter);
+            	}
     		}
         },
         onFilterValueChanged:function (e) {
