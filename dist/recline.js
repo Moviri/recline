@@ -37,12 +37,13 @@ this.recline.Backend.Ckan = this.recline.Backend.Ckan || {};
 
   // ### fetch
   my.fetch = function(dataset) {
+    var wrapper;
     if (dataset.endpoint) {
-      var wrapper = my.DataStore(dataset.endpoint);
+      wrapper = my.DataStore(dataset.endpoint);
     } else {
       var out = my._parseCkanResourceUrl(dataset.url);
       dataset.id = out.resource_id;
-      var wrapper = my.DataStore(out.endpoint);
+      wrapper = my.DataStore(out.endpoint);
     }
     var dfd = new Deferred();
     var jqxhr = wrapper.search({resource_id: dataset.id, limit: 0});
@@ -66,25 +67,36 @@ this.recline.Backend.Ckan = this.recline.Backend.Ckan || {};
     var actualQuery = {
       resource_id: dataset.id,
       q: queryObj.q,
+      filters: {},
       limit: queryObj.size || 10,
       offset: queryObj.from || 0
     };
+
     if (queryObj.sort && queryObj.sort.length > 0) {
       var _tmp = _.map(queryObj.sort, function(sortObj) {
         return sortObj.field + ' ' + (sortObj.order || '');
       });
       actualQuery.sort = _tmp.join(',');
     }
+
+    if (queryObj.filters && queryObj.filters.length > 0) {
+      _.each(queryObj.filters, function(filter) {
+        if (filter.type === "term") {
+          actualQuery.filters[filter.field] = filter.term;
+        }
+      });
+    }
     return actualQuery;
   };
 
   my.query = function(queryObj, dataset) {
+    var wrapper;
     if (dataset.endpoint) {
-      var wrapper = my.DataStore(dataset.endpoint);
+      wrapper = my.DataStore(dataset.endpoint);
     } else {
       var out = my._parseCkanResourceUrl(dataset.url);
       dataset.id = out.resource_id;
-      var wrapper = my.DataStore(out.endpoint);
+      wrapper = my.DataStore(out.endpoint);
     }
     var actualQuery = my._normalizeQuery(queryObj, dataset);
     var dfd = new Deferred();
@@ -105,15 +117,14 @@ this.recline.Backend.Ckan = this.recline.Backend.Ckan || {};
   //
   // @param endpoint: CKAN api endpoint (e.g. http://datahub.io/api)
   my.DataStore = function(endpoint) { 
-    var that = {
-      endpoint: endpoint || my.API_ENDPOINT
-    };
+    var that = {endpoint: endpoint || my.API_ENDPOINT};
+
     that.search = function(data) {
       var searchUrl = that.endpoint + '/3/action/datastore_search';
       var jqxhr = jQuery.ajax({
         url: searchUrl,
-        data: data,
-        dataType: 'json'
+        type: 'POST',
+        data: JSON.stringify(data)
       });
       return jqxhr;
     };
@@ -476,8 +487,8 @@ this.recline.Backend.DataProxy = this.recline.Backend.DataProxy || {};
         useMemoryStore: true
       });
     })
-    .fail(function(arguments) {
-      dfd.reject(arguments);
+    .fail(function(args) {
+      dfd.reject(args);
     });
     return dfd.promise();
   };
@@ -494,17 +505,17 @@ this.recline.Backend.DataProxy = this.recline.Backend.DataProxy || {};
         message: 'Request Error: Backend did not respond after ' + (my.timeout / 1000) + ' seconds'
       });
     }, my.timeout);
-    ourFunction.done(function(arguments) {
+    ourFunction.done(function(args) {
         clearTimeout(timer);
-        dfd.resolve(arguments);
+        dfd.resolve(args);
       })
-      .fail(function(arguments) {
+      .fail(function(args) {
         clearTimeout(timer);
-        dfd.reject(arguments);
+        dfd.reject(args);
       })
       ;
     return dfd.promise();
-  }
+  };
 
 }(this.recline.Backend.DataProxy));
 this.recline = this.recline || {};
@@ -1420,8 +1431,8 @@ my.Dataset = Backbone.Model.extend({
     if (this.backend !== recline.Backend.Memory) {
       this.backend.fetch(this.toJSON())
         .done(handleResults)
-        .fail(function(arguments) {
-          dfd.reject(arguments);
+        .fail(function(args) {
+          dfd.reject(args);
         });
     } else {
       // special case where we have been given data directly
@@ -1454,8 +1465,8 @@ my.Dataset = Backbone.Model.extend({
         .done(function() {
           dfd.resolve(self);
         })
-        .fail(function(arguments) {
-          dfd.reject(arguments);
+        .fail(function(args) {
+          dfd.reject(args);
         });
     }
 
@@ -1573,9 +1584,9 @@ my.Dataset = Backbone.Model.extend({
         self.trigger('query:done');
         dfd.resolve(self.records);
       })
-      .fail(function(arguments) {
-    	self.trigger('query:fail', arguments);
-        dfd.reject(arguments);
+      .fail(function(args) {
+        self.trigger('query:fail', args);
+        dfd.reject(args);
       });
     return dfd.promise();
   },
@@ -1825,7 +1836,7 @@ my.Field = Backbone.Model.extend({
         if (val && typeof val === 'string') {
           val = val.replace(/(https?:\/\/[^ ]+)/g, '<a href="$1">$1</a>');
         }
-        return val
+        return val;
       }
     }
   }
@@ -2182,13 +2193,13 @@ my.Flot = Backbone.View.extend({
 
     // for labels case we only want ticks at the label intervals
     // HACK: however we also get this case with Date fields. In that case we
-    // could have a lot of values and so we limit to max 30 (we assume)
+    // could have a lot of values and so we limit to max 15 (we assume)
     if (this.xvaluesAreIndex) {
       var numTicks = Math.min(this.model.records.length, 15);
       var increment = this.model.records.length / numTicks;
       var ticks = [];
       for (i=0; i<numTicks; i++) {
-        ticks.push(parseInt(i*increment));
+        ticks.push(parseInt(i*increment, 10));
       }
       xaxis.ticks = ticks;
     }
@@ -3044,12 +3055,12 @@ my.Grid = Backbone.View.extend({
     var numFields = this.fields.length;
     // compute field widths (-20 for first menu col + 10px for padding on each col and finally 16px for the scrollbar)
     var fullWidth = self.el.width() - 20 - 10 * numFields - this.scrollbarDimensions.width;
-    var width = parseInt(Math.max(50, fullWidth / numFields));
+    var width = parseInt(Math.max(50, fullWidth / numFields), 10);
     // if columns extend outside viewport then remainder is 0 
     var remainder = Math.max(fullWidth - numFields * width,0);
     _.each(this.fields, function(field, idx) {
       // add the remainder to the first field width so we make up full col
-      if (idx == 0) {
+      if (idx === 0) {
         field.set({width: width+remainder});
       } else {
         field.set({width: width});
@@ -4329,13 +4340,14 @@ my.MultiView = Backbone.View.extend({
 // This inverts the state serialization process in Multiview
 my.MultiView.restore = function(state) {
   // hack-y - restoring a memory dataset does not mean much ... (but useful for testing!)
+  var datasetInfo;
   if (state.backend === 'memory') {
-    var datasetInfo = {
+    datasetInfo = {
       backend: 'memory',
       records: [{stub: 'this is a stub dataset because we do not restore memory datasets'}]
     };
   } else {
-    var datasetInfo = _.extend({
+    datasetInfo = _.extend({
         url: state.url,
         backend: state.backend
       },
@@ -4348,7 +4360,7 @@ my.MultiView.restore = function(state) {
     state: state
   });
   return explorer;
-}
+};
 
 // ## Miscellaneous Utilities
 var urlPathRegex = /^([^?]+)(\?.*)?/;
@@ -4429,6 +4441,383 @@ this.recline = this.recline || {};
 this.recline.View = this.recline.View || {};
 
 (function($, my) {
+// ## SlickGrid Dataset View
+//
+// Provides a tabular view on a Dataset, based on SlickGrid.
+//
+// https://github.com/mleibman/SlickGrid
+//
+// Initialize it with a `recline.Model.Dataset`.
+//
+// Additional options to drive SlickGrid grid can be given through state.
+// The following keys allow for customization:
+// * gridOptions: to add options at grid level
+// * columnsEditor: to add editor for editable columns
+//
+// For example:
+//    var grid = new recline.View.SlickGrid({
+//         model: dataset,
+//         el: $el,
+//         state: {
+//          gridOptions: {editable: true},
+//          columnsEditor: [
+//            {column: 'date', editor: Slick.Editors.Date },
+//            {column: 'title', editor: Slick.Editors.Text}
+//          ]
+//        }
+//      });
+//// NB: you need an explicit height on the element for slickgrid to work
+my.SlickGrid = Backbone.View.extend({
+  initialize: function(modelEtc) {
+    var self = this;
+    this.el = $(this.el);
+    this.el.addClass('recline-slickgrid');
+    _.bindAll(this, 'render');
+    this.model.records.bind('add', this.render);
+    this.model.records.bind('reset', this.render);
+    this.model.records.bind('remove', this.render);
+    this.model.records.bind('change', this.onRecordChanged, this);
+
+    var state = _.extend({
+        hiddenColumns: [],
+        columnsOrder: [],
+        columnsSort: {},
+        columnsWidth: [],
+        columnsEditor: [],
+        options: {},
+        fitColumns: false
+      }, modelEtc.state
+
+    );
+    this.state = new recline.Model.ObjectState(state);
+  },
+
+  events: {
+  },
+
+  onRecordChanged: function(record) {
+    // Ignore if the grid is not yet drawn
+    if (!this.grid) {
+      return;
+    }
+
+    // Let's find the row corresponding to the index
+    var row_index = this.grid.getData().getModelRow( record );
+    this.grid.invalidateRow(row_index);
+    this.grid.getData().updateItem(record, row_index);
+    this.grid.render();
+  },
+
+  render: function() {
+    var self = this;
+
+    var options = _.extend({
+      enableCellNavigation: true,
+      enableColumnReorder: true,
+      explicitInitialization: true,
+      syncColumnCellResize: true,
+      forceFitColumns: this.state.get('fitColumns')
+    }, self.state.get('gridOptions'));
+
+    // We need all columns, even the hidden ones, to show on the column picker
+    var columns = [];
+    // custom formatter as default one escapes html
+    // plus this way we distinguish between rendering/formatting and computed value (so e.g. sort still works ...)
+    // row = row index, cell = cell index, value = value, columnDef = column definition, dataContext = full row values
+    var formatter = function(row, cell, value, columnDef, dataContext) {
+      var field = self.model.fields.get(columnDef.id);
+      if (field.renderer) {
+        return field.renderer(value, field, dataContext);
+      } else {
+        return value;
+      }
+    };
+    _.each(this.model.fields.toJSON(),function(field){
+      var column = {
+        id: field.id,
+        name: field.label,
+        field: field.id,
+        sortable: true,
+        minWidth: 80,
+        formatter: formatter
+      };
+
+      var widthInfo = _.find(self.state.get('columnsWidth'),function(c){return c.column === field.id;});
+      if (widthInfo){
+        column.width = widthInfo.width;
+      }
+
+      var editInfo = _.find(self.state.get('columnsEditor'),function(c){return c.column === field.id;});
+      if (editInfo){
+        column.editor = editInfo.editor;
+      }
+      columns.push(column);
+    });
+
+    // Restrict the visible columns
+    var visibleColumns = columns.filter(function(column) {
+      return _.indexOf(self.state.get('hiddenColumns'), column.id) === -1;
+    });
+
+    // Order them if there is ordering info on the state
+    if (this.state.get('columnsOrder') && this.state.get('columnsOrder').length > 0) {
+      visibleColumns = visibleColumns.sort(function(a,b){
+        return _.indexOf(self.state.get('columnsOrder'),a.id) > _.indexOf(self.state.get('columnsOrder'),b.id) ? 1 : -1;
+      });
+      columns = columns.sort(function(a,b){
+        return _.indexOf(self.state.get('columnsOrder'),a.id) > _.indexOf(self.state.get('columnsOrder'),b.id) ? 1 : -1;
+      });
+    }
+
+    // Move hidden columns to the end, so they appear at the bottom of the
+    // column picker
+    var tempHiddenColumns = [];
+    for (var i = columns.length -1; i >= 0; i--){
+      if (_.indexOf(_.pluck(visibleColumns,'id'),columns[i].id) === -1){
+        tempHiddenColumns.push(columns.splice(i,1)[0]);
+      }
+    }
+    columns = columns.concat(tempHiddenColumns);
+
+    // Transform a model object into a row
+    function toRow(m) {
+      var row = {};
+      self.model.fields.each(function(field){
+        row[field.id] = m.getFieldValueUnrendered(field);
+      });
+      return row;
+    }
+
+    function RowSet() {
+      var models = [];
+      var rows = [];
+
+      this.push = function(model, row) {
+        models.push(model);
+        rows.push(row);
+      };
+
+      this.getLength = function() {return rows.length; };
+      this.getItem = function(index) {return rows[index];};
+      this.getItemMetadata = function(index) {return {};};
+      this.getModel = function(index) {return models[index];};
+      this.getModelRow = function(m) {return models.indexOf(m);};
+      this.updateItem = function(m,i) {
+        rows[i] = toRow(m);
+        models[i] = m;
+      };
+    }
+
+    var data = new RowSet();
+
+    this.model.records.each(function(doc){
+      data.push(doc, toRow(doc));
+    });
+
+    this.grid = new Slick.Grid(this.el, data, visibleColumns, options);
+
+    // Column sorting
+    var sortInfo = this.model.queryState.get('sort');
+    if (sortInfo){
+      var column = sortInfo[0].field;
+      var sortAsc = sortInfo[0].order !== 'desc';
+      this.grid.setSortColumn(column, sortAsc);
+    }
+
+    this.grid.onSort.subscribe(function(e, args){
+      var order = (args.sortAsc) ? 'asc':'desc';
+      var sort = [{
+        field: args.sortCol.field,
+        order: order
+      }];
+      self.model.query({sort: sort});
+    });
+
+    this.grid.onColumnsReordered.subscribe(function(e, args){
+      self.state.set({columnsOrder: _.pluck(self.grid.getColumns(),'id')});
+    });
+
+    this.grid.onColumnsResized.subscribe(function(e, args){
+        var columns = args.grid.getColumns();
+        var defaultColumnWidth = args.grid.getOptions().defaultColumnWidth;
+        var columnsWidth = [];
+        _.each(columns,function(column){
+          if (column.width != defaultColumnWidth){
+            columnsWidth.push({column:column.id,width:column.width});
+          }
+        });
+        self.state.set({columnsWidth:columnsWidth});
+    });
+
+    this.grid.onCellChange.subscribe(function (e, args) {
+      // We need to change the model associated value
+      //
+      var grid = args.grid;
+      var model = data.getModel(args.row);
+      var field = grid.getColumns()[args.cell].id;
+      var v = {};
+      v[field] = args.item[field];
+      model.set(v);
+    });
+
+    var columnpicker = new Slick.Controls.ColumnPicker(columns, this.grid,
+                                                       _.extend(options,{state:this.state}));
+
+    if (self.visible){
+      self.grid.init();
+      self.rendered = true;
+    } else {
+      // Defer rendering until the view is visible
+      self.rendered = false;
+    }
+
+    return this;
+ },
+
+  show: function() {
+    // If the div is hidden, SlickGrid will calculate wrongly some
+    // sizes so we must render it explicitly when the view is visible
+    if (!this.rendered){
+      if (!this.grid){
+        this.render();
+      }
+      this.grid.init();
+      this.rendered = true;
+    }
+    this.visible = true;
+  },
+
+  hide: function() {
+    this.visible = false;
+  }
+});
+
+})(jQuery, recline.View);
+
+/*
+* Context menu for the column picker, adapted from
+* http://mleibman.github.com/SlickGrid/examples/example-grouping
+*
+*/
+(function ($) {
+  function SlickColumnPicker(columns, grid, options) {
+    var $menu;
+    var columnCheckboxes;
+
+    var defaults = {
+      fadeSpeed:250
+    };
+
+    function init() {
+      grid.onHeaderContextMenu.subscribe(handleHeaderContextMenu);
+      options = $.extend({}, defaults, options);
+
+      $menu = $('<ul class="dropdown-menu slick-contextmenu" style="display:none;position:absolute;z-index:20;" />').appendTo(document.body);
+
+      $menu.bind('mouseleave', function (e) {
+        $(this).fadeOut(options.fadeSpeed);
+      });
+      $menu.bind('click', updateColumn);
+
+    }
+
+    function handleHeaderContextMenu(e, args) {
+      e.preventDefault();
+      $menu.empty();
+      columnCheckboxes = [];
+
+      var $li, $input;
+      for (var i = 0; i < columns.length; i++) {
+        $li = $('<li />').appendTo($menu);
+        $input = $('<input type="checkbox" />').data('column-id', columns[i].id).attr('id','slick-column-vis-'+columns[i].id);
+        columnCheckboxes.push($input);
+
+        if (grid.getColumnIndex(columns[i].id) !== null) {
+          $input.attr('checked', 'checked');
+        }
+        $input.appendTo($li);
+        $('<label />')
+            .text(columns[i].name)
+            .attr('for','slick-column-vis-'+columns[i].id)
+            .appendTo($li);
+      }
+      $('<li/>').addClass('divider').appendTo($menu);
+      $li = $('<li />').data('option', 'autoresize').appendTo($menu);
+      $input = $('<input type="checkbox" />').data('option', 'autoresize').attr('id','slick-option-autoresize');
+      $input.appendTo($li);
+      $('<label />')
+          .text('Force fit columns')
+          .attr('for','slick-option-autoresize')
+          .appendTo($li);
+      if (grid.getOptions().forceFitColumns) {
+        $input.attr('checked', 'checked');
+      }
+
+      $menu.css('top', e.pageY - 10)
+          .css('left', e.pageX - 10)
+          .fadeIn(options.fadeSpeed);
+    }
+
+    function updateColumn(e) {
+      var checkbox;
+
+      if ($(e.target).data('option') === 'autoresize') {
+        var checked;
+        if ($(e.target).is('li')){
+            checkbox = $(e.target).find('input').first();
+            checked = !checkbox.is(':checked');
+            checkbox.attr('checked',checked);
+        } else {
+          checked = e.target.checked;
+        }
+
+        if (checked) {
+          grid.setOptions({forceFitColumns:true});
+          grid.autosizeColumns();
+        } else {
+          grid.setOptions({forceFitColumns:false});
+        }
+        options.state.set({fitColumns:checked});
+        return;
+      }
+
+      if (($(e.target).is('li') && !$(e.target).hasClass('divider')) ||
+            $(e.target).is('input')) {
+        if ($(e.target).is('li')){
+            checkbox = $(e.target).find('input').first();
+            checkbox.attr('checked',!checkbox.is(':checked'));
+        }
+        var visibleColumns = [];
+        var hiddenColumnsIds = [];
+        $.each(columnCheckboxes, function (i, e) {
+          if ($(this).is(':checked')) {
+            visibleColumns.push(columns[i]);
+          } else {
+            hiddenColumnsIds.push(columns[i].id);
+          }
+        });
+
+        if (!visibleColumns.length) {
+          $(e.target).attr('checked', 'checked');
+          return;
+        }
+
+        grid.setColumns(visibleColumns);
+        options.state.set({hiddenColumns:hiddenColumnsIds});
+      }
+    }
+    init();
+  }
+
+  // Slick.Controls.ColumnPicker
+  $.extend(true, window, { Slick:{ Controls:{ ColumnPicker:SlickColumnPicker }}});
+})(jQuery);
+/*jshint multistr:true */
+
+this.recline = this.recline || {};
+this.recline.View = this.recline.View || {};
+
+(function($, my) {
 // turn off unnecessary logging from VMM Timeline
 if (typeof VMM !== 'undefined') {
   VMM.debug = false;
@@ -4463,7 +4852,8 @@ my.Timeline = Backbone.View.extend({
     });
     var stateData = _.extend({
         startField: null,
-        endField: null
+        endField: null,
+        timelineJSOptions: {}
       },
       options.state
     );
@@ -4491,14 +4881,8 @@ my.Timeline = Backbone.View.extend({
 
   _initTimeline: function() {
     var $timeline = this.el.find(this.elementId);
-    // set width explicitly o/w timeline goes wider that screen for some reason
-    var width = Math.max(this.el.width(), this.el.find('.recline-timeline').width());
-    if (width) {
-      $timeline.width(width);
-    }
-    var config = {};
     var data = this._timelineJSON();
-    this.timeline.init(data, this.elementId, config);
+    this.timeline.init(data, this.elementId, this.state.get("timelineJSOptions"));
     this._timelineIsInitialized = true
   },
 
@@ -5183,3 +5567,118 @@ my.QueryEditor = Backbone.View.extend({
 
 })(jQuery, recline.View);
 
+/*jshint multistr:true */
+
+this.recline = this.recline || {};
+this.recline.View = this.recline.View || {};
+
+(function($, my) {
+
+my.ValueFilter = Backbone.View.extend({
+  className: 'recline-filter-editor well', 
+  template: ' \
+    <div class="filters"> \
+      <h3>Filters</h3> \
+      <button class="btn js-add-filter add-filter">Add filter</button> \
+      <form class="form-stacked js-add" style="display: none;"> \
+        <fieldset> \
+          <label>Field</label> \
+          <select class="fields"> \
+            {{#fields}} \
+            <option value="{{id}}">{{label}}</option> \
+            {{/fields}} \
+          </select> \
+          <button type="submit" class="btn">Add</button> \
+        </fieldset> \
+      </form> \
+      <form class="form-stacked js-edit"> \
+        {{#filters}} \
+          {{{filterRender}}} \
+        {{/filters}} \
+        {{#filters.length}} \
+        <button type="submit" class="btn update-filter">Update</button> \
+        {{/filters.length}} \
+      </form> \
+    </div> \
+  ',
+  filterTemplates: {
+    term: ' \
+      <div class="filter-{{type}} filter"> \
+        <fieldset> \
+          {{field}} \
+          <a class="js-remove-filter" href="#" title="Remove this filter" data-filter-id="{{id}}">&times;</a> \
+          <input type="text" value="{{term}}" name="term" data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" /> \
+        </fieldset> \
+      </div> \
+    '
+  },
+  events: {
+    'click .js-remove-filter': 'onRemoveFilter',
+    'click .js-add-filter': 'onAddFilterShow',
+    'submit form.js-edit': 'onTermFiltersUpdate',
+    'submit form.js-add': 'onAddFilter'
+  },
+  initialize: function() {
+    this.el = $(this.el);
+    _.bindAll(this, 'render');
+    this.model.fields.bind('all', this.render);
+    this.model.queryState.bind('change', this.render);
+    this.model.queryState.bind('change:filters:new-blank', this.render);
+    this.render();
+  },
+  render: function() {
+    var self = this;
+    var tmplData = $.extend(true, {}, this.model.queryState.toJSON());
+    // we will use idx in list as the id ...
+    tmplData.filters = _.map(tmplData.filters, function(filter, idx) {
+      filter.id = idx;
+      return filter;
+    });
+    tmplData.fields = this.model.fields.toJSON();
+    tmplData.filterRender = function() {
+      return Mustache.render(self.filterTemplates.term, this);
+    };
+    var out = Mustache.render(this.template, tmplData);
+    this.el.html(out);
+  },
+  updateFilter: function(input) {
+    var self = this;
+    var filters = self.model.queryState.get('filters');
+    var $input = $(input);
+    var filterIndex = parseInt($input.attr('data-filter-id'), 10);
+    var value = $input.val();
+    filters[filterIndex].term = value;
+  },
+  onAddFilterShow: function(e) {
+    e.preventDefault();
+    var $target = $(e.target);
+    $target.hide();
+    this.el.find('form.js-add').show();
+  },
+  onAddFilter: function(e) {
+    e.preventDefault();
+    var $target = $(e.target);
+    $target.hide();
+    var field = $target.find('select.fields').val();
+    this.model.queryState.addFilter({type: 'term', field: field});
+  },
+  onRemoveFilter: function(e) {
+    e.preventDefault();
+    var $target = $(e.target);
+    var filterId = $target.attr('data-filter-id');
+    this.model.queryState.removeFilter(filterId);
+  },
+  onTermFiltersUpdate: function(e) {
+    var self = this;
+    e.preventDefault();
+    var filters = self.model.queryState.get('filters');
+    var $form = $(e.target);
+    _.each($form.find('input'), function(input) {
+      self.updateFilter(input);
+    });
+    self.model.queryState.set({filters: filters, from: 0});
+    self.model.queryState.trigger('change');
+  }
+});
+
+})(jQuery, recline.View);
