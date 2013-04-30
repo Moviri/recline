@@ -27,26 +27,36 @@ var virtual = new recline.Model.VirtualDataset({
 });
 
 dataset.queryState.addFacetNoEvent("Tipo");
+dataset.queryState.addFacetNoEvent("Anno");
 dataset.fetch();
 
 var myAction = new recline.Action({
      filters:{
-         filter_tipo: {type:"list", field:"Tipo", fieldType:"string"}
+         filter_tipo: {type:"list", field:"Tipo", fieldType:"string"},
+        filter_anno: {type:"list", field:"Anno", fieldType:"integer"}
      },
      models: [{
          model: filteredDataset,
-         filters:["filter_tipo"]
+         filters:["filter_tipo", "filter_anno"]
          }],
      type:["filter"]
 });
 
 var filterDateCtrl = new recline.View.GenericFilter({
      sourceDataset: dataset,
-     sourceFields:[ {field:"Tipo", controlType:'hierarchic_radiobuttons', separator:'.', fieldType:"string", labelPosition:"left" }],
-     state: { showBackground:false },
+     state: {
+         useHorizontalLayout: true
+     },
+     sourceFields:[ 
+                   {field:"Anno", controlType:'listbox_styled', fieldType:"integer", labelPosition:"inside" },
+                   {field:"Tipo", controlType:'hierarchic_radiobuttons', separator:'.', fieldType:"string", labelPosition:"none" }
+                    ],
      actions: [{
                  action: myAction,
-                 mapping:[ {srcField:"Tipo", filter:"filter_tipo"} ],
+                 mapping:[ 
+                           {srcField:"Tipo", filter:"filter_tipo"},
+                           {srcField:"Anno", filter:"filter_anno"}
+                           ],
                  event:["selection"]
              }            
      ]
@@ -65,7 +75,7 @@ var graph1 = new recline.View.NVD3Graph({
         },
         graphType: 'multiBarChart',
         width: 850,
-        height: 500,
+        height: 450,
         tickFormatX: d3.format('d'),
         tickFormatY: d3.format('s'),
         xLabel: 'Anno',
