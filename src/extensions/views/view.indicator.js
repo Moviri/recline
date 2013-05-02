@@ -155,9 +155,14 @@ this.recline.View = this.recline.View || {};
             this.uid = options.id || ("" + new Date().getTime() + Math.floor(Math.random() * 10000)); // generating an unique id for the chart
 
             this.model.bind('query:done', this.render);
-
+            
+            if (this.options.modelCompare)
+        	{
+            	this.modelCompare = this.options.modelCompare
+            	this.modelCompare.bind('query:done', this.render);
+        	}
+            else this.modelCompare = this.model;
         },
-
         render:function () {
             //console.log("View.Indicator: render");
 
@@ -223,18 +228,20 @@ this.recline.View = this.recline.View || {};
             	template = self.templates.templateCondensed;            
 
             if (self.options.state.compareWith) {
-                var compareWithRecord = self.model.getRecords(self.options.state.compareWith.type);
+                var compareWithRecord = self.modelCompare.getRecords(self.options.state.compareWith.type);
 
                 if(compareWithRecord.length > 0) {
                     var compareWithField;
 
                     if (self.options.state.kpi.aggr)
-                        compareWithField = self.model.getField_byAggregationFunction(self.options.state.compareWith.type, self.options.state.compareWith.field, self.options.state.compareWith.aggr);
+                        compareWithField = self.modelCompare.getField_byAggregationFunction(self.options.state.compareWith.type, self.options.state.compareWith.field, self.options.state.compareWith.aggr);
                     else
-                        compareWithField = self.options.model.getFields(self.options.state.compareWith.type).get(self.options.state.compareWith.field);
+                        compareWithField = self.modelCompare.getFields(self.options.state.compareWith.type).get(self.options.state.compareWith.field);
 
-                    if (!compareWithField){
-                    	   throw "View.Indicator: unable to find field [" + self.options.state.compareWith.field + "] on model"	
+                    if (!compareWithField) {
+                    	if (self.modelCompare.attributes && self.modelCompare.attributes.dataset && self.modelCompare.attributes.dataset.recordCount)
+                    	   throw "View.Indicator: unable to find field [" + self.options.state.compareWith.field + "] on model"
+                    	else return; // parent model is empty. skip the rendering
                     } 
                 	 tmplData["compareWithValue"] = compareWithRecord[0].getFieldValue(compareWithField);
                      var compareWithValue = compareWithRecord[0].getFieldValueUnrendered(compareWithField);

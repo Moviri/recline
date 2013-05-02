@@ -129,26 +129,25 @@ this.recline.Data.ShapeSchema = this.recline.Data.ShapeSchema || {};
         getRecordsArray: function(dataset) {
             var self=this;
             var ret = [];
-
-            if(dataset.dataset.isFieldPartitioned && dataset.dataset.isFieldPartitioned(dataset.field, dataset.type))   {
-                var fields = dataset.dataset.getPartitionedFields(dataset.field);
-            _.each(dataset.dataset.getRecords(dataset.type), function(d) {
-                _.each(fields, function (field) {
-                    ret.push(d.attributes[field.id]);
-                });
-            });
-            }
-            else{
-                var  fields = [dataset.field];;
+            if (dataset.recordCount)
+        	{
+                if(dataset.dataset.isFieldPartitioned && dataset.dataset.isFieldPartitioned(dataset.field, dataset.type))   {
+                    var fields = dataset.dataset.getPartitionedFields(dataset.field);
                 _.each(dataset.dataset.getRecords(dataset.type), function(d) {
                     _.each(fields, function (field) {
-                        ret.push(d.attributes[field]);
+                        ret.push(d.attributes[field.id]);
                     });
                 });
-            }
-
-
-
+                }
+                else{
+                    var  fields = [dataset.field];;
+                    _.each(dataset.dataset.getRecords(dataset.type), function(d) {
+                        _.each(fields, function (field) {
+                            ret.push(d.attributes[field]);
+                        });
+                    });
+                }
+        	}
             return ret;
         },
 
