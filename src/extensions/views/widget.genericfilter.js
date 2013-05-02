@@ -9,8 +9,8 @@ this.recline.View = this.recline.View || {};
         template:'<div class="filters" {{#backgroundColor}}style="background-color:{{backgroundColor}}"{{/backgroundColor}}> \
       <div class="form-stacked js-edit"> \
 	  	<div class="label label-info" style="display:{{titlePresent}}" > \
-		  	<h4>{{filterDialogTitle}}</h4> \
-		  	{{filterDialogDescription}} \
+		  	<h4>{{{filterDialogTitle}}}</h4> \
+		  	{{{filterDialogDescription}}} \
 	  	</div> \
         {{#filters}} \
           {{{filterRender}}} \
@@ -24,8 +24,8 @@ this.recline.View = this.recline.View || {};
 	  		<tr>\
 	  			<td class="separated-item" style="display:{{titlePresent}}">\
 				  	<div class="label label-info"> \
-					  	<h4>{{filterDialogTitle}}</h4> \
-					  	{{filterDialogDescription}} \
+					  	<h4>{{{filterDialogTitle}}}</h4> \
+					  	{{{filterDialogDescription}}} \
 				  	</div> \
 				</td>\
 			  	{{#filters}} \
@@ -824,13 +824,13 @@ this.recline.View = this.recline.View || {};
                 	});
                     
                 facetTerms = currActiveFilter.facet.attributes.terms;
-                if (typeof currActiveFilter.label == "undefined" || currActiveFilter.label == null)
-                    currActiveFilter.label = currActiveFilter.field;
-            } else if(self._sourceDataset) {
-                // if facet are not defined i use all dataset records
+            } else if (self._sourceDataset) {
+                // if facet are not defined I use all dataset records
 
 
             }
+            if (typeof currActiveFilter.label == "undefined" || currActiveFilter.label == null)
+                currActiveFilter.label = currActiveFilter.field;
 
             currActiveFilter.useLegend = "block";
             if (currActiveFilter.labelPosition != 'top')
@@ -1982,7 +1982,7 @@ this.recline.View = this.recline.View || {};
                 else if (values.length)
             	{
                     actions.forEach(function(currAction){
-                        currAction.action.doActionWithValueArray(values, currAction.mapping);
+                        currAction.action.doActionWithValueArray(values, currAction.mapping, fieldName);
                     });
             	}
             } 

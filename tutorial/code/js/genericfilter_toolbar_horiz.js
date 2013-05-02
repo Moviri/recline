@@ -42,7 +42,7 @@ var myAction = new recline.Action({
      type:["filter"]
 });
 
-var filterDateCtrl = new recline.View.GenericFilter({
+var multiFilterCtrl = new recline.View.GenericFilter({
      sourceDataset: dataset,
      state: {
          useHorizontalLayout: true
@@ -61,8 +61,8 @@ var filterDateCtrl = new recline.View.GenericFilter({
              }            
      ]
 });
-$('#my_filter').append(filterDateCtrl.el);
-filterDateCtrl.render();
+$('#my_filter').append(multiFilterCtrl.el);
+multiFilterCtrl.render();
 
 var $el = $('#chart1'); 
 var graph1 = new recline.View.NVD3Graph({
