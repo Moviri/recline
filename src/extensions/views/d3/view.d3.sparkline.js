@@ -63,7 +63,8 @@ this.recline.View = this.recline.View || {};
         redraw: function () {     
             console.log("redraw");
             var field = this.model.fields.get(this.options.field);
-            var records = _.map(this.options.model.getRecords(this.options.resultType.type), function(record) {
+            var type = this.options.resultType || ""
+            var records = _.map(this.options.model.getRecords(type), function(record) {
                 return record.getFieldValueUnrendered(field);
             });
 
