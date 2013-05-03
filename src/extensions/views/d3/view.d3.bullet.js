@@ -76,8 +76,6 @@ this.recline.View = this.recline.View || {};
 
         redraw:function () {
             var self = this;
-            //var field = this.model.fields.get(this.options.fieldRanges);
-            //var fieldMeasure = this.model.fields.get(this.options.fieldMeasures);
 
             var type;
             if(this.options.resultType) {
@@ -87,17 +85,17 @@ this.recline.View = this.recline.View || {};
             var records = _.map(this.options.model.getRecords(type), function (record) {
                 var ranges = [];
                 _.each(self.options.fieldRanges, function (f) {
-                    var field = self.model.fields.get(f);
+                    var field = (type ? self.model[type].fields.get(f) : self.model.fields.get(f));
                     ranges.push(record.getFieldValueUnrendered(field));
                 });
                 var measures = [];
                 _.each(self.options.fieldMeasures, function (f) {
-                    var field = self.model.fields.get(f);
+                    var field = (type ? self.model[type].fields.get(f) : self.model.fields.get(f));
                     measures.push(record.getFieldValueUnrendered(field));
                 });
                 var markers = [];
                 _.each(self.options.fieldMarkers, function (f) {
-                    var field = self.model.fields.get(f);
+                    var field = (type ? self.model[type].fields.get(f) : self.model.fields.get(f));
                     markers.push(record.getFieldValueUnrendered(field));
                 });
                 return {ranges:ranges, measures:measures, markers: markers, customTicks: self.options.customTicks, tickFormat: self.options.tickFormat };
