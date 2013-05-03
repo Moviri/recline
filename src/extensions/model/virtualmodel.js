@@ -14,7 +14,7 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
 
 
         initialize:function () {
-            _.bindAll(this, 'query');
+            _.bindAll(this, 'query', 'toFullJSON');
 
 
             var self = this;
@@ -721,6 +721,19 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
 
         toTemplateJSON:function () {
             return this.vModel.toTemplateJSON();
+        },
+        toFullJSON:function (resultType) {
+            var self = this;
+            return _.map(self.getRecords(resultType), function (r) {
+                var res = {};
+
+                _.each(self.getFields(resultType).models, function (f) {
+                    res[f.id] = r.getFieldValueUnrendered(f);
+                });
+
+                return res;
+
+            });
         },
 
         getFieldsSummary:function () {

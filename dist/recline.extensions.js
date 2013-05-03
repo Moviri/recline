@@ -1293,7 +1293,7 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
 
 
         initialize:function () {
-            _.bindAll(this, 'query');
+            _.bindAll(this, 'query', 'toFullJSON');
 
 
             var self = this;
@@ -2000,6 +2000,19 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
 
         toTemplateJSON:function () {
             return this.vModel.toTemplateJSON();
+        },
+        toFullJSON:function (resultType) {
+            var self = this;
+            return _.map(self.getRecords(resultType), function (r) {
+                var res = {};
+
+                _.each(self.getFields(resultType).models, function (f) {
+                    res[f.id] = r.getFieldValueUnrendered(f);
+                });
+
+                return res;
+
+            });
         },
 
         getFieldsSummary:function () {
@@ -5602,23 +5615,29 @@ this.recline.View = this.recline.View || {};
     view.Composed = Backbone.View.extend({
         templates: {
             vertical: '<div id="{{uid}}">' +
-                '<div class="composedview_table">' +
-                '<div class="c_group c_header">' +
-                '<div class="c_row">' +
-                '<div class="cell cell_empty"></div>' +
+                '<div class="composedview_table" style="display:table">' +
+                '<div class="c_group c_header" style="display:table-header-group">' +
+                '<div class="c_row" style="display:table-row">' +
+                '<div class="cell cell_empty" style="display:table-cell"></div>' +
                 '{{#dimensions}}' +
-                '<div class="cell cell_name"><div class="title" style="float:left">{{term_desc}}</div><div class="shape" style="float:left">{{{shape}}}</div></div>' +
+                '<div class="cell cell_name" style="display:table-cell"><div class="title" style="float:left">{{term_desc}}</div><div class="shape" style="float:left">{{{shape}}}</div></div>' +
                 '{{/dimensions}}' +
+                '{{#dimensions_totals}}' +
+                '<div class="cell cell_name" style="display:table-cell"><div class="title" style="float:left">{{term_desc}}</div><div class="shape" style="float:left">{{{shape}}}</div></div>' +
+                '{{/dimensions_totals}}' +                
                 '</div>' +
                 '</div>' +
-                '<div class="c_group c_body">' +
-                '<div class="c_row"><div class="cell cell_empty"/>{{{noData}}}</div>' +
+                '<div class="c_group c_body" style="display:table-row-group">' +
+                '{{#noData}}}<div class="c_row"><div class="cell cell_empty"/>{{{noData}}}</div>{{/noData}}' +
                 '{{#measures}}' +
-                '<div class="c_row">' +
-                '<div class="cell cell_title"><div style="white-space:nowrap;"><div class="rawhtml" style="vertical-align:middle;float:left">{{{rawhtml}}}</div><div style="vertical-align:middle;float:left"><div class="title">{{{title}}}</div><div class="subtitle">{{{subtitle}}}</div></div><div class="shape" style="vertical-align:middle;float:left">{{shape}}</div></div></div>' +
+                '<div class="c_row" style="display:table-row">' +
+                '<div class="cell cell_title" style="display:table-cell"><div style="white-space:nowrap;"><div class="rawhtml" style="vertical-align:middle;float:left">{{{rawhtml}}}</div><div style="vertical-align:middle;float:left"><div class="title">{{{title}}}</div><div class="subtitle">{{{subtitle}}}</div></div><div class="shape" style="vertical-align:middle;float:left">{{shape}}</div></div></div>' +
                 '{{#dimensions}}' +
-                '<div class="cell cell_graph" id="{{#getDimensionIDbyMeasureID}}{{measure_id}}{{/getDimensionIDbyMeasureID}}" term="{{measure_id}}"></div>' +
+                '<div class="cell cell_graph" style="display:table-cell" id="{{#getDimensionIDbyMeasureID}}{{measure_id}}{{/getDimensionIDbyMeasureID}}" term="{{measure_id}}"></div>' +
                 '{{/dimensions}}' +
+                '{{#dimensions_totals}}' +
+    			'<div class="cell cell_graph" style="display:table-cell" id="{{#getDimensionIDbyMeasureTotalsID}}{{measure_id}}{{/getDimensionIDbyMeasureTotalsID}}"></div>' +
+    			'{{/dimensions_totals}}' +
                 '</div>' +
                 '{{/measures}}' +
                 '</div>' +
@@ -5628,29 +5647,29 @@ this.recline.View = this.recline.View || {};
 
             horizontal: '<div id="{{uid}}">' +
                 '<table><tr><td>' +
-                '<div class="composedview_table">' +
-                '<div class="c_group c_header">' +
-                '<div class="c_row">' +
-                '<div class="cell cell_empty"></div>' +
+                '<div class="composedview_table" style="display:table">' +
+                '<div class="c_group c_header" style="display:table-header-group">' +
+                '<div class="c_row" style="display:table-row">' +
+                '<div class="cell cell_empty" style="display:table-cell"></div>' +
                 '{{#measures}}' +
-                '<div class="cell cell_title"><div style="white-space:nowrap;"><div class="rawhtml" style="vertical-align:middle;float:left">{{{rawhtml}}}</div><div style="float:left;vertical-align:middle"><div class="title"><a class="link_tooltip" href="#" data-toggle="tooltip" title="{{{subtitle}}}">{{{title}}}</a></div></div><div class="shape" style="float:left;vertical-align:middle">{{shape}}</div></div></div>' +
+                '<div class="cell cell_title" style="display:table-cell"><div style="white-space:nowrap;"><div class="rawhtml" style="vertical-align:middle;float:left">{{{rawhtml}}}</div><div style="float:left;vertical-align:middle"><div class="title"><a class="link_tooltip" href="#" data-toggle="tooltip" title="{{{subtitle}}}">{{{title}}}</a></div></div><div class="shape" style="float:left;vertical-align:middle">{{shape}}</div></div></div>' +
                 '{{/measures}}' +
                 '</div>' +
                 '</div>' +
-                '<div class="c_group c_body">' +
+                '<div class="c_group c_body" style="display:table-row-group">' +
                 '{{#dimensions}}' +
-	                '<div class="c_row">' +
-	                	'<div class="cell cell_name"><div class="title" style="float:left">{{term_desc}}</div><div class="shape" style="float:left">{{{shape}}}</div></div>' +
+	                '<div class="c_row" style="display:table-row">' +
+	                	'<div class="cell cell_name" style="display:table-cell"><div class="title" style="float:left">{{term_desc}}</div><div class="shape" style="float:left">{{{shape}}}</div></div>' +
 	                	'{{#measures}}' +
-	                		'<div class="cell cell_graph" id="{{viewid}}"></div>' +
+	                		'<div class="cell cell_graph" style="display:table-cell" id="{{viewid}}"></div>' +
 	                	'{{/measures}}' +
 	                '</div>' +
                 '{{/dimensions}}' +
-	                '<div class="c_row c_totals">' +
+	                '<div class="c_row c_totals" style="display:table-row">' +
 		            	'{{#dimensions_totals}}' +
-		            		'<div class="cell cell_name"><div class="title" style="float:left">{{term_desc}}</div><div class="shape" style="float:left">{{{shape}}}</div></div>' +
+		            		'<div class="cell cell_name" style="display:table-cell"><div class="title" style="float:left">{{term_desc}}</div><div class="shape" style="float:left">{{{shape}}}</div></div>' +
 	            			'{{#measures_totals}}' +
-	            				'<div class="cell cell_graph" id="{{viewid}}"></div>' +
+	            				'<div class="cell cell_graph" style="display:table-cell" id="{{viewid}}"></div>' +
 	            			'{{/measures_totals}}' +
 		            	'{{/dimensions_totals}}' +
 		            '</div>' +
@@ -5853,9 +5872,20 @@ this.recline.View = this.recline.View || {};
                     data.push(val);
 
                 });
+                dim["getDimensionIDbyMeasureTotalsID"] = function () {
+                    return function (measureID) {
+                    	var j = -1;
+                        var measure = _.find(self.measures, function (f) {
+                            j++;
+                        	return f.measure_id == measureID;
+                        });
+                    	if (measure && j >= 0 && j < self.measures_totals.length)
+                    		return self.measures_totals[j].viewid;
+                    }
+                };
 
                 self.dimensions_totals = [dim];
-                self.measures_totals =data;
+                self.measures_totals = data;
             }
 
 
