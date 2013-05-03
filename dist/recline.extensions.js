@@ -13470,9 +13470,9 @@ this.recline.View = this.recline.View || {};
         },
 
         redraw:function () {
-                var self = this;
-            var field = this.model.fields.get(this.options.fieldRanges);
-            var fieldMeasure = this.model.fields.get(this.options.fieldMeasures);
+            var self = this;
+            //var field = this.model.fields.get(this.options.fieldRanges);
+            //var fieldMeasure = this.model.fields.get(this.options.fieldMeasures);
 
             var type;
             if(this.options.resultType) {
@@ -13495,7 +13495,7 @@ this.recline.View = this.recline.View || {};
                     var field = self.model.fields.get(f);
                     markers.push(record.getFieldValueUnrendered(field));
                 });
-                return {ranges:ranges, measures:measures, markers: markers, customTicks: self.options.customTicks};
+                return {ranges:ranges, measures:measures, markers: markers, customTicks: self.options.customTicks, tickFormat: self.options.tickFormat };
             });
 
             var margin = {top: 5, right: 40, bottom: 40, left: 40};
@@ -13561,16 +13561,17 @@ this.recline.View = this.recline.View || {};
                     measures = bulletMeasures,
                     width = 380,
                     height = 30,
-                    tickFormat = null,
+                    tickFormat = bulletTickFormat,
                 	customTicks = bulletCustomTicks;
 
-                // For each small multiple…
+                // For each small multiple
                 function bullet(g) {
                     g.each(function (d, i) {
                         var rangez = ranges.call(this, d, i).slice().sort(d3.descending),
                             markerz = markers.call(this, d, i).slice().sort(d3.descending),
                             measurez = measures.call(this, d, i).slice().sort(d3.descending),
                             customTickz = customTicks.call(this, d, i),
+                            tickFormatz = tickFormat.call(this, d, i),
                             g = d3.select(this);
 
                         // Compute the new x-scale.
@@ -13658,8 +13659,7 @@ this.recline.View = this.recline.View || {};
                             .attr("y1", height / 6)
                             .attr("y2", height * 5 / 6);
 
-                        // Compute the tick format.
-                        var format = tickFormat || x1.tickFormat(8);
+                        var format = tickFormatz || x1.tickFormat(8);
 
                         // Update the tick groups.
                         var tick = g.selectAll("g.tick")
@@ -13781,6 +13781,10 @@ this.recline.View = this.recline.View || {};
                 
                 return bullet;
             };
+
+            function bulletTickFormat(d) {
+                return d.tickFormat;
+            }
 
             function bulletCustomTicks(d) {
                 return d.customTicks;
