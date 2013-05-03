@@ -59,9 +59,9 @@ this.recline.View = this.recline.View || {};
             
             if (this.model.getRecords().length)
         	{
-                var width = 960,
-                height = 136,
-                cellSize = 17; // cell size
+                var width = self.options.cellSize * 56 || 960,
+                height = self.options.cellSize * 8 || 136,
+                cellSize = self.options.cellSize || 17; // cell size
 
                 //var svg = d3.select(this.el+" svg")
 
