@@ -14888,11 +14888,12 @@ this.recline.View = this.recline.View || {};
 				<b>Correlation:</b><table> \
 					<tr><td>Cluster 1: </td><td>{{name1}}</td></tr> \
 					<tr><td>Cluster 2: </td><td>{{name2}}</td></tr> \
-					<tr><td>Correlation distance: </td><td>{{value}}</td></tr> \
+					<tr><td>Correlation: </td><td>{{value}}</td></tr> \
 				</table> \
 			  </div>',    		
         events: {
         },
+        rendered:false,
         initialize:function (options) {
             var self = this;
 
@@ -14915,8 +14916,6 @@ this.recline.View = this.recline.View || {};
             this.width = this.options.state.width || 200
             this.height = this.options.state.height || 200
             
-            this.orderMode == "Cluster"
-            	
             if (this.options.state.customTooltipTemplate)
             	this.tooltipTemplate = this.options.state.customTooltipTemplate
             else this.tooltipTemplate = this.defaultTooltipTemplate
@@ -14995,13 +14994,13 @@ this.recline.View = this.recline.View || {};
                 group: d3.range(n).sort(function(a, b) { return nodes[b].group - nodes[a].group; })
               };
 
-            if (self.orderMode)
+            if (self.options.orderMode)
         	{
-                if (self.orderMode.toLowerCase().indexOf("cluster") >= 0)
+                if (self.options.orderMode.toLowerCase().indexOf("cluster") >= 0)
                 	x.domain(orders.group);
-                else if (self.orderMode.toLowerCase().indexOf("name") >= 0)
+                else if (self.options.orderMode.toLowerCase().indexOf("name") >= 0)
                 	x.domain(orders.name);
-                else if (self.orderMode.toLowerCase().indexOf("value") >= 0)
+                else if (self.options.orderMode.toLowerCase().indexOf("value") >= 0)
                 	x.domain(orders.val);
         	}
             else x.domain(orders.group);
@@ -15033,6 +15032,7 @@ this.recline.View = this.recline.View || {};
                   .each(row);
 
               row.append("line")
+                  .attr("class", "line")
                   .attr("x2", this.width);
 
               row.append("text")
@@ -15049,6 +15049,7 @@ this.recline.View = this.recline.View || {};
                   .attr("transform", function(d, i) { return "translate(" + x(i) + ")rotate(-90)"; });
 
               column.append("line")
+                  .attr("class", "line")
                   .attr("x1", -this.width);
 
               column.append("text")
@@ -15057,6 +15058,8 @@ this.recline.View = this.recline.View || {};
                   .attr("dy", ".32em")
                   .attr("text-anchor", "start")
                   .text(function(d, i) { return nodes[i].name; });
+              
+              this.rendered = true;
 
               function row(row) {
                 var cell = d3.select(this).selectAll(".cell")
@@ -15107,6 +15110,9 @@ this.recline.View = this.recline.View || {};
 
         redraw:function () {
             var self = this;
+            if (!this.rendered)
+            	return this.render.apply(this);
+            
         	var chartData = this.computeData();
         	if (!chartData)
         		return null;
