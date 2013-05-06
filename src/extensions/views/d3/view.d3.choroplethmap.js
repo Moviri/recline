@@ -148,7 +148,7 @@ this.recline.View = this.recline.View || {};
     	                	if (field)
     	                		val = selectedRecord.getFieldValue(field)
                     	}
-    	                if ( val.indexOf("N/A") == -1){
+    	                if (typeof val != "string" || val.indexOf("N/A") == -1){
     	                	var values = { x: region, y: val, xLabel: newXLabel, yLabel: selectedKpi }
         	                var content = Mustache.render(self.options.state.customTooltipTemplate, values);
         	                var $mapElem = $(self.el)
