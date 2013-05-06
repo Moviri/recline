@@ -63,8 +63,12 @@ this.recline.View = this.recline.View || {};
             var self = this;
 
             var matrix = [];
-            // filter records for the co-occurrence 
-            var records = _.filter(this.model.getRecords(), function(rec) { return rec.attributes[self.filterField] == self.filterValue; });
+            // filter records for the co-occurrence
+            var records = [];
+            if (self.filterField && self.filterValue)
+            	records = _.filter(this.model.getRecords(), function(rec) { return rec.attributes[self.filterField] == self.filterValue; });
+            else records = this.model.getRecords();
+            
             if (records.length == 0)
             	return null;
             

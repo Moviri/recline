@@ -6,7 +6,7 @@ var today = new Date(2012,12,31);
 var currDate = new Date(2010,0,1);
 while (currDate.getTime() <= today.getTime())
 {
-    recs.push({Data: new Date(currDate), Spese: -Math.floor(Math.random()*100) });
+    recs.push({Data: new Date(currDate), Spese: Math.floor(Math.random()*100) });
     currDate.add(1).days();
 }
 
@@ -25,7 +25,7 @@ var calendarView =  new recline.View.D3CalendarView({
     el: "#grid1",
     dateField: "Data",
     valueField: "Spese",
-    valueDomain: [-100,0],
+    valueDomain: [100,0],
     cellSize: 15
 });
 calendarView.render();
