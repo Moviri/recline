@@ -83,7 +83,6 @@ this.recline.View = this.recline.View || {};
                 node.index = i;
                 node.val = 0;
                 node.name = val;
-                //node.group = "#0F0"
                 matrix[i] = d3.range(n).map(function(j) { return {x: j, y: i, z: 0}; });
                 nodes.push(node);
             });
@@ -110,6 +109,56 @@ this.recline.View = this.recline.View || {};
             	nodes[src].val += value
             	nodes[trg].val += value
             });
+            // compute clusters
+            var groups = [];
+            var assignedIdxs = [];
+            
+            function assignGroup(currGroup, riga) {
+            	if (typeof groups[currGroup] == "undefined" || groups[currGroup] == null)
+        		{
+            		groups[currGroup] = [riga]
+            		assignedIdxs.push(riga);
+        		}
+            	
+	            for (var c = 0; c < n; c++)
+	            	if (matrix[riga][c].z > 0 && !_.contains(assignedIdxs, c))
+            		{
+	            		groups[currGroup].push(c);
+	            		assignedIdxs.push(c);
+            		}
+	            
+	            for (var i = 0; i <groups[currGroup].length; i++)
+	        	{
+	            	var currCol = groups[currGroup][i];
+	            	for (var r = 0; r < n; r++)
+	                	if (matrix[r][currCol].z > 0 && !_.contains(assignedIdxs, currCol))
+                		{
+	                		groups[currGroup].push(currCol)
+		            		assignedIdxs.push(currCol);
+                		}
+	        	}
+            }
+            function findGroupByIndex(idx) {
+            	for (var g = 0; g < groups.length; g++)
+            		if (_.contains(groups[g], idx))
+            			return g;
+            	
+            	return groups.length;
+            }
+            
+            assignGroup(0, 0);
+            
+        	for (r = 1; r < n; r++)
+        		if (groups.length < 9 && assignedIdxs.length < n)
+        			if (!_.contains(assignedIdxs, r))
+        				assignGroup(groups.length, r);
+        			else assignGroup(findGroupByIndex(r), r);
+        	
+        	_.each(nodes, function(currNode) {
+        		var g = findGroupByIndex(currNode.index);
+        		currNode.group = g;
+        	})
+            
             var x = d3.scale.ordinal().rangeBands([0, this.width]);
             var z = d3.scale.linear().domain([min, max]).clamp(true);
             var c = d3.scale.category10().domain(d3.range(10));
