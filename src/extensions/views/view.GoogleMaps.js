@@ -71,14 +71,13 @@ this.recline.View = this.recline.View || {};
 	    	var self = this;
 	    	
         	this.clearAllMarkers();
-        	if (mc)
+        	if (this.options.state.clustererOptions && mc)
         		mc.clearMarkers();
         	
         	var latField = self.options.state.latField;
         	var longField = self.options.state.longField;
         	var valueField = self.options.state.valueField;
         	var markerIconName = self.options.state.markerIcon;
-        	var iconSize = 
         	
             _.each(this.model.getRecords("unfiltered"), function(rec) {
     	        var latlng = new google.maps.LatLng(rec.attributes[latField], rec.attributes[longField]);
@@ -124,7 +123,7 @@ this.recline.View = this.recline.View || {};
 
         	    self.markers.push(mark)
             })
-            if (mc)
+            if (this.options.state.clustererOptions && mc)
         	{
                 mc.addMarkers(this.markers);
                 mc.repaint();	
