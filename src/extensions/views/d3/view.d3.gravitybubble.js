@@ -15,8 +15,12 @@ this.recline.View = this.recline.View || {};
 	        		<div id="{{uid}}_legend_size" style="width:{{size_legend_width}}px;height:{{size_legend_height}}px;{{#sizeMargin}}margin:{{sizeMargin}}{{/sizeMargin}}"></div> \
 	        	</div> \
 	        </div>',
-
-
+	    tooltipTemplate: 
+	    	'<div> \
+				Key = {{title}}<br> \
+	    		Color = {{colorValue}}<br> \
+	    		Size = {{sizeValue}}<br> \
+			</div>',
         initialize: function (options) {
             this.el = $(this.el);
             _.bindAll(this, 'render', 'redraw');
