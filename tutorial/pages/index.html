@@ -338,5 +338,48 @@ root: ../../
 				$panel2.width(oldW2-delta)
 			}
 		}
+		
+// 	  _onRunSandboxed: function(e) {
+// 		    var self = this;
+// 		    // save the script ...
+// 		    this.script.set({content: this.editor.getValue()});
+// 		    var worker = new Worker('src/views/worker-runscript.js');
+// 		    worker.addEventListener('message',
+// 		        function(e) { self._handleWorkerCommunication(e); },
+// 		        false);
+// 		    var codeToRun = this.editor.getValue();
+// 		    worker.postMessage({
+// 		      src: codeToRun,
+// 		      dataset: {
+// 		        records: this.dataset._store.records,
+// 		        fields: this.dataset._store.fields
+// 		      }
+// 		    });
+// 	  },
+
+// 	  _handleWorkerCommunication: function(e) {
+// 	    var self = this;
+// 	    if (e.data.msg == 'print') {
+// 	      this._writeToOutput(e.data.data);
+// 	    } else if (e.data.msg == 'error') {
+// 	      this._writeToOutput(e.data.data, 'error');
+// 	    } else if (e.data.msg == 'saveDataset') {
+// 	      this.dataset._store.records = e.data.records;
+// 	      this.dataset._store.fields = e.data.fields;
+// 	      this.dataset.fields.reset(this.dataset._store.fields);
+// 	      this.dataset.query({size: this.dataset._store.records.length});
+// 	      this.model.saveDatasetsToGist();
+// 	    }
+// 	  },
+
+// 	  _writeToOutput: function(msg, type) {
+// 	    // make it a bit safer ...
+// 	    msg = msg.replace('<', '&lt;').replace('>', '&gt;');
+// 	    if (type === 'error') {
+// 	      msg = '<span class="error"><strong>Error: </strong>' + msg + '</span>';
+// 	    }
+// 	    msg += '<br />';
+// 	    this.$output.append(msg);
+// 	  }		
 
 		</script>

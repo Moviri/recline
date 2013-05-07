@@ -72,11 +72,15 @@ this.recline.View = this.recline.View || {};
         renderGraph:function () {
             var self = this;
             this.graphOptions = {
-                element:document.querySelector('#' + this.uid)
+                element:document.querySelector('#' + this.uid),
+                width: self.options.width,
+                height: self.options.height
             };
 
             self.graphOptions = _.extend(self.graphOptions, self.options.state.options);
             self.createSeries();
+            if (self.series.length == 0)
+            	return;
 
             self.graphOptions.series = self.series;
 
@@ -115,7 +119,7 @@ this.recline.View = this.recline.View || {};
 
                 self.annotator = new Rickshaw.Graph.Annotate({
                     graph:self.graph,
-                    element:document.getElementById('timeline')
+                    element:document.getElementById(self.options.state.events.div || 'timeline')
                 });
 
                 var timeField = self.options.state.events.timeField;
