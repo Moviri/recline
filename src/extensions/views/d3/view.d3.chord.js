@@ -67,6 +67,7 @@ this.recline.View = this.recline.View || {};
             var valueField = this.options.model.fields.get(state.valueField);
             if (!valueField)
                 throw "d3.chord.js: unable to fiend field [" + state.valueField + "] in model";
+            
 
             _.each(this.options.model.getRecords(type), function (record) {
                 var i = nodes_map[record.attributes[state.startField]];
@@ -117,6 +118,11 @@ this.recline.View = this.recline.View || {};
         drawD3: function (nodes, matrix) {
 
             var self = this;
+            var sum = 0;
+            for (var i = 0; i < matrix.length; i++)
+                for (var j = 0; j < matrix[i].length; j++)
+                    sum += matrix[i][j];
+            
             var state = self.options.state;
 
             var colorScale = d3.scale.category20();
@@ -124,10 +130,12 @@ this.recline.View = this.recline.View || {};
 
             var outerRadius = Math.min(self.width, self.height) / 2 - 10,
                 innerRadius = outerRadius - 24;
+            
+            var formatNumber = state.numberFormat || d3.format(",.2f");
 
-
-
-            var formatPercent = d3.format(".1%");
+            var formatPercent = function(d) {
+        		return formatNumber(d)+" ["+d3.format(".1%")(d/sum)+"]";
+            }
 
             var arc = d3.svg.arc()
                 .innerRadius(innerRadius)
@@ -165,7 +173,7 @@ this.recline.View = this.recline.View || {};
 
             // Add a mouseover title.
             group.append("title").text(function (d, i) {
-                return nodes[i] + ": " + formatPercent(d.value) + " of origins";
+                return nodes[i] + ": " + formatPercent(d.value, sum) + " of origins";
             });
 
             // Add the group arc.
