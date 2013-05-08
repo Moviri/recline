@@ -303,7 +303,7 @@ this.recline.View = this.recline.View || {};
                  })
                 .attr("y", function (t, i) {
                     if(self.colorDataFormat == "string") {
-                        return transY + (16) + i * (rectHeight + 1);
+                        return transY + 9 + rectHeight/2 + i * (rectHeight + 1);
                     }  else{
                         return ((legendOpt.height - paddingAxis) / (tickValues.length - 1)) * i + paddingAxis / 2;
                     }
@@ -311,7 +311,7 @@ this.recline.View = this.recline.View || {};
                 })
                 .attr("x", function(){
                     if(self.colorDataFormat == "string") {
-                         return transX+rectWidth;
+                         return transX+rectWidth+2;
                     }else{
                         return ((legendWidth / 2 - legendOpt.width / 2) || 0) + legendOpt.width / 2;
                     }

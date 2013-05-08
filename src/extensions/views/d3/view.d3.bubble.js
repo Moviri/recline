@@ -165,7 +165,20 @@ this.recline.View = this.recline.View || {};
             if (xDomain[0] == xDomain[1]) xDomain = [xDomain[0] / 2, xDomain[0] * 2];
             if (yDomain[0] == yDomain[1]) yDomain = [yDomain[0] / 2, yDomain[0] * 2];
 
+            if (typeof state.xField.scale == "undefined")
+            	state.xField.scale = d3.scale.linear();
+            
+            if (typeof state.yField.scale == "undefined")
+            	state.yField.scale = d3.scale.linear();
+            
+            if (typeof state.sizeField.scale == "undefined")
+            	state.sizeField.scale = d3.scale.linear();
 
+            if (typeof state.colorField.scale == "undefined")
+            	if (this.colorDataFormat == "string")
+            		state.colorField.scale = d3.scale.ordinal();
+            	else state.colorField.scale = d3.scale.linear();
+            
             self.xScale = state.xField.scale.domain(xDomain).range([0, self.bubbleWidth]);
             self.yScale = state.yField.scale.domain(yDomain).range([self.height, 0]);
             self.sizeScale = state.sizeField.scale.domain(sizeDomain).range([2, 20]);
@@ -290,23 +303,12 @@ this.recline.View = this.recline.View || {};
             var numTick;
             var tickValues;
 
-            if(self.colorDataFormat == "string") {
-               data1 = colorDomain;
-                calculateColor = function(d) {
-                    return self.colorScale(d);
-                };
-                numTick = colorDomain.length;
-                tickValues = colorDomain;
-            }  else {
-                numTick =  legendOpt.numElements;
-               data1 =  d3.range(numTick);
-                calculateColor = function(d) { return self.colorScale(d * (colorDomain[1] - colorDomain[0]) / numTick + colorDomain[0])};
-
-                tickValues = _.map([colorDomain[0], colorDomain[1]], function (a) {
-                    return (a > 1000) ? d3.format("s")(Math.round(a)) : d3.format(".2f")(a);
-                });
-            }
-
+            data1 = colorDomain;
+            calculateColor = function(d) {
+                return self.colorScale(d);
+            };
+            numTick = colorDomain.length;
+            tickValues = colorDomain;
 
 
             var dataSca = [];
@@ -333,27 +335,13 @@ this.recline.View = this.recline.View || {};
                 .data(tickValues).enter().append("text")
                 .attr("class", "y label")
                 .attr("text-anchor", function(){
-                      if(self.colorDataFormat == "string"){
-                             return "left";
-                      }else{
-                          return "middle";
-                      }
+                     return "left";
                  })
                 .attr("y", function (t, i) {
-                    if(self.colorDataFormat == "string") {
-                        return transY + (16) + i * (rectHeight + 1);
-                    }  else{
-                        return ((legendOpt.height - paddingAxis) / (tickValues.length - 1)) * i + paddingAxis / 2;
-                    }
-
+                    return transY + 9 + rectHeight/2 + i * (rectHeight + 1);
                 })
                 .attr("x", function(){
-                    if(self.colorDataFormat == "string") {
-                         return transX+rectWidth;
-                    }else{
-                        return ((legendWidth / 2 - legendOpt.width / 2) || 0) + legendOpt.width / 2;
-                    }
-
+                     return transX+rectWidth+3;
                 })
                 .text(function (t) {
                     return t;
