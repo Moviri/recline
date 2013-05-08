@@ -5,10 +5,16 @@ this.recline.View = this.recline.View || {};
 
     "use strict";
 
-
     view.D3Bubble = Backbone.View.extend({
         template: '<div id="{{uid}}" style="width: {{width}}px; height: {{height}}px;"><div id="{{uid}}_graph" class="span11"></div><div class="span1" style="padding-left:30px;"><div id="{{uid}}_legend_color"  style="width:{{color_legend_width}}px;height:{{color_legend_height}}px"></div><div id="{{uid}}_legend_size" style="width:{{size_legend_width}}px;height:{{size_legend_height}}px"></div></div></div>',
-
+	    tooltipTemplate: 
+	    	'<div> \
+	    		<b>{{title}}</b><br> \
+	    		{{dim1Label}}: {{dim1Value}}<br> \
+	    		{{dim2Label}}: {{dim2Value}}<br> \
+	    		{{dim3Label}}: {{dim3Value}}<br> \
+	    		{{dim4Label}}: {{dim4Value}}<br> \
+			</div>',
         brushstart: function () {
             return []; //svg.classed("selecting", true);
         },
@@ -117,6 +123,13 @@ this.recline.View = this.recline.View || {};
             var yDomain = [Infinity, -Infinity];
             var sizeDomain = [Infinity, -Infinity];
             var colorDomain = [Infinity, -Infinity];
+            
+            var fieldColor = this.options.model.fields.get(state.colorField.field);
+            this.colorDataFormat = "number";
+            if (fieldColor.type == "string" || fieldColor.attributes.type == "string") {
+	            colorDomain = _.unique( _.map(self.options.model.getRecords(type), function(c) { return c.attributes[state.colorField.field] } ));
+	        	this.colorDataFormat = "string";
+            }
 
             var records = _.map(this.options.model.getRecords(type), function (record) {
                 state.domains = state.domains || {};
@@ -129,12 +142,11 @@ this.recline.View = this.recline.View || {};
                 sizeDomain = state.domains.sizeDomain || [
                 Math.min(sizeDomain[0], record.attributes[state.sizeField.field]),
                 Math.max(sizeDomain[1], record.attributes[state.sizeField.field])];
-                colorDomain = state.domains.colorDomain || [
-                Math.min(colorDomain[0], record.attributes[state.colorField.field]),
-                Math.max(colorDomain[1], record.attributes[state.colorField.field])];
-
-
-
+                if (self.colorDataFormat != "string") {
+                    colorDomain = state.domains.colorDomain || [
+                    Math.min(colorDomain[0], record.attributes[state.colorField.field]),
+                    Math.max(colorDomain[1], record.attributes[state.colorField.field])];
+                }
                 return {
                     "key": record.attributes[state.keyField.field],
                     "color": record.attributes[state.colorField.field], //record.attributes[state.colorField.field],
@@ -149,7 +161,7 @@ this.recline.View = this.recline.View || {};
             });
 
             if (sizeDomain[0] == sizeDomain[1]) sizeDomain = [sizeDomain[0] / 2, sizeDomain[0] * 2];
-            if (colorDomain[0] == colorDomain[1]) colorDomain = [colorDomain[0] / 2, colorDomain[0] * 2];
+            if (self.colorDataFormat != "string" && colorDomain[0] == colorDomain[1]) colorDomain = [colorDomain[0] / 2, colorDomain[0] * 2];
             if (xDomain[0] == xDomain[1]) xDomain = [xDomain[0] / 2, xDomain[0] * 2];
             if (yDomain[0] == yDomain[1]) yDomain = [yDomain[0] / 2, yDomain[0] * 2];
 
@@ -157,10 +169,14 @@ this.recline.View = this.recline.View || {};
             self.xScale = state.xField.scale.domain(xDomain).range([0, self.bubbleWidth]);
             self.yScale = state.yField.scale.domain(yDomain).range([self.height, 0]);
             self.sizeScale = state.sizeField.scale.domain(sizeDomain).range([2, 20]);
-            self.colorScale = state.colorField.scale.domain(colorDomain);
+            if (self.colorDataFormat == "string")
+            	self.colorScale = d3.scale.category20().domain(colorDomain)
+            else self.colorScale = state.colorField.scale.domain(colorDomain);
 
             if (state.colorLegend) {
-                self.drawLegendColor(colorDomain[0], colorDomain[1]);
+            	if (self.colorDataFormat == "string")
+            		self.drawLegendColorString(colorDomain);
+            	else self.drawLegendColor(colorDomain);
             }
             if (state.sizeLegend) {
                 self.drawLegendSize(sizeDomain[0], sizeDomain[1]);
@@ -185,7 +201,7 @@ this.recline.View = this.recline.View || {};
 
 	    legendOpt.margin = $.extend({top:0, right:0, bottom:0, left:0},legendOpt.margin);
             var paddingAxis = 20;
-            var numTick = legendOpt.numElements;
+            var numTick = legendOpt.numElements || 3;
 
             var legendid = "#" + this.uid + "_legend_size";
             var transX = (legendWidth / 2 - legendOpt.width / 2) || 0;
@@ -249,18 +265,116 @@ this.recline.View = this.recline.View || {};
                 	return (t > 1000) ? d3.format("s")(Math.round(t)) : d3.format(".2f")(t);
             	});
         },
-
-        drawLegendColor: function (minData, maxData) {
+        
+        drawLegendColorString: function (colorDomain) {
 
             var self = this;
             var legendOpt = self.options.state.colorLegend;
             var legendWidth = self.color_legend_width;
-	    var legendHeight = this.color_legend_height;
-	    legendOpt.margin = $.extend({top:0, right:0, bottom:0, left:0},legendOpt.margin);
+            var legendHeight = this.color_legend_height;
+            legendOpt.margin = $.extend({top: 0, right: 0, bottom: 0, left: 0}, legendOpt.margin);
 
-	    var rectWidth = 20;//legendOpt.width;
+            var rectWidth = 20;//legendOpt.width;
             var paddingAxis = 20;
-            var numTick = legendOpt.numElements;
+
+
+            var legendid = "#" + this.uid + "_legend_color";
+            var transX = rectWidth / 2 || 0;
+            var transY = legendOpt.margin.top || 0;
+            var legend = d3.select(legendid).append("svg")
+                .attr("width", legendWidth)
+                .attr("height", legendHeight);
+
+            var data1;
+            var calculateColor;
+            var numTick;
+            var tickValues;
+
+            if(self.colorDataFormat == "string") {
+               data1 = colorDomain;
+                calculateColor = function(d) {
+                    return self.colorScale(d);
+                };
+                numTick = colorDomain.length;
+                tickValues = colorDomain;
+            }  else {
+                numTick =  legendOpt.numElements;
+               data1 =  d3.range(numTick);
+                calculateColor = function(d) { return self.colorScale(d * (colorDomain[1] - colorDomain[0]) / numTick + colorDomain[0])};
+
+                tickValues = _.map([colorDomain[0], colorDomain[1]], function (a) {
+                    return (a > 1000) ? d3.format("s")(Math.round(a)) : d3.format(".2f")(a);
+                });
+            }
+
+
+
+            var dataSca = [];
+
+            var rects = legend.selectAll("rect")
+                .data(data1);
+            var rectHeight = (legendOpt.height - paddingAxis * 2 - numTick) / numTick;
+
+            rects.enter()
+                .append("rect")
+                .attr({
+                    width: rectWidth,
+                    height: rectHeight,
+                    y: function (d, i) {
+                        return transY + (5) + i * (rectHeight + 1);
+                    },
+                    x: transX,
+                    fill: function (d, i) {
+                        return calculateColor(d);
+                    }
+                });
+
+            legend.selectAll(".label")
+                .data(tickValues).enter().append("text")
+                .attr("class", "y label")
+                .attr("text-anchor", function(){
+                      if(self.colorDataFormat == "string"){
+                             return "left";
+                      }else{
+                          return "middle";
+                      }
+                 })
+                .attr("y", function (t, i) {
+                    if(self.colorDataFormat == "string") {
+                        return transY + (16) + i * (rectHeight + 1);
+                    }  else{
+                        return ((legendOpt.height - paddingAxis) / (tickValues.length - 1)) * i + paddingAxis / 2;
+                    }
+
+                })
+                .attr("x", function(){
+                    if(self.colorDataFormat == "string") {
+                         return transX+rectWidth;
+                    }else{
+                        return ((legendWidth / 2 - legendOpt.width / 2) || 0) + legendOpt.width / 2;
+                    }
+
+                })
+                .text(function (t) {
+                    return t;
+                });
+        },
+
+        drawLegendColor: function (colorDomain) {
+
+            var self = this;
+            var minData = colorDomain[0];
+            var maxData = colorDomain[1];
+            var legendOpt = self.options.state.colorLegend;
+            var legendWidth = self.color_legend_width;
+		    var legendHeight = this.color_legend_height;
+		    legendOpt.margin = $.extend({top:0, right:0, bottom:0, left:0},legendOpt.margin);
+
+		    var rectWidth = 20;//legendOpt.width;
+            var paddingAxis = 20;
+            var numTick = legendOpt.numElements || 15;
+            if (self.colorDataFormat == "string")
+            	numTick = colorDomain.length;
 
             var legendid = "#" + this.uid + "_legend_color";
             var transX = (legendWidth / 2 - rectWidth / 2) || 0;
@@ -285,26 +399,20 @@ this.recline.View = this.recline.View || {};
                     return transY + (5) + i * (rectHeight + 1);
                 },
                 x: transX,
-                fill: function (d, i) {
-                    return self.colorScale(d * (maxData - minData) / numTick + minData);
-                }
+                fill: function (d, i) { return self.colorScale(d * (maxData - minData) / numTick + minData); }
             });
-
             var tickValues = _.map([minData, maxData], function (a) {
-                return (a > 1000) ? d3.format("s")(Math.round(a)) : d3.format(".2f")(a);
-            });
-
-            legend.selectAll(".label")
-                .data(tickValues).enter().append("text")
-                .attr("class", "y label")
-                .attr("text-anchor", "middle")
-                .attr("y", function (t, i) {
-                return ((legendOpt.height - paddingAxis) / (tickValues.length - 1)) * i + paddingAxis / 2;
-            })
-                .attr("x", ((legendWidth / 2 - legendOpt.width / 2) || 0) + legendOpt.width / 2)
-                .text(function (t) {
-                return t;
-            });
+	                return (a > 1000) ? d3.format("s")(Math.round(a)) : d3.format(".2f")(a);
+	            });
+                legend.selectAll(".label")
+	                .data(tickValues).enter().append("text")
+	                .attr("class", "y label")
+	                .attr("text-anchor", "middle")
+	                .attr("y", function (t, i) {
+			                return ((legendOpt.height - paddingAxis) / (tickValues.length - 1)) * i + paddingAxis / 2;
+			            })
+	                .attr("x", ((legendWidth / 2 - legendOpt.width / 2) || 0) + legendOpt.width / 2)
+	                .text(function (t) { return t; });
         },
 
         drawD3: function (data) {
@@ -387,9 +495,7 @@ this.recline.View = this.recline.View || {};
                 .data(data)
                 .enter().append("circle")
                 .attr("class", "dot")
-                .style("fill", function (d) {
-                return self.colorScale(color(d));
-            })
+                .style("fill", function (d) { return self.colorScale(color(d)); })
                 .call(position)
                 .sort(order)
                 .on("mouseover", self.handleMouseover(self))
@@ -435,13 +541,13 @@ this.recline.View = this.recline.View || {};
 
                 var values = {
                     title: e.key,
-                    dim1Label: self.xAxisTitle,
+                    dim1Label: self.xAxisTitle || "X",
                     dim1Value: e.x_formatted,
-                    dim2Label: self.yAxisTitle,
+                    dim2Label: self.yAxisTitle || "Y",
                     dim2Value: e.y_formatted,
-                    dim3Label: self.colorTitle,
+                    dim3Label: self.colorTitle || "Color",
                     dim3Value: e.color_formatted,
-                    dim4Label: self.sizeTitle,
+                    dim4Label: self.sizeTitle || "Size",
                     dim4Value: e.size_formatted
                 }
                 var content = Mustache.render(self.tooltipTemplate, values);
