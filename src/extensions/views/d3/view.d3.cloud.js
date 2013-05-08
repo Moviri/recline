@@ -63,7 +63,7 @@ this.recline.View = this.recline.View || {};
                 return { key: record.attributes[state.wordField], value: record.attributes[state.dimensionField]};
             });
 
-        records =  _.sortBy(records, function(f){ return -f.value; });
+        records =  _.sortBy(records, function(f){ return f.value; });
 
             domain = [records[0].value, records[records.length-1].value];
 
@@ -89,10 +89,18 @@ this.recline.View = this.recline.View || {};
             var font = "Impact";
 
             if(state.font)
-                font = "Impact";
+                font = state.font;
 
             if(state.scale)
                 fontSize = state.scale;
+            
+            if (typeof state.angle_start == "undefined" && typeof state.angle_end == "undefined")
+        	{
+            	state.angle_start = -90;
+            	state.angle_end = 90;
+        	}
+            if (typeof state.orientations == "undefined")
+            	state.orientations = 10;
 
             d3.layout.cloud().size([self.width, self.height])
                 .words(data.map(function(d) {
