@@ -199,6 +199,21 @@ root: ../../
 	__loadPanels(null, "demo", "demo", "demo", "demo")
 
 		function __runCode() {
+			var success = JSHINT(__jsCodeMirror.getValue(), {asi:true, smarttabs: true});
+			if (!success)
+			{
+				//console.dir(JSHINT.errors);
+				var errMsg = "";
+				_.each(JSHINT.errors, function(err) {
+					errMsg += "Error at line "+err.line+" col "+err.character+"\n"
+						+ "Offending code is:\n"+err.evidence+"\n"
+						+ "Reason is: "+err.reason+"\n"
+						+ "_____________________________________\n"
+				})
+				alert(errMsg);
+				return;			
+			}
+			
 			if (__scriptElem)
 			{
 				try
