@@ -217,14 +217,14 @@ root: ../../
 			__scriptElem.id = "__myRunningCode"
 			__scriptElem.async = "async"
 			__scriptElem.defer = "defer"
-// 			try {
-// 				eval(__jsCodeMirror.getValue())	
-// 			}
-// 			catch(__err1)
-// 			{
-// 				alert(__err1)
-// 				return
-// 			}
+//  			try {
+//  				eval(__jsCodeMirror.getValue())	
+//  			}
+//  			catch(__err1)
+//  			{
+//  				alert(__err1)
+//  				return
+//  			}
 			
 			__scriptElem.textContent = __jsCodeMirror.getValue()
 			document.body.appendChild(__scriptElem);
