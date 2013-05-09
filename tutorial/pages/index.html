@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Tutorial</title>
+
+    <!-- jQuery + jQuery UI deps -->
+<script type="text/javascript" src="../../vendor/jquery/jquery-1.8.2.js"></script>
+<script type="text/javascript" src="../../vendor/jquery/jquery.1.2.1.ba-bbq.min.js"></script>
+<script type="text/javascript" src="../../vendor/jQueryUi/jquery-ui-1.8.23.custom.js"></script>
+
+<link type="text/css" href="../../vendor/jQueryUi/jquery-ui-1.8.23.custom.css" rel="stylesheet" />
+
+<script type="text/javascript" src="../../vendor/jquery-slider/js/jquery.slider.min.js"></script>
+<link type="text/css" href="../../vendor/jquery-slider/css/jquery.slider.min.css" rel="stylesheet" />
+
+<script type="text/javascript" src="../../vendor/date/date.js"></script>
+
+    
+<!-- NVD3 & D3 libraries -->
+<script type="text/javascript" src="../../vendor/d3/v2/d3.v2.custom.js"></script>
+<link rel="stylesheet" href="../../vendor/nvd3/0.0.1/nv.d3.css">
+<script type="text/javascript" src="../../vendor/nvd3/0.0.1/nv.d3.js"></script>
+<script type="text/javascript" src="../../vendor/d3.layouts/cloud.js"></script>
+
+    <!-- D3 choropleth maps deps -->
+<script type="text/javascript" src="../../vendor/d3/v3/d3.v3.js"></script>
+<script type="text/javascript" src="../../vendor/d3/v3/topojson.v0.min.js"></script>
+<script type="text/javascript" src="../../vendor/toAscii/toAscii.js"></script>
+
+    <!-- recline deps -->
+<script type="text/javascript" src="../../vendor/underscore/1.3.3/underscore.js"></script>
+<script type="text/javascript" src="../../vendor/underscore.deferred/0.4.0/underscore.deferred.js"></script>
+<script type="text/javascript" src="../../vendor/backbone/0.9.2/backbone.js"></script>
+<script type="text/javascript" src="../../vendor/mustache/0.5.0-dev/mustache.js"></script>
+<script type="text/javascript" src="../../vendor/accounting/accounting.js"></script>
+
+<script type="text/javascript" src="../../vendor/moment/1.6.2/moment.js"></script>
+<script type="text/javascript" src="../../vendor/crossfilter/1.1.0/crossfilter.min.js"></script>
+<script type="text/javascript" src="../../vendor/kartograph/unversioned/chroma.min.js"></script>
+
+<script type="text/javascript" src="../..//dist/recline.dataset.js"></script>
+<script type="text/javascript" src="../..//dist/recline.js"></script>
+<script type="text/javascript" src="../..//dist/recline.extensions.js"></script>
+
+    <!--  bootstrap deps -->
+<script type="text/javascript" src="../../vendor/bootstrap/2.3.1/js/bootstrap.js"></script>
+<link rel="stylesheet" href="../../vendor/bootstrap/2.3.1/css/bootstrap.css" />
+<link rel="stylesheet" href="../../vendor/bootstrap/2.3.1/css/bootstrap.extensions.css" />
+
+    <!--  bootstrap multiselect deps -->
+<script type="text/javascript" src="../../vendor/bootstrap-multiselect/bootstrap-multiselect.js"></script>
+<link href='../../vendor/bootstrap-multiselect/bootstrap-multiselect.css' rel='stylesheet' type='text/css' />
+    <link rel="stylesheet" href="../../vendor/leaflet/0.4.4/leaflet.css">
+<!--[if lte IE 8]>
+<link rel="stylesheet" href="../../vendor/leaflet/0.4.4/leaflet.ie.css" />
+<![endif]-->
+<link rel="stylesheet" href="../../vendor/leaflet.markercluster/MarkerCluster.css">
+<link rel="stylesheet" href="../../vendor/leaflet.markercluster/MarkerCluster.Default.css">
+<!--[if lte IE 8]>
+<link rel="stylesheet" href="../../vendor/leaflet.markercluster/MarkerCluster.Default.ie.css" />
+<![endif]-->
+
+  <script type="text/javascript" src="../../vendor/leaflet/0.4.4/leaflet.js"></script>
+  <script type="text/javascript" src="../../vendor/leaflet.markercluster/leaflet.markercluster.js"></script>
+
+
+    <script src="https://maps.googleapis.com/maps/api/js?sensor=false&libraries=places" type="text/javascript"></script>
+<script type="text/javascript" src="../../vendor/google-maps/markerclusterer.js"></script>
+
+    <!-- SlickGrid deps -->
+  <link rel="stylesheet" href="../../vendor/slickgrid/2.0.2/slick.grid.css">
+
+  <script type="text/javascript" src="../../vendor/slickgrid/2.0.2/jquery.event.drag-2.0.min.js"></script>
+  <script type="text/javascript" src="../../vendor/slickgrid/2.0.2/slick.grid.js"></script>
+  <script type="text/javascript" src="../../vendor/slickgrid/2.0.2/slick.core.js"></script>
+  <script type="text/javascript" src="../../vendor/slickgrid/2.0.2/slick.editors.js"></script>
+  <script type="text/javascript" src="../../vendor/slickgrid/2.0.2/slick.formatters.js"></script>
+  <script type="text/javascript" src="../../vendor/slickgrid/2.0.2/slick.cellrangeselector.js"></script>
+  <script type="text/javascript" src="../../vendor/slickgrid/2.0.2/slick.cellselectionmodel.js"></script>
+  <script type="text/javascript" src="../../vendor/slickgrid/2.0.2/slick.rowselectionmodel.js"></script>
+  <script type="text/javascript" src="../../vendor/slickgrid/2.0.2/slick.grid.js"></script>
+
+
+
+    
+        <!-- raphael -->
+<script type="text/javascript" src="../../vendor/raphael/2.1.0/raphael-min.js"></script>
+        <!-- kartograph -->
+<script type="text/javascript" src="../../vendor/kartograph/unversioned/kartograph.js"></script>
+
+
+    <link rel="stylesheet" href="../../vendor/rickshaw/1.1.2/rickshaw.min.css">
+<script type="text/javascript" src="../../vendor/rickshaw/1.1.2/rickshaw.min.js"></script>
+
+        <!--
+<script src="../../vendor/rickshaw/1.1.2/src/Rickshaw.js"></script>
+<script src="../../vendor/rickshaw/1.1.2/src/Rickshaw.Class.js"></script>
+<script src="../../vendor/rickshaw/1.1.2/src/Rickshaw.Compat.ClassList.js"></script>
+<script src="../../vendor/rickshaw/1.1.2/src/Rickshaw.Graph.js"></script>
+<script src="../../vendor/rickshaw/1.1.2/src/Rickshaw.Graph.Renderer.js"></script>
+<script src="../../vendor/rickshaw/1.1.2/src/Rickshaw.Graph.Renderer.Area.js"></script>
+<script src="../../vendor/rickshaw/1.1.2/src/Rickshaw.Graph.Renderer.Line.js"></script>
+<script src="../../vendor/rickshaw/1.1.2/src/Rickshaw.Graph.Renderer.Bar.js"></script>
+<script src="../../vendor/rickshaw/1.1.2/src/Rickshaw.Graph.Renderer.ScatterPlot.js"></script>
+<script src="../../vendor/rickshaw/1.1.2/src/Rickshaw.Graph.RangeSlider.js"></script>
+<script src="../../vendor/rickshaw/1.1.2/src/Rickshaw.Graph.HoverDetail.js"></script>
+<script src="../../vendor/rickshaw/1.1.2/src/Rickshaw.Graph.Annotate.js"></script>
+<script src="../../vendor/rickshaw/1.1.2/src/Rickshaw.Graph.Legend.js"></script>
+<script src="../../vendor/rickshaw/1.1.2/src/Rickshaw.Graph.Axis.Time.js"></script>
+<script src="../../vendor/rickshaw/1.1.2/src/Rickshaw.Graph.Behavior.Series.Toggle.js"></script>
+<script src="../../vendor/rickshaw/1.1.2/src/Rickshaw.Graph.Behavior.Series.Order.js"></script>
+<script src="../../vendor/rickshaw/1.1.2/src/Rickshaw.Graph.Behavior.Series.Highlight.js"></script>
+<script src="../../vendor/rickshaw/1.1.2/src/Rickshaw.Graph.Smoother.js"></script>
+<script src="../../vendor/rickshaw/1.1.2/src/Rickshaw.Graph.Unstacker.js"></script>
+<script src="../../vendor/rickshaw/1.1.2/src/Rickshaw.Fixtures.Time.js"></script>
+<script src="../../vendor/rickshaw/1.1.2/src/Rickshaw.Fixtures.Number.js"></script>
+<script src="../../vendor/rickshaw/1.1.2/src/Rickshaw.Fixtures.RandomData.js"></script>
+<script src="../../vendor/rickshaw/1.1.2/src/Rickshaw.Fixtures.Color.js"></script>
+<script src="../../vendor/rickshaw/1.1.2/src/Rickshaw.Color.Palette.js"></script>
+<script src="../../vendor/rickshaw/1.1.2/src/Rickshaw.Graph.Axis.Y.js"></script>
+        -->
+
+    <!-- xCharts deps -->
+<link rel="stylesheet" href="../../vendor/xcharts/xcharts.css">
+<script type="text/javascript" src="../../vendor/xcharts/xcharts.js"></script>
+
+
+   
+    <script type="text/javascript" src="../../vendor/chosen/chosen.jquery.min.js"></script>
+<link rel="stylesheet" href="../../vendor/chosen/chosen.css" />
+
+    <script type="text/javascript" src="../../vendor/datepicker/1.0.0/js/datepicker.js"></script>
+<script type="text/javascript" src="../../vendor/datepicker/1.0.0/js/DateRange.js"></script>
+<script type="text/javascript" src="../../vendor/datepicker/1.0.0/js/DateRangesWidget.js"></script>
+
+<link rel="stylesheet" type="text/css" href="../../vendor/datepicker/1.0.0/css/datepicker/base.css" />
+<link rel="stylesheet" type="text/css" href="../../vendor/datepicker/1.0.0/css/DateRangesWidget/base.css" />
+
+
+    <!-- codemirror deps -->
+		<script type="text/javascript" src="../../vendor/codemirror/js/codemirror.js"></script>
+		<script type="text/javascript" src="../../vendor/codemirror/js/htmlmixed.js"></script>
+		<script type="text/javascript" src="../../vendor/codemirror/js/xml.js"></script>
+		<script type="text/javascript" src="../../vendor/codemirror/js/css.js"></script>
+		<script type="text/javascript" src="../../vendor/codemirror/js/javascript.js"></script>
+		<script type="text/javascript" src="../../vendor/codemirror/js/closetag.js"></script>
+		<script type="text/javascript" src="../../vendor/codemirror/js/closebrackets.js"></script>
+		<!-- script type="text/javascript" src="../../vendor/codemirror/js/html-hint.js"></script-->
+		<!-- script type="text/javascript" src="../../vendor/codemirror/js/javascript-hint.js"></script-->
+		<script type="text/javascript" src="../../vendor/codemirror/js/matchbrackets.js"></script>
+		<script type="text/javascript" src="../../vendor/codemirror/js/foldcode.js"></script>
+		<script type="text/javascript" src="../../vendor/codemirror/js/brace-fold.js"></script>
+		<script type="text/javascript" src="../../vendor/codemirror/js/indent-fold.js"></script>
+		<script type="text/javascript" src="../../vendor/codemirror/js/xml-fold.js"></script>
+		
+		<script type="text/javascript" src="../../vendor/codemirror/js/lint.js"></script>
+		<script type="text/javascript" src="../../vendor/codemirror/js/javascript-lint.js"></script>
+		<script type="text/javascript" src="../../vendor/codemirror/js/json-lint.js"></script>
+		<script type="text/javascript" src="../../vendor/codemirror/js/jshint-1.1.0.js"></script>
+		
+		<link href="../../vendor/codemirror/css/codemirror.css" rel="stylesheet" type="text/css">
+		<link href="../../vendor/codemirror/css/show-hint.css" rel="stylesheet" type="text/css">
+		<link href="../../vendor/codemirror/css/lint.css" rel="stylesheet" type="text/css">
+		
+    
+    <script type="text/javascript">
+
+        var _gaq = _gaq || [];
+        _gaq.push(['_setAccount', 'UA-36323657-1']);
+        _gaq.push(['_trackPageview']);
+
+        (function() {
+            var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+            ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+            var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+        })();
+
+    </script>
+
+
+</head>
+<body>
+
+
+<link href="style.css" rel="stylesheet" type="text/css">
+<link href="treeview.css" rel="stylesheet" type="text/css">
+
+		<div style="width:1920px;height:950px">
+			<form style="width:98%;height:98%">
+				<div class="w15 left h100 greyborder">
+					<h4>Tutorial List<a class="btn btn-mini btn-info" href="gallery.html" style="margin-left:80px">Back&nbsp;<i class="icon-share-alt icon-white"></i><i class="icon-picture icon-white"></i></a></h4>
+					<div id="__tutorial_tree__"class="css-treeview" style="max-height:900px;overflow:auto">
+    <ul>
+        <li><input type="checkbox" id="item-0" checked="checked"/><label for="item-0">MODELS</label>
+            <ul>
+                <li><a value="#static_model" onclick="__loadPanels($(this), 'gridOnly', 'static_model', 'table-centered', 'static_model')">Static Model</a></li>
+                <li><a value="#model_with_jsonp" onclick="__loadPanels($(this), 'gridOnly', 'model_with_jsonp', 'table-centered', 'model_with_jsonp')">Model with JSONP Backend</a><a target="_blank" href="https://github.com/Moviri/recline/wiki/Model-with-Backend.jsonp"><i class="icon-question-sign"></i></a></li>
+                <li><a value="#model_with_csv" onclick="__loadPanels($(this), 'gridOnly', 'model_with_csv', 'table-centered', 'model_with_csv')">Model with CSV Backend</a></li>
+                <li><input type="checkbox" id="item-0-0" /><label for="item-0-0">Virtual Model<a target="_blank" href="https://github.com/Moviri/recline/wiki/VirtualModel"><i class="icon-question-sign"></i></a></label>
+	                <ul>
+	                    <li><a value="#virtualmodel_aggregation" onclick="__loadPanels($(this), 'twoGrids', 'virtualmodel_aggregation', 'table-centered', 'virtualmodel_aggregation')">Aggregations</a></li>
+	                    <li><a value="#virtualmodel_ratiotoreport" onclick="__loadPanels($(this), 'twoGrids', 'virtualmodel_ratiotoreport', 'table-centered', 'virtualmodel_ratiotoreport')">Ratio to report</a></li>
+	                    <li><a value="#virtualmodel_ratiotomax" onclick="__loadPanels($(this), 'twoGrids', 'virtualmodel_ratiotomax', 'table-centered', 'virtualmodel_ratiotomax')">Ratio to max</a></li>
+	                    <li><a value="#virtualmodel_partition" onclick="__loadPanels($(this), 'twoGrids', 'virtualmodel_partition', 'table-centered', 'virtualmodel_partition')">Partition By</a></li>
+	                    <li><a value="#virtualmodel_totals" onclick="__loadPanels($(this), 'twoGrids', 'virtualmodel_totals', 'table', 'virtualmodel_totals')">Totals and subtotals</a></li>
+	                </ul>
+	            </li>
+                <li><a value="#joined_model" onclick="__loadPanels($(this), 'threeGrids', 'joined_model', 'table-centered', 'joined_model')">JoinedModel</a><a target="_blank" href="https://github.com/Moviri/recline/wiki/JoinedModel"><i class="icon-question-sign"></i></a></li>
+                <li><a value="#filters_sort_conditions" onclick="__loadPanels($(this), 'filters_sort_conditions', 'filters_sort_conditions', 'table-centered', 'filters_sort_conditions')">Filters and SortConditions</a><a target="_blank" href="https://github.com/Moviri/recline/wiki/Filters"><i class="icon-question-sign"></i></a></li>
+                <li><a value="#filtered_model" onclick="__loadPanels($(this), 'filtered_model', 'filtered_model', 'filtered_model', 'filtered_model')">FilteredModel</a><a target="_blank" href="https://github.com/Moviri/recline/wiki/FilteredModel"><i class="icon-question-sign"></i></a></li>
+                <li><a value="#colorschema" onclick="__loadPanels($(this), 'colorschema', 'colorschema', 'xcharts', 'colorschema')">ColorSchemas</a><a target="_blank" href="https://github.com/Moviri/recline/wiki/Colors"><i class="icon-question-sign"></i></a></li>
+        	</ul>
+		</li>
+		
+        <li><input type="checkbox" id="item-5" checked="checked"/><label for="item-5">ACTIONS<a target="_blank" href="https://github.com/Moviri/recline/wiki/Actions"><i class="icon-question-sign"></i></a></label>
+            <ul>
+                <li><input type="checkbox" id="item-5-1" /><label for="item-5-1">Filter Actions</label>
+	                <ul>
+	                    <li><a value="#action_filter_onclick" onclick="__loadPanels($(this), 'action_filter_onclick', 'action_filter_onclick', 'action_filter_onclick', 'action_filter_onclick')">onClick</a></li>
+	                    <li><a value="#action_filter_onhover" onclick="__loadPanels($(this), 'NVD3chart_grid', 'action_filter_onhover', 'table-centered', 'action_filter_onhover')">onHover</a></li>
+	                </ul>
+	            </li>
+                <li><input type="checkbox" id="item-5-0" /><label for="item-5-0">Selection Actions</label>
+	                <ul>
+	                    <li><a value="#action_selection_onclick" onclick="__loadPanels($(this), 'action_selection_onclick', 'action_selection_onclick', 'table-centered', 'action_selection_onclick')">onClick</a></li>
+	                    <li><a value="#action_selection_onhover" onclick="__loadPanels($(this), 'NVD3chart_grid', 'action_selection_onhover', 'table-centered', 'action_selection_onhover')">onHover</a></li>
+	                </ul>
+	            </li>
+        	</ul>
+		</li>
+
+        <li><input type="checkbox" id="item-2" checked="checked"/><label for="item-2">TABLES</label>
+            <ul>
+                <li><a value="#view_d3table" onclick="__loadPanels($(this), 'gridOnly', 'view_d3table', '', 'view_d3table')">View.D3table</a><a target="_blank" href="https://github.com/Moviri/recline/wiki/View.d3.table"><i class="icon-question-sign"></i></a></li>
+                <li><input type="checkbox" id="item-2-0" /><label for="item-2-0">View.SlickGrid<a target="_blank" href="https://github.com/Moviri/recline/wiki/View.SlickGrid"><i class="icon-question-sign"></i></a></label>
+	                <ul>
+	                    <li><a value="#slickgrid_basic" onclick="__loadPanels($(this), 'gridOnly', 'slickgrid_basic', 'table-centered', 'slickgrid_basic')">Basic Usage</a></li>
+	                    <li><a value="#slickgrid_column_options" onclick="__loadPanels($(this), 'gridOnly', 'slickgrid_column_options', 'slickgrid_column_options', 'slickgrid_column_options')">Setting Column options</a></li>
+	                    <li><a value="#slickgrid_inner_chart" onclick="__loadPanels($(this), 'gridOnly', 'slickgrid_inner_chart', 'slickgrid_inner_chart', 'slickgrid_inner_chart')">Using inner chart</a></li>
+	                    <li><a value="#slickgrid_custom_formatters" onclick="__loadPanels($(this), 'gridOnly', 'slickgrid_custom_formatters', 'slickgrid_custom_formatters', 'slickgrid_custom_formatters')">Custom formatters</a></li>
+	                </ul>
+	            </li>
+        	</ul>
+		</li>
+		
+        <li><input type="checkbox" id="item-3" checked="checked"/><label for="item-3">CHARTS</label>
+            <ul>
+            	<li><a value="#seriesByName" onclick="__loadPanels($(this), 'xcharts_grid', 'seriesByName', 'xcharts_grid', 'seriesByName')">Using series by name</a></li>
+            	<li><a value="#seriesByValue" onclick="__loadPanels($(this), 'xcharts_grid', 'seriesByValue', 'xcharts_grid', 'seriesByValue')">Using series by value</a></li>
+            	<li><a value="#seriesByPartition" onclick="__loadPanels($(this), 'NVD3chart_grid', 'seriesByPartition', '', 'seriesByPartition')">Using series by partition</a></li>
+                <li><input type="checkbox" id="item-3-0" /><label for="item-3-0">Timelines with xCharts<a target="_blank" href="https://github.com/Moviri/recline/wiki/View.xCharts"><i class="icon-question-sign"></i></a></label>
+	                <ul>
+	                    <li><a value="#xcharts_colorschema" onclick="__loadPanels($(this), 'xcharts_legend_grid', 'xcharts_colorschema', 'xcharts', 'xcharts_colorschema')">Color series</a></li>
+	                    <li><a value="#xcharts_customtooltips" onclick="__loadPanels($(this), 'xcharts_legend_grid', 'xcharts_customtooltips', 'xcharts', 'xcharts_customtooltips')">Custom Tooltips</a></li>
+	                    <li><a value="#xcharts_annotations" onclick="__loadPanels($(this), 'xcharts_legend_grid', 'xcharts_annotations', 'xcharts', 'xcharts_annotations')">Annotations</a></li>
+	                </ul>
+	            </li>
+                <li><input type="checkbox" id="item-3-1" /><label for="item-3-1">NVD3 charts<a target="_blank" href="https://github.com/Moviri/recline/wiki/View.NVD3Graph"><i class="icon-question-sign"></i></a></label>
+	                <ul>
+	                    <li><a value="#NVD3barchart" onclick="__loadPanels($(this), 'NVD3chart', 'NVD3barchart', '', 'NVD3barchart')">Barchart</a></li>
+	                    <li><a value="#NVD3horizbarchart" onclick="__loadPanels($(this), 'NVD3chart', 'NVD3horizbarchart', '', 'NVD3horizbarchart')">Horizontal Barchart</a></li>
+	                    <li><a value="#NVD3piechart" onclick="__loadPanels($(this), 'NVD3chart', 'NVD3piechart', '', 'NVD3piechart')">Pie Chart</a></li>
+	                    <li><a value="#NVD3customtooltips" onclick="__loadPanels($(this), 'NVD3chart', 'NVD3customtooltips', '', 'NVD3customtooltips')">Custom Tooltips</a></li>
+	                </ul>
+	            </li>
+                <li><a value="#view_d3bullet" onclick="__loadPanels($(this), 'd3bullet_grid', 'view_d3bullet', 'd3bullet_grid', 'view_d3bullet')">View.D3Bullet</a><a target="_blank" href="https://github.com/Moviri/recline/wiki/View.d3.bullet"><i class="icon-question-sign"></i></a></li>
+                <li><a value="#view_d3bubble" onclick="__loadPanels($(this), 'bubble2', 'view_d3bubble', '', 'view_d3bubble')">View.D3Bubble</a></li>
+                <li><a value="#view_d3gravitybubble" onclick="__loadPanels($(this), 'bubble', 'view_d3gravitybubble', '', 'view_d3gravitybubble')">View.D3GravityBubble</a></li>
+                <li><a value="#view_d3sparkline" onclick="__loadPanels($(this), 'view_d3sparkline', 'view_d3sparkline', 'table-centered', 'view_d3sparkline')">View.D3Sparkline</a><a target="_blank" href="https://github.com/Moviri/recline/wiki/View.d3.sparkline"><i class="icon-question-sign"></i></a></li>
+                <li><a value="#view_rickshaw" onclick="__loadPanels($(this), 'rickshaw', 'view_rickshaw', 'table-centered', 'view_rickshaw')">View.Rickshaw</a><a target="_blank" href="https://github.com/Moviri/recline/wiki/View.RickShaw"><i class="icon-question-sign"></i></a></li>
+                <li><a value="#view_d3cloud" onclick="__loadPanels($(this), 'cloud', 'view_d3cloud', '', 'view_d3cloud')">View.D3Cloud</a></li>
+                <li><a value="#view_d3chord" onclick="__loadPanels($(this), 'bubble2', 'view_d3chord', '', 'view_d3chord')">View.D3Chord</a></li>
+        	</ul>
+		</li>
+		
+        <li><input type="checkbox" id="item-1" checked="checked"/><label for="item-1">CONTROLS</label>
+            <ul>
+                <li><a value="#view_datepicker" onclick="__loadPanels($(this), 'xcharts_datepicker', 'view_datepicker', 'xcharts', 'view_datepicker')">View.DatePicker</a><a target="_blank" href="https://github.com/Moviri/recline/wiki/View.DatePicker"><i class="icon-question-sign"></i></a></li>
+                <li><input type="checkbox" id="item-1-0" /><label for="item-1-0">View.GenericFilter<a target="_blank" href="https://github.com/Moviri/recline/wiki/View.GenericFilter"><i class="icon-question-sign"></i></a></label>
+	                <ul>
+	                    <li><a value="#genericfilter_range" onclick="__loadPanels($(this), 'genericfilter', 'genericfilter_range', 'genericfilter', 'genericfilter_range')">range</a></li>
+	                    <li><a value="#genericfilter_range_calendar" onclick="__loadPanels($(this), 'genericfilter_date', 'genericfilter_range_calendar', 'genericfilter_date', 'genericfilter_range_calendar')">range_calendar</a></li>
+	                    <li><a value="#genericfilter_month_week_calendar" onclick="__loadPanels($(this), 'genericfilter_month_week_calendar', 'genericfilter_month_week_calendar', 'genericfilter_month_week_calendar', 'genericfilter_month_week_calendar')">month_week_calendar</a></li>
+	                    <li><a value="#genericfilter_dropdown" onclick="__loadPanels($(this), 'genericfilter2', 'genericfilter_dropdown', 'genericfilter2', 'genericfilter_dropdown')">dropdown</a></li>
+	                    <li><a value="#genericfilter_dropdown_styled" onclick="__loadPanels($(this), 'genericfilter2', 'genericfilter_dropdown_styled', 'genericfilter2', 'genericfilter_dropdown_styled')">dropdown_styled</a></li>
+	                    <li><a value="#genericfilter_dropdowndaterange" onclick="__loadPanels($(this), 'genericfilter_date', 'genericfilter_dropdowndaterange', 'genericfilter_date', 'genericfilter_dropdowndaterange')">dropdown_date_range</a></li>
+	                    <li><a value="#genericfilter_listbox" onclick="__loadPanels($(this), 'genericfilter2', 'genericfilter_listbox', 'genericfilter2', 'genericfilter_listbox')">listbox</a></li>
+	                    <li><a value="#genericfilter_listbox_styled" onclick="__loadPanels($(this), 'genericfilter2', 'genericfilter_listbox_styled', 'genericfilter2', 'genericfilter_listbox_styled')">listbox_styled</a></li>
+	                    <li><a value="#genericfilter_list" onclick="__loadPanels($(this), 'genericfilter2', 'genericfilter_list', 'genericfilter2', 'genericfilter_list')">list</a></li>
+	                    <li><a value="#genericfilter_legend" onclick="__loadPanels($(this), 'genericfilter_legend', 'genericfilter_legend', 'genericfilter_legend', 'genericfilter_legend')">legend</a></li>
+	                    <li><a value="#genericfilter_slider" onclick="__loadPanels($(this), 'genericfilter_slider', 'genericfilter_slider', 'genericfilter_slider', 'genericfilter_slider')">slider</a></li>
+	                    <li><a value="#genericfilter_slider_styled" onclick="__loadPanels($(this), 'genericfilter_slider', 'genericfilter_slider_styled', 'genericfilter_slider', 'genericfilter_slider_styled')">slider_styled</a></li>
+	                    <li><a value="#genericfilter_range_slider"  onclick="__loadPanels($(this), 'genericfilter', 'genericfilter_range_slider', 'genericfilter', 'genericfilter_range_slider')">range_slider</a></li>
+	                    <li><a value="#genericfilter_range_slider_styled" onclick="__loadPanels($(this), 'genericfilter', 'genericfilter_range_slider_styled', 'genericfilter', 'genericfilter_range_slider_styled')">range_slider_styled</a></li>
+	                    <li><a value="#genericfilter_multibutton" onclick="__loadPanels($(this), 'genericfilter_buttonsets', 'genericfilter_multibutton', 'genericfilter_buttonsets', 'genericfilter_multibutton')">multibutton</a></li>
+	                    <li><a value="#genericfilter_radiobuttons" onclick="__loadPanels($(this), 'genericfilter_buttonsets', 'genericfilter_radiobuttons', 'genericfilter_buttonsets', 'genericfilter_radiobuttons')">radiobuttons</a></li>
+	                    <li><a value="#genericfilter_hierarchic_radiobuttons" onclick="__loadPanels($(this), 'genericfilter_buttonsets', 'genericfilter_hierarchic_radiobuttons', 'genericfilter_buttonsets2', 'genericfilter_hierarchic_radiobuttons')">hierarchic_radiobuttons</a></li>
+	                    <li><a value="#genericfilter_toolbar_horiz" onclick="__loadPanels($(this), 'genericfilter_buttonsets', 'genericfilter_toolbar_horiz', 'genericfilter_toolbar_horiz', 'genericfilter_toolbar_horiz')">Multi-Control toolbar (horizontal)</a></li>
+	                    <li><a value="#genericfilter_toolbar_vert" onclick="__loadPanels($(this), 'genericfilter_toolbar_vert', 'genericfilter_toolbar_vert', 'genericfilter_toolbar_vert', 'genericfilter_toolbar_vert')">Multi-Control toolbar (vertical)</a></li>
+	                    <li><a value="#"></a></li>
+	                </ul>
+	            </li>
+                <li><a value="#view_multibutton_dropdown_filter" onclick="__loadPanels($(this), 'view_multibutton_dropdown_filter', 'view_multibutton_dropdown_filter', 'genericfilter_buttonsets2', 'view_multibutton_dropdown_filter')">View.MultiButtonDropdownFilter</a><a target="_blank" href="https://github.com/Moviri/recline/wiki/View.MultiButtonDropdownFilter"><i class="icon-question-sign"></i></a></li>
+                <li><a value="#view_indicator" onclick="__loadPanels($(this), 'view_indicator', 'view_indicator', 'view_indicator', 'view_indicator')">View.Indicator</a><a target="_blank" href="https://github.com/Moviri/recline/wiki/View.Indicator"><i class="icon-question-sign"></i></a></li>
+                <li><input type="checkbox" id="item-1-1" /><label for="item-1-1">View.Composed<a target="_blank" href="https://github.com/Moviri/recline/wiki/View.Composed"><i class="icon-question-sign"></i></a></label>
+	                <ul>
+	                    <li><a value="#view_composed_indicators" onclick="__loadPanels($(this), 'view_composed', 'view_composed_indicators', 'view_composed', 'view_composed_indicators')">Indicators</a></li>
+	                    <li><a value="#view_composed_d3bullet" onclick="__loadPanels($(this), 'view_composed', 'view_composed_d3bullet', 'view_composed_d3bullet', 'view_composed_d3bullet')">D3Bullets</a></li>
+	                    <li><a value="#view_composed_sparklines" onclick="__loadPanels($(this), 'view_composed', 'view_composed_sparklines', 'view_composed', 'view_composed_sparklines')">Sparklines</a></li>
+	                </ul>
+	            </li>                
+                
+                <li><a value="#view_calendarview" onclick="__loadPanels($(this), 'gridOnly', 'view_calendarview', '', 'view_calendarview')">View.CalendarView</a><a target="_blank" href="https://github.com/Moviri/recline/wiki/View.CalendarView"><i class="icon-question-sign"></i></a></li>
+                <li><a value="#view_cooccurrence_matrix" onclick="__loadPanels($(this), 'view_cooccurrence_matrix', 'view_cooccurrence_matrix', 'view_cooccurrence_matrix', 'view_cooccurrence_matrix')">View.D3.Co-occurrenceMatrix</a><a target="_blank" href="https://github.com/Moviri/recline/wiki/View.D3.Co-occurrenceMatrix"><i class="icon-question-sign"></i></a></li>
+        	</ul>
+		</li>
+		
+        <li><input type="checkbox" id="item-4" checked="checked"/><label for="item-4">MAPS</label>
+            <ul>
+                <li><a value="#view_d3choropleth_map" onclick="__loadPanels($(this), 'maps', 'view_d3choropleth_map', '', 'view_d3choropleth_map')">View.d3.ChoroplethMap</a><a target="_blank" href="https://github.com/Moviri/recline/wiki/View.d3.ChoroplethMap"><i class="icon-question-sign"></i></a></li>
+                <li><input type="checkbox" id="item-4-0" /><label for="item-4-0">View.GoogleMaps<a target="_blank" href="https://github.com/Moviri/recline/wiki/View.GoogleMaps"><i class="icon-question-sign"></i></a></label>
+	                <ul>
+	                    <li><a value="#view_googlemaps_basic" onclick="__loadPanels($(this), 'maps', 'view_googlemaps_basic', 'maps', 'view_googlemaps_basic')">Basic usage</a></li>
+	                    <li><a value="#view_googlemaps_clickevents" onclick="__loadPanels($(this), 'maps', 'view_googlemaps_clickevents', 'maps', 'view_googlemaps_clickevents')">Assigning click events</a></li>
+	                    <li><a value="#view_googlemaps_clusters" onclick="__loadPanels($(this), 'maps', 'view_googlemaps_clusters', 'maps', 'view_googlemaps_clusters')">Clustering markers</a></li>
+	                </ul>
+	            </li>
+        	</ul>
+		</li>
+        <li><input type="checkbox" id="item-6" checked="checked"/><label for="item-6">MISC</label>
+            <ul>
+                <li><a value="#loader"  onclick="__loadPanels($(this), 'loader', 'loader', 'table-centered', 'loader')">AJAX Loader Panel</a></li>
+        	</ul>
+		</li>
+		
+    </ul>
+</div>
+				</div>
+				<div class="w80 right h100" >
+					<div id="__leftPanel" class="w40 left h100" >
+						<div id="__htmlPanel" class="h30 greyborder">
+							<div class="w100 h100">
+								<span class="label label-info dimmed" style="position:relative;top:0px;right:0px">HTML</span>
+								<button type="button" class="btn btn-info btn-mini dimmed" onclick="__minimizePanel('__htmlPanel', '__jsPanel')" style="position:relative;top:0px;left:10px"><i class="icon-chevron-up icon-white"></i></button>
+								<button type="button" class="btn btn-info btn-mini dimmed" onclick="__maximizePanel('__htmlPanel', '__jsPanel')" style="position:relative;top:0px;left:5px"><i class="icon-chevron-down icon-white"></i></button>
+								<button type="button" class="btn btn-info btn-mini dimmed" onclick="__reducePanelsWidth('__leftPanel', '__rightPanel')" style="position:relative;top:0px;left:0px"><i class="icon-chevron-left icon-white"></i></button>
+								<textarea id="__areaHtml" class="w100 h100"></textarea>
+							</div>
+						</div>
+						<div id="__horizLeftDivider" class="w100 horiz-divider"></div>
+						<div id="__jsPanel" class="h70 greyborder">
+							<div class="w100  h100">
+								<span class="label label-info dimmed" style="position:relative;top:0px;left:0px">Javascript</span>
+								<button type="button" class="btn btn-info btn-mini dimmed" onclick="__minimizePanel('__jsPanel', '__htmlPanel')" style="position:relative;top:0px;left:10px"><i class="icon-chevron-down icon-white"></i></button>
+								<button type="button" class="btn btn-info btn-mini dimmed" onclick="__maximizePanel('__jsPanel', '__htmlPanel')" style="position:relative;top:0px;left:5px"><i class="icon-chevron-up icon-white"></i></button>
+								<button type="button" class="btn btn-info btn-mini dimmed" onclick="__reducePanelsWidth('__leftPanel', '__rightPanel')" style="position:relative;top:0px;left:0px"><i class="icon-chevron-left icon-white"></i></button>
+								<textarea id="__areaJS" class="w100 h100"></textarea>
+							</div>
+						</div>
+					</div>
+					<div id="__verticalDivider" class="h100 left vertic-divider"></div>
+					<div id="__rightPanel" class="w58 right h100">
+						<div id="__cssPanel" class="h20 greyborder">
+							<div class="w100  h100">
+								<span class="label label-info dimmed" style="position:relative;top:0px;right:0px">CSS</span>
+								<button type="button" class="btn btn-info btn-mini dimmed" onclick="__minimizePanel('__cssPanel', '__resultPanel')" style="position:relative;top:0px;left:10px"><i class="icon-chevron-up icon-white"></i></button>
+								<button type="button" class="btn btn-info btn-mini dimmed" onclick="__maximizePanel('__cssPanel', '__resultPanel')" style="position:relative;top:0px;left:5px"><i class="icon-chevron-down icon-white"></i></button>
+								<button type="button" class="btn btn-info btn-mini dimmed" onclick="__reducePanelsWidth('__rightPanel', '__leftPanel')" style="position:relative;top:0px;left:0px"><i class="icon-chevron-right icon-white"></i></button>
+								<textarea id="__areaCSS" class="w100 h100"></textarea>
+							</div>
+						</div>
+						<div id="__horizRightDivider" class="w100 horiz-divider"></div>
+						<div id="__resultPanel" class="h80 greyborder">
+							<button type="button" class="btn btn-primary btn-mini" onclick="__runCode()" style="position:relative;top:0px;right:0px">RUN</button>
+							<button type="button" class="btn btn-info btn-mini dimmed" onclick="__minimizePanel('__resultPanel', '__cssPanel')" style="position:relative;top:0px;left:10px"><i class="icon-chevron-down icon-white"></i></button>
+							<button type="button" class="btn btn-info btn-mini dimmed" onclick="__maximizePanel('__resultPanel', '__cssPanel')" style="position:relative;top:0px;left:5px"><i class="icon-chevron-up icon-white"></i></button>
+							<button type="button" class="btn btn-info btn-mini dimmed" onclick="__reducePanelsWidth('__rightPanel', '__leftPanel')" style="position:relative;top:0px;left:0px"><i class="icon-chevron-right icon-white"></i></button>
+							<a href="#__helpModalDialog" role="button" class="btn btn-info btn-mini dimmed" data-toggle="modal"><i class="icon-question-sign icon-white"></i></a>
+							<div id="__div_result" class="w100 h100"></div>
+						</div>
+					</div>
+				</div>
+			</form>
+		</div>
+		
+		<div id="__helpModalDialog" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="__myModalLabel" aria-hidden="true">
+		    <div class="modal-header">
+			    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+			    <h3 id="__myModalLabel">Tutorial Description</h3>
+		    </div>
+		    <div class="modal-body" id="__helpDialogContent"></div>
+		    <div class="modal-footer">
+		    	<button class="btn" data-dismiss="modal" aria-hidden="true">Close</button>
+		    </div>
+	    </div>
+		
+		<script type="text/javascript">
+		
+		function __getQueryVariable(variable) {
+		    var query = window.location.search.substring(1);
+		    var vars = query.split('&');
+		    for (var i = 0; i < vars.length; i++) {
+		        var pair = vars[i].split('=');
+		        if (decodeURIComponent(pair[0]) == variable) {
+		            return decodeURIComponent(pair[1]);
+		        }
+		    }
+		    return null;
+		}
+
+		var __scriptElem = null;
+		var __cssElem = null;
+
+		var __foldFuncJS_CSS = CodeMirror.newFoldFunction(CodeMirror.braceRangeFinder);
+		var __foldFuncHtml = CodeMirror.newFoldFunction(CodeMirror.tagRangeFinder);
+
+		var __jsCodeMirror = CodeMirror.fromTextArea(document.getElementById('__areaJS'), {
+		    lineNumbers: true,
+		    mode: "javascript",
+		    gutters: ["CodeMirror-lint-markers"],
+		    lintWith: CodeMirror.javascriptValidator,
+// 			indentWithTabs: true,
+// 			smartIndent: true,
+// 			matchBrackets : true,
+// 			autoCloseBrackets: true,
+// 			autofocus: true,
+// 			lineWrapping: true,
+		});
+		__jsCodeMirror.on("gutterClick", __foldFuncJS_CSS);
+		
+		var __htmlCodeMirror = CodeMirror.fromTextArea(document.getElementById('__areaHtml'), {
+			mode: 'text/html',
+			indentWithTabs: true,
+			smartIndent: true,
+			lineNumbers: true,
+			matchBrackets : true,
+			autoCloseTags: true,
+			autofocus: true,
+			lineWrapping: false
+		});
+		__htmlCodeMirror.on("gutterClick", __foldFuncHtml);
+
+		var __cssCodeMirror = CodeMirror.fromTextArea(document.getElementById('__areaCSS'), {
+			mode: 'css',
+			indentWithTabs: true,
+			smartIndent: true,
+			lineNumbers: true,
+			matchBrackets : true,
+			autoCloseBrackets: true,
+			autofocus: true,
+			lineWrapping: false
+		});
+		__cssCodeMirror.on("gutterClick", __foldFuncJS_CSS);
+		
+		function __assignDividerEvents($elem, $panel1, $panel2, horiz) {
+			$elem.data('dragMode', 0)
+			//console.log($elem[0].id+ " DRAGMODE = "+$elem.data('dragMode'))
+			
+			$elem.on('mousedown', function(event) {
+				$elem.data('dragMode', 1)
+				//console.log($elem[0].id+ " DRAGMODE = "+$elem.data('dragMode'))
+			});
+
+			$(document.body).on('mouseup', function(event) {
+				$elem.data('dragMode', 0)
+				//console.log($elem[0].id+ " DRAGMODE = "+$elem.data('dragMode'))
+			});
+
+			$(document.body).on('mousemove', function(event) {
+				if ($elem.data('dragMode') == 1)
+				{
+					//console.dir(event.originalEvent)
+					event.stopPropagation();
+					
+					function fixDelta(delta) {
+						if (delta > 0 && delta > 20)
+							delta = 20
+						else if (delta < 0 && delta < -20)
+							delta = -20;
+						
+						return delta;
+					}
+					if (horiz)
+					{
+						var deltaY = fixDelta(event.originalEvent.mozMovementY || event.originalEvent.webkitMovementY || event.originalEvent.offsetY - $panel1.height())
+						var topH = $panel1.height()+deltaY
+						var bottomH = $panel2.height()-deltaY
+						if (topH > 50 && bottomH > 50)
+						{
+							$panel1.height(topH)
+							$panel2.height(bottomH)
+						}
+					}
+					else
+					{
+						var deltaX = fixDelta(event.originalEvent.mozMovementX || event.originalEvent.webkitMovementX || event.originalEvent.offsetX - $panel1.width())
+						var leftW = $panel1.width()+deltaX
+						var rightW = $panel2.width()-deltaX
+						if (leftW > 50 && rightW > 50)
+						{
+							$panel1.width(leftW)
+							$panel2.width(rightW)
+						}
+					}
+					
+				}
+			});
+		}
+		
+		__assignDividerEvents($('#__horizLeftDivider'), $('#__htmlPanel'), $('#__jsPanel'), true)
+		__assignDividerEvents($('#__horizRightDivider'), $('#__cssPanel'), $('#__resultPanel'), true)
+		__assignDividerEvents($('#__verticalDivider'), $('#__leftPanel'), $('#__rightPanel'), false)
+		
+ 		var __queryVariable = __getQueryVariable('q');
+ 		if (__queryVariable)
+ 		{
+ 			var $treeNode = $('#__tutorial_tree__ a[value$="#'+__queryVariable+'"]')
+ 			if ($treeNode.length)
+ 				$treeNode.click();
+ 		}
+		else 
+	__loadPanels(null, "demo", "demo", "demo", "demo")
+
+		function __runCode() {
+			var success = JSHINT(__jsCodeMirror.getValue(), {asi:true, smarttabs: true, laxbreak: true, laxcomma: true, multistr: true});
+			if (!success)
+			{
+				//console.dir(JSHINT.errors);
+				var errMsg = "";
+				_.each(JSHINT.errors, function(err) {
+					if (err.code != "W070")
+						errMsg += "Error at line "+err.line+" col "+err.character+"\n"
+							+ "Offending code is:\n"+err.evidence+"\n"
+							+ "Reason is: "+err.reason+"\n"
+							+ "_____________________________________\n"
+				})
+				if (errMsg.length)
+				{
+					alert(errMsg);
+					return;			
+				}
+			}
+			
+			if (__scriptElem)
+			{
+				try
+				{
+					document.body.removeChild(__scriptElem)
+					//console.log($("#__myRunningCode"))
+					//__scriptElem = undefined
+				}
+				catch(__err) {}
+			}
+
+			$("#__div_result").empty()
+			$("#__div_result").append("<style>"+__cssCodeMirror.getValue()+"</style> "+__htmlCodeMirror.getValue())
+				
+			__scriptElem = document.createElement('script');
+			__scriptElem.id = "__myRunningCode"
+			__scriptElem.async = "async"
+			__scriptElem.defer = "defer"
+//  			try {
+//  				eval(__jsCodeMirror.getValue())	
+//  			}
+//  			catch(__err1)
+//  			{
+//  				alert(__err1)
+//  				return
+//  			}
+			
+			__scriptElem.textContent = __jsCodeMirror.getValue()
+			document.body.appendChild(__scriptElem);
+		}
+		
+		function __IO(path, filename) {
+			var ext;
+			switch(path) {
+				case "css" : ext = ".css";break;
+				case "help" : ext = ".txt";break;
+				case "html" : ext = ".html";break;
+				default : ext = ".js";
+			}
+			var pathname = "../code/"+path+"/"+filename+ext
+			var X = !window.XMLHttpRequest ? new ActiveXObject("Microsoft.XMLHTTP") : new XMLHttpRequest;
+			X.open("GET", pathname, false);
+			X.send("");
+			
+			return X.responseText;
+		}
+		
+		function __enforceCodeFolding(codeMirrorObj, foldFunc) {
+			var totLines = codeMirrorObj.lineCount();
+			for (var r = 0; r < totLines; r++)
+			{
+				var lineCode = codeMirrorObj.getLine(r);
+				if (lineCode.indexOf("/*FOLD_ME*/") > 0)
+				{
+					codeMirrorObj.setLine(r, lineCode.replace("/*FOLD_ME*/", ""))
+					foldFunc(codeMirrorObj, r);
+				}
+			}
+		}
+		
+		function __loadPanels($this, htmlCodename, jsCodename, cssCodename, helpCodename) {
+			$("#__tutorial_tree__ a.selected").removeClass("selected") // deselect all previous tree nodes
+			if ($this)
+			{
+				$this.addClass("selected") // select this tree node
+				var $parentInput = $this.parent().parent().prev().prev("input");
+				if ($parentInput)
+					$parentInput.attr("checked", "checked") // also open parent folder
+			}
+			if (htmlCodename)
+			{
+				__htmlCodeMirror.setValue(__IO("html", htmlCodename))
+				__enforceCodeFolding(__htmlCodeMirror, __foldFuncHtml)
+			}
+			else __htmlCodeMirror.setValue("")
+			
+			if (jsCodename)
+			{
+				__jsCodeMirror.setValue(__IO("js", jsCodename))	
+				__enforceCodeFolding(__jsCodeMirror, __foldFuncJS_CSS)
+			}
+			else __jsCodeMirror.setValue("")
+
+			if (cssCodename)
+				__cssCodeMirror.setValue(__IO("css", cssCodename))
+			else __cssCodeMirror.setValue("")
+			
+			if (helpCodename)
+				$("#__helpDialogContent").html(__IO("help", helpCodename))
+			else $("#__helpDialogContent").html("")
+			
+			$("#__div_result").empty()
+			
+			__runCode();
+		}
+		
+		var __MIN_HEIGHT = 80;
+		var __MIN_WIDTH = 200;
+		
+		function __minimizePanel(panel1, panel2) {
+			$panel1 = $("#"+panel1)
+			$panel2 = $("#"+panel2)
+			var oldH1 = $panel1.height()
+			var oldH2 = $panel2.height()
+			
+			if (oldH1 > __MIN_HEIGHT)
+			{
+				var delta = __MIN_HEIGHT - oldH1
+				$panel1.height(oldH1+delta)
+				$panel2.height(oldH2-delta)
+			}
+		}
+
+		function __maximizePanel(panel1, panel2) {
+			$panel1 = $("#"+panel1)
+			$panel2 = $("#"+panel2)
+			var oldH1 = $panel1.height()
+			var oldH2 = $panel2.height()
+			
+			if (oldH2 > __MIN_HEIGHT)
+			{
+				var delta = __MIN_HEIGHT - oldH2
+				$panel1.height(oldH1-delta)
+				$panel2.height(oldH2+delta)
+			}
+		}
+		
+		function __reducePanelsWidth(panel1, panel2) {
+			$panel1 = $("#"+panel1)
+			$panel2 = $("#"+panel2)
+			var oldW1 = $panel1.width()
+			var oldW2 = $panel2.width()
+			if (oldW1 > __MIN_WIDTH)
+			{
+				var delta = __MIN_WIDTH - oldW1
+				$panel1.width(oldW1+delta)
+				$panel2.width(oldW2-delta)
+			}
+		}
+		
+// 	  _onRunSandboxed: function(e) {
+// 		    var self = this;
+// 		    // save the script ...
+// 		    this.script.set({content: this.editor.getValue()});
+// 		    var worker = new Worker('src/views/worker-runscript.js');
+// 		    worker.addEventListener('message',
+// 		        function(e) { self._handleWorkerCommunication(e); },
+// 		        false);
+// 		    var codeToRun = this.editor.getValue();
+// 		    worker.postMessage({
+// 		      src: codeToRun,
+// 		      dataset: {
+// 		        records: this.dataset._store.records,
+// 		        fields: this.dataset._store.fields
+// 		      }
+// 		    });
+// 	  },
+
+// 	  _handleWorkerCommunication: function(e) {
+// 	    var self = this;
+// 	    if (e.data.msg == 'print') {
+// 	      this._writeToOutput(e.data.data);
+// 	    } else if (e.data.msg == 'error') {
+// 	      this._writeToOutput(e.data.data, 'error');
+// 	    } else if (e.data.msg == 'saveDataset') {
+// 	      this.dataset._store.records = e.data.records;
+// 	      this.dataset._store.fields = e.data.fields;
+// 	      this.dataset.fields.reset(this.dataset._store.fields);
+// 	      this.dataset.query({size: this.dataset._store.records.length});
+// 	      this.model.saveDatasetsToGist();
+// 	    }
+// 	  },
+
+// 	  _writeToOutput: function(msg, type) {
+// 	    // make it a bit safer ...
+// 	    msg = msg.replace('<', '&lt;').replace('>', '&gt;');
+// 	    if (type === 'error') {
+// 	      msg = '<span class="error"><strong>Error: </strong>' + msg + '</span>';
+// 	    }
+// 	    msg += '<br />';
+// 	    this.$output.append(msg);
+// 	  }		
+
+		</script>
+
+
+
+</body>
+</html>

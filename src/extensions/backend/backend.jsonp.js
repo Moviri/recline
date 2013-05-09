@@ -6,7 +6,7 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
     my.__type__ = 'Jsonp';
     // Timeout for request (after this time if no response we error)
     // Needed because use JSONP so do not receive e.g. 500 errors
-    my.timeout = 30000;
+    my.timeout = 60000;
 
     // ## load
     //
@@ -29,84 +29,13 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
 
     my.query = function (queryObj, dataset) {
 
-        //var tmpQueryStateInMemory = new recline.Model.Query();
-        //var tmpQueryStateOnBackend = new recline.Model.Query();
 
-
-        //if (dataset.inMemoryQueryFields == null && !queryObj.facets && !dataset.useMemoryStore) {
-        //    dataset.useMemoryStore = [];
-        //} else
-        //    self.useMemoryStore = true;
-
-        /*var filters = queryObj.filters;
-         for (var i = 0; i < filters.length; i++) {
-         // verify if filter is specified in inmemoryfields
-
-         if (_.indexOf(dataset.inMemoryQueryFields, filters[i].field) == -1) {
-         //console.log("filtering " + filters[i].field + " on backend");
-         tmpQueryStateOnBackend.addFilter(filters[i]);
-         }
-         else {
-         //console.log("filtering " + filters[i].field + " on memory");
-         tmpQueryStateInMemory.addFilter(filters[i]);
-         }
-         }
-         tmpQueryStateOnBackend.set({sort: queryObj.sort});
-         tmpQueryStateInMemory.set({sort: queryObj.sort});
-
-         var changedOnBackend = false;
-         var changedOnMemory = false;
-         var changedFacets = false;
-
-         // verify if filters on backend are changed since last query
-         if (self.firstFetchExecuted == null ||
-         !_.isEqual(self.queryStateOnBackend.attributes.filters, tmpQueryStateOnBackend.attributes.filters) ||
-         !_.isEqual(self.queryStateOnBackend.attributes.sort, tmpQueryStateOnBackend.attributes.sort)
-         ) {
-         self.queryStateOnBackend = tmpQueryStateOnBackend;
-         changedOnBackend = true;
-         self.firstFetchExecuted = true;
-         }
-
-         // verify if filters on memory are changed since last query
-         if (dataset.inMemoryQueryFields && dataset.inMemoryQueryFields.length > 0
-         && !_.isEqual(self.queryStateInMemory.attributes.filters, tmpQueryStateInMemory.attributes.filters)
-         && !_.isEqual(self.queryStateInMemory.attributes.sort, tmpQueryStateInMemory.attributes.sort)
-         ) {
-         self.queryStateInMemory = tmpQueryStateInMemory;
-         changedOnMemory = true;
-         }
-
-         // verify if facets are changed
-         if (queryObj.facets && !_.isEqual(self.queryStateInMemory.attributes.facets, queryObj.facets)) {
-         self.queryStateInMemory.attributes.facets = queryObj.facets;
-         changedFacets = true;
-         }
-         */
-
-        //if (changedOnBackend) {
         var data = buildRequestFromQuery(queryObj);
-        console.log("Querying backend for ");
+        console.log("Querying jsonp backend [" + (dataset.id ? dataset.id : dataset.url) +"] for ");
         console.log(data);
         return requestJson(dataset, data, queryObj);
-        //}
-
-        /*if (self.inMemoryStore == null) {
-         throw "No memory store available for in memory query, execute initial load"
-         }*/
-
-        /*var dfd = $.Deferred();
-         dfd.resolve(applyInMemoryFilters());
-         return dfd.promise();
-         */
 
     };
-
-    function isArrayEquals(a, b) {
-        return !(a < b || b < a);
-    }
-
-    ;
 
 
     function requestJson(dataset, data, queryObj) {
@@ -124,12 +53,10 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
 
             // verify if returned data is not an error
             if (results.results.length != 1 || results.results[0].status.code != 0) {
-                console.log("Error in fetching data: " + results.results[0].status.message + " Statuscode:[" + results.results[0].status.code + "] AdditionalInfo:["+results.results[0].status.additionalInfo+"]");
-
+                console.log("Error in fetching data: " + results.results[0].status.message + " Statuscode:[" + results.results[0].status.code + "] AdditionalInfo:[" + results.results[0].status.additionalInfo + "]");
                 dfd.reject(results.results[0].status);
-            } else
-                dfd.resolve(_handleJsonResult(results.results[0].result, queryObj));
-
+            } else 
+            	dfd.resolve(_handleJsonResult(results.results[0].result, queryObj));
         })
             .fail(function (arguments) {
                 dfd.reject(arguments);
@@ -137,102 +64,38 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
 
         return dfd.promise();
 
-    }
+    };
 
-    ;
+
+
 
     function _handleJsonResult(data, queryObj) {
-            if (data.data == null) {
-                return {
-                    fields:_handleFieldDescription(data.description),
-                    useMemoryStore:false
-                }
+        if (data.data == null) {
+            return {
+                fields:_handleFieldDescription(data.description),
+                useMemoryStore:false
             }
-            else {
-                var fields = _handleFieldDescription(data.description);
+        }
+        else {
+            var fields = _handleFieldDescription(data.description);
+
+            var facets = [];
+            if(queryObj)
                 var facets = recline.Data.Faceting.computeFacets(data.data, queryObj);
 
-                return {
-                    hits:_normalizeRecords(data.data, fields),
-                    fields: fields,
-                    facets: facets,
-                    useMemoryStore:false,
-                    total: data.data.length
-                }
+            return {
+                hits:_normalizeRecords(data.data, fields),
+                fields:fields,
+                facets:facets,
+                useMemoryStore:false,
+                total:data.data.length
             }
-        /*
-         var self = this;
-         var fields;
-         if (data.description) {
-         fields = _handleFieldDescription(data.description);
-         //my.memoryFields = _handleFieldDescription(data.description);
-         }
+        }
 
-         // Im fetching only record description
-         if (data.data == null) {
-         return prepareReturnedData(data);
-         }
-
-         var result = data;
-         */
-
-        /*if (my.useMemoryStore) {
-         // check if is the first time I use the memory store
-         my.inMemoryStore = new recline.Backend.Memory.Store(result.data, _handleFieldDescription(result.description));
-         my.data = my.inMemoryStore.data;
-         return applyInMemoryFilters();
-
-         }
-         else {
-         // no need to query on memory, return json data
-         return prepareReturnedData(result);
-         } */
-        //return prepareReturnedData(result);
     }
 
     ;
 
-    /*
-     function applyInMemoryFilters() {
-     var self=this;
-     var tmpValue;
-
-     my.inMemoryStore.query(my.queryStateInMemory.toJSON())
-     .done(function (value) {
-     tmpValue = value;
-     tmpValue["fields"] = my.memoryFields;
-     });
-
-
-     return tmpValue;
-     };
-     */
-
-    /*function prepareReturnedData(data) {
-
-        if (data.hits == null)
-
-
-            if (data.data == null) {
-
-                return {
-                    fields:my.memoryFields,
-                    useMemoryStore:false
-                }
-            }
-            else {
-
-                return {
-                    hits:_normalizeRecords(data.data, my.memoryFields),
-                    fields:my.memoryFields,
-                    useMemoryStore:false
-                }
-            }
-
-        return data;
-    }
-
-    ;*/
 
     // convert each record in native format
     // todo verify if could cause performance problems
@@ -241,7 +104,7 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
         _.each(fields, function (f) {
             if (f != "string")
                 _.each(records, function (r) {
-                    r[f.id] = recline.Data.FormattersMODA[f.type](r[f.id]);
+                    r[f.id] = recline.Data.FormattersMoviri[f.type](r[f.id]);
                 })
         });
 
@@ -299,7 +162,7 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
                 var value = filter.field;
                 var start = parse(filter.start);
                 var stop = parse(filter.stop);
-                return (value + " lte " + stop + "," + value + " gte " + start);
+                return (value + " bw " + start + multivsep + stop);
 
             }, // field > start and field < end
             list:function list(filter) {
@@ -307,8 +170,8 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
                 var value = filter.field;
                 var list = filter.list;
 
-                var ret = value + " bw ";
-                for (var i = 0; i < filter.list.length; i++) {
+                var ret = value + " in ";
+                for (var i in list) {
                     if (i > 0)
                         ret = ret + multivsep;
 
@@ -363,8 +226,11 @@ this.recline.Backend.Jsonp = this.recline.Backend.Jsonp || {};
 
 
         var outdata = {};
-        if (data.length > 0)
-            outdata["filters"] = data.toString();
+        if (data.length > 0){
+            // outdata["filters"] = data.toString();
+        	outdata["filtersep"] = "!==!";
+        	outdata["filters"] = data.join('!==!');
+        }
 
         if (res.length > 0)
             outdata["orderby"] = res;

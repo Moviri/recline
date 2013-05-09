@@ -18,9 +18,8 @@ this.recline.Model.FilteredDataset = this.recline.Model.FilteredDataset || {};
 
 
             this.records = new my.RecordList();
-
             this.fields =  this.attributes.dataset.fields;
-
+            this.attributes.deriver = this.attributes.dataset.deriver;
 
             //todo
             //this.facets = new my.FacetList();
@@ -66,7 +65,7 @@ this.recline.Model.FilteredDataset = this.recline.Model.FilteredDataset || {};
             });
 
 
-            console.log("Query on model query [" + JSON.stringify(queryObj) + "]");
+            //console.log("Query on model query [" + JSON.stringify(queryObj) + "]");
 
             var dataset = self.attributes.dataset;
             var numRows = queryObj.size || dataset.recordCount;
@@ -74,7 +73,7 @@ this.recline.Model.FilteredDataset = this.recline.Model.FilteredDataset || {};
 
             //todo use records fitlering in order to inherit all record properties
             //todo perhaps need a new applyfiltersondata
-            var results = recline.Data.Filters.applyFiltersOnData(queryObj.filters, dataset.records.toJSON(), dataset.fields.toJSON());
+            var results = recline.Data.Filters.applyFiltersOnData(queryObj.filters, dataset.toFullJSON(), dataset.fields.toJSON());
 
             _.each(queryObj.sort, function (sortObj) {
                 var fieldName = sortObj.field;
@@ -142,8 +141,20 @@ this.recline.Model.FilteredDataset = this.recline.Model.FilteredDataset || {};
                     field.attributes.colorSchema = d.schema;
             })
 
-        }
+        },
+        toFullJSON:function (resultType) {
+            var self = this;
+            return _.map(self.records.models, function (r) {
+                var res = {};
 
+                _.each(self.fields.models, function (f) {
+                    res[f.id] = r.getFieldValueUnrendered(f);
+                });
+
+                return res;
+
+            });
+        }
 
 
 

@@ -7,16 +7,12 @@ this.recline.Data = this.recline.Data || {};
     my.Formatters = {};
 
     // formatters define how data is rapresented in internal dataset
-    my.FormattersMODA = {
-        integer : function (e) { return parseInt(e); },
-        string  : function (e) {
-            if(e!=null)
-                return e.toString();
-            else
-                return null; },
+    my.FormattersMoviri = {
+        integer : function (e) { return (isFinite(e) ? parseInt(e, 10) : 0);},
+        string  : function (e) { return (e ? e.toString() : null); }, 
         date    : function (e) { return new Date(parseInt(e)).valueOf() },
-        float   : function (e) { return parseFloat(e, 10); },
-        number  : function (e) { return parseFloat(e, 10); }
+        float   : function (e) { return (isFinite(e) ? parseFloat(e, 10) : 0);},
+        number  : function (e) { return (isFinite(e) ? parseFloat(e, 10) : 0);}
     };
 
     
@@ -65,10 +61,49 @@ this.recline.Data = this.recline.Data || {};
 	};
 
     my.Formatters.Renderers = function(val, field, doc)   {
+
         var r = my.Formatters.RenderersImpl[field.attributes.type];
         if(r==null) {
-            throw "No renderers defined for field type " + field.attributes.type;
+            throw "No custom renderers defined for field type " + field.attributes.type;
         }
+
+        return r(val, field, doc);
+    };
+
+    my.Formatters.RenderersConvert_ALL_ = function(val, field, doc)   {
+
+    	var stringFormatterFor_ALL_ = function(val, field, doc) {
+    		//console.log(">>> My formatter: orig value is "+val)
+    		//console.log(doc)
+            var format = field.get('format');
+            if (format === 'markdown') {
+                if (typeof Showdown !== 'undefined') {
+                    var showdown = new Showdown.converter();
+                    out = showdown.makeHtml(val);
+                    return out;
+                } else {
+                    return val;
+                }
+            } else if (format == 'plain') {
+            	if (val)
+            		return val.replace(/\b_ALL_\b/g, "All")
+            	else return val;
+            } else {
+                // as this is the default and default type is string may get things
+                // here that are not actually strings
+                if (val && typeof val === 'string') {
+                    val = val.replace(/(https?:\/\/[^ ]+)/g, '<a href="$1">$1</a>').replace(/\b_ALL_\b/g, "All");
+                }
+                return val
+            }
+        }
+    	
+        var r = my.Formatters.RenderersImpl[field.attributes.type];
+        if(r==null) {
+            throw "No custom renderers defined for field type " + field.attributes.type;
+        }
+        if (field.attributes.type == "string")
+        	r = stringFormatterFor_ALL_;
 
         return r(val, field, doc);
     };
@@ -81,38 +116,91 @@ this.recline.Data = this.recline.Data || {};
         integer: function(val, field, doc) {
             var format = field.get('format');
             if(format === "currency_euro") {
-                return "€ " + val;
-            }
-
-            return val;
+               // return "€ " + val;
+            	return accounting.formatMoney(val, { symbol: "€",  format: "%v %s", decimal : ".", thousand: ",", precision : 0 }); // �4,999.99
+            }           
+            return accounting.formatNumber(val, 0, ",");
         },
         date: function(val, field, doc) {
             var format = field.get('format');
-            if(format == null || format == "date")
-                return val;
-            if(format === "localeTimeString") {
+            if(format == null || format == "date"){
+            	return val;
+            } else if(format === "localeTimeString") {
                 return (new Date(val)).toLocaleString();
+            } else if(format === "timeString"){
+            	return (new Date(val)).toUTCString();
             }
-
-            return new Date(val).toLocaleString();
+            return new Date(val).toUTCString();
         },
         geo_point: function(val, field, doc) {
             return JSON.stringify(val);
         },
         number: function(val, field, doc) {
             var format = field.get('format');
+            
             if (format === 'percentage') {
-                return parseFloat(val.toFixed(2)) + '%';
+                try {
+                    return accounting.formatNumber(val, 2, ",", ".") + '<small class="muted">%</small>';
+                } catch(err) {
+                    return "-";
+                }
+
+                
+            } else if(format === "percentage_0to1") {
+            	 try {
+            		 if (val > 1){ /***** FIXME: REMOVE *****/
+            			 return accounting.formatNumber(val, 2, ",", ".") + '<small class="muted">%</small>';
+            		 } else {
+            			 return accounting.formatNumber(val*100, 2, ",", ".") + '<small class="muted">%</small>';	 
+            		 }
+                     
+                 } catch(err) {
+                     return "-";
+                 }
             } else if(format === "currency_euro") {
-                return "€ " + val;
+                try {
+                    return accounting.formatMoney(val, { symbol: "",  format: "%v %s", decimal : ".", thousand: ",", precision : 0 }) + '<small class="muted">€</small>'; 
+                 
+                     
+            		
+                    // return "€ " + parseFloat(val.toFixed(2));
+                } catch(err) {
+                    return "-";
+                }
+            } else if(format === "currency_euro_decimal") {
+                try {
+                	return accounting.formatMoney(val, { symbol: "",  format: "%v %s", decimal : ".", thousand: ",", precision : 2 }) + '<small class="muted">€</small>';
+                    
+                    // return "€ " + parseFloat(val.toFixed(2));
+                } catch(err) {
+                    return "-";
+                }
+            }   else if (format === 'time') {
+            	var sec_numb    = parseInt(val);
+                var hours   = Math.floor(sec_numb / 3600);
+                var minutes = Math.floor((sec_numb - (hours * 3600)) / 60);
+                var seconds = sec_numb - (hours * 3600) - (minutes * 60);
+                if (hours   < 10) {hours   = "0"+hours;}
+                if (minutes < 10) {minutes = "0"+minutes;}
+                if (seconds < 10) {seconds = "0"+seconds;}
+                var time    = hours+':'+minutes+':'+seconds;
+                return time;
+               
+            }  else if(format === "integer") {
+                try {
+                	return accounting.formatNumber(val, 0, ",", ".");
+                } catch(err) {
+                    return "-";
+                }
             }
 
             try {
-                return parseFloat(val.toFixed(2));
+            	return accounting.formatNumber(val, 2, ",", ".");
+                // return parseFloat(val.toFixed(2));
             }
             catch(err) {
                 //console.log("Error in conferting val " + val + " toFixed");
-                return "N.A.";
+                return "-";
             }
 
 
@@ -129,6 +217,16 @@ this.recline.Data = this.recline.Data || {};
                 }
             } else if (format == 'plain') {
                 return val;
+            } else if (format === 'time') {
+            	var sec_numb    = parseInt(val);
+                var hours   = Math.floor(sec_numb / 3600);
+                var minutes = Math.floor((sec_numb - (hours * 3600)) / 60);
+                var seconds = sec_numb - (hours * 3600) - (minutes * 60);
+                if (hours   < 10) {hours   = "0"+hours;}
+                if (minutes < 10) {minutes = "0"+minutes;}
+                if (seconds < 10) {seconds = "0"+seconds;}
+                var time    = hours+':'+minutes+':'+seconds;
+                return time;
             } else {
                 // as this is the default and default type is string may get things
                 // here that are not actually strings

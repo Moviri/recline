@@ -26,30 +26,43 @@ this.recline.View = this.recline.View || {};
 
         compareType:{
             self:this,
-            percentage:function (kpi, compare, templates, condensed) {
+            percentage:function (kpi, compare, templates, condensed, shapeAfter) {
                 var tmpField = new recline.Model.Field({type:"number", format:"percentage"});
                 var unrenderedValue = kpi / compare * 100;
                 var data = recline.Data.Formatters.Renderers(unrenderedValue, tmpField);
                 var template = templates.templatePercentage;
-                if (condensed == true)
-                	template = templates.templateCondensed;
-                
-                return {data:data, template:template, unrenderedValue: unrenderedValue, percentageMsg: "% of total: "};
+                if (condensed == true){
+                	if (shapeAfter == true){
+                		template = templates.templateCondensedShapeAfter;
+                	} else {
+                		template = templates.templateCondensed;	
+                	}                	
+                }
+                return {data:data, template:template, unrenderedValue: unrenderedValue, percentageMsg: " % of total: "};
             },
-            percentageVariation:function (kpi, compare, templates, condensed) {
+            percentageVariation:function (kpi, compare, templates, condensed, shapeAfter) {
                 var tmpField = new recline.Model.Field({type:"number", format:"percentage"});
                 var unrenderedValue = (kpi-compare) / compare * 100;
                 var data = recline.Data.Formatters.Renderers( unrenderedValue, tmpField);
                 var template = templates.templatePercentage;
-                if (condensed == true)
-                	template = templates.templateCondensed;
-
-                return {data:data, template:template, unrenderedValue: unrenderedValue, percentageMsg: "% variation: "};
+                if (condensed == true){
+                	if (shapeAfter == true){
+                		template = templates.templateCondensedShapeAfter;
+                	} else {
+                		template = templates.templateCondensed;	
+                	} 
+                }	
+                return {data:data, template:template, unrenderedValue: unrenderedValue, percentageMsg: ""};
             },
-            nocompare: function (kpi, compare, templates, condensed){
+            nocompare: function (kpi, compare, templates, condensed, shapeAfter){
                 var template = templates.templateBase;
-                if (condensed == true)
-                	template = templates.templateCondensed;
+                if (condensed == true){
+                	if (shapeAfter == true){
+                		template = templates.templateCondensedShapeAfter;
+                	} else {
+                		template = templates.templateCondensed;	
+                	}                	
+                }
             	
                 return {data:null, template:template, unrenderedValue:null};
             }
@@ -68,29 +81,13 @@ this.recline.View = this.recline.View || {};
                 <tr class="shaperow"> \
 	   				<td><div class="shape">{{{shape}}}</div> \
 	   				<div class="compareshape">{{{compareShape}}}</div> \
-	   				</td><td class="value-cell">{{value}}</td></tr>  \
+	   				</td><td class="value-cell"><div class="kpi_value">{{{value}}}</div></td>\
+	   				<td class="aftershape">{{{afterShape}}}</td> \
+	   			</tr> \
              </table>  \
 		</div>\
       </div> \
     </div> ',
-    templateBaseCondensed_old:
-	'<div class="indicator " style="width:100%;"> \
-	    <div class="panel indicator_{{viewId}}" style="width:100%;"> \
-    		<div id="indicator_{{viewId}}" class="indicator-container well" style="width:85%;"> \
-    			<div style="width:100%;margin-left:5px"> \
-	                <div class="value-cell" style="float:left">{{value}}</div> \
-    				{{#compareShape}} \
-					<div class="compareshape" style="float:right">{{{compareShape}}}</div> \
-    				{{/compareShape}} \
-	   				{{#shape}} \
-	                <div class="shape" style="float:right">{{{shape}}}</div> \
-	   				{{/shape}} \
-				</div> \
-    			<div style="width:100%;padding-top:10px"><hr></div> \
-                <div style="text-align:justify;width:100%;margin-right:8px" class="title">{{{label}}}</div>\
-			</div> \
-	    </div> \
-    </div>',
     templateCondensed:
         '<div class="indicator round-border-dark" > \
     	    <div class="panel indicator_{{viewId}}" > \
@@ -102,27 +99,53 @@ this.recline.View = this.recline.View || {};
 						{{#shape}} \
     	                <div class="shape" style="float:left">{{{shape}}}</div> \
     					{{/shape}} \
-        				<div class="value-cell" style="float:left">{{value}}</div> \
+        				<div class="value-cell" style="float:left"><div class="kpi_value">{{{value}}}</div></div> \
+    					<div class="aftershape" style="float:left">{{{afterShape}}}</div> \
     				</div> \
-                    <div class="title">&nbsp;&nbsp;{{{label}}}</div>\
+    				{{#label}}<div class="title">&nbsp;&nbsp;{{{label}}}</div>{{/label}}\
     			</div> \
     	    </div> \
-        </div>'
-
-,
-   templatePercentage:
-   '<div class="indicator"> \
-      <div class="panel indicator_{{viewId}}"> \
-        <div id="indicator_{{viewId}}"> \
-			 <table class="indicator-table"> \
-                <tr class="titlerow"><td></td><td class="title">{{{label}}}</td></tr>    \
-                <tr class="descriptionrow"><td></td><td class="description"><small>{{description}}</small></td></tr>    \
-                <tr class="shaperow"><td><div class="shape">{{{shape}}}</div><div class="compareshape">{{{compareShape}}}</div></td><td class="value-cell">{{value}}</td></tr>  \
-                <tr class="comparerow"><td></td><td class="comparelabel">{{percentageMsg}}<b>{{compareValue}}</b> (<b>{{compareWithValue}}</b>)</td></tr>  \
-             </table>  \
-		</div>\
-      </div> \
-    </div> '
+        </div>',
+    templateCondensedShapeAfter:
+        '<div class="indicator round-border-dark" > \
+    	    <div class="panel indicator_{{viewId}}" > \
+    			<div class="title">{{{label}}}</div>\
+        		<div id="indicator_{{viewId}}" class="indicator-container"> \
+			    	<div class="round-border" style="float:left;margin:2px 2px 0px 2px"> \
+    				<div class="value-cell" style="float:left">{{{value}}}</div> \
+					{{#compareShape}} \
+					<div class="compareshape" style="float:left">{{{compareShape}}}</div> \
+					{{/compareShape}} \
+					{{#shape}} \
+			        <div class="shape" style="float:left">{{{shape}}}</div> \
+					{{/shape}} \
+    			</div> \
+    			</div> \
+    	    </div> \
+        </div>',
+	templatePercentage:
+	   '<div class="indicator"> \
+	      <div class="panel indicator_{{viewId}}"> \
+	        <div id="indicator_{{viewId}}"> \
+				 <div class="indicator-table"> \
+	                <div class="titlerow"><span class="title">{{{label}}}</span></div>    \
+	                <div class="descriptionrow"><span class="description"><small>{{description}}</small></span></div>    \
+	                <div class="shaperow"> \
+						<div class="shape">{{{shape}}}</div> \
+						<span class="value-cell"> \
+							<div style="white-space: nowrap;"> \
+								<div class="kpi_value">{{{value}}}</div> \
+								<div class="kpi_compare_shape_container"> \
+									<div class="kpi_compare_shape_shape" >{{{compareShape}}}</div> \
+									<div class="kpi_compare_shape_msg">{{{percentageMsg}}}{{{compareValue}}}</div>\
+								</div> \
+							</div> </span> \
+					</div>  \
+	             </div>  \
+			</div>\
+	      </div> \
+	    </div> '
+	
         },
         initialize:function (options) {
             var self = this;
@@ -132,11 +155,16 @@ this.recline.View = this.recline.View || {};
             this.uid = options.id || ("" + new Date().getTime() + Math.floor(Math.random() * 10000)); // generating an unique id for the chart
 
             this.model.bind('query:done', this.render);
-
+            
+            if (this.options.modelCompare)
+        	{
+            	this.modelCompare = this.options.modelCompare
+            	this.modelCompare.bind('query:done', this.render);
+        	}
+            else this.modelCompare = this.model;
         },
-
         render:function () {
-            console.log("View.Indicator: render");
+            //console.log("View.Indicator: render");
 
             var self = this;
             var tmplData = {};
@@ -151,8 +179,13 @@ this.recline.View = this.recline.View || {};
             else
                 field = self.model.getFields(self.options.state.kpi.type).get(self.options.state.kpi.field);
 
-            if (!field)
-                throw "View.Indicator: unable to find field [" + self.options.state.kpi.field + "] on model"
+            if (!field){
+            	if (self.model.attributes.dataset && !self.model.attributes.dataset.recordCount)
+        		{
+            		// virtual model has no valid fields since starting model has no record. Must only display N/A
+        		}
+            	else throw "View.Indicator: unable to find field [" + self.options.state.kpi.field + "] on model"
+            }     
                 
             var textField = null;
             if (self.options.state.condensed == true && self.options.state.kpi.textField)
@@ -169,62 +202,83 @@ this.recline.View = this.recline.View || {};
             var kpiValue;
 
 
-            if (kpi.length > 0) {
+            if (kpi.length > 0 && field) {
                 kpiValue = kpi[0].getFieldValueUnrendered(field);
                 tmplData["value"] = kpi[0].getFieldValue(field);
                 tmplData["shape"] = kpi[0].getFieldShape(field, true, false);
-                if (self.options.state.condensed == true && textField)
-                	tmplData["label"] = kpi[0].getFieldValue(textField);
+                if (self.options.state.condensed == true && textField){
+                	if (self.options.maxLabelLength){ // TODO DOCUMENT the maxLabelLength option
+                		var fullText =  kpi[0].getFieldValue(textField);
+
+                		if ( fullText && fullText.length > self.options.maxLabelLength){
+                            var truncatedText = fullText.substring(0, self.options.maxLabelLength);
+                            tmplData["label"] = '<abbr title="' + fullText + '">'+truncatedText+'...</abbr>';
+                		} else {
+                			tmplData["label"] = kpi[0].getFieldValue(textField);
+                		}                			
+                	} else {
+                		tmplData["label"] = kpi[0].getFieldValue(textField);	
+                	}                	
+                }	
             }
-            else tmplData["value"] = "N/A"
+            else tmplData["value"] = "N/A";
 
             var template = this.templates.templateBase;
             if (self.options.state.condensed == true)
             	template = self.templates.templateCondensed;            
 
             if (self.options.state.compareWith) {
-                var compareWithRecord = self.model.getRecords(self.options.state.compareWith.type);
+                var compareWithRecord = self.modelCompare.getRecords(self.options.state.compareWith.type);
 
                 if(compareWithRecord.length > 0) {
                     var compareWithField;
 
                     if (self.options.state.kpi.aggr)
-                        compareWithField = self.model.getField_byAggregationFunction(self.options.state.compareWith.type, self.options.state.compareWith.field, self.options.state.compareWith.aggr);
+                        compareWithField = self.modelCompare.getField_byAggregationFunction(self.options.state.compareWith.type, self.options.state.compareWith.field, self.options.state.compareWith.aggr);
                     else
-                        compareWithField = self.options.model.getFields(self.options.state.compareWith.type).get(self.options.state.compareWith.field);
+                        compareWithField = self.modelCompare.getFields(self.options.state.compareWith.type).get(self.options.state.compareWith.field);
 
-                    if (!compareWithField)
-                        throw "View.Indicator: unable to find field [" + self.options.state.compareWith.field + "] on model"
+                    if (!compareWithField) {
+                    	if (self.modelCompare.attributes && self.modelCompare.attributes.dataset && self.modelCompare.attributes.dataset.recordCount)
+                    	   throw "View.Indicator: unable to find field [" + self.options.state.compareWith.field + "] on model"
+                    	else return; // parent model is empty. skip the rendering
+                    } 
+                	 tmplData["compareWithValue"] = compareWithRecord[0].getFieldValue(compareWithField);
+                     var compareWithValue = compareWithRecord[0].getFieldValueUnrendered(compareWithField);
 
+                     var compareValue;
 
-                    tmplData["compareWithValue"] = compareWithRecord[0].getFieldValue(compareWithField);
-                    var compareWithValue = compareWithRecord[0].getFieldValueUnrendered(compareWithField);
+                     var compareValue = self.compareType[self.options.state.compareWith.compareType](kpiValue, compareWithValue, self.templates, self.options.state.condensed, self.options.state.shapeAfter);
+                     if(!compareValue){
+                    	   throw "View.Indicator: unable to find compareType [" + self.options.state.compareWith.compareType + "]";	 
+                     }
+                	 tmplData["compareValue"] = compareValue.data;
 
-                    var compareValue;
+                     if(self.options.state.compareWith.shapes) {
+                         if(compareValue.unrenderedValue == 0)
+                             tmplData["compareShape"] = self.options.state.compareWith.shapes.constant;
+                         else if(compareValue.unrenderedValue > 0)
+                             tmplData["compareShape"] = self.options.state.compareWith.shapes.increase;
+                         else if(compareValue.unrenderedValue < 0)
+                             tmplData["compareShape"] = self.options.state.compareWith.shapes.decrease;
+                     }
 
-                    var compareValue = self.compareType[self.options.state.compareWith.compareType](kpiValue, compareWithValue, self.templates, self.options.state.condensed);
-                    if(!compareValue)
-                        throw "View.Indicator: unable to find compareType [" + self.options.state.compareWith.compareType + "]";
-
-                    tmplData["compareValue"] = compareValue.data;
-
-                    if(self.options.state.compareWith.shapes) {
-                        if(compareValue.unrenderedValue == 0)
-                            tmplData["compareShape"] = self.options.state.compareWith.shapes.constant;
-                        else if(compareValue.unrenderedValue > 0)
-                            tmplData["compareShape"] = self.options.state.compareWith.shapes.increase;
-                        else if(compareValue.unrenderedValue < 0)
-                            tmplData["compareShape"] = self.options.state.compareWith.shapes.decrease;
-                    }
-
-                    if(compareValue.template)
-                        template = compareValue.template;
+                     if(compareValue.template)
+                         template = compareValue.template;	 
+                
                 }
+            } else if (self.options.state.fillCompareSpace){
+            	template = this.templates.templatePercentage;
             }
             if ((tmplData["shape"] == null || typeof tmplData["shape"] == "undefined") 
             	&& (tmplData["compareShape"] == null || typeof tmplData["compareShape"] == "undefined"))
             	tmplData["compareShape"] = " " // ensure the space is filled
 
+            if (this.options.showPercentageBar){
+            	tmplData["afterShape"] = "<div class='indicator-percent-complete-bar-background' style='float:left;'>"
+                    + "<span class='indicator-percent-complete-bar' style='width:" + tmplData["value"] + "'></span></div>"
+            }
+            
             if (this.options.state.description)
                 tmplData["description"] = this.options.state.description;
             

@@ -21,6 +21,8 @@ this.recline.Data = this.recline.Data || {};
                 return v;
             return Math.min(p, v);
         },
+        maxScaled: function (p, v) {},
+        minScaled: function (p, v) {},
         ratioToReport: function (p, v) {},
         ratioToMax: function (p, v) {},
         runningTotal: function (p, v) {}
@@ -31,6 +33,8 @@ this.recline.Data = this.recline.Data || {};
         avg           : function () {},
         max           : function () {},
         min           : function () {},
+        maxScaled     : function () {},
+        minScaled     : function () {},
         ratioToReport : function () {},
         ratioToMax    : function () {},
         runningTotal  : function () {}
@@ -41,6 +45,8 @@ this.recline.Data = this.recline.Data || {};
         avg           : function (original) { return "float"},
         max           : function (original) { return original},
         min           : function (original) { return original},
+        maxScaled     : function (original) { return original},
+        minScaled     : function (original) { return original},
         ratioToReport : function (original) { return "float"},
         ratioToMax :    function (original) { return "float"},
         runningTotal  : function (original) { return original}
@@ -49,12 +55,8 @@ this.recline.Data = this.recline.Data || {};
     my.Aggregations.finalizeFunctions = {
         sum         : function () {},
         avg         : function (resultData, aggregatedFields, partitionsFields) {
-
-
             resultData.avg = function(aggr, part){
-
                 return function(){
-
                     var map = {};
                     for(var o=0;o<aggr.length;o++){
                         map[aggr[o]] = this.sum[aggr[o]] / this.count;
@@ -64,31 +66,46 @@ this.recline.Data = this.recline.Data || {};
             }(aggregatedFields, partitionsFields);
 
             if(partitionsFields != null && partitionsFields.length > 0) {
-
-
-                resultData.partitions.avg = function(aggr, part){
-
-                return function(){
-
-                    var map = {};
-                    for (var j=0;j<part.length;j++) {
-                        if(resultData.partitions.sum[part[j]])   {
-                            map[part[j]] = {
-                                value: resultData.partitions.sum[part[j]].value / resultData.partitions.count[part[j]].value,
-                                partition: resultData.partitions.sum[part[j]].partition
-                            };
-                        }
-                    }
-                    return map;
-                }
-            }(aggregatedFields, partitionsFields);
-
+                resultData.partitions.avg = function(aggr, part) {
+                	return function(){
+	                    var map = {};
+	                    for (var j=0;j<part.length;j++) {
+	                        if(resultData.partitions.sum[part[j]])   {
+	                            map[part[j]] = {
+	                                value: resultData.partitions.sum[part[j]].value / resultData.partitions.count[part[j]].value,
+	                                partition: resultData.partitions.sum[part[j]].partition
+	                            };
+	                        }
+	                    }
+	                    return map;
+                	}
+                }(aggregatedFields, partitionsFields);
             }
-
-
         },
         max                     : function () {},
         min                     : function () {},
+        maxScaled              : function (resultData, aggregatedFields) {
+            resultData.maxScaled = function(aggr){
+                return function(){
+                    var map = {};
+                    for(var o=0;o<aggr.length;o++){
+                        map[aggr[o]] = this.max[aggr[o]] * this.count;
+                    }
+                    return map;
+                }
+            }(aggregatedFields);
+        },
+        minScaled              : function (resultData, aggregatedFields) {
+            resultData.minScaled = function(aggr){
+                return function(){
+                    var map = {};
+                    for(var o=0;o<aggr.length;o++){
+                        map[aggr[o]] = this.min[aggr[o]] * this.count;
+                    }
+                    return map;
+                }
+            }(aggregatedFields);
+        },
         ratioToReport           : function () {},
         ratioToMax              : function () {},
         runningTotal            : function () {}
@@ -173,6 +190,9 @@ this.recline.Data = this.recline.Data || {};
 
     my.Aggregations.tableCalculationDependencies =  {
         runningTotal: [],
+        avg: ["sum"],
+        minScaled: ["min"],
+        maxScaled: ["max"],
         ratioToReport: ["sum"],
         ratioToMax: ["max"]
     };

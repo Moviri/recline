@@ -14,7 +14,7 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
 
 
         initialize:function () {
-            _.bindAll(this, 'query');
+            _.bindAll(this, 'query', 'toFullJSON');
 
 
             var self = this;
@@ -22,7 +22,10 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
             self.vModel = new my.Dataset(
                 {
                     backend: "Memory",
-                    records:[], fields: []});
+                    records:[], fields: [],
+                    renderer: self.attributes.renderer
+                });
+
 
             self.fields = self.vModel.fields;
             self.records = self.vModel.records;
@@ -68,6 +71,9 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
 
                 return self.totals_unfiltered.records.models;
             } else {
+            	if(self.needsTableCalculation && self.totals == null)
+                    self.rebuildTotals();
+            	
                 return self.vModel.getRecords(type);
             }
         },
@@ -101,6 +107,7 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
         },
 
         initializeCrossfilter:function () {
+         //   console.log("initialize crossfilter");
             var aggregatedFields = this.attributes.aggregation.measures;
             var aggregationFunctions = this.attributes.aggregation.aggregationFunctions;
             var originalFields = this.attributes.dataset.fields;
@@ -111,9 +118,8 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
             var group = this.createDimensions(crossfilterData, dimensions);
             var results = this.reduce(group,dimensions,aggregatedFields,aggregationFunctions,partitions);
 
-
-
             this.updateStore(results, originalFields,dimensions,aggregationFunctions,aggregatedFields,partitions);
+            this.trigger('query:done');
         },
 
         setDimensions:function (dimensions) {
@@ -149,8 +155,10 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
                         if (i > 0) {
                             tmp = tmp + "#";
                         }
-
+                       if(d[dimensions[i]])
                         tmp = tmp + d[dimensions[i]].valueOf();
+                       else
+                        tmp = tmp + "NULL";
                     }
                     return tmp;
                 });
@@ -162,8 +170,8 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
 
         reduce:function (group, dimensions, aggregatedFields, aggregationFunctions, partitions) {
 
-            if (aggregationFunctions == null || aggregationFunctions.length == 0)
-                throw("Error aggregationFunctions parameters is not set for virtual dataset ");
+            //if (aggregationFunctions == null || aggregationFunctions.length == 0)
+            //    throw("Error aggregationFunctions parameters is not set for virtual dataset ");
 
 
             var partitioning = false;
@@ -256,7 +264,8 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
 
                 for (j = 0; j < aggregationFunctions.length; j++) {
                     tmp[aggregationFunctions[j]] = {};
-                    this.recline.Data.Aggregations.initFunctions[aggregationFunctions[j]](tmp, aggregatedFields, partitions);
+
+                        this.recline.Data.Aggregations.initFunctions[aggregationFunctions[j]](tmp, aggregatedFields, partitions);
                 }
 
                 if (partitioning) {
@@ -304,11 +313,14 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
             self.vModel.resetFields(fields);
             self.vModel.resetRecords(result);
 
+
+
             recline.Data.FieldsUtility.setFieldsAttributes(fields, self);
 
             this.clearUnfilteredTotals();
 
             self.vModel.fetch();
+            self.recordCount = self.vModel.recordCount;
 
         },
 
@@ -369,15 +381,19 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
 
             recline.Data.FieldsUtility.setFieldsAttributes(fields, self);
 
+            var options;
+            if (self.attributes.renderer)
+                options = { renderer: self.attributes.renderer};
+
             if(filtered) {
                 if(this.totals == null) { this.totals = {records: new my.RecordList(), fields: new my.FieldList() }}
 
-                    this.totals.fields.reset(fields, {renderer:recline.Data.Formatters.Renderers}) ;
+                    this.totals.fields.reset(fields, options) ;
                     this.totals.records.reset(result);
             }   else   {
                 if(this.totals_unfiltered == null) { this.totals_unfiltered = {records: new my.RecordList(), fields: new my.FieldList() }}
 
-                    this.totals_unfiltered.fields.reset(fields, {renderer:recline.Data.Formatters.Renderers}) ;
+                    this.totals_unfiltered.fields.reset(fields, options) ;
                     this.totals_unfiltered.records.reset(result);
             }
 
@@ -431,7 +447,7 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
                         var originalFieldAttributes = originalFields.get(field).attributes;
                         var type = originalFieldAttributes.type;
 
-                        var parse = recline.Data.FormattersMODA[type];
+                        var parse = recline.Data.FormattersMoviri[type];
                         var value = parse(keyField[j]);
 
                         tmp[dimensions[j]] = value;
@@ -632,7 +648,10 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
             if (dimensions != null) {
                 fields.push({id:"dimension"});
                 for (var i = 0; i < dimensions.length; i++) {
-                    var originalFieldAttributes = originalFields.get(dimensions[i]).attributes;
+                    var field = originalFields.get(dimensions[i]);
+                    if(!field)
+                        throw "VirtualModel.js: unable to find field [" + dimensions[i] + "] in model";
+                    var originalFieldAttributes = field.attributes;
                     fields.push({
                         id:dimensions[i],
                         type:originalFieldAttributes.type,
@@ -672,6 +691,8 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
         },
 
         setColorSchema:function (type) {
+            if(this.attributes["colorSchema"])
+                 this.vModel.attributes["colorSchema"] = this.attributes["colorSchema"];
             return this.vModel.setColorSchema(type);
 
         },
@@ -701,9 +722,26 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
         toTemplateJSON:function () {
             return this.vModel.toTemplateJSON();
         },
+        toFullJSON:function (resultType) {
+            var self = this;
+            return _.map(self.getRecords(resultType), function (r) {
+                var res = {};
+
+                _.each(self.getFields(resultType).models, function (f) {
+                    res[f.id] = r.getFieldValueUnrendered(f);
+                });
+
+                return res;
+
+            });
+        },
 
         getFieldsSummary:function () {
             return this.vModel.getFieldsSummary();
+        },
+
+        addStaticColorSchema: function(colorSchema, field) {
+           return this.vModel.addStaticColorSchema(colorSchema, field);
         },
 
         // Retrieve the list of partitioned field for the specified aggregated field
@@ -727,7 +765,11 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
         },
 
         isFieldPartitioned:function (fieldName, type) {
-            return  this.getFields(type).get(fieldName).attributes.aggregationFunction
+            var field = this.getFields(type).get(fieldName);
+            if(!field)
+                throw("Virtualmodel.js: isFieldPartitioned: unable to find field [" + fieldName + "] in virtualmodel [" + this.id +"]");
+
+            return  field.attributes.aggregationFunction
                 && this.attributes.aggregation.partitions;
         },
 

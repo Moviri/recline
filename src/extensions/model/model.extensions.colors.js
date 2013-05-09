@@ -3,6 +3,7 @@
     recline.Model.Dataset.prototype = $.extend(recline.Model.Dataset.prototype, {
         setColorSchema:function () {
             var self = this;
+
             _.each(self.attributes.colorSchema, function (d) {
                 var field = _.find(self.fields.models, function (f) {
                     return d.field === f.id
@@ -11,7 +12,51 @@
                     field.attributes.colorSchema = d.schema;
             })
 
-        }
+        },
+
+        // a color schema is linked to the dataset but colors are not recalculated upon data/field reset
+        addStaticColorSchema: function(colorSchema, field) {
+            var self = this;
+            if (!self.attributes["colorSchema"])
+                self.attributes["colorSchema"] = [];
+
+            self.attributes["colorSchema"].push({schema:colorSchema, field:field});
+
+            if(self.fields.length > 0)
+                self.setColorSchema();
+
+            self.fields.bind('reset', function () {
+                self.setColorSchema();
+            });
+            self.fields.bind('add', function () {
+                self.setColorSchema();
+            });
+            self.fields.bind('change', function () {
+                self.setColorSchema();
+            });
+
+        },
+
+        _handleQueryResult:function () {
+            var super_init = recline.Model.Dataset.prototype._handleQueryResult;
+
+            return function (queryResult) {
+
+                var self = this;
+
+                super_init.call(this, queryResult);
+
+                if (queryResult.facets) {
+
+                    _.each(queryResult.facets, function (f, index) {
+
+                        recline.Data.ColorSchema.addColorsToTerms(f.id, f.terms, self.attributes.colorSchema);
+                    });
+                }
+
+
+            };
+        }()
     });
 
 

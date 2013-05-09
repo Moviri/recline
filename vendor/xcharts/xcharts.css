@@ -5,21 +5,27 @@
 .xchart .fill {
   stroke-width: 0;
 }
+.xchart .line .fill {
+  pointer-events: none;
+}
 .xchart circle {
   stroke: #FFF;
-  stroke-width: 3px;
+  stroke-width: 1px;
 }
 .xchart .axis .domain {
   fill: none;
 }
 .xchart .axis .tick {
-  stroke: #EEE;
+  stroke: #F5F5F5;
   stroke-width: 1px;
 }
 .xchart .axis text {
   font-family: Helvetica, Arial, Verdana, sans-serif;
   fill: #666;
-  font-size: 12px;
+  font-size: 10px;
+}
+.xchart .axisX .tick {
+  stroke: #aaaaaa;
 }
 .xchart .color0 .line {
   stroke: #3880aa;

@@ -38,7 +38,8 @@ my.Timeline = Backbone.View.extend({
     });
     var stateData = _.extend({
         startField: null,
-        endField: null
+        endField: null,
+        timelineJSOptions: {}
       },
       options.state
     );
@@ -66,14 +67,8 @@ my.Timeline = Backbone.View.extend({
 
   _initTimeline: function() {
     var $timeline = this.el.find(this.elementId);
-    // set width explicitly o/w timeline goes wider that screen for some reason
-    var width = Math.max(this.el.width(), this.el.find('.recline-timeline').width());
-    if (width) {
-      $timeline.width(width);
-    }
-    var config = {};
     var data = this._timelineJSON();
-    this.timeline.init(data, this.elementId, config);
+    this.timeline.init(data, this.elementId, this.state.get("timelineJSOptions"));
     this._timelineIsInitialized = true
   },
 
@@ -146,11 +141,6 @@ my.Timeline = Backbone.View.extend({
     if (out.toDate() == 'Invalid Date') {
       return null;
     } else {
-      // fix for moment weirdness around date parsing and time zones
-      // moment('1914-08-01').toDate() => 1914-08-01 00:00 +01:00
-      // which in iso format (with 0 time offset) is 31 July 1914 23:00
-      // meanwhile native new Date('1914-08-01') => 1914-08-01 01:00 +01:00
-      out = out.subtract('minutes', out.zone());
       return out.toDate();
     }
   },

@@ -24,11 +24,9 @@ this.recline = this.recline || {};
             var actionParameters = [];
             //foreach mapping set destination field
             _.each(mapping, function (map) {
-                if (eventData[map["srcField"]] == null) {
+            	if (eventData[map["srcField"]] == null && currentAction.action.attributes.filters[map.filter].type != "list") {
                     console.log("warn: sourceField: [" + map["srcField"] + "] not present in event data");
                 } else {
-
-
                     var param = {
                         filter:map["filter"],
                         value:eventData[map["srcField"]]
@@ -36,7 +34,6 @@ this.recline = this.recline || {};
                     actionParameters.push(param);
                 }
             });
-
             if (actionParameters.length > 0) {
                 currentAction.action._internalDoAction(actionParameters);
             }
@@ -71,34 +68,68 @@ this.recline = this.recline || {};
                 var params = [];
                 mapping.forEach(function (mapp) {
                     var values = [];
-                    //{srcField: "daydate", filter: "filter_daydate"}
                     records.forEach(function (row) {
                         values.push(row.getFieldValueUnrendered({id:mapp.srcField}));
                     });
                     params.push({
                         filter:mapp.filter,
-                        value:values
+                        value:values,
                     });
                 });
                 this._internalDoAction(params);
             },
-
+            doActionWithFacets:function (facetTerms, valueList, mapping, filterFieldName) {
+                var params = [];
+                mapping.forEach(function (mapp) {
+                    var values = [];
+                    facetTerms.forEach(function (obj) {
+                    	obj.records.forEach(function(row) {
+                    		var filterFieldValue = row[filterFieldName]
+                    		valueList.forEach(function(currSelValue) {
+                    			if (currSelValue == filterFieldValue || (currSelValue && filterFieldValue && currSelValue.valueOf() == filterFieldValue.valueOf()))
+                    				if (!_.contains(values, row[mapp.srcField]))
+                            			values.push(row[mapp.srcField]);
+                    		})
+                    	});
+                    });
+                    params.push({
+                        filter:mapp.filter,
+                        value:values,
+                        origValueList: valueList
+                    });
+                });
+                this._internalDoAction(params);
+            },
             doActionWithValues:function (valuesarray, mapping) {
                 var params = [];
                 mapping.forEach(function (mapp) {
                     var values = [];
-                    //{srcField: "daydate", filter: "filter_daydate"}
                     _.each(valuesarray, function (row) {
                         if (row.field === mapp.srcField)
                             params.push({
                                 filter:mapp.filter,
-                                value:row.value
+                                value:row.value,
+                                origValueList: valuesarray
                             });
                     });
 
                 });
                     this._internalDoAction(params);
             },
+            doActionWithValueArray:function (valuesarray, mapping, fieldName) {
+            	// no check. Pass the raw data (useful in type "range", 
+            	// when you may not have an exact record match)
+            	// Important: pass it only to the field named fieldName!!
+            	var params = [];
+                mapping.forEach(function (mapp) {
+                	if (mapp.srcField == fieldName)
+	                    params.push({
+	                        filter:mapp.filter,
+	                        value:valuesarray
+	                    });
+                });
+                this._internalDoAction(params);
+            },            
 
 
             // action could be add/remove
@@ -122,18 +153,23 @@ this.recline = this.recline || {};
                     currentFilter["name"] = f.filter;
                     if (self.filters[currentFilter.type] == null)
                         throw "Filter not implemented for type " + currentFilter.type;
-
-                    targetFilters.push(self.filters[currentFilter.type](currentFilter, f.value));
-
+                    
+                	if (currentFilter.type == "range" && f.value.length < 2 && f.origValueList)
+                		targetFilters.push(self.filters[currentFilter.type](currentFilter, f.origValueList)); // fallback to orig values if some range value has been filtered (missing in the model)
+                	else targetFilters.push(self.filters[currentFilter.type](currentFilter, f.value)); // general case
                 });
 
                 // foreach type and dataset add all filters and trigger events
                 _.each(type, function (type) {
                     _.each(models, function (m) {
-
+                    	// use the same starting filter object on all datasets, to ensure setFilter works correctly on filter removal
+                    	var clonedTargetFilters = []
+                    	_.each(targetFilters, function(targetF) {
+                    		clonedTargetFilters.push(_.clone(targetF))
+                    	}) 
                         var modified = false;
 
-                        _.each(targetFilters, function (f) {
+                        _.each(clonedTargetFilters, function (f) {
 
                             // verify if filter is associated with current model
                             if (_.find(m.filters, function (x) {
@@ -152,7 +188,12 @@ this.recline = this.recline || {};
                         }
                     });
                 });
-
+                // at this points all filter removals have already been parsed. 
+                // so: delete all "remove" flags from internal filter list 
+                _.each(data, function (f) {
+                    var currentFilter = filters[f.filter];
+                    delete currentFilter["remove"]
+                });
 
             },
 
@@ -235,8 +276,8 @@ this.recline = this.recline || {};
                 term:function (filter, data) {
 
                     if (data.length === 0) {
-                        //empty list
                         filter["term"] = null;
+                		filter["remove"] = true;
                     } else if (data.length === 1) {
                     	if(data[0] == null)
                     		filter["remove"] = true;
@@ -248,6 +289,24 @@ this.recline = this.recline || {};
 
                     return filter;
                 },
+                termAdvanced:function (filter, data) {
+                	if (filter.operator) {
+                        if (data.length === 0) {
+                            filter["term"] = null;
+                    		filter["remove"] = true;
+                        } else if (data.length === 1) {
+                        	if(data[0] == null)
+                        		filter["remove"] = true;
+                        	else
+                        		filter["term"] = data[0];
+                        } else {
+                            throw "Data passed for filtertype termAdvanced not valid. Data lenght should be 1 or empty but is " + data.length;
+                        }
+                	}
+                	else throw "Data passed for filtertype termAdvanced not valid. Operator clause is missing";
+                	
+                    return filter;
+                },                
                 range:function (filter, data) {
 
                     if (data.length === 0) {
@@ -268,12 +327,14 @@ this.recline = this.recline || {};
                 },
                 list:function (filter, data) {
 
-                    if (data.length === 0) {
+                	if (data === null) {
                         //empty list
                         filter["list"] = null;
-                    } else if (data === null) {
+                	}
+                	else if (data.length === 0) {
                         //null list
                         filter["remove"] = true;
+                        filter["list"] = [];
                     } else {
                         filter["list"] = data;
                     }

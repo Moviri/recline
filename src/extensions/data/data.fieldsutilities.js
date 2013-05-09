@@ -5,7 +5,7 @@ this.recline.Data.FieldsUtility = this.recline.Data.FieldsUtility || {};
 
 (function($, my) {
 
-    my.setFieldsAttributes = function(fields, model) {
+    my.setFieldsAttributes = function(fields, model, records) {
 
 
         // if labels are declared in dataset properties merge it;
@@ -17,6 +17,7 @@ this.recline.Data.FieldsUtility = this.recline.Data.FieldsUtility || {};
                 if (tmp != null)
                     fields[i].label = tmp.label;
 
+
             }
 
         }
@@ -24,15 +25,18 @@ this.recline.Data.FieldsUtility = this.recline.Data.FieldsUtility || {};
         // if format is declared it is updated
         if (model.attributes.fieldsFormat) {
             // if format is declared in dataset properties merge it;
-            _.each(model.attributes.fieldsFormat, function (d) {
-                var field = _.find(fields, function (f) {
-                    return d.id === f.id
-                });
-                if (field != null)
-                    field.format = d.format;
-            })
+        	if (model.attributes.fieldsFormat.length)
+    		{
+                _.each(model.attributes.fieldsFormat, function (d) {
+                    var field = _.find(fields, function (f) {
+                        return d.id === f.id
+                    });
+                    if (field != null)
+                        field.format = d.format;
+                })
+    		}
+        	else throw "Wrong fieldsFormat parameter. Must be an array, not a single object!"
         }
-
 
         // assignment of color schema to fields
         if (model.attributes.colorSchema) {
@@ -56,6 +60,7 @@ this.recline.Data.FieldsUtility = this.recline.Data.FieldsUtility || {};
             })
         }
     }
+
 
 
 }(jQuery, this.recline.Data.FieldsUtility));

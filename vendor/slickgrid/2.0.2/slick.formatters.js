@@ -15,7 +15,9 @@
         "Checkmark": CheckmarkFormatter,
         "TwinBarFormatter": TwinBarFormatter,
         "FixedCellFormatter": FixedCellFormatter,
-        "DateFormatter": DateFormatter
+        "DateFormatter": DateFormatter,
+        "HtmlFormatter": HtmlFormatter,
+        "HtmlExtFormatter": HtmlExtFormatter
       }
     }
   });
@@ -38,10 +40,11 @@
     }
   }
 
-  function PercentCompleteBarFormatter(row, cell, value, columnDef, dataContext) {
-    if (value == null || value === "") {
+  function PercentCompleteBarFormatter(row, cell, values, columnDef, dataContext) {
+    if (values == null || values === "") {
       return "";
     }
+    var value = 100 * values[0] / parseFloat(values[1]);
     var color;
     var colors = dataContext.schema_colors;
     if (colors)
@@ -86,4 +89,26 @@
   function CheckmarkFormatter(row, cell, value, columnDef, dataContext) {
     return value ? "<img src='../images/tick.png'>" : "";
   }
+  
+  function HtmlFormatter(row, cell, values, columnDef, dataContext) {
+	    if (values == null || values.length < 2)
+	        return "";
+	    
+	    var record = values[0] // must hold the record JSON attributes (record.attributes)
+	    var template = values[1]
+	    if (template)
+	    	return Mustache.render(template, record);
+	    else return "";
+  }
+  
+  function HtmlExtFormatter(row, cell, values, columnDef, dataContext) {
+	    if (values == null || values.length < 2)
+	        return "";
+	    
+	    var record = values[0]  // must be a record class instance
+	    var extFormula = values[1]
+	    
+      return extFormula(record);
+}
+  
 })(jQuery);

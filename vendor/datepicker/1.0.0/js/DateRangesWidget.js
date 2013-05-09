@@ -263,14 +263,14 @@
 
 			}
 
-            $('.dr1.from_millis', $dropdown).val(dates[0]);
-            $('.dr1.to_millis', $dropdown).val(dates[1]);
+            $('.dr1.from_millis', $dropdown).val(dates[0].getTime());
+            $('.dr1.to_millis', $dropdown).val(dates[1].getTime());
 			
 			$('.dr2.from', $dropdown).val(dates[2].getDate() + '/' + (dates[2].getMonth()+1) + '/' + dates[2].getFullYear());
 			$('.dr2.to', $dropdown).val(dates[3].getDate() + '/' + (dates[3].getMonth()+1) + '/' + dates[3].getFullYear());
 
-            $('.dr2.from_millis', $dropdown).val(dates[2]);
-            $('.dr2.to_millis', $dropdown).val(dates[3]);
+            $('.dr2.from_millis', $dropdown).val(dates[2].getTime());
+            $('.dr2.to_millis', $dropdown).val(dates[3].getTime());
 		},
 		
 		createElements : function($target) {
@@ -320,8 +320,10 @@
 							'<input type="text" class="dr dr2 from" lastSel="2" /> - <input type="text" class="dr dr2 to" lastSel="3" />'+
                             '<input type="hidden" class="dr dr2 from_millis" lastSel="2" /><input type="hidden" class="dr dr2 to_millis" lastSel="3" />'+
            			'</div>'+
-						'<button class="btn btn-small" id="button-ok">Ok</button>'+
-						'<button class="btn btn-small" id="button-cancel">Cancel</button>'+
+           				'<div class="btn-group">'+
+						'<button class="btn btn-mini" id="button-ok">Apply</button>'+
+						'<button class="btn btn-mini" id="button-cancel">Cancel</button>'+
+						'</div>'+
 					'</div>'+
 				'</div>');
 				$dropdown.appendTo($('body'));
@@ -366,7 +368,7 @@
 				/**
 				 * Handle change of datePreset
 				 */
-				$daterangePreset.change(function() {
+				$daterangePreset.change(function(ev) {
 					var date_preset = internal.getDaterangePreset();
 					if (date_preset.parameters) {
 						//console.log(internal.getParameter1());
@@ -378,8 +380,16 @@
 						$parameters.hide();
 					}
 					$('.dr1', $dropdown).prop('disabled', ($daterangePreset.val() == 'custom' ? false : true));
-					
 					internal.recalculateDaterange();
+
+					// customization. When daterangePreset changes, comparisonPreset reverts to previous period
+					// the IF condition checks if the caller is actually the daterangePreset dropdown and not
+					// some other control that bubbled the event all the way through
+					if (ev && ev.originalEvent && ev.originalEvent.currentTarget == this)
+					{
+						$comparisonPreset.val("previousperiod");
+						$comparisonPreset.change();
+					}
 				});
 				
 				$parameter1.change(function() {
@@ -410,7 +420,7 @@
 				$('.dr', $dropdown).click(function() {
 					// set active date field for datepicker
 					$datepicker.DatePickerSetLastSel($(this).attr('lastSel'));
-					internal.refreshForm();
+					//internal.refreshForm(); // don't refresh
 				});
 				
 				/**
@@ -700,7 +710,7 @@
 			}
 			
 			internal.loadValues($target);
-			
+			$datepicker.DatePickerSetLastSel(0);
 			
 			// retract all other dropdowns
 			$('.DRWOpened').each(function() {

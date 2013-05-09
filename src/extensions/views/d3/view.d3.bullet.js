@@ -6,7 +6,7 @@ this.recline.View = this.recline.View || {};
     "use strict";
 
     view.D3Bullet = Backbone.View.extend({
-        template: '<div id="{{uid}}" style="width: {{width}}px; height: {{height}}px;"> <div> ',
+        template: '<div id="{{uid}}" style="width: {{width}}px; height: {{height}}px;">',
         firstResizeDone: false,
         initialize:function (options) {
 
@@ -43,13 +43,11 @@ this.recline.View = this.recline.View || {};
 
         resize:function () {
         	this.firstResizeDone = true;
-//        	console.log($("#"+this.uid))
         	var currH = $("#"+this.uid).height()
         	var currW = $("#"+this.uid).width()
         	var $parent = this.el
         	var newH = $parent.height()
         	var newW = $parent.width()
-//        	console.log("Resize from W"+currW+" H"+currH+" to W"+newW+" H"+newH)
         	if (typeof this.options.width == "undefined")
     		{
             	$("#"+this.uid).width(newW)
@@ -73,20 +71,11 @@ this.recline.View = this.recline.View || {};
             self.graph = d3.select(graphid);
             
             if (!self.firstResizeDone)
-        	{
-            	// bruttissimo! ogni resize avvicina alla dimensione desiderata
             	self.resize();
-            	self.resize();
-	        	self.resize();
-	        	self.resize();
-	        	self.resize();
-        	}
         },
 
         redraw:function () {
-                var self = this;
-            var field = this.model.fields.get(this.options.fieldRanges);
-            var fieldMeasure = this.model.fields.get(this.options.fieldMeasures);
+            var self = this;
 
             var type;
             if(this.options.resultType) {
@@ -96,27 +85,34 @@ this.recline.View = this.recline.View || {};
             var records = _.map(this.options.model.getRecords(type), function (record) {
                 var ranges = [];
                 _.each(self.options.fieldRanges, function (f) {
-                    var field = self.model.fields.get(f);
+                    var field = (type ? self.model[type].fields.get(f) : self.model.fields.get(f));
                     ranges.push(record.getFieldValueUnrendered(field));
                 });
                 var measures = [];
                 _.each(self.options.fieldMeasures, function (f) {
-                    var field = self.model.fields.get(f);
+                    var field = (type ? self.model[type].fields.get(f) : self.model.fields.get(f));
                     measures.push(record.getFieldValueUnrendered(field));
                 });
                 var markers = [];
                 _.each(self.options.fieldMarkers, function (f) {
-                    var field = self.model.fields.get(f);
+                    var field = (type ? self.model[type].fields.get(f) : self.model.fields.get(f));
                     markers.push(record.getFieldValueUnrendered(field));
                 });
-                return {ranges:ranges, measures:measures, markers: markers, customTicks: self.options.customTicks};
+                return {ranges:ranges, measures:measures, markers: markers, customTicks: self.options.customTicks, tickFormat: self.options.tickFormat };
             });
 
             var margin = {top: 5, right: 40, bottom: 40, left: 40};
             var width = self.width - margin.left - margin.right;
             var height = self.height - margin.top - margin.bottom;
+            if (width < 0)
+            	width = 0;
+
+            if (height < 0)
+            	height = 0;
 
             self.plugin();
+
+
 
             this.chart = d3.bullet()
                 .width(width)
@@ -168,16 +164,17 @@ this.recline.View = this.recline.View || {};
                     measures = bulletMeasures,
                     width = 380,
                     height = 30,
-                    tickFormat = null,
+                    tickFormat = bulletTickFormat,
                 	customTicks = bulletCustomTicks;
 
-                // For each small multiple…
+                // For each small multiple
                 function bullet(g) {
                     g.each(function (d, i) {
                         var rangez = ranges.call(this, d, i).slice().sort(d3.descending),
                             markerz = markers.call(this, d, i).slice().sort(d3.descending),
                             measurez = measures.call(this, d, i).slice().sort(d3.descending),
                             customTickz = customTicks.call(this, d, i),
+                            tickFormatz = tickFormat.call(this, d, i),
                             g = d3.select(this);
 
                         // Compute the new x-scale.
@@ -265,8 +262,7 @@ this.recline.View = this.recline.View || {};
                             .attr("y1", height / 6)
                             .attr("y2", height * 5 / 6);
 
-                        // Compute the tick format.
-                        var format = tickFormat || x1.tickFormat(8);
+                        var format = tickFormatz || x1.tickFormat(8);
 
                         // Update the tick groups.
                         var tick = g.selectAll("g.tick")
@@ -282,7 +278,6 @@ this.recline.View = this.recline.View || {};
 
                         var idx = -1;
                         var customFormat = function() {
-//                        	var customTicks = [null, null, "MIN", null, "Current", null, "Previous", null, "MAX"]
                         	if (customTickz && customTickz[++idx])
                         		return customTickz[idx];
                         	else return ""
@@ -389,6 +384,10 @@ this.recline.View = this.recline.View || {};
                 
                 return bullet;
             };
+
+            function bulletTickFormat(d) {
+                return d.tickFormat;
+            }
 
             function bulletCustomTicks(d) {
                 return d.customTicks;

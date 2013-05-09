@@ -6,11 +6,11 @@ this.recline.View = this.recline.View || {};
 
     my.GenericFilter = Backbone.View.extend({
         className:'recline-filter-editor well',
-        template:'<div class="filters" style="background-color:{{backgroundColor}}"> \
+        template:'<div class="filters" {{#backgroundColor}}style="background-color:{{backgroundColor}}"{{/backgroundColor}}> \
       <div class="form-stacked js-edit"> \
 	  	<div class="label label-info" style="display:{{titlePresent}}" > \
-		  	<h4>{{filterDialogTitle}}</h4> \
-		  	{{filterDialogDescription}} \
+		  	<h4>{{{filterDialogTitle}}}</h4> \
+		  	{{{filterDialogDescription}}} \
 	  	</div> \
         {{#filters}} \
           {{{filterRender}}} \
@@ -24,8 +24,8 @@ this.recline.View = this.recline.View || {};
 	  		<tr>\
 	  			<td class="separated-item" style="display:{{titlePresent}}">\
 				  	<div class="label label-info"> \
-					  	<h4>{{filterDialogTitle}}</h4> \
-					  	{{filterDialogDescription}} \
+					  	<h4>{{{filterDialogTitle}}}</h4> \
+					  	{{{filterDialogDescription}}} \
 				  	</div> \
 				</td>\
 			  	{{#filters}} \
@@ -54,6 +54,7 @@ this.recline.View = this.recline.View || {};
 			$( "#slider{{ctrlId}}" ).slider({ \
 				min: {{min}}, \
 				max: {{max}}, \
+            	{{#step}}step: {{step}}{{/step}}, \
 				value: {{term}}, \
 				slide: function( event, ui ) { \
 					$( "#amount{{ctrlId}}" ).html( "{{label}}: "+ ui.value ); \
@@ -78,18 +79,6 @@ this.recline.View = this.recline.View || {};
 	<style> \
 		 .layout-slider { padding-bottom:15px;width:150px } \
 	</style> \
-	<script> \
-		$(document).ready(function(){ \
-			$( "#slider{{ctrlId}}" ).jslider({ \
-				from: {{min}}, \
-				to: {{max}}, \
-				scale: [{{min}},"|","{{step1}}","|","{{mean}}","|","{{step3}}","|",{{max}}], \
-				step: {{step}}, \
-				limits: false, \
-				skin: "plastic" \
-			}); \
-		}); \
-	</script> \
       <div class="filter-{{type}} filter" id="{{ctrlId}}"> \
         <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
             <legend style="display:{{useLegend}}">{{label}} \
@@ -146,18 +135,6 @@ this.recline.View = this.recline.View || {};
 	<style> \
 	 .layout-slider { padding-bottom:15px;width:150px } \
 	</style> \
-	<script> \
-		$(document).ready(function(){ \
-			$( "#slider{{ctrlId}}" ).jslider({ \
-				from: {{min}}, \
-				to: {{max}}, \
-				scale: [{{min}},"|","{{step1}}","|","{{mean}}","|","{{step3}}","|",{{max}}], \
-				limits: false, \
-				step: {{step}}, \
-				skin: "round_plastic", \
-			}); \
-		}); \
-	</script> \
       <div class="filter-{{type}} filter" id="{{ctrlId}}"> \
         <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
             <legend style="display:{{useLegend}}">{{label}} \
@@ -193,7 +170,7 @@ this.recline.View = this.recline.View || {};
 				{{/periodValues}} \
 			</select> \
 			<br> \
-			<div style="max-height:500px;width:100%;border:1px solid grey;overflow:auto;"> \
+			<div class="month_week_scroller" style="max-height:500px;width:100%;border:1px solid grey;overflow:auto;"> \
 				<table class="table table-striped table-hover table-condensed" style="width:100%" data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
 				<tbody>\
 				{{#values}} \
@@ -360,11 +337,11 @@ this.recline.View = this.recline.View || {};
                 <legend style="display:{{useLegend}}">{{label}}</legend>  \
     			<div style="float:left;padding-right:10px;padding-top:4px;display:{{useLeftLabel}}">{{label}}</div> \
     			<div class="btn-group data-control-id" > \
-            		{{#useAllButton}} \
-            		<button class="btn grouped-button btn-primary">All</button> \
-            		{{/useAllButton}} \
+            		{{^noAllButton}} \
+            		<button class="btn btn-mini grouped-button btn-primary">All</button> \
+            		{{/noAllButton}} \
     	            {{#values}} \
-    	    		<button class="btn grouped-button {{selected}}" val="{{value}}" {{tooltip}}>{{{val}}}</button> \
+    	    		<button class="btn btn-mini grouped-button {{selected}}" val="{{value}}" {{tooltip}}>{{{val}}}</button> \
     	            {{/values}} \
               	</div> \
             </div> \
@@ -377,24 +354,28 @@ this.recline.View = this.recline.View || {};
     			<div style="float:left;padding-right:10px;padding-top:4px;display:{{useLeftLabel}}">{{label}}</div> \
     			<div class="btn-group data-control-id" level="1" style="float:left"> \
             		{{#useAllButton}} \
-            		<button class="btn grouped-button btn-primary">All</button> \
+            		<button class="btn btn-mini grouped-button {{all1Selected}}" val="All">All</button> \
             		{{/useAllButton}} \
     	            {{#values}} \
-    	    		<button class="btn grouped-button {{selected}}" val="{{value}}" {{tooltip}}>{{{val}}}</button> \
+    	    		<button class="btn btn-mini grouped-button {{selected}}" val="{{value}}" {{tooltip}}>{{{val}}}</button> \
     	            {{/values}} \
               	</div> \
         		{{#useLevel2}} \
 	    			<div class="btn-group level2" level="2" style="float:left;display:{{showLevel2}}"> \
-	            		<button class="btn grouped-button {{all2Selected}}" val="">All</button> \
+     		{{#useAllButton}} \
+        	 			<button class="btn btn-mini grouped-button {{all2Selected}}" val="">All</button> \
+     		{{/useAllButton}} \
 			            {{#valuesLev2}} \
-	            			<button class="btn grouped-button {{selected}}" val="{{value}}" {{tooltip}}>{{{val}}}</button> \
+	            			<button class="btn btn-mini grouped-button {{selected}}" val="{{value}}" {{tooltip}}>{{{val}}}</button> \
 			            {{/valuesLev2}} \
 	            	</div> \
             		{{#useLevel3}} \
 		    			<div class="btn-group level3" level="3" style="float:left;display:{{showLevel3}}"> \
-	            			<button class="btn grouped-button {{all3Selected}}" val="">All</button> \
+      		{{#useAllButton}} \
+	            			<button class="btn btn-mini grouped-button {{all3Selected}}" val="">All</button> \
+     		{{/useAllButton}} \
 				            {{#valuesLev3}} \
-			        			<button class="btn grouped-button {{selected}}" val="{{value}}" {{tooltip}}>{{{val}}}</button> \
+			        			<button class="btn btn-mini grouped-button {{selected}}" val="{{value}}" {{tooltip}}>{{{val}}}</button> \
 				            {{/valuesLev3}} \
 			        	</div> \
             		{{/useLevel3}} \
@@ -410,7 +391,7 @@ this.recline.View = this.recline.View || {};
     		<div style="float:left;padding-right:10px;padding-top:4px;display:{{useLeftLabel}}">{{label}}</div> \
     		<div class="btn-group data-control-id" > \
 	            {{#values}} \
-	    		<button class="btn grouped-button {{selected}}" val="{{value}}" {{tooltip}}>{{{val}}}</button> \
+	    		<button class="btn btn-mini grouped-button {{selected}}" val="{{value}}" {{tooltip}}>{{{val}}}</button> \
 	            {{/values}} \
           </div> \
         </fieldset> \
@@ -422,7 +403,8 @@ this.recline.View = this.recline.View || {};
 					border-top:2px solid black;border-left:2px solid black; \
 					border-bottom:2px solid darkgrey;border-right:2px solid darkgrey; \
 					width:16px;height:16px;padding:1px;margin:5px; \
-					opacity: 0.85 \
+					opacity: 0.85; \
+            		cursor: pointer; \
 					}  \
 	 .legend-item.not-selected { background-color:transparent !important; } /* the idea is that the color "not-selected" overrides the original color (this way we may use a global style) */ \
 	  </style> \
@@ -434,7 +416,7 @@ this.recline.View = this.recline.View || {};
 			{{#values}} \
 				<tr> \
 				<td style="width:25px"><div class="legend-item {{notSelected}}" myValue="{{val}}" style="background-color:{{color}}"></td> \
-				<td style="vertical-align:middle"><label style="color:{{color}};text-shadow: black 1px 1px, black -1px -1px, black -1px 1px, black 1px -1px, black 0px 1px, black 0px -1px, black 1px 0px, black -1px 0px">{{val}}</label></td>\
+				<td style="vertical-align:middle"><label class="legend-label" style="color:{{color}};text-shadow: black 1px 1px, black -1px -1px, black -1px 1px, black 1px -1px, black 0px 1px, black 0px -1px, black 1px 0px, black -1px 0px">{{val}}</label></td>\
 				<td><label style="text-align:right">[{{count}}]</label></td>\
 				</tr>\
 			{{/values}}\
@@ -443,18 +425,32 @@ this.recline.View = this.recline.View || {};
       </div> \
 	',
             color_legend:' \
-	<div class="filter-{{type}} filter" style="width:{{totWidth2}}px;max-height:{{totHeight2}}px"> \
-        <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}"> \
+	<div class="filter-{{type}} filter" id="{{ctrlId}}" style="width:{{totWidth2}}px;max-height:{{totHeight2}}px"> \
+        <fieldset data-filter-field="{{field}}" data-filter-id="{{id}}" data-filter-type="{{type}}" data-control-type="{{controlType}}"> \
             <legend style="display:{{useLegend}}">{{label}}</legend>  \
 				<div style="float:left;padding-right:10px;height:{{lineHeight}}px;display:{{useLeftLabel}}"> \
 					<label style="line-height:{{lineHeight}}px">{{label}}</label> \
 				</div> \
-				<div style="width:{{totWidth}}px;height:{{totHeight}}px;display:inline"> \
+            	<div class="data-control-id" style="width:{{totWidth}}px;height:{{totHeight}}px;display:inline" > \
 					<svg height="{{totHeight}}" xmlns="http://www.w3.org/2000/svg"> \
+            		<g> \
 					{{#colorValues}} \
 				    	<rect width="{{width}}" height={{lineHeight}} fill="{{color}}" x="{{x}}" y={{y}}/> \
-						<text width="{{width}}" fill="{{textColor}}" x="{{x}}" y="{{yplus30}}">{{val}}</text> \
-					{{/colorValues}}\
+            			{{#showValueLabels}} \
+            			<text width="{{width}}" fill="{{textColor}}" x="{{x}}" y="{{yplus30}}">{{val}}</text> \
+            			{{/showValueLabels}} \
+            		{{/colorValues}}\
+            		</g> \
+            		<g> \
+            			{{^showValueLabels}} \
+            			{{#totWidth}} \
+            			<path d="M0,0 L{{totWidth}},0 L{{totWidth}},{{totHeight}} L0,{{totHeight}} L0,0" style="fill:none;"/> \
+            			{{/totWidth}} \
+            			{{#colorValues2}} \
+            			<text width="{{width}}" fill="{{textColor}}" x="{{x}}" y="{{yplus30}}">{{val}}</text> \
+            			{{/colorValues2}} \
+            			{{/showValueLabels}} \
+            		</g> \
 					</svg>		\
 				</div> \
 	    </fieldset> \
@@ -475,11 +471,12 @@ this.recline.View = this.recline.View || {};
             "term":{ needFacetedField:false},
             "range":{ needFacetedField:true},
             "slider":{ needFacetedField:true},
+            "slider_styled":{ needFacetedField:true},
             "range_slider":{ needFacetedField:true},
             "range_slider_styled":{ needFacetedField:true},
             "color_legend":{ needFacetedField:true},
             "multibutton":{ needFacetedField:true},
-            "radiobuttons":{ needFacetedField:false},
+            "radiobuttons":{ needFacetedField:true},
             "hierarchic_radiobuttons":{ needFacetedField:false}
         },
 
@@ -489,13 +486,13 @@ this.recline.View = this.recline.View || {};
             'click #addFilterButton':'onAddFilter',
             'click .list-filter-item':'onListItemClicked',
             'click .legend-item':'onLegendItemClicked',
+            'click .legend-label':'onLegendItemClicked',
             'click #setFilterValueButton':'onFilterValueChanged',
             'change .drop-down':'onFilterValueChanged',
             'change .chzn-select-deselect':'onFilterValueChanged',
             'change .drop-down2':'onListItemClicked',
             'change .drop-down3':'onPeriodChanged',
             'click .grouped-button':'onButtonsetClicked',
-            'change .slider-styled':'onStyledSliderValueChanged'
         },
 
         activeFilters:new Array(),
@@ -510,7 +507,6 @@ this.recline.View = this.recline.View || {};
             _.bindAll(this, 'onRemoveFilter');
             _.bindAll(this, 'onPeriodChanged');
             _.bindAll(this, 'findActiveFilterByField');
-
             _.bindAll(this, 'updateDropdown');
             _.bindAll(this, 'updateDropdownStyled');
             _.bindAll(this, 'updateSlider');
@@ -525,8 +521,11 @@ this.recline.View = this.recline.View || {};
             _.bindAll(this, 'updateListbox');
             _.bindAll(this, 'updateListboxStyled');
             _.bindAll(this, 'updateLegend');
+            _.bindAll(this, 'updateColorLegend');
             _.bindAll(this, 'updateMultibutton');
             _.bindAll(this, 'redrawGenericControl');
+            _.bindAll(this, 'fixHierarchicRadiobuttonsSelections');
+            _.bindAll(this, 'changeFilterField');
 
             this._sourceDataset = args.sourceDataset;
             this.uid = args.id || Math.floor(Math.random() * 100000); // unique id of the view containing all filters
@@ -555,6 +554,7 @@ this.recline.View = this.recline.View || {};
 
             // not all filters required a source of data
             if (this._sourceDataset) {
+                //this._sourceDataset.facets.bind('reset', this.render);
                 this._sourceDataset.bind('query:done', this.render);
                 this._sourceDataset.queryState.bind('selection:done', this.update);
             }
@@ -572,7 +572,7 @@ this.recline.View = this.recline.View || {};
                 return true;
             if (b && a == b.valueOf())
                 return true;
-            if (a && b && a.valueOf == b.valueOf())
+            if (a && b && a.valueOf() == b.valueOf())
                 return true;
 
             return false;
@@ -588,6 +588,7 @@ this.recline.View = this.recline.View || {};
                         self.activeFilters[j].term = filter.term
                         self.activeFilters[j].start = filter.start
                         self.activeFilters[j].stop = filter.stop
+                        self.fixHierarchicRadiobuttonsSelections(self.activeFilters[j])
                     }
                 }
             });
@@ -649,6 +650,8 @@ this.recline.View = this.recline.View || {};
                             return self.updateListboxStyled($(flt), currActiveFilter, $(currFilterCtrl));
                         case "legend" :
                             return self.updateLegend($(flt), currActiveFilter, $(currFilterCtrl));
+                        case "color_legend" :
+                            return self.updateColorLegend($(flt), currActiveFilter, $(currFilterCtrl));
                         case "multibutton" :
                             return self.updateMultibutton($(flt), currActiveFilter, $(currFilterCtrl));
                     }
@@ -667,6 +670,12 @@ this.recline.View = this.recline.View || {};
         redrawGenericControl:function (filterContainer, currActiveFilter) {
             var out = this.createSingleFilter(currActiveFilter);
             filterContainer.parent().html(out);
+            if (currActiveFilter.controlType == "month_week_calendar" && currActiveFilter.period == "Weeks")
+        	{
+            	var $scroller = $("#"+currActiveFilter.ctrlId).find(".month_week_scroller")
+            	var $tableRow = $scroller.first("table tr")
+            	$scroller.scrollTop((currActiveFilter.term -1) * parseInt($tableRow.css("line-height")))
+        	}
         },
 
         updateDropdown:function (filterContainer, currActiveFilter, filterCtrl) {
@@ -674,7 +683,7 @@ this.recline.View = this.recline.View || {};
 
             if (valueList != null && valueList.length == 1) {
                 filterCtrl[0].style.color = "";
-                filterCtrl.val(currActiveFilter.list[0]);
+                filterCtrl.val(valueList[0]);
             }
             else
                 filterCtrl.find("option:first").prop("selected", "selected");
@@ -709,7 +718,7 @@ this.recline.View = this.recline.View || {};
             _.each(buttons, function (btn) {
                 $(btn).removeClass("btn-primary")
             });
-            if (valueList != null) {
+            if (valueList != null && typeof valuelist != "undefined") {
                 if (valueList.length == 1) {
                     // do not use each or other jquery/underscore methods since they don't work well here
                     for (var i = 0; i < buttons.length; i++) {
@@ -731,7 +740,7 @@ this.recline.View = this.recline.View || {};
         },
         updateRangeSlider:function (filterContainer, currActiveFilter, filterCtrl) {
             var valueList = this.computeUserChoices(currActiveFilter);
-            if (valueList != null && valueList.length == 2) {
+            if (valueList && valueList.length == 2) {
                 filterCtrl.slider("values", 0, valueList[0]);
                 filterCtrl.slider("values", 1, valueList[1]);
                 $("#amount" + currActiveFilter.ctrlId).html(currActiveFilter.label + ": " + valueList[0] + " - " + valueList[1]); // sistema di riserva
@@ -740,7 +749,7 @@ this.recline.View = this.recline.View || {};
         },
         updateRangeSliderStyled:function (filterContainer, currActiveFilter, filterCtrl) {
             var valueList = this.computeUserChoices(currActiveFilter);
-            if (valueList != null && valueList.length == 2)
+            if (valueList && valueList.length == 2)
                 filterCtrl.jslider("value", valueList[0], valueList[1]);
         },
         updateRangeCalendar:function (filterContainer, currActiveFilter, filterCtrlFrom, filterCtrlTo) {
@@ -764,22 +773,25 @@ this.recline.View = this.recline.View || {};
         updateLegend:function (filterContainer, currActiveFilter, filterCtrl) {
             this.redrawGenericControl(filterContainer, currActiveFilter);
         },
+        updateColorLegend:function (filterContainer, currActiveFilter, filterCtrl) {
+            this.redrawGenericControl(filterContainer, currActiveFilter);
+        },
         updateMultibutton:function (filterContainer, currActiveFilter, filterCtrl) {
             var valueList = this.computeUserChoices(currActiveFilter);
-
+            var classToUse = currActiveFilter.selectedClassName || "btn-info";
             var buttons = filterCtrl.find("button.grouped-button");
             _.each(buttons, function (btn) {
-                $(btn).removeClass("btn-info")
+                $(btn).removeClass(classToUse)
             });
 
             // from now on, do not use each or other jquery/underscore methods since they don't work well here
-            if (valueList != null)
+            if (valueList)
                 for (var i = 0; i < buttons.length; i++) {
                     var btn = $(buttons[i]);
                     for (var j = 0; j < valueList.length; j++) {
                         var v = valueList[j];
                         if (this.areValuesEqual(v, btn.html()))
-                            btn.addClass("btn-info");
+                            btn.addClass(classToUse);
                     }
                 }
         },
@@ -798,9 +810,12 @@ this.recline.View = this.recline.View || {};
                 throw("GenericFilter: Invalid control type " + currActiveFilter.controlType);
 
             if (filterTemplate.needFacetedField) {
+            	if (!self._sourceDataset.getRecords().length)
+            		return
+            		
                 currActiveFilter.facet = self._sourceDataset.getFacetByFieldId(currActiveFilter.field);
 
-                if (currActiveFilter.facet == null)
+                if (currActiveFilter.facet == null || typeof currActiveFilter.facet == "undefined")
                     throw "GenericFilter: no facet present for field [" + currActiveFilter.field + "]. Define a facet before filter render"
                 
                 if (currActiveFilter.fieldType == "integer" || currActiveFilter.fieldType == "number") // sort if numeric (Chrome issue)
@@ -809,13 +824,13 @@ this.recline.View = this.recline.View || {};
                 	});
                     
                 facetTerms = currActiveFilter.facet.attributes.terms;
-                if (typeof currActiveFilter.label == "undefined" || currActiveFilter.label == null)
-                    currActiveFilter.label = currActiveFilter.field;
-            } else if(self._sourceDataset) {
-                // if facet are not defined i use all dataset records
+            } else if (self._sourceDataset) {
+                // if facet are not defined I use all dataset records
 
 
             }
+            if (typeof currActiveFilter.label == "undefined" || currActiveFilter.label == null)
+                currActiveFilter.label = currActiveFilter.field;
 
             currActiveFilter.useLegend = "block";
             if (currActiveFilter.labelPosition != 'top')
@@ -851,10 +866,7 @@ this.recline.View = this.recline.View || {};
 
             if (currActiveFilter.controlType == "month_week_calendar") {
                 currActiveFilter.weekValues = [];
-                currActiveFilter.periodValues = [
-                    {val:"Months", selected:(currActiveFilter.period == "Months" ? "selected" : "")},
-                    {val:"Weeks", selected:(currActiveFilter.period == "Weeks" ? "selected" : "")}
-                ]
+
                 var currYear = currActiveFilter.year;
                 var januaryFirst = new Date(currYear, 0, 1);
                 var januaryFirst_time = januaryFirst.getTime();
@@ -870,12 +882,22 @@ this.recline.View = this.recline.View || {};
                         weekEndTime = new Date(currYear + 1, 0, 1).getTime();
                         finished = true;
                     }
-                    currActiveFilter.weekValues.push({val:w + 1,
-                        label:"" + (w + 1) + " [" + d3.time.format("%x")(new Date(weekStartTime)) + " -> " + d3.time.format("%x")(new Date(weekEndTime - 1000)) + "]",
-                        startDate:new Date(weekStartTime),
-                        stopDate:new Date(weekEndTime),
-                        selected:(currActiveFilter.term == w + 1 ? self._selectedClassName : "")
-                    });
+                    var currWeekValues = {
+                    		val:w + 1,
+                            label:"" + (w + 1) + " [" + d3.time.format("%x")(new Date(weekStartTime)) + " -> " + d3.time.format("%x")(new Date(weekEndTime - 1000)) + "]",
+                            startDate:new Date(weekStartTime),
+                            stopDate:new Date(weekEndTime)
+                    }
+                    if (currActiveFilter.term == w + 1 || 
+                    	(currActiveFilter.start && currActiveFilter.start.getTime() == weekStartTime
+                    	&& currActiveFilter.stop && currActiveFilter.stop.getTime() == weekEndTime)) 
+                    {
+                    	currWeekValues.selected = self._selectedClassName;
+                    	currActiveFilter.term = w + 1;
+                        if (currActiveFilter.period == "")
+                        	currActiveFilter.period = "Weeks";
+                    }
+                    currActiveFilter.weekValues.push(currWeekValues);
                 }
 
                 currActiveFilter.monthValues = [];
@@ -886,13 +908,26 @@ this.recline.View = this.recline.View || {};
                         endYear = currYear + 1;
                         endMonth = 0;
                     }
-                    currActiveFilter.monthValues.push({ val:d3.format("02d")(m),
+                    var currMonthValues = {
+                		val:d3.format("02d")(m),
                         label:d3.time.format("%B")(new Date(m + "/01/2012")) + " " + currYear,
                         startDate:new Date(currYear, m - 1, 1, 0, 0, 0, 0),
                         stopDate:new Date(endYear, endMonth, 1, 0, 0, 0, 0),
-                        selected:(currActiveFilter.term == m ? self._selectedClassName : "")
-                    });
+                    }
+                    if (currActiveFilter.term == m || 
+                    	(currActiveFilter.start && currActiveFilter.start.getTime() == currMonthValues.startDate.getTime()
+                    	&& currActiveFilter.stop && currActiveFilter.stop.getTime() == currMonthValues.stopDate.getTime())) 
+                    {
+                    	currMonthValues.selected = self._selectedClassName;
+                        if (currActiveFilter.period == "")
+                        	currActiveFilter.period = "Months";
+                    }
+                    currActiveFilter.monthValues.push(currMonthValues);
                 }
+                currActiveFilter.periodValues = [
+                     {val:"Months", selected:(currActiveFilter.period == "Months" ? "selected" : "")},
+                     {val:"Weeks", selected:(currActiveFilter.period == "Weeks" ? "selected" : "")}
+                ]
                 if (currActiveFilter.period == "Months")
                     currActiveFilter.values = currActiveFilter.monthValues;
                 else if (currActiveFilter.period == "Weeks")
@@ -903,7 +938,6 @@ this.recline.View = this.recline.View || {};
                 var endYear = parseInt(d3.time.format("%Y")(new Date()))
                 for (var y = startYear; y <= endYear; y++)
                     currActiveFilter.yearValues.push({val:y, selected:(currActiveFilter.year == y ? "selected" : "")});
-
             }
             else if (currActiveFilter.controlType == "dropdown_date_range") {
                 currActiveFilter.date_values = [];
@@ -959,13 +993,14 @@ this.recline.View = this.recline.View || {};
                         });
                 }
                 for (var j in currActiveFilter.date_values)
-                    if (currActiveFilter.date_values[j].val == currActiveFilter.term) {
-                        currActiveFilter.date_values[j].selected = self._selectedClassName;
+                    if (currActiveFilter.date_values[j].val == currActiveFilter.term ||
+                    	(currActiveFilter.date_values[j].startDate == currActiveFilter.start && currActiveFilter.date_values[j].stopDate == currActiveFilter.stop)) {
+                        currActiveFilter.date_values[j].selected = "selected";
                         break;
                     }
             }
             else if (currActiveFilter.controlType == "legend") {
-                // OLD code, somehow working but wrong
+                // this code somehow works but it's not correct
                 currActiveFilter.tmpValues = _.pluck(currActiveFilter.facet.attributes.terms, "term");
 
                 if (typeof currActiveFilter.origLegend == "undefined") {
@@ -983,27 +1018,14 @@ this.recline.View = this.recline.View || {};
 
                     currActiveFilter.values.push({val:v, notSelected:notSelected, color:currActiveFilter.facet.attributes.terms[i].color, count:currActiveFilter.facet.attributes.terms[i].count});
                 }
-
-// 			NEW code. Will work when facet will be returned correctly even after filtering
-//		  currActiveFilter.tmpValues = _.pluck(currActiveFilter.facet.attributes.terms, "term");
-//		  for (var v in currActiveFilter.tmpValues)
-//		  {
-//				var color;
-//				var currTerm = _.find(currActiveFilter.facet.attributes.terms, function(currT) { return currT.term == v; });
-//				if (typeof currTerm != "undefined" && currTerm != null)
-//				{
-//					color = currTerm.color;
-//					count = currTerm.count;
-//				}
-//				var notSelected = "";
-//				var legendSelection = currActiveFilter.legend;
-//				if (typeof legendSelection == "undefined" || legendSelection == null || legendSelection.indexOf(v) < 0)
-//					notSelected = "not-selected";
-//				
-//				currActiveFilter.values.push({val: v, notSelected: notSelected, color: color, count: count});
-//		  }		  
             }
             else if (currActiveFilter.controlType == "color_legend") {
+            	if (typeof currActiveFilter.showValueLabels == "undefined")
+            		currActiveFilter.showValueLabels = true;
+            	
+                currActiveFilter.colorValues = [];
+
+                currActiveFilter.tmpValues = _.filter(_.pluck(currActiveFilter.facet.attributes.terms, "term"), function(val){ return typeof val != "undefined" && val != null; });
                 var ruler = document.getElementById("my_string_width_calculation_ruler");
                 if (typeof ruler == "undefined" || ruler == null) {
                     ruler = document.createElement("span");
@@ -1012,82 +1034,129 @@ this.recline.View = this.recline.View || {};
                     ruler.style.width = "auto";
                     document.body.appendChild(ruler);
                 }
-                var maxWidth = 250;
-                currActiveFilter.colorValues = [];
-                
-                
+                if (currActiveFilter.showValueLabels)
+            	{
+                    var maxWidth = self.$el.width() || 250;
+                    currActiveFilter.lineHeight = 40;
+                    
+	                if (currActiveFilter.fieldType == "float" || currActiveFilter.fieldType == "number" || currActiveFilter.fieldType == "integer")
+	                    for (var jj in currActiveFilter.tmpValues)
+		                	currActiveFilter.tmpValues[jj] = Math.floor(currActiveFilter.tmpValues[jj])
+	                	
+	                currActiveFilter.tmpValues = _.uniq(currActiveFilter.tmpValues)
+	
+	                var pixelW = 0;
+	                // calculate needed pixel width for every string
+	                for (var i in currActiveFilter.tmpValues) {
+	                    var v = currActiveFilter.tmpValues[i];
+	                    ruler.innerHTML = v;
+	                    var w = ruler.offsetWidth
+	                    if (w > pixelW)
+	                        pixelW = w;
+	                }
+	                pixelW += 2;
+	
+	                // calculate needed row number and columns per row
+	                var maxColsPerRow = Math.floor(maxWidth / pixelW);
+	                var totRighe = Math.ceil(currActiveFilter.tmpValues.length / maxColsPerRow);
+	                var colsPerRow = Math.ceil(currActiveFilter.tmpValues.length / totRighe);
+	                currActiveFilter.totWidth = colsPerRow * pixelW;
+	                currActiveFilter.totWidth2 = currActiveFilter.totWidth + (currActiveFilter.labelPosition == 'left' ? currActiveFilter.label.length * 10 : 10)
+	                currActiveFilter.totHeight = totRighe * currActiveFilter.lineHeight;
+	                currActiveFilter.totHeight2 = currActiveFilter.totHeight + currActiveFilter.lineHeight;
+	
+	                var riga = 0;
+	                var colonna = 0;
+	
+	                for (var i in currActiveFilter.tmpValues) {
+	                    var v = currActiveFilter.tmpValues[i];
+	                    var color = currActiveFilter.facet.attributes.terms[i].color;
+	                    if (colonna == colsPerRow) {
+	                        riga++;
+	                        colonna = 0;
+	                    }
+	                    currActiveFilter.colorValues.push({width:pixelW, color:color, textColor:self.complementColor(color),
+	                        val:v, x:pixelW * colonna, y:riga * currActiveFilter.lineHeight, yplus30:riga * currActiveFilter.lineHeight + 25 });
+	
+	                    colonna++;
+	                }
+            	}
+                else
+            	{
+                    currActiveFilter.colorValues2 = [];
+                    currActiveFilter.lineHeight = 20;
 
-                currActiveFilter.tmpValues = _.pluck(currActiveFilter.facet.attributes.terms, "term");
-
-                var pixelW = 0;
-                // calculate needed pixel width for every string
-                for (var i in currActiveFilter.tmpValues) {
-                    var v = currActiveFilter.tmpValues[i];
-                    ruler.innerHTML = v;
-                    var w = ruler.offsetWidth
-                    if (w > pixelW)
-                        pixelW = w;
-                }
-                pixelW += 2;
-                currActiveFilter.lineHeight = 40;
-
-                // calculate needed row number and columns per row
-                var maxColsPerRow = Math.floor(maxWidth / pixelW);
-                var totRighe = Math.ceil(currActiveFilter.tmpValues.length / maxColsPerRow);
-                var colsPerRow = Math.ceil(currActiveFilter.tmpValues.length / totRighe);
-                currActiveFilter.totWidth = colsPerRow * pixelW;
-                currActiveFilter.totWidth2 = currActiveFilter.totWidth + (currActiveFilter.labelPosition == 'left' ? currActiveFilter.label.length * 10 : 10)
-                currActiveFilter.totHeight = totRighe * currActiveFilter.lineHeight;
-                currActiveFilter.totHeight2 = currActiveFilter.totHeight + 40;
-
-                var riga = 0;
-                var colonna = 0;
-
-                for (var i in currActiveFilter.tmpValues) {
-                    var v = currActiveFilter.tmpValues[i];
-                    var color = currActiveFilter.facet.attributes.terms[i].color;
-                    if (colonna == colsPerRow) {
-                        riga++;
-                        colonna = 0;
-                    }
-                    currActiveFilter.colorValues.push({width:pixelW, color:color, textColor:self.complementColor(color),
-                        val:v, x:pixelW * colonna, y:riga * currActiveFilter.lineHeight, yplus30:riga * currActiveFilter.lineHeight + 25 });
-
-                    colonna++;
-                }
+                	currActiveFilter.minValue = currActiveFilter.tmpValues[0]
+                	currActiveFilter.maxValue = currActiveFilter.tmpValues[currActiveFilter.tmpValues.length-1]
+                	
+                	var maxWidth = self.el.width() || 250
+                	var colsPerRow = currActiveFilter.tmpValues.length
+                	var pixelW = Math.floor(maxWidth / colsPerRow)
+                	
+	                currActiveFilter.totWidth = colsPerRow * pixelW;
+	                currActiveFilter.totWidth2 = currActiveFilter.totWidth + (currActiveFilter.labelPosition == 'left' ? currActiveFilter.label.length * 10 : 10)
+	                currActiveFilter.totHeight = currActiveFilter.lineHeight;
+	                currActiveFilter.totHeight2 = currActiveFilter.totHeight + currActiveFilter.lineHeight;
+	                for (var i in currActiveFilter.tmpValues) {
+	                    var v = currActiveFilter.tmpValues[i];
+	                    var color = currActiveFilter.facet.attributes.terms[i].color;
+	                    // also set first and last label
+	                    if (i == 0 || i == currActiveFilter.tmpValues.length-1)
+                    	{
+	                    	if (!isNaN(v)){
+	                    		v = v.toFixed(2);	                    		
+	                    	}
+	                    	ruler.innerHTML = v;
+		                    var w = ruler.offsetWidth
+		                    currActiveFilter.colorValues2.push({width:w, color:color, val:v, x:(i==0 ? 2 : currActiveFilter.totWidth-w-2), y:0, yplus30:15, textColor:self.complementColor(color)});
+                    	}
+	                    currActiveFilter.colorValues.push({width:pixelW, color:color, val:"", x:pixelW * i, y:0, yplus30:15 });
+	                }
+            	}
             }
             else if (currActiveFilter.controlType == "hierarchic_radiobuttons") {
                 var lev1Values = []
                 var fullLevelValues = []
                 var totLevels = 1;
                 var userSelection = null;
+        		currActiveFilter.all1Selected = "btn-primary";
                 if (currActiveFilter.term)
                 	userSelection = currActiveFilter.term
                 else if (typeof currActiveFilter.list != "undefined" && currActiveFilter.list && currActiveFilter.list.length == 1) 
                 	userSelection = currActiveFilter.list[0];
-                	
-            	_.each(self._sourceDataset.getRecords(), function(record) {
+                
+                if (currActiveFilter.term || (currActiveFilter.list && currActiveFilter.list.length < self._sourceDataset.getRecords()))
+                	currActiveFilter.all1Selected = ""
+                
+
+                var storedValues = []; // to avoid dulicates
+                _.each(self._sourceDataset.getRecords(), function(record) {
                     var field = self._sourceDataset.fields.get(currActiveFilter.field);
                     if(!field) {
                         throw "widget.genericfilter: unable to find field ["+currActiveFilter.field+"] in dataset";
                     }
 
                     var v = record.getFieldValue(field);
-                    var shape = record.getFieldShape(field, false, false);
-                    fullLevelValues.push(v);
-                    if (v.indexOf(currActiveFilter.separator) < 0)
-                    	lev1Values.push({value: v, record: record, shape: shape});
-                    else
+                    var vUnrendered = record.getFieldValueUnrendered(field);
+                    if (!_.contains(storedValues, vUnrendered))
                 	{
-                    	var valueSet = v.split(currActiveFilter.separator);
-                        var lev1Val = valueSet[0]
-                        if (_.find(lev1Values, function(currVal){ return currVal.value == lev1Val }))
-                        	{ /* skip already present */ }
-                        else 
+                    	storedValues.push(vUnrendered);
+                        var shape = record.getFieldShape(field, false, false);
+                        fullLevelValues.push(v);
+                        if (v.indexOf(currActiveFilter.separator) < 0)
+                        	lev1Values.push({value: v, valueUnrendered: vUnrendered, record: record, shape: shape});
+                        else
                     	{
-                        	lev1Values.push({value: lev1Val, record: null, shape: shape});
-                        	if (valueSet.length > totLevels)
-                        		totLevels = valueSet.length
+                        	var valueSet = v.split(currActiveFilter.separator);
+                            var lev1Val = valueSet[0]
+                            if (_.find(lev1Values, function(currVal){ return currVal.value == lev1Val }))
+                            	{ /* skip already present */ }
+                            else 
+                        	{
+                            	lev1Values.push({value: lev1Val, valueUnrendered: lev1Val, record: null, shape: shape});
+                            	if (valueSet.length > totLevels)
+                            		totLevels = valueSet.length
+                        	}
                     	}
                 	}
             	});
@@ -1107,10 +1176,10 @@ this.recline.View = this.recline.View || {};
             	_.each(lev1Values, function(lev1Val) {
                     var selected = "";
                     var v = lev1Val.value;
-                    var val = v;
+                    var vUnrendered = lev1Val.valueUnrendered;
                     var record = lev1Val.record;
                     
-                	if (userSelection && userSelection != "" && self.areValuesEqual(userSelection.split(currActiveFilter.separator)[0], v))
+                	if (userSelection && userSelection != "" && self.areValuesEqual(userSelection.split(currActiveFilter.separator)[0], vUnrendered))
                         selected = 'btn-primary'
                         	
                     if (currActiveFilter.useShapeOnly == true)
@@ -1123,7 +1192,7 @@ this.recline.View = this.recline.View || {};
                     	}
                     	else v = "<div class='shapeH'>"+v+"</div>"
                 	}
-                    currActiveFilter.values.push({value: val, val:v, record:record, selected:selected, valCount: v, tooltip: tooltip });
+                    currActiveFilter.values.push({value: vUnrendered, val:v, record:record, selected:selected, valCount: v, tooltip: tooltip });
                 });
             	// handle user selection
             	if (userSelection && userSelection != "")
@@ -1228,13 +1297,27 @@ this.recline.View = this.recline.View || {};
             }
             else {
                 var lastV = null;
-                currActiveFilter.step = null;
+                if (typeof currActiveFilter.step == "undefined") // do not reset if user specified its own step value
+                	currActiveFilter.step = null;
 
                 if(facetTerms) {
                     for (var i in facetTerms) {
                         var selected = "";
                         var tooltip = "";
                         var v = facetTerms[i].term;
+                        // facet has no renderer, so we need to retrieve the first record that matches the value and use its renderer
+                        // This is needed to solve the notorious "All"/"_ALL_" issue
+                        if (facetTerms[i].term)
+                    	{
+                        	var validRec = _.find(self._sourceDataset.getRecords(), function(rec) { return rec.attributes[currActiveFilter.field] == facetTerms[i].term })
+                            if (validRec)
+                        	{
+                            	var validRecField = validRec.fields.get(currActiveFilter.field)
+                            	if (validRecField)
+                            		v = validRec.getFieldValue(validRecField)
+                        	}
+                    	}
+                        var vUnrendered = facetTerms[i].term;
                         var val = v;
                         var count = facetTerms[i].count
                         if (currActiveFilter.controlType == "list") {
@@ -1242,8 +1325,10 @@ this.recline.View = this.recline.View || {};
                                 selected = self._selectedClassName;
                         }
                         else if (currActiveFilter.controlType == "radiobuttons") {
-                            if (self.areValuesEqual(currActiveFilter.term, v) || (typeof currActiveFilter.list != "undefined" && currActiveFilter.list && currActiveFilter.list.length == 1 && self.areValuesEqual(currActiveFilter.list[0], v)))
-                                selected = 'btn-primary'
+                            var classToUse = currActiveFilter.selectedClassName || "btn-primary"
+
+                            if (self.areValuesEqual(currActiveFilter.term, vUnrendered) || (typeof currActiveFilter.list != "undefined" && currActiveFilter.list && currActiveFilter.list.length == 1 && self.areValuesEqual(currActiveFilter.list[0], vUnrendered)))
+                                selected = classToUse
                             
                             if (currActiveFilter.useShapeOnly == true)
                             	if (facetTerms[i].shape && facetTerms[i].shape.indexOf("undefined") < 0)
@@ -1254,12 +1339,14 @@ this.recline.View = this.recline.View || {};
                             	else v = "<div class='shapeH'>"+v+"</div>"
                         }
                         else if (currActiveFilter.controlType == "multibutton") {
-                            if (self.areValuesEqual(currActiveFilter.term, v))
-                                selected = 'btn-info'
+                            var classToUse = currActiveFilter.selectedClassName || "btn-info"
+
+                            if (self.areValuesEqual(currActiveFilter.term, vUnrendered))
+                                selected = classToUse
                             else if (typeof currActiveFilter.list != "undefined" && currActiveFilter.list != null) {
                                 for (var j in currActiveFilter.list)
-                                    if (self.areValuesEqual(currActiveFilter.list[j], v))
-                                        selected = 'btn-info'
+                                    if (self.areValuesEqual(currActiveFilter.list[j], vUnrendered))
+                                        selected = classToUse
                             }
                             if (currActiveFilter.useShapeOnly == true)
                             	if (facetTerms[i].shape && facetTerms[i].shape.indexOf("undefined") < 0)
@@ -1270,21 +1357,21 @@ this.recline.View = this.recline.View || {};
                             	else v = "<div class='shapeH'>"+v+"</div>"
                         }
                         else if (currActiveFilter.controlType == "dropdown" || currActiveFilter.controlType == "dropdown_styled") {
-                            if (self.areValuesEqual(currActiveFilter.term, v) || (typeof currActiveFilter.list != "undefined" && currActiveFilter.list && currActiveFilter.list.length == 1 && self.areValuesEqual(currActiveFilter.list[0], v)))
+                            if (self.areValuesEqual(currActiveFilter.term, vUnrendered) || (typeof currActiveFilter.list != "undefined" && currActiveFilter.list && currActiveFilter.list.length == 1 && self.areValuesEqual(currActiveFilter.list[0], vUnrendered)))
                                 selected = "selected"
                         }
                         else if (currActiveFilter.controlType == "listbox" || currActiveFilter.controlType == "listbox_styled") {
-                            if (self.areValuesEqual(currActiveFilter.term, v))
+                            if (self.areValuesEqual(currActiveFilter.term, vUnrendered))
                                 selected = "selected"
                             else if (typeof currActiveFilter.list != "undefined" && currActiveFilter.list != null) {
                                 for (var j in currActiveFilter.list)
-                                    if (self.areValuesEqual(currActiveFilter.list[j], v))
+                                    if (self.areValuesEqual(currActiveFilter.list[j], vUnrendered))
                                         selected = "selected"
                             }
                         }
                         if (currActiveFilter.showCount)
-                            currActiveFilter.values.push({value: val, val:v, selected:selected, valCount: v+"\t["+count+"]", count: "["+count+"]", tooltip: tooltip });
-                        else currActiveFilter.values.push({value: val, val:v, selected:selected, valCount: v, tooltip: tooltip });
+                            currActiveFilter.values.push({value: vUnrendered, val:v, selected:selected, valCount: v+"\t["+count+"]", count: "["+count+"]", tooltip: tooltip });
+                        else currActiveFilter.values.push({value: vUnrendered, val:v, selected:selected, valCount: v, tooltip: tooltip });
 
                         if (currActiveFilter.controlType.indexOf('slider') >= 0) {
                             if (v > currActiveFilter.max)
@@ -1294,7 +1381,7 @@ this.recline.View = this.recline.View || {};
                                 currActiveFilter.min = v;
 
                             if (currActiveFilter.controlType.indexOf('styled') > 0 && lastV != null) {
-                                if (currActiveFilter.step == null)
+                                if (currActiveFilter.step == null || typeof currActiveFilter.step == "undefined")
                                     currActiveFilter.step = v - lastV;
                                 else if (v - lastV != currActiveFilter.step)
                                     currActiveFilter.step = 1;
@@ -1312,10 +1399,12 @@ this.recline.View = this.recline.View || {};
                         }
 
                         var v = record.getFieldValue(field);
+                        var vUnrendered = record.getFieldValueUnrendered(field);
                         var val = v;
                         if (currActiveFilter.controlType == "radiobuttons") {
-                            if (self.areValuesEqual(currActiveFilter.term, v) || (typeof currActiveFilter.list != "undefined" && currActiveFilter.list && currActiveFilter.list.length == 1 && self.areValuesEqual(currActiveFilter.list[0], v)))
-                                selected = 'btn-primary'
+                        	var classToUse = currActiveFilter.selectedClassName || "btn-primary"
+                            if (self.areValuesEqual(currActiveFilter.term, vUnrendered) || (typeof currActiveFilter.list != "undefined" && currActiveFilter.list && currActiveFilter.list.length == 1 && self.areValuesEqual(currActiveFilter.list[0], vUnrendered)))
+                                selected = classToUse
                                 	
                             if (currActiveFilter.useShapeOnly == true)
                         	{
@@ -1329,12 +1418,13 @@ this.recline.View = this.recline.View || {};
                         	}
                         }
                         else if (currActiveFilter.controlType == "multibutton") {
-                            if (self.areValuesEqual(currActiveFilter.term, v))
-                                selected = 'btn-info'
+                        	var classToUse = currActiveFilter.selectedClassName || "btn-info"
+                            if (self.areValuesEqual(currActiveFilter.term, vUnrendered))
+                                selected = classToUse
                             else if (typeof currActiveFilter.list != "undefined" && currActiveFilter.list != null) {
                                 for (var j in currActiveFilter.list)
-                                    if (self.areValuesEqual(currActiveFilter.list[j], v))
-                                        selected = 'btn-info'
+                                    if (self.areValuesEqual(currActiveFilter.list[j], vUnrendered))
+                                        selected = classToUse
                             }
                             if (currActiveFilter.useShapeOnly == true)
                         	{
@@ -1348,19 +1438,19 @@ this.recline.View = this.recline.View || {};
                         	}
                         }
                         else if (currActiveFilter.controlType == "dropdown" || currActiveFilter.controlType == "dropdown_styled") {
-                            if (self.areValuesEqual(currActiveFilter.term, v) || (typeof currActiveFilter.list != "undefined" && currActiveFilter.list && currActiveFilter.list.length == 1 && self.areValuesEqual(currActiveFilter.list[0], v)))
+                            if (self.areValuesEqual(currActiveFilter.term, vUnrendered) || (typeof currActiveFilter.list != "undefined" && currActiveFilter.list && currActiveFilter.list.length == 1 && self.areValuesEqual(currActiveFilter.list[0], vUnrendered)))
                                 selected = "selected"
                         }
                         else if (currActiveFilter.controlType == "listbox" || currActiveFilter.controlType == "listbox_styled") {
-                            if (self.areValuesEqual(currActiveFilter.term, v))
+                            if (self.areValuesEqual(currActiveFilter.term, vUnrendered))
                                 selected = "selected"
                             else if (typeof currActiveFilter.list != "undefined" && currActiveFilter.list != null) {
                                 for (var j in currActiveFilter.list)
-                                    if (self.areValuesEqual(currActiveFilter.list[j], v))
+                                    if (self.areValuesEqual(currActiveFilter.list[j], vUnrendered))
                                         selected = "selected"
                             }
                         }
-                        currActiveFilter.values.push({value: val, val:v, record:record, selected:selected, valCount: v, tooltip: tooltip });
+                        currActiveFilter.values.push({value: vUnrendered, val:v, record:record, selected:selected, valCount: v, tooltip: tooltip });
 
                         if (currActiveFilter.controlType.indexOf('slider') >= 0) {
                             if (v > currActiveFilter.max)
@@ -1370,7 +1460,7 @@ this.recline.View = this.recline.View || {};
                                 currActiveFilter.min = v;
 
                             if (currActiveFilter.controlType.indexOf('styled') > 0 && lastV != null) {
-                                if (currActiveFilter.step == null)
+                                if (currActiveFilter.step == null || typeof currActiveFilter.step == "undefined")
                                     currActiveFilter.step = v - lastV;
                                 else if (v - lastV != currActiveFilter.step)
                                     currActiveFilter.step = 1;
@@ -1416,9 +1506,44 @@ this.recline.View = this.recline.View || {};
 
             return Mustache.render(self.filterTemplates[currActiveFilter.controlType], currActiveFilter);
         },
+        fixHierarchicRadiobuttonsSelections:function(filter) {
+        	var self = this;
+            // ensures previous hierarchic_radiobutton selections are retained, if any (coming from the session cookie) [PART 1]
+            if (filter.controlType == "hierarchic_radiobuttons" && filter.type == "list"
+            	&& filter.list && filter.list.length > 1)
+        	{
+            	var valueParts = filter.list[0].split(filter.separator)
+            	if (valueParts.length > 1)
+        		{
+                	var commonSelection = valueParts.splice(0, valueParts.length - 1).join(filter.separator)
+                	var lung = commonSelection.length
+                	var allRecordsFound = true
+                	var allRecords = self._sourceDataset.getRecords() 
+                	for (var r in allRecords)
+            		{
+                		var record = allRecords[r]
+                        var field = self._sourceDataset.fields.get(filter.field);
+                        var currV = record.getFieldValue(field);
+                        if (currV.substring(0, lung) === commonSelection)
+                    	{
+                        	if (!_.contains(filter.list, currV))
+                    		{
+                            	allRecordsFound = false;
+                            	break;
+                    		}
+                    	}
+            		}
+                	if (allRecordsFound)
+                		filter.term = commonSelection
+        		}
+        	}
+        	
+        },
+        
 
         render:function () {
             var self = this;
+            console.log("Render "+this._sourceDataset.id+" ["+this._sourceDataset.getRecords().length+"]")
             var tmplData = {filters:this.activeFilters};
             _.each(tmplData.filters, function (flt) {
                 flt.hrVisible = 'block';
@@ -1434,6 +1559,7 @@ this.recline.View = this.recline.View || {};
                             tmplData.filters[j].term = filter.term
                             tmplData.filters[j].start = filter.start
                             tmplData.filters[j].stop = filter.stop
+                            self.fixHierarchicRadiobuttonsSelections(tmplData.filters[j])
                         }
                     }
                 });
@@ -1478,6 +1604,37 @@ this.recline.View = this.recline.View || {};
 
             var out = Mustache.render(currTemplate, tmplData);
             this.el.html(out);
+            
+            // ensure range_slider_styled is attached correctly to the event
+            for (var jj in tmplData.filters)
+            	if (tmplData.filters[jj].controlType.indexOf("slider_styled") >= 0) {
+            		var currData = tmplData.filters[jj];
+        			$( "#slider"+currData.ctrlId).jslider({
+        				from: currData.min,
+        				to: currData.max,
+        				scale: [currData.min,"|",currData.step1,"|",currData.mean,"|", currData.step2,"|",currData.max],
+        				limits: false,
+                    	step: currData.step,
+        				skin: (tmplData.filters[jj].controlType.indexOf("range") == 0 ? "round_plastic" : "plastic"),
+                    	onstatechange: self.onStyledSliderValueChanged
+        			});
+        			$( "#slider"+currData.ctrlId).data("self", self);
+            	}
+            
+            // ensures previous hierarchic_radiobutton selections are retained, if any (coming from the session cookie) [PART 2]
+            _.each(tmplData.filters, function(currActiveFilter) {
+                if (currActiveFilter.controlType == "hierarchic_radiobuttons" && currActiveFilter.type == "list" 
+                	&& currActiveFilter.list && currActiveFilter.list.length > 1)
+            	{
+                    var flt;
+                    if (currActiveFilter.ctrlId)
+                    	flt = self.el.find("#"+currActiveFilter.ctrlId);
+                    else flt = this.el.find("div.filter");
+                    
+            		var currFilterCtrl = $(flt).find(".data-control-id");
+            		self.updateHierarchicRadiobuttons($(flt), currActiveFilter, $(currFilterCtrl));                		
+            	}
+            });
         },
 
         complementColor:function (c) {
@@ -1502,14 +1659,14 @@ this.recline.View = this.recline.View || {};
             var controlType = $fieldSet.attr('data-control-type');
             if (controlType == "hierarchic_radiobuttons")
         	{
+                var currActiveFilter = this.findActiveFilterByField(fieldId, controlType);
                 // ensure one and only one selection is performed
-                var classToUse = "btn-primary"
+                var classToUse = currActiveFilter.selectedClassName || "btn-primary"
                 $target.parent().find('button.' + classToUse).each(function () {
                     $(this).removeClass(classToUse);
                 });
                 $target.addClass(classToUse);
                 var currLevel = $target.parent().attr("level")
-                var currActiveFilter = this.findActiveFilterByField(fieldId, controlType);
                 var prefix = ""
                 if (currLevel >= 2)
                 {
@@ -1528,11 +1685,16 @@ this.recline.View = this.recline.View || {};
                 	listaValori.push(prefix.substring(0, prefix.length-1))
                 	
                 currActiveFilter.userChanged = true;
+
                 if (listaValori.length == 1 && listaValori[0] == "All" && !currActiveFilter.noAllButton) {
-                    listaValori = [];
+                	// "All" pressed. Pass all records to the action 
                     currActiveFilter.term = "";
                     currActiveFilter.showLevel2 = "none";
                     currActiveFilter.showLevel3 = "none";
+                    var actions = this.options.actions;
+                    actions.forEach(function(currAction){
+                        currAction.action.doAction(self._sourceDataset.getRecords(), currAction.mapping);
+                    });
                 }
                 else
             	{
@@ -1566,14 +1728,21 @@ this.recline.View = this.recline.View || {};
                     		if (divLev3.length > 0)
                     			divLev3[0].style.display="none"
                 		}
+                    	// must also send currSelectedValue to all models!!!!
                         this.doAction("onButtonsetClicked", fieldId, listaValori, "add", currActiveFilter);
             		}
                 	else
             		{
                 		currActiveFilter.term = prefix + currSelectedValue;
+                		if (currActiveFilter.term.length && currActiveFilter.term[currActiveFilter.term.length-1] == currActiveFilter.separator)
+                			currActiveFilter.term = currActiveFilter.term.substring(0, currActiveFilter.term.length-1)
+                			
                 		// redraw the filter!!!
-                		// TODO: devi trovare flt giusto se ce n'è più di uno!!!
-	                    var flt = this.el.find("div.filter"); 
+	                    var flt;
+	                    if (currActiveFilter.ctrlId)
+	                    	flt = self.el.find("#"+currActiveFilter.ctrlId);
+	                    else flt = this.el.find("div.filter");
+	                    
 	            		var currFilterCtrl = $(flt).find(".data-control-id");
 	            		this.updateHierarchicRadiobuttons($(flt), currActiveFilter, $(currFilterCtrl));                		
                 		
@@ -1583,11 +1752,17 @@ this.recline.View = this.recline.View || {};
                     	_.each(this._sourceDataset.getRecords(), function(record) {
                             var field = self._sourceDataset.fields.get(currActiveFilter.field);
                             var currV = record.getFieldValue(field);
-                            if (currV.indexOf(prefix + currSelectedValue+currActiveFilter.separator) == 0)
+                            var searchString = prefix + currSelectedValue+currActiveFilter.separator;
+                            if (currSelectedValue == "")
+                            	searchString = prefix;
+                            
+                            if (currV.indexOf(searchString) == 0  && !_.contains(listaValori, currV))
                             	listaValori.push(currV)
                     	});
+                    	// must also send currSelectedValue to all models!!!!
                 		this.doAction("onButtonsetClicked", fieldId, listaValori, "add", currActiveFilter);
             		}
+                	
             	}
         	}
             else
@@ -1596,32 +1771,63 @@ this.recline.View = this.recline.View || {};
                 var type = $fieldSet.attr('data-filter-type');
                 var fieldId = $fieldSet.attr('data-filter-field');
                 var controlType = $fieldSet.attr('data-control-type');
-                var classToUse = "btn-info"
+                var currActiveFilter = this.findActiveFilterByField(fieldId, controlType);
+                var classToUse = currActiveFilter.selectedClassName || "btn-info"
                 if (controlType == "multibutton") {
-                    $target.toggleClass(classToUse);
+                	$target.toggleClass(classToUse);
+                	if (currActiveFilter.nullSelectionNotAllowed)
+            		{
+                		if ($fieldSet.find('div.btn-group button.' + classToUse).length == 0)
+            			{
+                			// too few selections
+                			// re-select the button then exit 
+                        	$target.toggleClass(classToUse);
+                			return;
+            			}
+            		}                
                 }
                 else if (controlType == "radiobuttons") {
-                    // ensure one and only one selection is performed
-                    classToUse = "btn-primary"
-                    $fieldSet.find('div.btn-group button.' + classToUse).each(function () {
-                        $(this).removeClass(classToUse);
-                    });
-                    $target.addClass(classToUse);
+                	classToUse = currActiveFilter.selectedClassName || "btn-primary"
+                	if (currActiveFilter.allowDeselection)
+            		{
+                		var wasSelected = $target.hasClass(classToUse) 
+                        $fieldSet.find('div.btn-group button.' + classToUse).each(function () {
+                            $(this).removeClass(classToUse);
+                        });
+                		if (!wasSelected)
+                			$target.addClass(classToUse)
+            		}
+                	else
+            		{
+                        // ensure one and only one selection is performed
+                        $fieldSet.find('div.btn-group button.' + classToUse).each(function () {
+                            $(this).removeClass(classToUse);
+                        });
+                        $target.addClass(classToUse);
+            		
+            		}
                 }
                 var listaValori = [];
                 $fieldSet.find('div.btn-group button.' + classToUse).each(function () {
-                    listaValori.push($(this).attr('val').valueOf()); // in case there's a date, convert it with valueOf
+                	var currVal = $(this).attr('val'); 
+                	if (currVal != null && typeof currVal != "undefined")
+                		listaValori.push(currVal.valueOf()); // in case there's a date, convert it with valueOf
                 });
-                var currActiveFilter = this.findActiveFilterByField(fieldId, controlType);
                 currActiveFilter.userChanged = true;
                 if (controlType == "multibutton")
                     currActiveFilter.list = listaValori;
                 else if (controlType == "radiobuttons") {
-                    if (listaValori.length == 1 && listaValori[0] == "All" && !currActiveFilter.noAllButton) {
-                        listaValori = [];
-                        currActiveFilter.term = "";
+                    if (listaValori.length == 1 && listaValori[0] == "All" && !currActiveFilter.noAllButton
+                    	|| listaValori.length == 0 && currActiveFilter.allowDeselection) {
+	                        listaValori = [];
+	                        currActiveFilter.term = "";
                     }
-                    else currActiveFilter.term = $target.attr('val').valueOf();
+                    else 
+                    {
+                    	var currVal = $(this).attr('val'); 
+                    	if (currVal != null && typeof currVal != "undefined")
+                    		currActiveFilter.term = currVal.valueOf();
+                    }
                 }
                 this.doAction("onButtonsetClicked", fieldId, listaValori, "add", currActiveFilter);
         	}
@@ -1629,6 +1835,10 @@ this.recline.View = this.recline.View || {};
         onLegendItemClicked:function (e) {
             e.preventDefault();
             var $target = $(e.currentTarget);
+            // switch to checkbox if user pressed on label
+            if ($target.is("label"))
+            	$target = $target.parent().prev().children('.legend-item')
+            	
             var $fieldSet = $target.parent().parent().parent().parent().parent();
             var type = $fieldSet.attr('data-filter-type');
             var fieldId = $fieldSet.attr('data-filter-field');
@@ -1705,8 +1915,8 @@ this.recline.View = this.recline.View || {};
                 if (type == "range") {
                     // case month_week_calendar
                     var year = parseInt($combo.val());
-                    var startDate = $targetTD.attr('startDate');
-                    var endDate = $targetTD.attr('stopDate');
+                    var startDate = new Date($targetTD.attr('startDate'));
+                    var endDate = new Date($targetTD.attr('stopDate'));
 
                     currFilter.term = $targetTD.attr('myValue'); // save selected item for re-rendering later
 
@@ -1724,42 +1934,58 @@ this.recline.View = this.recline.View || {};
         // action could be add or remove
         doAction:function (eventType, fieldName, values, actionType, currFilter) {
             var self=this;
+            if (currFilter.fieldType == "integer" || currFilter.fieldType == "number" || currFilter.fieldType == "float")
+            	for (var j in values)
+            		values[j] = parseFloat(values[j]);
 
-            var res = [];
-            // make sure you use all values, even 2nd or 3rd level if present (hierarchic radiobuttons only)
-            var allValues = currFilter.values
-            if (currFilter.valuesLev3)
-            	allValues = currFilter.values.concat(currFilter.valuesLev2, currFilter.valuesLev3)
-            else if (currFilter.valuesLev2)
-            	allValues = currFilter.values.concat(currFilter.valuesLev2)
-            	
-            // TODO it is not efficient, record must be indexed by term
-            // TODO conversion to string is not correct, original value must be used
-            _.each(allValues, function(v) {
-              if(v.record) {
-                  var field = v.record.fields.get(currFilter.field);
-                  if(_.contains(values,v.record.getFieldValueUnrendered(field).toString()))
-                    res.push(v.record);
-              };
-            });
-
-            // I'm using record (not facet) so I can pass it to actions
-            if(res.length>0) {
-                var actions = self.options.actions;
-                actions.forEach(function(currAction){
-                    currAction.action.doAction(res, currAction.mapping);
-                });
-            } else
+            var actions = this.options.actions;
+            if (currFilter.facet) 
             {
-
-                var actions = this.options.actions;
-                var eventData = {};
-                if (values.length)
-                	eventData[fieldName] = values;
-                else eventData[fieldName] = [null];
-				
-                recline.ActionUtility.doAction(actions, eventType, eventData, actionType);
+                actions.forEach(function(currAction){
+                    currAction.action.doActionWithFacets(currFilter.facet.attributes.terms, values, currAction.mapping, fieldName);
+                });                
             }
+            else
+            {
+            	// I'm using record (not facet) so I can pass it to actions
+                var res = [];
+                
+                if (currFilter.values && currFilter.values.length)
+            	{
+                    // make sure you use all values, even 2nd or 3rd level if present (hierarchic radiobuttons only)
+                    var allValues = currFilter.values
+                    if (currFilter.valuesLev3)
+                    	allValues = currFilter.values.concat(currFilter.valuesLev2, currFilter.valuesLev3)
+                    else if (currFilter.valuesLev2)
+                    	allValues = currFilter.values.concat(currFilter.valuesLev2)
+                    	
+                    // TODO it is not efficient, record must be indexed by term
+                    _.each(allValues, function(v) {
+                      if (v.record) {
+                          var field = v.record.fields.get(currFilter.field);
+                          var recordValue = v.record.getFieldValueUnrendered(field);
+                          for (var jj in values)
+                        	  if (self.areValuesEqual(recordValue, values[jj]))
+                        	  {
+                        		  res.push(v.record);
+                        		  break;
+                        	  }
+                      }
+                    });            	
+            	}
+                if (res.length)
+            	{
+                    actions.forEach(function(currAction){
+                        currAction.action.doAction(res, currAction.mapping);
+                    });
+            	}
+                else if (values.length)
+            	{
+                    actions.forEach(function(currAction){
+                        currAction.action.doActionWithValueArray(values, currAction.mapping, fieldName);
+                    });
+            	}
+            } 
         },
 
         dateConvert:function (d) {
@@ -1777,31 +2003,33 @@ this.recline.View = this.recline.View || {};
                 return d;
             }
         },
+        onStyledSliderValueChanged:function (value) {
+        	var self = this.inputNode.data("self");
+        	if (self)
+    		{
+                var $target = this.domNode.parent().parent();
+                var fieldId = $target.attr('data-filter-field');
+                var fieldType = $target.attr('data-filter-type');
+                var controlType = $target.attr('data-control-type');
 
-        onStyledSliderValueChanged:function (e, value) {
-            e.preventDefault();
-            var $target = $(e.target).parent().parent();
-            var fieldId = $target.attr('data-filter-field');
-            var fieldType = $target.attr('data-filter-type');
-            var controlType = $target.attr('data-control-type');
-            if (fieldType == "term") {
-                var term = value;
-                var activeFilter = this.findActiveFilterByField(fieldId, controlType);
+                var activeFilter = self.findActiveFilterByField(fieldId, controlType);
                 activeFilter.userChanged = true;
-                activeFilter.term = term;
-                activeFilter.list = [term];
-                this.doAction("onStyledSliderValueChanged", fieldId, [term], "add", activeFilter);
-            }
-            else if (fieldType == "range") {
-                var activeFilter = this.findActiveFilterByField(fieldId, controlType);
-                activeFilter.userChanged = true;
-                var fromTo = value.split(";");
-                var from = fromTo[0];
-                var to = fromTo[1];
-                activeFilter.from = from;
-                activeFilter.to = to;
-                this.doAction("onStyledSliderValueChanged", fieldId, [from, to], "add", activeFilter);
-            }
+                if (controlType == "range_slider_styled")
+            	{
+                    var fromTo = value.split(";");
+                    var from = fromTo[0];
+                    var to = fromTo[1];
+                    activeFilter.from = from;
+                    activeFilter.to = to;
+                    self.doAction("onStyledRangeSliderValueChanged", fieldId, [from, to], "add", activeFilter);
+            	}
+                else
+            	{
+                  activeFilter.term = value;
+                  activeFilter.list = [value];
+                  self.doAction("onStyledSliderValueChanged", fieldId, [value], "add", activeFilter);
+            	}
+    		}
         },
         onFilterValueChanged:function (e) {
             e.preventDefault();
@@ -1814,6 +2042,7 @@ this.recline.View = this.recline.View || {};
             activeFilter.userChanged = true;
             if (fieldType == "term") {
                 var term;
+                var op = "add";
                 var termObj = $target.find('.data-control-id');
                 switch (controlType) {
                     case "term":
@@ -1824,12 +2053,14 @@ this.recline.View = this.recline.View || {};
                         break;
                     case "slider_styled":
                         term = termObj.attr("value");
-                        if (term = "")
+                        if (term == "")
                         	term = null;
                         break;
                     case "dropdown":
                     case "dropdown_styled":
                         term = termObj.val();
+                        if (term == "")
+                        	term = null;
                         break;
                     case "listbox":
                         term = termObj.val();
@@ -1838,9 +2069,9 @@ this.recline.View = this.recline.View || {};
                 activeFilter.term = term;
                 if (term)
                 	activeFilter.list = [term];
-                else activeFilter.list = [];
+                else activeFilter.list = [null];
                 
-                this.doAction("onFilterValueChanged", fieldId, activeFilter.list, "add", activeFilter);
+                this.doAction("onFilterValueChanged", fieldId, activeFilter.list, op, activeFilter);
             }
             else if (fieldType == "list") {
                 var list = new Array();
@@ -1949,7 +2180,7 @@ this.recline.View = this.recline.View || {};
             if (typeof newFilter.fieldType == 'undefined')
                 newFilter.fieldType = this.getFieldType(newFilter.field)
 
-            if (newFilter.controlType == "radiobuttons")
+            if (newFilter.controlType == "radiobuttons" || newFilter.controlType == "hierarchic_radiobuttons")
         	{
             	if (newFilter.noAllButton && newFilter.noAllButton == true)
             		newFilter.useAllButton = false 
@@ -1987,6 +2218,10 @@ this.recline.View = this.recline.View || {};
                     return this.activeFilters[j];
             }
             return new Object(); // to avoid "undefined" errors
+        },
+        changeFilterField: function(idx, fieldId) {
+            if (this.activeFilters[idx])
+            	this.activeFilters[idx].field = fieldId
         },
         onRemoveFilter:function (e) {
             e.preventDefault();

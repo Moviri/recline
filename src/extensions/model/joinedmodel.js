@@ -18,8 +18,9 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
             _.bindAll(this, 'generatefields');
 
             self.ds_fetched = [];
+            self.field_fetched = [];
 
-            self.joinedModel = new my.Dataset({backend: "Memory", records:[], fields: []});
+            self.joinedModel = new my.Dataset({backend: "Memory", records:[], fields: [], renderer: self.attributes.renderer});
 
             self.fields = self.joinedModel.fields;
             self.records = self.joinedModel.records;
@@ -31,32 +32,50 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
                 this.get('initialState').setState(this);
             }
 
-            this.attributes.model.fields.bind('reset', this.generatefields);
-            this.attributes.model.fields.bind('add', this.generatefields);
+            this.attributes.model.fields.bind('reset', function() {
+                self.field_fetched.push("model");
+
+                if (self.allDsFetched(self.field_fetched))
+                    self.generatefields();
+            });
+            //this.attributes.model.fields.bind('add', this.generatefields);
 
             _.each(this.attributes.join, function(p) {
-                p.model.fields.bind('reset', self.generatefields);
-                p.model.fields.bind('add', self.generatefields);
+                p.model.fields.bind('reset', function() {
+                    if(!p.id)
+                        throw "joinedmodel: a model without id has been used in join. Unable to apply joined model";
+
+                    self.field_fetched.push(p.model.id);
+
+                    if (self.allDsFetched(self.field_fetched))
+                        self.generatefields();
+
+                });
+                //p.model.fields.bind('add', self.generatefields);
             });
 
             this.attributes.model.bind('query:done', function () {
                 self.ds_fetched.push("model");
 
-                if (self.allDsFetched())
+
+                if (self.allDsFetched(self.ds_fetched))
                     self.query();
             })
 
             _.each(this.attributes.join, function(p) {
 
                 p.model.bind('query:done', function () {
+                    if(!p.id)
+                        throw "joinedmodel: a model without id has been used in join. Unable to apply joined model";
+
                     self.ds_fetched.push(p.id);
 
-                    if (self.allDsFetched())
+                    if (self.allDsFetched(self.ds_fetched))
                         self.query();
                 });
 
                 p.model.queryState.bind('change', function () {
-                    if (self.allDsFetched())
+                    if (self.allDsFetched(self.ds_fetched))
                         self.query();
                 });
 
@@ -64,23 +83,25 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
 
         },
 
-        allDsFetched: function() {
+        allDsFetched: function(fetchedList) {
             var self=this;
             var ret= true;
 
-            if(!_.contains(self.ds_fetched, "model"))
+            if(!_.contains(fetchedList, "model"))
                 return false;
 
              _.each(self.attributes.join, function(p) {
-                 if(!_.contains(self.ds_fetched, p.id)) {
+                 if(!_.contains(fetchedList, p.id)) {
                      ret = false;
                  }
              });
+
 
              return ret;
         },
 
         generatefields:function () {
+            var self=this;
             var tmpFields = [];
             _.each(this.attributes.model.fields.models, function (f) {
                 var c = f.toJSON();
@@ -95,7 +116,9 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
                     tmpFields.push(c);
                 });
             });
+
             this.joinedModel.resetFields(tmpFields);
+
         },
 
 
@@ -109,8 +132,12 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
             var results = self.join();
 
             self.joinedModel.resetRecords(results);
+            if(self.fields.models.length == 0)
+                self.generatefields();
+
             self.joinedModel.fetch();
             self.recordCount = self.joinedModel.recordCount;
+
 
             self.trigger('query:done');
         },
@@ -133,18 +160,23 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
 
                 // define the record with all data from model
                 var record = {};
-                _.each(r.toJSON(), function (f, index) {
-                    record[index] = f;
+                _.each(r.fields.models, function(field) {
+                   record[field.id] = r.getFieldValueUnrendered(field);
                 });
+
+
 
                 _.each(joinModel, function(p) {
                     // retrieve records from secondary model
                     _.each(p.joinon, function (f) {
                         var field = p.model.fields.get(f);
-                        filters.push({field:field.id, type:"term", term:r.getFieldValueUnrendered(field), fieldType:field.attributes.type });
+                        if(!field)
+                            throw "joinedmodel.js: unable to find field [" + f + "] on secondary model";
+
+                        filters.push({field:field.id, type:"term", term: r.getFieldValueUnrendered(field), fieldType:field.attributes.type });
                     })
 
-                    var resultsFromDataset2 = recline.Data.Filters.applyFiltersOnData(filters, p.model.records.toJSON(), p.model.fields.toJSON());
+                    var resultsFromDataset2 = recline.Data.Filters.applyFiltersOnData(filters, p.model.toFullJSON(), p.model.fields.toJSON());
 
                     if(resultsFromDataset2.length == 0)
                         recordMustBeAdded = false;
@@ -192,7 +224,32 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
         },
         toFullJSON:function (resultType) {
             return this.joinedModel.toFullJSON(resultType);
+        },
+        setColorSchema:function () {
+            if(this.attributes["colorSchema"])
+                this.joinedModel.attributes["colorSchema"] = this.attributes["colorSchema"];
+            return this.joinedModel.setColorSchema();
+        },
+        // a color schema is linked to the dataset but colors are not recalculated upon data/field reset
+        addStaticColorSchema: function(colorSchema, field) {
+            var self = this;
+            if (!self.attributes["colorSchema"])
+                self.attributes["colorSchema"] = [];
+
+            self.attributes["colorSchema"].push({schema:colorSchema, field:field});
+            this.joinedModel.attributes["colorSchema"] = this.attributes["colorSchema"];
+
+            self.setColorSchema();
+
+            self.fields.bind('reset', function () {
+                self.setColorSchema();
+            });
+            self.fields.bind('add', function () {
+                self.setColorSchema();
+            });
+
         }
+
 
     })
 

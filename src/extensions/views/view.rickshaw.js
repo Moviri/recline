@@ -57,7 +57,6 @@ this.recline.View = this.recline.View || {};
                 self.renderGraph();
 
         },
-
         updateGraph:function () {
             var self = this;
             //self.graphOptions.series = this.createSeries();
@@ -66,15 +65,22 @@ this.recline.View = this.recline.View || {};
             self.graph.update();
             //self.graph.render();
         },
+        convertDateValueWithoutMillis:function(value) {
+    		return Math.round(value.valueOf()/1000);
+        },
 
         renderGraph:function () {
             var self = this;
             this.graphOptions = {
-                element:document.querySelector('#' + this.uid)
+                element:document.querySelector('#' + this.uid),
+                width: self.options.width,
+                height: self.options.height
             };
 
             self.graphOptions = _.extend(self.graphOptions, self.options.state.options);
             self.createSeries();
+            if (self.series.length == 0)
+            	return;
 
             self.graphOptions.series = self.series;
 
@@ -113,7 +119,7 @@ this.recline.View = this.recline.View || {};
 
                 self.annotator = new Rickshaw.Graph.Annotate({
                     graph:self.graph,
-                    element:document.getElementById('timeline')
+                    element:document.getElementById(self.options.state.events.div || 'timeline')
                 });
 
                 var timeField = self.options.state.events.timeField;
@@ -123,9 +129,9 @@ this.recline.View = this.recline.View || {};
 
                 _.each(self.options.state.events.dataset.getRecords(self.options.state.events.resultType), function (d) {
                     if (endField)
-                        self.annotator.add(d.attributes[timeField], d.attributes[valueField], d.attributes[endField]);
+                        self.annotator.add(self.convertDateValueWithoutMillis(d.attributes[timeField]), d.attributes[valueField], self.convertDateValueWithoutMillis(d.attributes[endField]));
                     else
-                        self.annotator.add(d.attributes[timeField], d.attributes[valueField]);
+                        self.annotator.add(self.convertDateValueWithoutMillis(d.attributes[timeField]), d.attributes[valueField]);
 
                 })
 
@@ -183,7 +189,7 @@ this.recline.View = this.recline.View || {};
             if (self.options.resultType !== null)
                 resultType = self.options.resultType;
 
-            var records = self.model.getRecords(resultType);  //self.model.records.models;
+            var records = self.model.getRecords(resultType);
 
             var xfield = self.model.fields.get(self.options.state.group);
 
@@ -284,7 +290,7 @@ this.recline.View = this.recline.View || {};
                 _.each(serieNames, function (field) {
 
                     var yfield;
-                    if (seriesAttr.type == "byFieldName")
+                    if (seriesAttr.type == "byFieldName" && field.fieldName)
                         yfield = self.model.fields.get(field.fieldName);
                     else
                         yfield = self.model.fields.get(field);

@@ -27,10 +27,11 @@
   <!-- Recline CSS components -->
   <link rel="stylesheet" href="../../css/grid.css">
   <link rel="stylesheet" href="../../css/slickgrid.css">
-  <link rel="stylesheet" href="../../css/graph.css">
+  <link rel="stylesheet" href="../../css/flot.css">
   <link rel="stylesheet" href="../../css/transform.css">
   <link rel="stylesheet" href="../../css/map.css">
   <link rel="stylesheet" href="../../css/multiview.css">
+  <link rel="stylesheet" href="../../css/timeline.css">
   <!-- /Recline CSS components -->
 
   <!-- 3rd party JS libraries -->
@@ -40,7 +41,10 @@
   <script type="text/javascript" src="../../vendor/backbone/0.9.2/backbone.js"></script>
   <script type="text/javascript" src="../../vendor/mustache/0.5.0-dev/mustache.js"></script>
   <script type="text/javascript" src="../../vendor/bootstrap/2.0.2/bootstrap.js"></script>
-  <script type="text/javascript" src="../../vendor/flotr2/flotr2.js"></script>
+  <!--[if lte IE 8]>
+  <script language="javascript" type="text/javascript" src="../../vendor/flot/excanvas.min.js"></script>
+  <![endif]-->
+  <script type="text/javascript" src="../../vendor/flot/jquery.flot.js"></script>
   <script type="text/javascript" src="../../vendor/leaflet/0.4.4/leaflet.js"></script>
   <script type="text/javascript" src="../../vendor/leaflet.markercluster/leaflet.markercluster.js"></script>
   <script type="text/javascript" src="../../vendor/slickgrid/2.0.1/jquery-ui-1.8.16.custom.min.js"></script>
@@ -68,19 +72,20 @@
   <script type="text/javascript" src="../../src/backend.elasticsearch.js"></script>
   <script type="text/javascript" src="../../src/backend.csv.js"></script>
   <script type="text/javascript" src="../../src/backend.ckan.js"></script>
-  <script type="text/javascript" src="../../src/backend.solr.js"></script>
 
   <!-- views -->
   <script type="text/javascript" src="../../src/view.grid.js"></script>
   <script type="text/javascript" src="../../src/view.slickgrid.js"></script>
   <script type="text/javascript" src="../../src/view.transform.js"></script>
   <script type="text/javascript" src="../../src/data.transform.js"></script>
+  <script type="text/javascript" src="../../src/view.flot.js"></script>
   <script type="text/javascript" src="../../src/view.graph.js"></script>
   <script type="text/javascript" src="../../src/view.map.js"></script>
   <script type="text/javascript" src="../../src/view.timeline.js"></script>
   <script type="text/javascript" src="../../src/widget.pager.js"></script>
   <script type="text/javascript" src="../../src/widget.queryeditor.js"></script>
   <script type="text/javascript" src="../../src/widget.filtereditor.js"></script>
+  <script type="text/javascript" src="../../src/widget.valuefilter.js"></script>
   <script type="text/javascript" src="../../src/widget.facetviewer.js"></script>
   <script type="text/javascript" src="../../src/widget.datepicker.js"></script>
   <script type="text/javascript" src="../../src/widget.fields.js"></script>
@@ -133,9 +138,9 @@
       </ul>
       <ul class="nav pull-right">
         <li>
-          <a href="http://github.com/okfn/recline/">
-            <i class="icon-download-alt icon-white"></i>
-            GitHub
+          <a href="http://github.com/okfn/recline/" title="Recline on Github">
+            <iframe src="http://ghbtns.com/github-btn.html?user=okfn&repo=recline&type=watch&count=true"
+                allowtransparency="true" frameborder="0" scrolling="0" width="90" height="20"></iframe>
           </a>
         </li>
       </ul>
@@ -225,7 +230,7 @@ ul.facet-items {
 
 <div class="info">
   <p>This demo shows how Recline can be used to build a search app. It includes faceting as well as search. You can find the <a href="demo.search.app.js">source javascript here</a> (plus <a href="../..//docs/src/demo.search.app.html">prettified version of source for readability</a>) &ndash; please feel free to reuse!</p>
-  <p>The default setup uses local example data but you can also connect directly to any other <a href="../..//docs/backends.html">backend supported by Recline</a>, for example SOLR, ElasticSearch or even a google docs spreadsheet. As an example: here's an <a href="?backend=solr&amp;url=http://openspending.org/api/search">example running against the SOLR-style OpenSpending API</a> and here's an example <a href="?backend=gdocs&amp;url=https://docs.google.com/spreadsheet/ccc?key=0Aon3JiuouxLUdExXSTl2Y01xZEszOTBFZjVzcGtzVVE">running against a GDocs spreadsheet (Oil spills in the Niger Delta)</a>.</p>
+  <p>The default setup uses local example data but you can also connect directly to any other <a href="../..//docs/backends.html">backend supported by Recline</a>, for example SOLR, ElasticSearch or even a google docs spreadsheet. Here's an example <a href="?backend=gdocs&amp;url=https://docs.google.com/spreadsheet/ccc?key=0Aon3JiuouxLUdExXSTl2Y01xZEszOTBFZjVzcGtzVVE">running against a GDocs spreadsheet (Oil spills in the Niger Delta)</a>.</p>
 </div>
 
 <hr />
