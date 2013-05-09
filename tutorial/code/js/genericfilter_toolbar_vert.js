@@ -48,7 +48,7 @@ var multiFilterCtrl = new recline.View.GenericFilter({
                                   { label: 'Week 4', start: "january 22 2013", delta:{days:7}}, 
                                   { label: 'Week 1+2', start: "january 1 2013", delta:{days:14}}, 
                                   { label: 'Week 3+4', start: "january 15 2013", delta:{days:14}}, 
-                                  { label: 'Whole Month', start: "january 1 2013", delta:{months:1}}, 
+                                  { label: 'Whole Month', start: "january 1 2013", delta:{months:1}} 
                                   ]   
                },
                 {field:"UserId", controlType:'list', fieldType:"string", labelPosition:"top" }

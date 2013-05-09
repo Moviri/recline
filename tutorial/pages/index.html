@@ -92,16 +92,16 @@ root: ../../
 		var __foldFuncHtml = CodeMirror.newFoldFunction(CodeMirror.tagRangeFinder);
 
 		var __jsCodeMirror = CodeMirror.fromTextArea(document.getElementById('__areaJS'), {
-			mode: 'javascript',
-			gutters: ["CodeMirror-lint-markers"],
-			indentWithTabs: true,
-			smartIndent: true,
-			lineNumbers: true,
-			matchBrackets : true,
-			autoCloseBrackets: true,
-			autofocus: true,
-			lineWrapping: false,
-			lintWith: CodeMirror.javascriptValidator			
+		    lineNumbers: true,
+		    mode: "javascript",
+		    gutters: ["CodeMirror-lint-markers"],
+		    lintWith: CodeMirror.javascriptValidator,
+// 			indentWithTabs: true,
+// 			smartIndent: true,
+// 			matchBrackets : true,
+// 			autoCloseBrackets: true,
+// 			autofocus: true,
+// 			lineWrapping: true,
 		});
 		__jsCodeMirror.on("gutterClick", __foldFuncJS_CSS);
 		
@@ -199,19 +199,23 @@ root: ../../
 	__loadPanels(null, "demo", "demo", "demo", "demo")
 
 		function __runCode() {
-			var success = JSHINT(__jsCodeMirror.getValue(), {asi:true, smarttabs: true});
+			var success = JSHINT(__jsCodeMirror.getValue(), {asi:true, smarttabs: true, laxbreak: true, laxcomma: true, multistr: true});
 			if (!success)
 			{
 				//console.dir(JSHINT.errors);
 				var errMsg = "";
 				_.each(JSHINT.errors, function(err) {
-					errMsg += "Error at line "+err.line+" col "+err.character+"\n"
-						+ "Offending code is:\n"+err.evidence+"\n"
-						+ "Reason is: "+err.reason+"\n"
-						+ "_____________________________________\n"
+					if (err.code != "W070")
+						errMsg += "Error at line "+err.line+" col "+err.character+"\n"
+							+ "Offending code is:\n"+err.evidence+"\n"
+							+ "Reason is: "+err.reason+"\n"
+							+ "_____________________________________\n"
 				})
-				alert(errMsg);
-				return;			
+				if (errMsg.length)
+				{
+					alert(errMsg);
+					return;			
+				}
 			}
 			
 			if (__scriptElem)

@@ -48,7 +48,7 @@ var legend_dataset = new recline.Model.Dataset({
         {id:'y1', type:"integer"},
         {id:'y2', type:"integer"},
         {id:'z', type:"integer"}
-    ],
+    ]
 });
 var bulletLegend = new recline.View.D3Bullet({
     model: legend_dataset,
@@ -80,7 +80,7 @@ var grid1 = new recline.View.SlickGridGraph({
                       {id: "Effettivo_by_Periodo_1_avg", label: "Effettivo Period 1 avg"},
                       {id: "Effettivo_by_Periodo_2_min", label: "Effettivo Period 2 min"},
                       {id: "Effettivo_by_Periodo_2_avg", label: "Effettivo Period 2 avg"},
-                      {id: "Effettivo_by_Periodo_2_max", label: "Effettivo Period 2 max"},
+                      {id: "Effettivo_by_Periodo_2_max", label: "Effettivo Period 2 max"}
                       ]
     }
 });

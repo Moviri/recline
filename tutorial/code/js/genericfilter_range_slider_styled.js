@@ -25,7 +25,7 @@ var dataset = new recline.Model.Dataset({ /*FOLD_ME*/
         {id:'id', type:'integer'},
         {id:'age', type:'integer' },
         {id:'visits', type:'integer' }
-        ],
+        ]
 });
 
 var filteredDataset = new recline.Model.FilteredDataset( { dataset: dataset } );

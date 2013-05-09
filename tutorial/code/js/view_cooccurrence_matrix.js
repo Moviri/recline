@@ -5,7 +5,7 @@ var dataset = new recline.Model.Dataset({ /*FOLD_ME*/
     fieldsType: [
          {id:'Cognome1', type:'string'},
          {id:'Cognome2',   type:'string'},
-         {id:'Incontri',   type:'integer'},
+         {id:'Incontri',   type:'integer'}
         ]
 });
 

@@ -4,7 +4,7 @@ var dataset = new recline.Model.Dataset({ /*FOLD_ME*/
     fieldsType:[
         {id:'giorno', type: 'integer'},
         {id:'country', type:'string'},
-        {id:'kpi', type:'integer' },
+        {id:'kpi', type:'integer' }
         ]
 });
 

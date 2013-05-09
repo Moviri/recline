@@ -30,7 +30,7 @@ var dataset = new recline.Model.Dataset({ /*FOLD_ME*/
              {id:'y',   type:'integer'},
             {id:'z',   type:'number'},
             {id:'macrosettore',   type:'string'},
-            {id:'settore',   type:'string'},
+            {id:'settore',   type:'string'}
            ]
 });
 

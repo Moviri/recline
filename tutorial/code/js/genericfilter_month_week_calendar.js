@@ -1,9 +1,8 @@
 var recs = [];
 
 //we build one year of random data starting from today
-//NOTE: using library Date.js to handle dates more easily
-var today = Date.today().set({second:0});
-var currDate = new Date(today).add(-365).days();
+var today = new Date();
+var currDate = new Date(today.getTime()-365*24*3600*1000);
 while (currDate.getTime() <= today.getTime())
 {
     recs.push({Data: new Date(currDate), Spese: Math.floor(Math.random()*100) });
