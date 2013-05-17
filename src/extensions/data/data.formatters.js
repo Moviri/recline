@@ -16,7 +16,7 @@ this.recline.Data = this.recline.Data || {};
     };
 
     
-    my.Format.decimal = d3.format(".00f");
+    //my.Format.decimal = d3.format(".00f");
 	
 	my.Format.scale = function(options) {
 		var calculateRange = function(rangePerc, dimwidth){			
@@ -117,7 +117,7 @@ this.recline.Data = this.recline.Data || {};
             var format = field.get('format');
             if(format === "currency_euro") {
                // return "€ " + val;
-            	return accounting.formatMoney(val, { symbol: "€",  format: "%v %s", decimal : ".", thousand: ",", precision : 0 }); // �4,999.99
+            	return accounting.formatMoney(val, { symbol: "€",  format: "%v %s", decimal : ".", thousand: ",", precision : 0 }); // �4,999.99
             }           
             return accounting.formatNumber(val, 0, ",");
         },
