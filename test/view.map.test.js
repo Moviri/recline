@@ -162,13 +162,13 @@ test('Popup', function () {
   $('.fixtures').append(view.el);
   view.render();
 
-  var marker = view.el.find('.leaflet-marker-icon').first();
+  var marker = view.$el.find('.leaflet-marker-icon').first();
 
   assertPresent(marker);
 
   _.values(view.features._layers)[0].fire('click');
 
-  var popup = view.el.find('.leaflet-popup-content');
+  var popup = view.$el.find('.leaflet-popup-content');
 
   assertPresent(popup);
 
@@ -183,7 +183,7 @@ test('Popup', function () {
   view.remove();
 });
 
-test('Popup - Custom', function () {
+test('Popup - Custom', function (assert) {
   var dataset = GeoJSONFixture.getDataset();
   var view = new recline.View.Map({
     model: dataset
@@ -195,14 +195,14 @@ test('Popup - Custom', function () {
   };
   view.render();
 
-  var marker = view.el.find('.leaflet-marker-icon').first();
+  var marker = view.$el.find('.leaflet-marker-icon').first();
   _.values(view.features._layers)[0].fire('click');
-  var popup = view.el.find('.leaflet-popup-content');
+  var popup = view.$el.find('.leaflet-popup-content');
 
   assertPresent(popup);
 
   var text = popup.html();
-  ok((text.indexOf('<h3>1</h3>y: 2') != -1))
+  assert.htmlEqual(text, '<h3>1</h3>y: 2');
 
   view.remove();
 });
