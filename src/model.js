@@ -27,7 +27,15 @@ my.Dataset = Backbone.Model.extend({
     }
     this.fields = new my.FieldList();
     this.records = new my.RecordList();
-    this._changes = {
+
+      // When a new record is added to the collection it is automatically added to changes
+      var self=this;
+      self.records.bind('add', function(doc) {
+          self._changes.creates.push(doc.toJSON());
+      });
+
+
+      this._changes = {
       deletes: [],
       updates: [],
       creates: []

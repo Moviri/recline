@@ -13,7 +13,7 @@ my.Faceting = {};
         }
         _.each(queryObj.facets, function (query, facetId) {
             // TODO: remove dependency on recline.Model
-            facetResults[facetId] = new recline.Model.Facet({id:facetId}).toJSON();
+                facetResults[facetId] = new recline.Model.Facet({id:facetId}).toJSON();
             facetResults[facetId].termsall = {};
 
         });

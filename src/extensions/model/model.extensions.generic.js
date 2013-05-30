@@ -1,4 +1,6 @@
+
 recline.Model.Dataset.prototype = $.extend(recline.Model.Dataset.prototype, {
+
     toFullJSON:function (resultType) {
         var self = this;
         return _.map(self.getRecords(resultType), function (r) {

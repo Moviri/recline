@@ -220,6 +220,7 @@ my.SlickGrid = Backbone.View.extend({
       var field = grid.getColumns()[args.cell].id;
       var v = {};
       v[field] = args.item[field];
+
       model.set(v);
     });
 
