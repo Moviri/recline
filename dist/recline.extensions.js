@@ -15387,6 +15387,27 @@ this.recline.View = this.recline.View || {};
         drawCloud: function(graph){
            return  function(words) {
             var self=graph;
+			
+			var mouseover = function (d) { };
+			var mouseout = function (d) { };
+			var mouseoverCustom;
+			var mouseoutCustom;
+			if (self.options.state.customTooltipTemplate)
+			{
+				mouseoverCustom = function (d) {
+					var leftOffset = -($('html').css('padding-left').replace('px', '') + $('body').css('margin-left').replace('px', ''))+10;
+					var topOffset = d.size/2;
+					var pos = $(this).offset();
+					var content = Mustache.render(self.options.state.customTooltipTemplate, d);
+
+					var topOffsetAbs = topOffset + pos.top;
+					if (topOffsetAbs < 0) topOffsetAbs = -topOffsetAbs; 
+					 nv.tooltip.show([pos.left + leftOffset, topOffset + pos.top], content, 'w', null, self.el[0]);
+				};
+				mouseoutCustom = function () {
+					nv.tooltip.cleanup();
+				}
+			}
 
             var fill = d3.scale.log().range(['#DEEBF7', '#3182BD']);
             self.graph.append("svg")
@@ -15400,19 +15421,16 @@ this.recline.View = this.recline.View || {};
                 .style("font-size", function(d) { return d.size + "px"; })
                 .style("font-family", "Impact")
                 .style("fill", function(d, i) { return fill(d.size); })
+				.style("cursor", "pointer")
                 .attr("text-anchor", "middle")
                 .attr("transform", function(d) {
                     return "translate(" + [d.x, d.y] + ")rotate(" + d.rotate + ")";
                 })
-                .text(function(d) { return d.text; });
-           };
+                .text(function(d) { return d.text; })
+				.on("mouseover", mouseoverCustom || mouseover)
+				.on("mouseout", mouseoutCustom || mouseout)
+			};
         }
-
-
-
-
-
-
     });
 
 
