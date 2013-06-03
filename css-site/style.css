@@ -21,7 +21,7 @@ Author URI:         http://www.mintcanary.com/
 
 @import url(http://fonts.googleapis.com/css?family=PT+Sans:400,400italic,700);
 
-body, p {
+body, p {                                                            facet-choice
   font-family: 'PT Sans',Helvetica,Arial,sans-serif;
   font-size: 15px;
 }

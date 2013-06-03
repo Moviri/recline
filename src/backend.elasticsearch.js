@@ -3,10 +3,11 @@ this.recline.Backend = this.recline.Backend || {};
 this.recline.Backend.ElasticSearch = this.recline.Backend.ElasticSearch || {};
 
 (function($, my) {
+  "use strict";
   my.__type__ = 'elasticsearch';
 
   // use either jQuery or Underscore Deferred depending on what is available
-  var Deferred = _.isUndefined(this.jQuery) ? _.Deferred : jQuery.Deferred;
+  var Deferred = (typeof jQuery !== "undefined" && jQuery.Deferred) || _.Deferred;
 
   // ## ElasticSearch Wrapper
   //
@@ -137,7 +138,7 @@ this.recline.Backend.ElasticSearch = this.recline.Backend.ElasticSearch || {};
 
     this._convertFilter = function(filter) {
       var out = {};
-      out[filter.type] = {}
+      out[filter.type] = {};
       if (filter.type === 'term') {
         out.term[filter.field] = filter.term.toLowerCase();
       } else if (filter.type === 'geo_distance') {
@@ -167,7 +168,7 @@ this.recline.Backend.ElasticSearch = this.recline.Backend.ElasticSearch || {};
         dataType: this.options.dataType
       });
       return jqxhr;
-    }
+    };
   };
 
 
@@ -200,8 +201,8 @@ this.recline.Backend.ElasticSearch = this.recline.Backend.ElasticSearch || {};
         fields: fieldData
       });
     })
-    .fail(function(arguments) {
-      dfd.reject(arguments);
+    .fail(function(args) {
+      dfd.reject(args);
     });
     return dfd.promise();
   };

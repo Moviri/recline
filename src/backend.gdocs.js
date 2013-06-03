@@ -3,10 +3,11 @@ this.recline.Backend = this.recline.Backend || {};
 this.recline.Backend.GDocs = this.recline.Backend.GDocs || {};
 
 (function(my) {
+  "use strict";
   my.__type__ = 'gdocs';
 
   // use either jQuery or Underscore Deferred depending on what is available
-  var Deferred = _.isUndefined(this.jQuery) ? _.Deferred : jQuery.Deferred;
+  var Deferred = (typeof jQuery !== "undefined" && jQuery.Deferred) || _.Deferred;
 
   // ## Google spreadsheet backend
   // 
@@ -142,14 +143,14 @@ this.recline.Backend.GDocs = this.recline.Backend.GDocs || {};
     if(!!matches) {
         key = matches[1];
         // the gid in url is 0-based and feed url is 1-based
-        worksheet = parseInt(matches[3]) + 1;
+        worksheet = parseInt(matches[3], 10) + 1;
         if (isNaN(worksheet)) {
           worksheet = 1;
         }
         urls = {
           worksheet  : 'https://spreadsheets.google.com/feeds/list/'+ key +'/'+ worksheet +'/public/values?alt=json',
           spreadsheet: 'https://spreadsheets.google.com/feeds/worksheets/'+ key +'/public/basic?alt=json'
-        }
+        };
     }
     else {
         // we assume that it's one of the feeds urls
@@ -159,7 +160,7 @@ this.recline.Backend.GDocs = this.recline.Backend.GDocs || {};
         urls = {
           worksheet  : 'https://spreadsheets.google.com/feeds/list/'+ key +'/'+ worksheet +'/public/values?alt=json',
           spreadsheet: 'https://spreadsheets.google.com/feeds/worksheets/'+ key +'/public/basic?alt=json'
-        }            
+        };
     }
 
     return urls;

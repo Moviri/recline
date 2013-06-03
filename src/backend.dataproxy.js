@@ -3,16 +3,17 @@ this.recline.Backend = this.recline.Backend || {};
 this.recline.Backend.DataProxy = this.recline.Backend.DataProxy || {};
 
 (function(my) {
+  "use strict";
   my.__type__ = 'dataproxy';
   // URL for the dataproxy
-  my.dataproxy_url = 'http://jsonpdataproxy.appspot.com';
+  my.dataproxy_url = '//jsonpdataproxy.appspot.com';
   // Timeout for dataproxy (after this time if no response we error)
   // Needed because use JSONP so do not receive e.g. 500 errors 
   my.timeout = 5000;
 
   
   // use either jQuery or Underscore Deferred depending on what is available
-  var Deferred = _.isUndefined(this.jQuery) ? _.Deferred : jQuery.Deferred;
+  var Deferred = (typeof jQuery !== "undefined" && jQuery.Deferred) || _.Deferred;
 
   // ## load
   //

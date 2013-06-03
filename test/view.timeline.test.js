@@ -19,13 +19,13 @@ test('extract dates and timelineJSON', function () {
         'headline': '',
         'date': [
           {
-            'startDate': new Date('2012-03-20'),
+            'startDate': moment('2012-03-20').toDate(),
             'endDate': null,
             'headline': '1',
             'text': '<div class="recline-record-summary"><div class="Date"><strong>Date</strong>: 2012-03-20</div><div class="title"><strong>title</strong>: 1</div></div>'
           },
           {
-            'startDate': new Date('2012-03-25'),
+            'startDate': moment('2012-03-25').toDate(),
             'endDate': null,
             'headline': '2',
             'text': '<div class="recline-record-summary"><div class="Date"><strong>Date</strong>: 2012-03-25</div><div class="title"><strong>title</strong>: 2</div></div>'
@@ -47,7 +47,7 @@ test('render etc', function () {
   assertPresent('.vmm-timeline', view.el);
   assertPresent('.timenav', view.el);
   assertPresent('.timenav', view.el);
-  equal(view.el.find('.marker.active h4').text(), '2011');
+  equal(view.$el.find('.marker.active h4').text(), '2011');
   view.remove();
 });
 
@@ -67,7 +67,7 @@ test('_parseDate', function () {
   ];
   _.each(testData, function(item) {
     var out = view._parseDate(item[0]);
-    if (out) out = out.toISOString();
+    if (out) out = moment(out).toJSON();
     equal(out, item[1]);
   });
 });

@@ -4,7 +4,7 @@ this.recline = this.recline || {};
 this.recline.View = this.recline.View || {};
 
 (function($, my) {
-
+  "use strict";
 // ## Graph view for a Dataset using Flot graphing library.
 //
 // Initialization arguments (in a hash in first parameter):
@@ -38,14 +38,11 @@ my.Flot = Backbone.View.extend({
     var self = this;
     this.graphColors = ["#edc240", "#afd8f8", "#cb4b4b", "#4da74d", "#9440ed"];
 
-    this.el = $(this.el);
     _.bindAll(this, 'render', 'redraw', '_toolTip', '_xaxisLabel');
     this.needToRedraw = false;
-    this.model.bind('change', this.render);
-    this.model.fields.bind('reset', this.render);
-    this.model.fields.bind('add', this.render);
-    this.model.records.bind('add', this.redraw);
-    this.model.records.bind('reset', this.redraw);
+    this.listenTo(this.model, 'change', this.render);
+    this.listenTo(this.model.fields, 'reset add', this.render);
+    this.listenTo(this.model.records, 'reset add', this.redraw);
     var stateData = _.extend({
         group: null,
         // so that at least one series chooser box shows up
@@ -60,21 +57,26 @@ my.Flot = Backbone.View.extend({
       model: this.model,
       state: this.state.toJSON()
     });
-    this.editor.state.bind('change', function() {
+    this.listenTo(this.editor.state, 'change', function() {
       self.state.set(self.editor.state.toJSON());
       self.redraw();
     });
-    this.elSidebar = this.editor.el;
+    this.elSidebar = this.editor.$el;
   },
 
   render: function() {
     var self = this;
     var tmplData = this.model.toTemplateJSON();
     var htmls = Mustache.render(this.template, tmplData);
-    $(this.el).html(htmls);
-    this.$graph = this.el.find('.panel.graph');
+    this.$el.html(htmls);
+    this.$graph = this.$el.find('.panel.graph');
     this.$graph.on("plothover", this._toolTip);
     return this;
+  },
+
+  remove: function () {
+    this.editor.remove();
+    Backbone.View.prototype.remove.apply(this, arguments);
   },
 
   redraw: function() {
@@ -82,7 +84,7 @@ my.Flot = Backbone.View.extend({
     // * The relevant div that graph attaches to his hidden at the moment of creating the plot -- Flot will complain with
     //   Uncaught Invalid dimensions for plot, width = 0, height = 0
     // * There is no data for the plot -- either same error or may have issues later with errors like 'non-existent node-value'
-    var areWeVisible = !jQuery.expr.filters.hidden(this.el[0]);
+    var areWeVisible = !jQuery.expr.filters.hidden(this.el);
     if ((!areWeVisible || this.model.records.length === 0)) {
       this.needToRedraw = true;
       return;
@@ -213,7 +215,7 @@ my.Flot = Backbone.View.extend({
       var numTicks = Math.min(this.model.records.length, 15);
       var increment = this.model.records.length / numTicks;
       var ticks = [];
-      for (i=0; i<numTicks; i++) {
+      for (var i=0; i<numTicks; i++) {
         ticks.push(parseInt(i*increment, 10));
       }
       xaxis.ticks = ticks;
@@ -403,10 +405,8 @@ my.FlotControls = Backbone.View.extend({
 
   initialize: function(options) {
     var self = this;
-    this.el = $(this.el);
     _.bindAll(this, 'render');
-    this.model.fields.bind('reset', this.render);
-    this.model.fields.bind('add', this.render);
+    this.listenTo(this.model.fields, 'reset add', this.render);
     this.state = new recline.Model.ObjectState(options.state);
     this.render();
   },
@@ -415,7 +415,7 @@ my.FlotControls = Backbone.View.extend({
     var self = this;
     var tmplData = this.model.toTemplateJSON();
     var htmls = Mustache.render(this.template, tmplData);
-    this.el.html(htmls);
+    this.$el.html(htmls);
 
     // set up editor from state
     if (this.state.get('graphType')) {
@@ -439,7 +439,7 @@ my.FlotControls = Backbone.View.extend({
   // Private: Helper function to select an option from a select list
   //
   _selectOption: function(id,value){
-    var options = this.el.find(id + ' select > option');
+    var options = this.$el.find(id + ' select > option');
     if (options) {
       options.each(function(opt){
         if (this.value == value) {
@@ -451,16 +451,16 @@ my.FlotControls = Backbone.View.extend({
   },
 
   onEditorSubmit: function(e) {
-    var select = this.el.find('.editor-group select');
+    var select = this.$el.find('.editor-group select');
     var $editor = this;
-    var $series  = this.el.find('.editor-series select');
+    var $series = this.$el.find('.editor-series select');
     var series = $series.map(function () {
       return $(this).val();
     });
     var updatedState = {
       series: $.makeArray(series),
-      group: this.el.find('.editor-group select').val(),
-      graphType: this.el.find('.editor-type select').val()
+      group: this.$el.find('.editor-group select').val(),
+      graphType: this.$el.find('.editor-type select').val()
     };
     this.state.set(updatedState);
   },
@@ -477,7 +477,7 @@ my.FlotControls = Backbone.View.extend({
     }, this.model.toTemplateJSON());
 
     var htmls = Mustache.render(this.templateSeriesEditor, data);
-    this.el.find('.editor-series-group').append(htmls);
+    this.$el.find('.editor-series-group').append(htmls);
     return this;
   },
 

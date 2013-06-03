@@ -3,9 +3,10 @@ this.recline = this.recline || {};
 this.recline.Model = this.recline.Model || {};
 
 (function(my) {
+  "use strict";
 
 // use either jQuery or Underscore Deferred depending on what is available
-var Deferred = _.isUndefined(this.jQuery) ? _.Deferred : jQuery.Deferred;
+var Deferred = (typeof jQuery !== "undefined" && jQuery.Deferred) || _.Deferred;
 
 // ## <a id="dataset">Dataset</a>
 my.Dataset = Backbone.Model.extend({
@@ -15,6 +16,7 @@ my.Dataset = Backbone.Model.extend({
 
   // ### initialize
   initialize: function() {
+    var self = this;
     _.bindAll(this, 'query');
     this.backend = null;
     if (this.get('backend')) {
@@ -26,7 +28,15 @@ my.Dataset = Backbone.Model.extend({
     }
     this.fields = new my.FieldList();
     this.records = new my.RecordList();
-    this._changes = {
+
+      // When a new record is added to the collection it is automatically added to changes
+      var self=this;
+      self.records.bind('add', function(doc) {
+          self._changes.creates.push(doc.toJSON());
+      });
+
+
+      this._changes = {
       deletes: [],
       updates: [],
       creates: []
@@ -34,8 +44,9 @@ my.Dataset = Backbone.Model.extend({
     this.facets = new my.FacetList();
     this.recordCount = null;
     this.queryState = new my.Query();
-    this.queryState.bind('change', this.query);
-    this.queryState.bind('facet:add', this.query);
+    this.queryState.bind('change facet:add', function () {
+      self.query(); // We want to call query() without any arguments.
+    });
     // store is what we query and save against
     // store will either be the backend or be a memory store if Backend fetch
     // tells us to use memory store
@@ -167,20 +178,6 @@ my.Dataset = Backbone.Model.extend({
     var self = this;
     // TODO: need to reset the changes ...
     return this._store.save(this._changes, this.toJSON());
-  },
-
-  transform: function(editFunc) {
-    var self = this;
-    if (!this._store.transform) {
-      alert('Transform is not supported with this backend: ' + this.get('backend'));
-      return;
-    }
-    this.trigger('recline:flash', {message: "Updating all visible docs. This could take a while...", persist: true, loader: true});
-    this._store.transform(editFunc).done(function() {
-      // reload data as records have changed
-      self.query();
-      self.trigger('recline:flash', {message: "Records updated successfully"});
-    });
   },
 
   // ### query
@@ -322,7 +319,7 @@ my.Record = Backbone.Model.extend({
   //
   // NB: if field is undefined a default '' value will be returned
   getFieldValue: function(field) {
-    val = this.getFieldValueUnrendered(field);
+    var val = this.getFieldValueUnrendered(field);
     if (field && !_.isUndefined(field.renderer)) {
       val = field.renderer(val, field, this.toJSON());
     }
@@ -612,10 +609,11 @@ this.recline.Backend = this.recline.Backend || {};
 this.recline.Backend.Memory = this.recline.Backend.Memory || {};
 
 (function(my) {
+  "use strict";
   my.__type__ = 'memory';
 
   // private data - use either jQuery or Underscore Deferred depending on what is available
-  var Deferred = _.isUndefined(this.jQuery) ? _.Deferred : jQuery.Deferred;
+  var Deferred = (typeof jQuery !== "undefined" && jQuery.Deferred) || _.Deferred;
 
   // ## Data Wrapper
   //
@@ -719,9 +717,9 @@ this.recline.Backend.Memory = this.recline.Backend.Memory || {};
         integer: function (e) { return parseFloat(e, 10); },
         'float': function (e) { return parseFloat(e, 10); },
         number: function (e) { return parseFloat(e, 10); },
-        string : function (e) { return e.toString() },
-        date   : function (e) { return new Date(e).valueOf() },
-        datetime   : function (e) { return new Date(e).valueOf() }
+        string : function (e) { return e.toString(); },
+        date   : function (e) { return moment(e).valueOf(); },
+        datetime   : function (e) { return new Date(e).valueOf(); }
       };
       var keyedFields = {};
       _.each(self.fields, function(field) {
@@ -752,8 +750,8 @@ this.recline.Backend.Memory = this.recline.Backend.Memory || {};
       }
 
       function range(record, filter) {
-        var startnull = (filter.start == null || filter.start === '');
-        var stopnull = (filter.stop == null || filter.stop === '');
+        var startnull = (filter.start === null || filter.start === '');
+        var stopnull = (filter.stop === null || filter.stop === '');
         var parse = getDataParser(filter);
         var value = parse(record[filter.field]);
         var start = parse(filter.start);
@@ -777,8 +775,8 @@ this.recline.Backend.Memory = this.recline.Backend.Memory || {};
       if (queryObj.q) {
         var terms = queryObj.q.split(' ');
         var patterns=_.map(terms, function(term) {
-          return new RegExp(term.toLowerCase());;
-          });
+          return new RegExp(term.toLowerCase());
+        });
         results = _.filter(results, function(rawdoc) {
           var matches = true;
           _.each(patterns, function(pattern) {
@@ -841,18 +839,6 @@ this.recline.Backend.Memory = this.recline.Backend.Memory || {};
         tmp.terms = tmp.terms.slice(0, 10);
       });
       return facetResults;
-    };
-
-    this.transform = function(editFunc) {
-      var dfd = new Deferred();
-      // TODO: should we clone before mapping? Do not see the point atm.
-      self.records = _.map(self.records, editFunc);
-      // now deal with deletes (i.e. nulls)
-      self.records = _.filter(self.records, function(record) {
-        return record != null;
-      });
-      dfd.resolve();
-      return dfd.promise();
     };
   };
 

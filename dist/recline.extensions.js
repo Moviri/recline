@@ -613,7 +613,9 @@ recline.Model.Query.prototype = $.extend(recline.Model.Query.prototype, {
 
     }
 
-});recline.Model.Dataset.prototype = $.extend(recline.Model.Dataset.prototype, {
+});
+recline.Model.Dataset.prototype = $.extend(recline.Model.Dataset.prototype, {
+
     toFullJSON:function (resultType) {
         var self = this;
         return _.map(self.getRecords(resultType), function (r) {
@@ -3125,7 +3127,7 @@ my.Faceting = {};
         }
         _.each(queryObj.facets, function (query, facetId) {
             // TODO: remove dependency on recline.Model
-            facetResults[facetId] = new recline.Model.Facet({id:facetId}).toJSON();
+                facetResults[facetId] = new recline.Model.Facet({id:facetId}).toJSON();
             facetResults[facetId].termsall = {};
 
         });
@@ -3554,7 +3556,7 @@ this.recline.Data = this.recline.Data || {};
     };
 
     
-    my.Format.decimal = d3.format(".00f");
+    //my.Format.decimal = d3.format(".00f");
 	
 	my.Format.scale = function(options) {
 		var calculateRange = function(rangePerc, dimwidth){			
@@ -3655,7 +3657,7 @@ this.recline.Data = this.recline.Data || {};
             var format = field.get('format');
             if(format === "currency_euro") {
                // return "€ " + val;
-            	return accounting.formatMoney(val, { symbol: "€",  format: "%v %s", decimal : ".", thousand: ",", precision : 0 }); // �4,999.99
+            	return accounting.formatMoney(val, { symbol: "€",  format: "%v %s", decimal : ".", thousand: ",", precision : 0 }); // �4,999.99
             }           
             return accounting.formatNumber(val, 0, ",");
         },
@@ -5092,6 +5094,280 @@ this.recline.Backend.JsonpMemoryStore = this.recline.Backend.JsonpMemoryStore ||
 }(jQuery, this.recline.Backend.JsonpMemoryStore));
 this.recline = this.recline || {};
 this.recline.Backend = this.recline.Backend || {};
+this.recline.Backend.SocketIO = this.recline.Backend.SocketIO || {};
+
+(function ($, my) {
+    my.__type__ = 'SocketIO';
+
+    my.fetch = function (dataset) {
+
+        console.log("Fetching data structure " + dataset.url);
+
+        var data = {onlydesc:"true"};
+        return requestJson(dataset, data);
+
+    };
+
+    my.query = function (queryObj, dataset) {
+
+
+        var data = buildRequestFromQuery(queryObj);
+        console.log("Querying jsonp backend [" + (dataset.id ? dataset.id : dataset.url) +"] for ");
+        console.log(data);
+        return requestJson(dataset, data, queryObj);
+
+    };
+
+
+    function requestJson(dataset, data, queryObj) {
+        var dfd = $.Deferred();
+
+        var jqxhr = $.ajax({
+            url:dataset.url,
+            dataType:'jsonp',
+            jsonpCallback:dataset.id,
+            data:data,
+            cache:true
+        });
+
+        _wrapInTimeout(jqxhr).done(function (results) {
+
+            // verify if returned data is not an error
+            if (results.results.length != 1 || results.results[0].status.code != 0) {
+                console.log("Error in fetching data: " + results.results[0].status.message + " Statuscode:[" + results.results[0].status.code + "] AdditionalInfo:[" + results.results[0].status.additionalInfo + "]");
+                dfd.reject(results.results[0].status);
+            } else 
+            	dfd.resolve(_handleJsonResult(results.results[0].result, queryObj));
+        })
+            .fail(function (arguments) {
+                dfd.reject(arguments);
+            });
+
+        return dfd.promise();
+
+    };
+
+
+
+
+    function _handleJsonResult(data, queryObj) {
+        if (data.data == null) {
+            return {
+                fields:_handleFieldDescription(data.description),
+                useMemoryStore:false
+            }
+        }
+        else {
+            var fields = _handleFieldDescription(data.description);
+
+            var facets = [];
+            if(queryObj)
+                var facets = recline.Data.Faceting.computeFacets(data.data, queryObj);
+
+            return {
+                hits:_normalizeRecords(data.data, fields),
+                fields:fields,
+                facets:facets,
+                useMemoryStore:false,
+                total:data.data.length
+            }
+        }
+
+    }
+
+    ;
+
+
+    // convert each record in native format
+    // todo verify if could cause performance problems
+    function _normalizeRecords(records, fields) {
+
+        _.each(fields, function (f) {
+            if (f != "string")
+                _.each(records, function (r) {
+                    r[f.id] = recline.Data.FormattersMoviri[f.type](r[f.id]);
+                })
+        });
+
+        return records;
+
+    }
+
+    ;
+
+
+    // todo should be in backend
+    function getDate(temp) {
+        var tmp = new Date();
+
+        var dateStr = padStr(temp.getFullYear()) + "-" +
+            padStr(1 + temp.getMonth()) + "-" +
+            padStr(temp.getDate()) + " " +
+            padStr(temp.getHours()) + ":" +
+            padStr(temp.getMinutes()) + ":" +
+            padStr(temp.getSeconds());
+        return dateStr;
+    }
+
+    function padStr(i) {
+        return (i < 10) ? "0" + i : "" + i;
+    }
+
+
+    function buildRequestFromQuery(queryObj) {
+
+        var filters = queryObj.filters;
+        var data = [];
+        var multivsep = "|";
+
+
+        // register filters
+        var filterFunctions = {
+            term:function term(filter) {
+                var parse = dataParsers[filter.fieldType];
+                var value = filter.field;
+                var term = parse(filter.term);
+
+                return (value + " eq " + term);
+            }, // field = value
+            termAdvanced:function termAdvanced(filter) {
+                var parse = dataParsers[filter.fieldType];
+                var value = filter.field;
+                var term = parse(filter.term);
+                var operator = filter.operator;
+
+                return (value + " " + operator + " " + term);
+            }, // field (operator) value
+            range:function range(filter) {
+                var parse = dataParsers[filter.fieldType];
+                var value = filter.field;
+                var start = parse(filter.start);
+                var stop = parse(filter.stop);
+                return (value + " bw " + start + multivsep + stop);
+
+            }, // field > start and field < end
+            list:function list(filter) {
+                var parse = dataParsers[filter.fieldType];
+                var value = filter.field;
+                var list = filter.list;
+
+                var ret = value + " in ";
+                for (var i in list) {
+                    if (i > 0)
+                        ret = ret + multivsep;
+
+                    ret = ret + list[i];
+                }
+
+                return ret;
+
+            }
+        };
+
+        var dataParsers = {
+            number:function (e) {
+                return parseFloat(e, 10);
+            },
+            string:function (e) {
+                return e.toString()
+            },
+            date:function (e) {
+                var tmp = new Date(e);
+                //console.log("---> " + e  + " ---> "+ getDate(tmp)) ;
+                return getDate(tmp);
+
+                // return new Date(e).valueOf()
+            },
+            integer:function (e) {
+                return parseInt(e);
+            }
+        };
+
+        for (var i = 0; i < filters.length; i++) {
+            data.push(filterFunctions[filters[i].type](filters[i]));
+        }
+
+        // build sort options
+        var res = "";
+
+        _.each(queryObj.sort, function (sortObj) {
+            if (res.length > 0)
+                res += ";"
+
+            var fieldName = sortObj.field;
+            res += fieldName;
+            if (sortObj.order) {
+                res += ":" + sortObj.order;
+            }
+
+        });
+
+
+        // filters definitions
+
+
+        var outdata = {};
+        if (data.length > 0){
+            // outdata["filters"] = data.toString();
+        	outdata["filtersep"] = "!==!";
+        	outdata["filters"] = data.join('!==!');
+        }
+
+        if (res.length > 0)
+            outdata["orderby"] = res;
+
+        return outdata;
+
+    }
+
+
+    // ## _wrapInTimeout
+    //
+    // Convenience method providing a crude way to catch backend errors on JSONP calls.
+    // Many of backends use JSONP and so will not get error messages and this is
+    // a crude way to catch those errors.
+    var _wrapInTimeout = function (ourFunction) {
+        var dfd = $.Deferred();
+        var timer = setTimeout(function () {
+            dfd.reject({
+                message:'Request Error: Backend did not respond after ' + (my.timeout / 1000) + ' seconds'
+            });
+        }, my.timeout);
+        ourFunction.done(function (arguments) {
+            clearTimeout(timer);
+            dfd.resolve(arguments);
+        })
+            .fail(function (arguments) {
+                clearTimeout(timer);
+                dfd.reject(arguments);
+            })
+        ;
+        return dfd.promise();
+    }
+
+    function _handleFieldDescription(description) {
+
+        var dataMapping = {
+            STRING:"string",
+            DATE:"date",
+            INTEGER:"integer",
+            DOUBLE:"number"
+        };
+
+
+        var res = [];
+        for (var k in description) {
+
+            res.push({id:k, type:dataMapping[description[k]]});
+        }
+
+        return res;
+    }
+
+
+}(jQuery, this.recline.Backend.Jsonp));
+this.recline = this.recline || {};
+this.recline.Backend = this.recline.Backend || {};
 this.recline.Backend.Splunk = this.recline.Backend.Splunk || {};
 
 (function ($, my) {
@@ -5625,6 +5901,166 @@ this.recline.Backend.ParallelUnionBackend = this.recline.Backend.ParallelUnionBa
 
 
 }(jQuery, this.recline.Backend.ParallelUnionBackend));
+/*jshint multistr:true */
+
+this.recline = this.recline || {};
+this.recline.View = this.recline.View || {};
+
+(function ($, my) {
+
+    my.GoogleMaps = Backbone.View.extend({
+        iconaMarker: 'http://chart.googleapis.com/chart?chst=d_simple_text_icon_above&chld={TEXT}|14|{TEXTCOLOR}|{MARKERICON}|{ICONSIZE}|{ICONCOLOR}|404040',
+        initialize:function (options) {
+            _.bindAll(this, 'render', 'redraw', 'clearAllMarkers', 'getMarkerColor', 'openInfoWindow');
+            this.model.bind('query:done', this.redraw);
+            this.mapEl = document.getElementById(this.options.el);
+            this.render();
+        },
+	    clearAllMarkers: function() {
+	        _.each(this.markers, function (marker) {
+	            marker.setMap(null);
+	        })
+	        this.markers = []
+	    },
+        getMarkerColor : function(val, htmlType) {
+            var self = this;
+        	var min, max;
+        	if (self.options.state.redThreshold.indexOf("min") >= 0 || self.options.state.redThreshold.indexOf("max") >= 0
+        		|| self.options.state.greenThreshold.indexOf("min") >= 0 || self.options.state.greenThreshold.indexOf("max") >= 0)
+    		{
+                var fieldValues = _.map(this.model.getRecords(), function(rec) { return rec.attributes[self.options.state.valueField] })
+                min = _.min(fieldValues);
+                max = _.max(fieldValues);
+    		}
+        	if (val <= eval(self.options.state.redThreshold))
+        		return (htmlType ? "#FF0000": "red")
+        	else if (val <= eval(self.options.state.greenThreshold))
+        		return (htmlType ? "#FFFF00" : "yellow")
+        	else return (htmlType ? "#00FF00" : "green");
+        },
+        render:function() {
+            var self = this;
+
+            var googleOptions = {};
+            if (this.options.state.googleOptions)
+            	googleOptions = _.extend(googleOptions, this.options.state.googleOptions)
+            if (this.options.state.mapCenter)
+            	googleOptions.center = new google.maps.LatLng(this.options.state.mapCenter[0], this.options.state.mapCenter[1])
+            if (this.options.state.mapType)
+            	googleOptions.mapTypeId = google.maps.MapTypeId[this.options.state.mapType]
+
+            this.map = new google.maps.Map(this.mapEl, googleOptions);
+    	    if (this.options.state.clustererOptions)
+    	    	mc = new MarkerClusterer(this.map,[], this.options.state.clustererOptions);
+    	    
+    	    if (this.options.events && this.options.events.mapClick)
+    	    	google.maps.event.addListener(this.map, 'click', this.options.events.mapClick);
+    	    
+    	    if (this.options.events && this.options.events.mapDblClick)
+    	    	google.maps.event.addListener(this.map, 'dblclick', this.options.events.mapDblClick);
+
+    	    if (this.options.events && this.options.events.mapRightClick)
+    	    	google.maps.event.addListener(this.map, 'rightclick', this.options.events.mapRightClick);
+    	    
+            if (this.options.state.infoWindowTemplate)
+        	{
+            	this.infowindow = new google.maps.InfoWindow({ content: '' });
+            	this.infowindow.close();
+        	}
+    	    this.redraw();
+        },
+
+	    redraw: function() {
+	    	var self = this;
+	    	
+        	this.clearAllMarkers();
+        	if (this.options.state.clustererOptions && mc)
+        		mc.clearMarkers();
+        	
+        	var latField = self.options.state.latField;
+        	var longField = self.options.state.longField;
+        	var valueField = self.options.state.valueField;
+        	var markerIconName = self.options.state.markerIcon;
+        	
+            _.each(this.model.getRecords("unfiltered"), function(rec) {
+    	        var latlng = new google.maps.LatLng(rec.attributes[latField], rec.attributes[longField]);
+    	        var color = self.getMarkerColor(rec.attributes[valueField], true).replace("#","")
+    			var text = self.iconaMarker.replace("{TEXT}", (self.options.state.showValue ? rec.attributes[valueField].toString() : ""))
+    			text = text.replace("{ICONCOLOR}", color)
+    			text = text.replace("{TEXTCOLOR}", color)
+    			text = text.replace("{MARKERICON}", self.options.state.markerIcon)
+    			text = text.replace("{ICONSIZE}", self.options.state.markerSize)
+    			
+    	        var mark = new google.maps.Marker({position:latlng, map:self.map, animation:null, icon:text, value: rec.attributes[valueField], color: self.getMarkerColor(rec.attributes[valueField]), record: rec});
+        	    
+    	        if (self.options.state.infoWindowTemplate)
+    	        	google.maps.event.addListener(mark, 'click', function() {self.openInfoWindow(mark)});
+
+    	        if (self.options.actions)
+	        	{
+    	        	var markerClickActions = self.getActionsForEvent("selection");
+					var mappings = self.options.state.mapping
+					google.maps.event.addListener(mark, 'click', function() {
+						var rec = this.record
+						markerClickActions.forEach(function (currAction) {
+		                    currAction.action.doAction([rec], currAction.mapping);
+		                });
+					});
+    	        	var markerHoverActions = self.getActionsForEvent("hover");
+					var mappings = self.options.state.mapping
+					google.maps.event.addListener(mark, 'mouseover', function() {
+						var rec = this.record
+						markerHoverActions.forEach(function (currAction) {
+		                    currAction.action.doAction([rec], currAction.mapping);
+		                });
+					});
+	        	}
+    	        if (self.options.events && self.options.events.markerClick)
+        	    	google.maps.event.addListener(mark, 'click', self.options.events.markerClick);
+        	    
+        	    if (self.options.events && self.options.events.markerDblClick)
+        	    	google.maps.event.addListener(mark, 'dblclick', self.options.events.markerDblClick);
+
+        	    if (self.options.events && self.options.events.markerRightClick)
+        	    	google.maps.event.addListener(mark, 'rightclick', self.options.events.markerRightClick);    	        
+
+        	    self.markers.push(mark)
+            })
+            if (this.options.state.clustererOptions && mc)
+        	{
+                mc.addMarkers(this.markers);
+                mc.repaint();	
+        	}
+	    },
+        getActionsForEvent:function (eventType) {
+            var self = this;
+            var actions = [];
+
+            _.each(self.options.actions, function (d) {
+                if (_.contains(d.event, eventType))
+                    actions.push(d);
+            });
+            return actions;
+        },
+	    openInfoWindow: function(marker) {
+	    	var tmplData = {
+	    		value: marker.value,
+	    		color: marker.color,
+	    	}
+	    	tmplData = _.extend(tmplData, marker.record.attributes);
+            var html = Mustache.render(this.options.state.infoWindowTemplate, tmplData);
+            this.infowindow.setContent(html);
+            this.infowindow.setPosition(marker.position);
+            this.infowindow.open(this.map);
+	    },
+	    closeInfoWindow : function() {
+	    	this.infowindow.setContent('')
+	        this.infowindow.close();	    	
+	    }
+    });
+
+
+})(jQuery, recline.View);
 this.recline = this.recline || {};
 this.recline.View = this.recline.View || {};
 
@@ -6097,166 +6533,6 @@ this.recline.View = this.recline.View || {};
 
     });
 })(jQuery, recline.View);/*jshint multistr:true */
-
-this.recline = this.recline || {};
-this.recline.View = this.recline.View || {};
-
-(function ($, my) {
-
-    my.GoogleMaps = Backbone.View.extend({
-        iconaMarker: 'http://chart.googleapis.com/chart?chst=d_simple_text_icon_above&chld={TEXT}|14|{TEXTCOLOR}|{MARKERICON}|{ICONSIZE}|{ICONCOLOR}|404040',
-        initialize:function (options) {
-            _.bindAll(this, 'render', 'redraw', 'clearAllMarkers', 'getMarkerColor', 'openInfoWindow');
-            this.model.bind('query:done', this.redraw);
-            this.mapEl = document.getElementById(this.options.el);
-            this.render();
-        },
-	    clearAllMarkers: function() {
-	        _.each(this.markers, function (marker) {
-	            marker.setMap(null);
-	        })
-	        this.markers = []
-	    },
-        getMarkerColor : function(val, htmlType) {
-            var self = this;
-        	var min, max;
-        	if (self.options.state.redThreshold.indexOf("min") >= 0 || self.options.state.redThreshold.indexOf("max") >= 0
-        		|| self.options.state.greenThreshold.indexOf("min") >= 0 || self.options.state.greenThreshold.indexOf("max") >= 0)
-    		{
-                var fieldValues = _.map(this.model.getRecords(), function(rec) { return rec.attributes[self.options.state.valueField] })
-                min = _.min(fieldValues);
-                max = _.max(fieldValues);
-    		}
-        	if (val <= eval(self.options.state.redThreshold))
-        		return (htmlType ? "#FF0000": "red")
-        	else if (val <= eval(self.options.state.greenThreshold))
-        		return (htmlType ? "#FFFF00" : "yellow")
-        	else return (htmlType ? "#00FF00" : "green");
-        },
-        render:function() {
-            var self = this;
-
-            var googleOptions = {};
-            if (this.options.state.googleOptions)
-            	googleOptions = _.extend(googleOptions, this.options.state.googleOptions)
-            if (this.options.state.mapCenter)
-            	googleOptions.center = new google.maps.LatLng(this.options.state.mapCenter[0], this.options.state.mapCenter[1])
-            if (this.options.state.mapType)
-            	googleOptions.mapTypeId = google.maps.MapTypeId[this.options.state.mapType]
-
-            this.map = new google.maps.Map(this.mapEl, googleOptions);
-    	    if (this.options.state.clustererOptions)
-    	    	mc = new MarkerClusterer(this.map,[], this.options.state.clustererOptions);
-    	    
-    	    if (this.options.events && this.options.events.mapClick)
-    	    	google.maps.event.addListener(this.map, 'click', this.options.events.mapClick);
-    	    
-    	    if (this.options.events && this.options.events.mapDblClick)
-    	    	google.maps.event.addListener(this.map, 'dblclick', this.options.events.mapDblClick);
-
-    	    if (this.options.events && this.options.events.mapRightClick)
-    	    	google.maps.event.addListener(this.map, 'rightclick', this.options.events.mapRightClick);
-    	    
-            if (this.options.state.infoWindowTemplate)
-        	{
-            	this.infowindow = new google.maps.InfoWindow({ content: '' });
-            	this.infowindow.close();
-        	}
-    	    this.redraw();
-        },
-
-	    redraw: function() {
-	    	var self = this;
-	    	
-        	this.clearAllMarkers();
-        	if (this.options.state.clustererOptions && mc)
-        		mc.clearMarkers();
-        	
-        	var latField = self.options.state.latField;
-        	var longField = self.options.state.longField;
-        	var valueField = self.options.state.valueField;
-        	var markerIconName = self.options.state.markerIcon;
-        	
-            _.each(this.model.getRecords("unfiltered"), function(rec) {
-    	        var latlng = new google.maps.LatLng(rec.attributes[latField], rec.attributes[longField]);
-    	        var color = self.getMarkerColor(rec.attributes[valueField], true).replace("#","")
-    			var text = self.iconaMarker.replace("{TEXT}", (self.options.state.showValue ? rec.attributes[valueField].toString() : ""))
-    			text = text.replace("{ICONCOLOR}", color)
-    			text = text.replace("{TEXTCOLOR}", color)
-    			text = text.replace("{MARKERICON}", self.options.state.markerIcon)
-    			text = text.replace("{ICONSIZE}", self.options.state.markerSize)
-    			
-    	        var mark = new google.maps.Marker({position:latlng, map:self.map, animation:null, icon:text, value: rec.attributes[valueField], color: self.getMarkerColor(rec.attributes[valueField]), record: rec});
-        	    
-    	        if (self.options.state.infoWindowTemplate)
-    	        	google.maps.event.addListener(mark, 'click', function() {self.openInfoWindow(mark)});
-
-    	        if (self.options.actions)
-	        	{
-    	        	var markerClickActions = self.getActionsForEvent("selection");
-					var mappings = self.options.state.mapping
-					google.maps.event.addListener(mark, 'click', function() {
-						var rec = this.record
-						markerClickActions.forEach(function (currAction) {
-		                    currAction.action.doAction([rec], currAction.mapping);
-		                });
-					});
-    	        	var markerHoverActions = self.getActionsForEvent("hover");
-					var mappings = self.options.state.mapping
-					google.maps.event.addListener(mark, 'mouseover', function() {
-						var rec = this.record
-						markerHoverActions.forEach(function (currAction) {
-		                    currAction.action.doAction([rec], currAction.mapping);
-		                });
-					});
-	        	}
-    	        if (self.options.events && self.options.events.markerClick)
-        	    	google.maps.event.addListener(mark, 'click', self.options.events.markerClick);
-        	    
-        	    if (self.options.events && self.options.events.markerDblClick)
-        	    	google.maps.event.addListener(mark, 'dblclick', self.options.events.markerDblClick);
-
-        	    if (self.options.events && self.options.events.markerRightClick)
-        	    	google.maps.event.addListener(mark, 'rightclick', self.options.events.markerRightClick);    	        
-
-        	    self.markers.push(mark)
-            })
-            if (this.options.state.clustererOptions && mc)
-        	{
-                mc.addMarkers(this.markers);
-                mc.repaint();	
-        	}
-	    },
-        getActionsForEvent:function (eventType) {
-            var self = this;
-            var actions = [];
-
-            _.each(self.options.actions, function (d) {
-                if (_.contains(d.event, eventType))
-                    actions.push(d);
-            });
-            return actions;
-        },
-	    openInfoWindow: function(marker) {
-	    	var tmplData = {
-	    		value: marker.value,
-	    		color: marker.color,
-	    	}
-	    	tmplData = _.extend(tmplData, marker.record.attributes);
-            var html = Mustache.render(this.options.state.infoWindowTemplate, tmplData);
-            this.infowindow.setContent(html);
-            this.infowindow.setPosition(marker.position);
-            this.infowindow.open(this.map);
-	    },
-	    closeInfoWindow : function() {
-	    	this.infowindow.setContent('')
-	        this.infowindow.close();	    	
-	    }
-    });
-
-
-})(jQuery, recline.View);
-/*jshint multistr:true */
 
 this.recline = this.recline || {};
 this.recline.View = this.recline.View || {};

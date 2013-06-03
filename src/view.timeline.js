@@ -4,6 +4,7 @@ this.recline = this.recline || {};
 this.recline.View = this.recline.View || {};
 
 (function($, my) {
+  "use strict";
 // turn off unnecessary logging from VMM Timeline
 if (typeof VMM !== 'undefined') {
   VMM.debug = false;
@@ -27,13 +28,12 @@ my.Timeline = Backbone.View.extend({
 
   initialize: function(options) {
     var self = this;
-    this.el = $(this.el);
     this.timeline = new VMM.Timeline();
     this._timelineIsInitialized = false;
-    this.model.fields.bind('reset', function() {
+    this.listenTo(this.model.fields, 'reset', function() {
       self._setupTemporalField();
     });
-    this.model.records.bind('all', function() {
+    this.listenTo(this.model.records, 'all', function() {
       self.reloadData();
     });
     var stateData = _.extend({
@@ -50,7 +50,7 @@ my.Timeline = Backbone.View.extend({
   render: function() {
     var tmplData = {};
     var htmls = Mustache.render(this.template, tmplData);
-    this.el.html(htmls);
+    this.$el.html(htmls);
     // can only call _initTimeline once view in DOM as Timeline uses $
     // internally to look up element
     if ($(this.elementId).length > 0) {
@@ -66,7 +66,7 @@ my.Timeline = Backbone.View.extend({
   },
 
   _initTimeline: function() {
-    var $timeline = this.el.find(this.elementId);
+    var $timeline = this.$el.find(this.elementId);
     var data = this._timelineJSON();
     this.timeline.init(data, this.elementId, this.state.get("timelineJSOptions"));
     this._timelineIsInitialized = true
@@ -134,14 +134,14 @@ my.Timeline = Backbone.View.extend({
     if (!date) {
       return null;
     }
-    var out = date.trim();
+    var out = $.trim(date);
     out = out.replace(/(\d)th/g, '$1');
     out = out.replace(/(\d)st/g, '$1');
-    out = out.trim() ? moment(out) : null;
-    if (out.toDate() == 'Invalid Date') {
-      return null;
-    } else {
+    out = $.trim(out) ? moment(out) : null;
+    if (out && out.isValid()) {
       return out.toDate();
+    } else {
+      return null;
     }
   },
 
