@@ -8,17 +8,17 @@ this.recline.Model.SocketDataset = this.recline.Model.SocketDataset || {};
 
 
     my.SocketDataset = Backbone.Model.extend({
-        constructor:function FilteredDataset() {
+        constructor: function SocketDataset() {
             Backbone.Model.prototype.constructor.apply(this, arguments);
         },
 
 
-        initialize:function () {
+        initialize: function () {
             var self = this;
 
 
             this.records = new my.RecordList();
-            this.fields =  new my.FieldList()
+            this.fields = new my.FieldList()
 
             self.fields.reset(this.get("fields"));
 
@@ -27,13 +27,11 @@ this.recline.Model.SocketDataset = this.recline.Model.SocketDataset || {};
             this.queryState = new my.Query();
 
 
-
-
         },
 
 
-        attach:function () {
-            var self=this;
+        attach: function () {
+            var self = this;
             this.trigger('attach:start');
 
             var queryObj = self.queryState.toJSON();
@@ -41,79 +39,61 @@ this.recline.Model.SocketDataset = this.recline.Model.SocketDataset || {};
 
             var socket = io.connect(self.attributes.url, { port: self.attributes.port, resource: self.attributes.resource});
 
+            socket.on('connect', function (data) {
+                socket.emit('subscribe', self.attributes.queue);
+            });
+
             socket.on(self.attributes.queue, function (data) {
-                console.log(data);
+                //console.log(data);
 
-                //var results = recline.Data.Filters.applyFiltersOnData(queryObj.filters, data, self.fields);
 
-                var numRows = queryObj.size || self.recordCount;
-                var start = queryObj.from || 0;
+                self.records.add(data, {at: 0});
 
-                /*
-                _.each(queryObj.sort, function (sortObj) {
-                    var fieldName = sortObj.field;
-                    results = _.sortBy(results, function (doc) {
-                        var _out = doc[fieldName];
-                        return _out;
-                    });
-                    if (sortObj.order == 'desc') {
-                        results.reverse();
-                    }
-                });
-                */
-
-                //results = results.slice(start, start + numRows);
-                //self.recordCount = results.length;
-
-                self.records.add(data);
-
-/*                var docs = _.map(data, function (hit) {
-                    var tmp = {};
-
-                    var _doc = new my.Record(tmp);
-                    _doc.fields = dataset.fields;
-                    return _doc;
-                });
-
-                self.records.add(docs);
-*/
 
                 self.recordCount = self.records.length;
+
+
+                while (self.recordCount > self.attributes.queueSize) {
+                    var m = self.records.at(self.recordCount - 1);
+                    self.records.remove(m);
+
+                    m.destroy();
+                    self.recordCount = self.records.length;
+                }
+
             });
 
 
             self.trigger('attach:done');
-            // GET DATA
-            // AAAAAAAAAAAAAAAAAAAA
 
         },
 
-        getRecords:function () {
+        getRecords: function () {
             return this.records.models;
         },
 
-        getFields:function (type) {
+        getFields: function (type) {
             return this.fields;
         },
 
-        toTemplateJSON:function () {
+        toTemplateJSON: function () {
             var data = this.records.toJSON();
             data.recordCount = this.recordCount;
             data.fields = this.fields.toJSON();
             return data;
         },
 
-        getFieldsSummary:function () {
+        getFieldsSummary: function () {
             return this.attributes.dataset.getFieldsSummary();
         },
 
-        addCustomFilterLogic: function(f) {
-            if(this.attributes.customFilterLogic)
+        addCustomFilterLogic: function (f) {
+            if (this.attributes.customFilterLogic)
                 this.attributes.customFilterLogic.push(f);
             else
                 this.attributes.customFilterLogic = [f];
         },
-        setColorSchema:function () {
+        setColorSchema: function () {
             var self = this;
             _.each(self.attributes.colorSchema, function (d) {
                 var field = _.find(self.fields.models, function (f) {
@@ -124,7 +104,7 @@ this.recline.Model.SocketDataset = this.recline.Model.SocketDataset || {};
             })
 
         },
-        toFullJSON:function (resultType) {
+        toFullJSON: function (resultType) {
             var self = this;
             return _.map(self.records.models, function (r) {
                 var res = {};
