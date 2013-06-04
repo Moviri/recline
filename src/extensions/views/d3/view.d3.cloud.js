@@ -148,6 +148,11 @@ this.recline.View = this.recline.View || {};
 					nv.tooltip.cleanup();
 				}
 			}
+			else if (self.options.state.mouseover && self.options.state.mouseout)
+			{
+				mouseoverCustom = self.options.state.mouseover;
+				mouseoutCustom = self.options.state.mouseout;
+			}
 
             var fill = d3.scale.log().range(['#DEEBF7', '#3182BD']);
             self.graph.append("svg")
