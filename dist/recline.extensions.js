@@ -1112,11 +1112,11 @@ this.recline.Model.SocketDataset = this.recline.Model.SocketDataset || {};
             var socket = io.connect(self.attributes.url, { port: self.attributes.port, resource: self.attributes.resource});
 
             socket.on('connect', function (data) {
-                socket.emit('subscribe', self.attributes.queue);
+                socket.emit('subscribe', self.attributes.subscribeData);
             });
 
             socket.on(self.attributes.queue, function (data) {
-                //console.log(data);
+                console.log(data);
 
 
                 self.records.add(data, {at: 0});
