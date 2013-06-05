@@ -15323,7 +15323,6 @@ this.recline.View = this.recline.View || {};
             var self=this;
             var state = self.options.state;
             var fontSize = d3.scale.log().domain(self.domain).range(state.fontRange || self.defaultFontRange);
- 		
             var font = "Impact";
 
             if(state.font)
@@ -15365,7 +15364,6 @@ this.recline.View = this.recline.View || {};
         drawCloud: function(graph){
            return  function(words) {
             var self=graph;
-			
 			var mouseover = function (d) { };
 			var mouseout = function (d) { };
 			var mouseoverCustom;
@@ -15391,7 +15389,6 @@ this.recline.View = this.recline.View || {};
 				mouseoverCustom = self.options.state.mouseover;
 				mouseoutCustom = self.options.state.mouseout;
 			}
-
             var fill = d3.scale.log().range(['#DEEBF7', '#3182BD']);
             self.graph.append("svg")
                 .attr("width", self.width)
@@ -15415,8 +15412,6 @@ this.recline.View = this.recline.View || {};
 			};
         }
     });
-
-
 })(jQuery, recline.View);
 /*jshint multistr:true */
 

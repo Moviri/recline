@@ -7,11 +7,7 @@ this.recline.View = this.recline.View || {};
 
     view.D3Cloud = Backbone.View.extend({
         template: '<div id="{{uid}}" style="width: {{width}}px; height: {{height}}px;"></div>',
-<<<<<<< HEAD
 		defaultfontRange: [20, 100],
-=======
-
->>>>>>> eee7d1f37f1d95cd098a779f5340fd2d5f611861
         initialize: function (options) {
 
             this.el = $(this.el);
@@ -30,10 +26,6 @@ this.recline.View = this.recline.View || {};
             this.width = options.width - this.margin.right;
             this.height = options.height - this.margin.top - this.margin.bottom;
 
-<<<<<<< HEAD
-=======
-
->>>>>>> eee7d1f37f1d95cd098a779f5340fd2d5f611861
             var out = Mustache.render(this.template, this);
             this.el.html(out);
         },
@@ -66,12 +58,7 @@ this.recline.View = this.recline.View || {};
 	    var domain = [Infinity, -Infinity];
 
             var records = _.map(this.options.model.getRecords(type), function (record) {
-<<<<<<< HEAD
                 return { key: record.attributes[state.wordField], value: (record.attributes[state.dimensionField] ? record.attributes[state.dimensionField] : 0.00000001) };
-=======
-
-                return { key: record.attributes[state.wordField], value: record.attributes[state.dimensionField]};
->>>>>>> eee7d1f37f1d95cd098a779f5340fd2d5f611861
             });
 
         records =  _.sortBy(records, function(f){ return f.value; });
@@ -95,12 +82,7 @@ this.recline.View = this.recline.View || {};
 
             var self=this;
             var state = self.options.state;
-<<<<<<< HEAD
             var fontSize = d3.scale.log().domain(self.domain).range(state.fontRange || self.defaultFontRange);
-=======
-            var fontSize = d3.scale.log().domain(self.domain).range([20, 100]);
->>>>>>> eee7d1f37f1d95cd098a779f5340fd2d5f611861
- 		
             var font = "Impact";
 
             if(state.font)
@@ -142,8 +124,6 @@ this.recline.View = this.recline.View || {};
         drawCloud: function(graph){
            return  function(words) {
             var self=graph;
-<<<<<<< HEAD
-			
 			var mouseover = function (d) { };
 			var mouseout = function (d) { };
 			var mouseoverCustom;
@@ -169,9 +149,6 @@ this.recline.View = this.recline.View || {};
 				mouseoverCustom = self.options.state.mouseover;
 				mouseoutCustom = self.options.state.mouseout;
 			}
-=======
->>>>>>> eee7d1f37f1d95cd098a779f5340fd2d5f611861
-
             var fill = d3.scale.log().range(['#DEEBF7', '#3182BD']);
             self.graph.append("svg")
                 .attr("width", self.width)
@@ -184,32 +161,15 @@ this.recline.View = this.recline.View || {};
                 .style("font-size", function(d) { return d.size + "px"; })
                 .style("font-family", "Impact")
                 .style("fill", function(d, i) { return fill(d.size); })
-<<<<<<< HEAD
 				.style("cursor", "pointer")
-=======
->>>>>>> eee7d1f37f1d95cd098a779f5340fd2d5f611861
                 .attr("text-anchor", "middle")
                 .attr("transform", function(d) {
                     return "translate(" + [d.x, d.y] + ")rotate(" + d.rotate + ")";
                 })
-<<<<<<< HEAD
                 .text(function(d) { return d.text; })
 				.on("mouseover", mouseoverCustom || mouseover)
 				.on("mouseout", mouseoutCustom || mouseout)
 			};
         }
-=======
-                .text(function(d) { return d.text; });
-           };
-        }
-
-
-
-
-
-
->>>>>>> eee7d1f37f1d95cd098a779f5340fd2d5f611861
     });
-
-
 })(jQuery, recline.View);
