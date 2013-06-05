@@ -7,7 +7,7 @@ this.recline.View = this.recline.View || {};
 
     view.D3Cloud = Backbone.View.extend({
         template: '<div id="{{uid}}" style="width: {{width}}px; height: {{height}}px;"></div>',
-
+		defaultfontRange: [20, 100],
         initialize: function (options) {
 
             this.el = $(this.el);
@@ -25,7 +25,6 @@ this.recline.View = this.recline.View || {};
             this.margin = {top: 19.5, right: 19.5, bottom: 19.5, left: 100.5};
             this.width = options.width - this.margin.right;
             this.height = options.height - this.margin.top - this.margin.bottom;
-
 
             var out = Mustache.render(this.template, this);
             this.el.html(out);
@@ -59,8 +58,7 @@ this.recline.View = this.recline.View || {};
 	    var domain = [Infinity, -Infinity];
 
             var records = _.map(this.options.model.getRecords(type), function (record) {
-
-                return { key: record.attributes[state.wordField], value: record.attributes[state.dimensionField]};
+                return { key: record.attributes[state.wordField], value: (record.attributes[state.dimensionField] ? record.attributes[state.dimensionField] : 0.00000001) };
             });
 
         records =  _.sortBy(records, function(f){ return f.value; });
@@ -84,7 +82,7 @@ this.recline.View = this.recline.View || {};
 
             var self=this;
             var state = self.options.state;
-            var fontSize = d3.scale.log().domain(self.domain).range([20, 100]);
+            var fontSize = d3.scale.log().domain(self.domain).range(state.fontRange || self.defaultFontRange);
  		
             var font = "Impact";
 
