@@ -44,7 +44,7 @@ this.recline.Model.SocketDataset = this.recline.Model.SocketDataset || {};
             });
 
             socket.on(self.attributes.queue, function (data) {
-                console.log(data);
+                //console.log(data);
 
 
                 self.records.add(data, {at: 0});

@@ -18,6 +18,8 @@ this.recline.View = this.recline.View || {};
             this.model.fields.bind('reset', this.render);
             this.model.fields.bind('add', this.render);
 
+            this.listenTo(this.model.records, 'add', this.addRecords);
+
             this.model.bind('query:done', this.redraw);
             this.model.queryState.bind('selection:done', this.redraw);
 
@@ -78,7 +80,24 @@ this.recline.View = this.recline.View || {};
             };
 
             self.graphOptions = _.extend(self.graphOptions, self.options.state.options);
-            self.createSeries();
+
+
+            var resultType = "filtered";
+            if (self.options.resultType !== null)
+                resultType = self.options.resultType;
+
+            var records = self.model.getRecords(resultType);
+
+            if (!self.series)
+                self.series = [];
+            else
+                self.series.length = 0; // keep reference to old serie
+
+            var series = self.series;
+
+            self.createSeries(records, series);
+
+
             if (self.series.length == 0)
             	return;
 
@@ -163,17 +182,24 @@ this.recline.View = this.recline.View || {};
 
         },
 
-        createSeries:function () {
+        addRecords: function(model) {
+            var self= this;
+            var series = [];
+            this.createSeries([model], series);
 
+            _.each(series, function(c, index) {
+                _.each(c.data, function(d) {
+                    self.series[index].data.push(d);
+                });
+            });
+
+
+            self.graph.update();
+        },
+
+        createSeries:function (records, series) {
             var self = this;
-            if (!self.series)
-                self.series = [];
-            else
-                self.series.length = 0; // keep reference to old serie
 
-            var series = self.series;
-
-            //  {type: "byFieldName", fieldvaluesField: ["y", "z"]}
             var seriesAttr = this.options.state.series;
 
             var fillEmptyValuesWith = seriesAttr.fillEmptyValuesWith;
@@ -185,11 +211,7 @@ this.recline.View = this.recline.View || {};
             if (self.model.queryState.isSelected())
                 selectionActive = true;
 
-            var resultType = "filtered";
-            if (self.options.resultType !== null)
-                resultType = self.options.resultType;
 
-            var records = self.model.getRecords(resultType);
 
             var xfield = self.model.fields.get(self.options.state.group);
 
