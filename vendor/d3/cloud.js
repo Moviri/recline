@@ -24,6 +24,7 @@
                 data = words.map(function(d, i) {
                     return {
                         text: text.call(this, d, i),
+						color: d.color,
                         font: font.call(this, d, i),
                         rotate: rotate.call(this, d, i),
                         size: ~~fontSize.call(this, d, i),

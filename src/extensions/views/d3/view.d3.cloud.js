@@ -23,8 +23,13 @@ this.recline.View = this.recline.View || {};
             this.uid = options.id || ("d3_" + new Date().getTime() + Math.floor(Math.random() * 10000)); // generating an unique id for the chart
 
             this.margin = {top: 19.5, right: 19.5, bottom: 19.5, left: 100.5};
-            this.width = options.width - this.margin.right;
-            this.height = options.height - this.margin.top - this.margin.bottom;
+			if (options.width)
+				this.width = options.width - this.margin.right;
+			else throw "Missing cloud width!";
+			
+			if (options.height)
+				this.height = options.height - this.margin.top - this.margin.bottom;
+			else throw "Missing cloud height!";
 
             var out = Mustache.render(this.template, this);
             this.el.html(out);
@@ -55,13 +60,18 @@ this.recline.View = this.recline.View || {};
             if (this.options.resultType) {
                 type = this.options.resultType;
             }
-	    var domain = [Infinity, -Infinity];
+			var domain = [Infinity, -Infinity];
 
             var records = _.map(this.options.model.getRecords(type), function (record) {
-                return { key: record.attributes[state.wordField], value: (record.attributes[state.dimensionField] ? record.attributes[state.dimensionField] : 0.00000001) };
+				var newRec = { key: record.attributes[state.wordField], value: (record.attributes[state.dimensionField] ? record.attributes[state.dimensionField] : 0.00000001) };
+				if (state.colorField && record.attributes[state.colorField])
+					newRec.color = record.attributes[state.colorField];
+				return newRec;
             });
 
-        records =  _.sortBy(records, function(f){ return f.value; });
+			records =  _.sortBy(records, function(f){ return f.value; });
+			if (records.length == 0)
+				return;
 
             domain = [records[0].value, records[records.length-1].value];
 
@@ -101,7 +111,7 @@ this.recline.View = this.recline.View || {};
 
             d3.layout.cloud().size([self.width, self.height])
                 .words(data.map(function(d) {
-                        return {text: d.key, size: d.value};
+                        return {text: d.key, size: d.value, color: d.color };
                     }))
                 .rotate(function() {
 
@@ -160,7 +170,9 @@ this.recline.View = this.recline.View || {};
                 .enter().append("text")
                 .style("font-size", function(d) { return d.size + "px"; })
                 .style("font-family", "Impact")
-                .style("fill", function(d, i) { return fill(d.size); })
+                .style("fill", function(d, i) { 
+					return (d.color ? d.color : fill(d.size)); 
+				})
 				.style("cursor", "pointer")
                 .attr("text-anchor", "middle")
                 .attr("transform", function(d) {
