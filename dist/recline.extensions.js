@@ -15493,8 +15493,10 @@ this.recline.View = this.recline.View || {};
             var self=graph;
 			var mouseover = function (d) { };
 			var mouseout = function (d) { };
+			var click = function (d) { };
 			var mouseoverCustom;
 			var mouseoutCustom;
+			var clickCustom;
 			if (self.options.state.customTooltipTemplate)
 			{
 				mouseoverCustom = function (d) {
@@ -15516,6 +15518,9 @@ this.recline.View = this.recline.View || {};
 				mouseoverCustom = self.options.state.mouseover;
 				mouseoutCustom = self.options.state.mouseout;
 			}
+			if (self.options.state.click)
+				clickCustom = self.options.state.click;
+			
             var fill = d3.scale.log().range(['#DEEBF7', '#3182BD']);
             self.graph.append("svg")
                 .attr("width", self.width)
@@ -15538,6 +15543,7 @@ this.recline.View = this.recline.View || {};
                 .text(function(d) { return d.text; })
 				.on("mouseover", mouseoverCustom || mouseover)
 				.on("mouseout", mouseoutCustom || mouseout)
+				.on("click", clickCustom || click)
 			};
         }
     });
