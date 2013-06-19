@@ -37,15 +37,15 @@ this.recline.Model.SocketDataset = this.recline.Model.SocketDataset || {};
             var queryObj = self.queryState.toJSON();
 
 
-            var socket = io.connect(self.attributes.url, { port: self.attributes.port, resource: self.attributes.resource});
+            self.socket = io.connect(self.attributes.url, { port: self.attributes.port, resource: self.attributes.resource});
+
+            var socket = self.socket;
 
             socket.on('connect', function (data) {
                 socket.emit('subscribe', self.attributes.subscribeData);
             });
 
             socket.on(self.attributes.queue, function (data) {
-                //console.log(data);
-
 
                 self.records.add(data, {at: 0});
 
@@ -67,7 +67,9 @@ this.recline.Model.SocketDataset = this.recline.Model.SocketDataset || {};
             self.trigger('attach:done');
 
         },
-
+        deatach: function() {
+            this.socket.disconnect();
+        },
         getRecords: function () {
             return this.records.models;
         },
