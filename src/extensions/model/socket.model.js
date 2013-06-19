@@ -67,7 +67,7 @@ this.recline.Model.SocketDataset = this.recline.Model.SocketDataset || {};
             self.trigger('attach:done');
 
         },
-        deatach: function() {
+        deattach: function() {
             this.socket.disconnect();
         },
         getRecords: function () {
