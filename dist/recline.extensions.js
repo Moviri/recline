@@ -4244,7 +4244,7 @@ this.recline.Data.SeriesUtility = this.recline.Data.SeriesUtility || {};
         return series;
     };
     
-    my.createSerieAnnotations = function(model, dateFieldname, textFieldname, series) {
+    my.createSerieAnnotations = function(model, dateFieldname, textFieldname, series, seriesFieldname, strictPositioning) {
         var annotations = []
     	if (model && dateFieldname && textFieldname)
     	{
@@ -4262,7 +4262,7 @@ this.recline.Data.SeriesUtility = this.recline.Data.SeriesUtility || {};
     			_.each(series, function(serie, sIndex) {
     				var recordSameTimestamp = _.find(serie.data, function(v) {return v.x == timestamp })
     				if (recordSameTimestamp)
-    					allY.push(recordSameTimestamp.y)
+    					allY.push(recordSameTimestamp)
     				else
 					{
     					for (var j = 1; j < serie.data.length; j++)
@@ -4287,7 +4287,41 @@ this.recline.Data.SeriesUtility = this.recline.Data.SeriesUtility || {};
             			if (i > 26)
             				letter += Math.floor(i/27)
 
-            			annotations.push({x: timestamp, text: rec.getFieldValue(textField), letter: letter, y: maxY.y || 0, serie: maxY.serie || 0 })
+            			var serieId = -1;
+            			if (!strictPositioning) {
+            				serieId = maxY.serie || 0;	
+            			}
+            			var currY = maxY.y || 0;
+            			if (seriesFieldname)
+        				{
+            				var seriesField = model.fields.get(seriesFieldname)
+            				var seriesValue = rec.getFieldValueUnrendered(seriesField);
+            				for(var jj = 0 ; jj < series.length; jj++)
+            					if (series[jj].name == seriesValue){
+            						serieId = jj;
+            						break;
+            					}
+            						
+        				}
+            			if (strictPositioning && serieId == -1 && series.length == 1 && series[0].name == "_ALL_"){
+            				// we are in the case that strictPositioning has been required and only series ALL is plotted. So we put the annotation on ALL series
+            				serieId = 0;
+            				annotations.push({x: timestamp, text: rec.getFieldValue(textField), letter: letter, y: currY, serie: serieId })
+            			} else if (serieId >= 0){
+            				var foundSeries = false;
+                			_.find(allY, function(a){ 
+                				if(a.legendValue == series[serieId].label) {
+                					currY = a.y;
+                					foundSeries = true;
+                				}
+                			});
+                			if ((strictPositioning && foundSeries) || !strictPositioning){
+                				annotations.push({x: timestamp, text: rec.getFieldValue(textField), letter: letter, y: currY, serie: serieId })	
+                			}	
+            			}
+            			
+            			
+            			
         			} 
 				}
     		})
@@ -9555,6 +9589,8 @@ this.recline.View = this.recline.View || {};
             this.model.bind('query:done', this.redraw);
            // this.model.records.bind('reset', this.redraw);
             this.model.queryState.bind('selection:done', this.redraw);
+       //     if (this.options.state.useAnnotations)
+      //      	this.options.state.useAnnotations.dataset.bind('query:done', this.redraw);
 
             this.uid = options.id || ("d3_" + new Date().getTime() + Math.floor(Math.random() * 10000)); // generating an unique id for the chart
 
@@ -9617,45 +9653,48 @@ this.recline.View = this.recline.View || {};
         updateGraph:function () {
      //       console.log("View.xCharts: updateGraph");
             var self = this;
-            self.updateSeries();
-            
-            if (self.series.main && self.series.main.length && self.series.main[0].data && self.series.main[0].data.length)
-        	{
-            	this.el.find('figure div.noData').remove()
-            	
-            	this.el.find('div.xCharts-title-x').html(self.options.state.xAxisTitle)
-                var state =  self.options.state;
-                self.updateState(state);
-                self.graph._options = state.opts;
-
-                self.graph.setData(self.series);
-                self.updateOptions();
-
-                self.graph.setType(state.type);
-
-                if(state.legend)
-                    self.createLegend();
-
-        	}
-            else
-        	{
-            	// display NO DATA MSG
-            	
-            	//self.graph.setData(self.series);
-                var graphid = "#" + this.uid;
-                if (self.graph)
-                {
-                	// removes resize event or last chart will popup again!
-                	d3.select(window).on('resize.for.' + graphid, null);
-                	$(graphid).off()
-                    $(graphid).empty();
-                    delete self.graph;
-                }
-                this.el.find('figure').html("");
-                this.el.find('figure').append(new recline.View.NoDataMsg().create());
-                this.el.find('div.xCharts-title-x').html("")
-            	self.graph = null
-        	}
+            if (this.model.recordCount)
+            {
+	            self.updateSeries();
+	            
+	            if (self.series.main && self.series.main.length && self.series.main[0].data && self.series.main[0].data.length)
+	        	{
+	            	this.el.find('figure div.noData').remove()
+	            	
+	            	this.el.find('div.xCharts-title-x').html(self.options.state.xAxisTitle)
+	                var state =  self.options.state;
+	                self.updateState(state);
+	                self.graph._options = state.opts;
+	
+	                self.graph.setData(self.series);
+	                self.updateOptions();
+	
+	                self.graph.setType(state.type);
+	
+	                if(state.legend)
+	                    self.createLegend();
+	
+	        	}
+	            else
+	        	{
+	            	// display NO DATA MSG
+	            	
+	            	//self.graph.setData(self.series);
+	                var graphid = "#" + this.uid;
+	                if (self.graph)
+	                {
+	                	// removes resize event or last chart will popup again!
+	                	d3.select(window).on('resize.for.' + graphid, null);
+	                	$(graphid).off()
+	                    $(graphid).empty();
+	                    delete self.graph;
+	                }
+	                this.el.find('figure').html("");
+	                this.el.find('figure').append(new recline.View.NoDataMsg().create());
+	                this.el.find('div.xCharts-title-x').html("")
+	            	self.graph = null
+	        	}
+            }
         },
 
         updateState: function(state) {
@@ -9730,50 +9769,54 @@ this.recline.View = this.recline.View || {};
 
             var self = this;
             var state = self.options.state;
-            self.updateSeries();
-            
-
-            if(state.legend)
-                self.createLegend();
-
-
-            if (self.series.main && self.series.main.length && self.series.main[0].data && self.series.main[0].data.length)
-        	{
-            	self.el.find('figure div.noData').remove() // remove no data msg (if any) 
-            	self.el.find('figure svg g').remove() // remove previous graph (if any)
-            		
-                self.updateState(state);
-
-                if (state.interpolation)
-                    state.opts.interpolation = state.interpolation;
-                
-                if (state.type == 'line-dotted' && state.dotRadius)
-                    state.opts.dotRadius = state.dotRadius;
-
-                self.graph = new xChart(state.type, self.series, '#' + self.uid, state.opts);
-                if (state.timing != null && typeof state.timing != "undefined")
-                	self.graph._options.timing = state.timing;
-
-
-                self.updateOptions();
-
-            }
-            else
+            if (this.model.recordCount)
             {
-            	// display NO DATA MSG
-                var graphid = "#" + this.uid;
-                if (self.graph)
-                {
-                	// removes resize event or last chart will popup again!
-                	d3.select(window).on('resize.for.' + graphid, null);
-                	$(graphid).off()
-                    $(graphid).empty();
-                    delete self.graph;
+                self.updateSeries();
+                
+
+                if(state.legend)
+                    self.createLegend();
+
+
+                if (self.series.main && self.series.main.length && self.series.main[0].data && self.series.main[0].data.length)
+            	{
+                	self.el.find('figure div.noData').remove() // remove no data msg (if any) 
+                	self.el.find('figure svg g').remove() // remove previous graph (if any)
+                		
+                    self.updateState(state);
+
+                    if (state.interpolation)
+                        state.opts.interpolation = state.interpolation;
+                    
+                    if (state.type == 'line-dotted' && state.dotRadius)
+                        state.opts.dotRadius = state.dotRadius;
+
+                    self.graph = new xChart(state.type, self.series, '#' + self.uid, state.opts);
+                    if (state.timing != null && typeof state.timing != "undefined")
+                    	self.graph._options.timing = state.timing;
+
+
+                    self.updateOptions();
+
                 }
-                this.el.find('figure').html("");
-            	this.el.find('figure').append(new recline.View.NoDataMsg().create());
-            	this.el.find('div.xCharts-title-x').html("")
+                else
+                {
+                	// display NO DATA MSG
+                    var graphid = "#" + this.uid;
+                    if (self.graph)
+                    {
+                    	// removes resize event or last chart will popup again!
+                    	d3.select(window).on('resize.for.' + graphid, null);
+                    	$(graphid).off()
+                        $(graphid).empty();
+                        delete self.graph;
+                    }
+                    this.el.find('figure').html("");
+                	this.el.find('figure').append(new recline.View.NoDataMsg().create());
+                	this.el.find('div.xCharts-title-x').html("")
+                }
             }
+            
         },
 
         createLegend: function() {
@@ -9845,7 +9888,7 @@ this.recline.View = this.recline.View || {};
                 data.main.push(serie);
             });
             if (self.options.state.useAnnotations && series.length)
-            	recline.Data.SeriesUtility.createSerieAnnotations(self.options.state.useAnnotations.dataset, self.options.state.useAnnotations.dateField, self.options.state.useAnnotations.textField, data.main)
+            	recline.Data.SeriesUtility.createSerieAnnotations(self.options.state.useAnnotations.dataset, self.options.state.useAnnotations.dateField, self.options.state.useAnnotations.textField, data.main, self.options.state.useAnnotations.seriesField, self.options.state.useAnnotations.strictPositioning)
 
             self.series = data;
         }

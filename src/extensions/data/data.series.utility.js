@@ -317,7 +317,7 @@ this.recline.Data.SeriesUtility = this.recline.Data.SeriesUtility || {};
         return series;
     };
     
-    my.createSerieAnnotations = function(model, dateFieldname, textFieldname, series) {
+    my.createSerieAnnotations = function(model, dateFieldname, textFieldname, series, seriesFieldname, strictPositioning) {
         var annotations = []
     	if (model && dateFieldname && textFieldname)
     	{
@@ -335,7 +335,7 @@ this.recline.Data.SeriesUtility = this.recline.Data.SeriesUtility || {};
     			_.each(series, function(serie, sIndex) {
     				var recordSameTimestamp = _.find(serie.data, function(v) {return v.x == timestamp })
     				if (recordSameTimestamp)
-    					allY.push(recordSameTimestamp.y)
+    					allY.push(recordSameTimestamp)
     				else
 					{
     					for (var j = 1; j < serie.data.length; j++)
@@ -360,7 +360,41 @@ this.recline.Data.SeriesUtility = this.recline.Data.SeriesUtility || {};
             			if (i > 26)
             				letter += Math.floor(i/27)
 
-            			annotations.push({x: timestamp, text: rec.getFieldValue(textField), letter: letter, y: maxY.y || 0, serie: maxY.serie || 0 })
+            			var serieId = -1;
+            			if (!strictPositioning) {
+            				serieId = maxY.serie || 0;	
+            			}
+            			var currY = maxY.y || 0;
+            			if (seriesFieldname)
+        				{
+            				var seriesField = model.fields.get(seriesFieldname)
+            				var seriesValue = rec.getFieldValueUnrendered(seriesField);
+            				for(var jj = 0 ; jj < series.length; jj++)
+            					if (series[jj].name == seriesValue){
+            						serieId = jj;
+            						break;
+            					}
+            						
+        				}
+            			if (strictPositioning && serieId == -1 && series.length == 1 && series[0].name == "_ALL_"){
+            				// we are in the case that strictPositioning has been required and only series ALL is plotted. So we put the annotation on ALL series
+            				serieId = 0;
+            				annotations.push({x: timestamp, text: rec.getFieldValue(textField), letter: letter, y: currY, serie: serieId })
+            			} else if (serieId >= 0){
+            				var foundSeries = false;
+                			_.find(allY, function(a){ 
+                				if(a.legendValue == series[serieId].label) {
+                					currY = a.y;
+                					foundSeries = true;
+                				}
+                			});
+                			if ((strictPositioning && foundSeries) || !strictPositioning){
+                				annotations.push({x: timestamp, text: rec.getFieldValue(textField), letter: letter, y: currY, serie: serieId })	
+                			}	
+            			}
+            			
+            			
+            			
         			} 
 				}
     		})
