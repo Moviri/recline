@@ -37,7 +37,7 @@ this.recline.Model.SocketDataset = this.recline.Model.SocketDataset || {};
             var queryObj = self.queryState.toJSON();
 
 
-            self.socket = io.connect(self.attributes.url, { port: self.attributes.port, resource: self.attributes.resource});
+            self.socket = io.connect(self.attributes.url, {'force new connection': true, port: self.attributes.port, resource: self.attributes.resource});
 
             var socket = self.socket;
 

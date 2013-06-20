@@ -1109,7 +1109,7 @@ this.recline.Model.SocketDataset = this.recline.Model.SocketDataset || {};
             var queryObj = self.queryState.toJSON();
 
 
-            self.socket = io.connect(self.attributes.url, { port: self.attributes.port, resource: self.attributes.resource});
+            self.socket = io.connect(self.attributes.url, {'force new connection': true, port: self.attributes.port, resource: self.attributes.resource});
 
             var socket = self.socket;
 
@@ -1139,7 +1139,7 @@ this.recline.Model.SocketDataset = this.recline.Model.SocketDataset || {};
             self.trigger('attach:done');
 
         },
-        deatach: function() {
+        deattach: function() {
             this.socket.disconnect();
         },
         getRecords: function () {
@@ -9589,8 +9589,6 @@ this.recline.View = this.recline.View || {};
             this.model.bind('query:done', this.redraw);
            // this.model.records.bind('reset', this.redraw);
             this.model.queryState.bind('selection:done', this.redraw);
-       //     if (this.options.state.useAnnotations)
-      //      	this.options.state.useAnnotations.dataset.bind('query:done', this.redraw);
 
             this.uid = options.id || ("d3_" + new Date().getTime() + Math.floor(Math.random() * 10000)); // generating an unique id for the chart
 
