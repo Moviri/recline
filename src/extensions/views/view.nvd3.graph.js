@@ -184,9 +184,26 @@ this.recline.View = this.recline.View || {};
 	            	{
 	                	var xField = self.model.fields.get(self.options.state.group)
 	                	if (xField.attributes.type == "date")
-	                		self.chart.xAxis.tickFormat(function (d) {
-	                			return d3.time.format("%d-%b")(new Date(d)); 
-	                		});
+						{
+							if (graphType.indexOf("Horizontal") < 0 && self.options.state.tickFormatX)
+							{
+								self.chart.xAxis.tickFormat(function (d) {
+									return self.options.state.tickFormatX(new Date(d)); 
+								});
+							}
+							else if (graphType.indexOf("Horizontal") > 0 && self.options.state.tickFormatY)
+							{
+								self.chart.yAxis.tickFormat(function (d) {
+									return self.options.state.tickFormatY(new Date(d)); 
+								});
+							}
+							else 
+	                		{
+								self.chart.xAxis.tickFormat(function (d) {
+									return d3.time.format("%d-%b")(new Date(d)); 
+								});
+							}
+						}
 	            	}
 	                if (self.options.state.options.noTicksY)
 	                    self.chart.yAxis.tickFormat(function (d) { return ''; });                	
