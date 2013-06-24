@@ -111,7 +111,7 @@ this.recline.View = this.recline.View || {};
             var self = this;
             self.trigger("chart:startDrawing")
 
-            if (self.model.recordCount == 0)
+            if (typeof self.model.records == "undefined" || self.model.records == null || self.model.records.length == 0)
             {
                 var svgElem = this.el.find('#nvd3chart_' + self.uid+ ' svg')
                 svgElem.css("display", "block")
@@ -121,11 +121,13 @@ this.recline.View = this.recline.View || {};
 
                 // display noData message and exit
                 svgElem.css("display", "none")
-                this.el.find('#nvd3chart_' + self.uid).width(width).height(height).append(new recline.View.NoDataMsg().create());
+                this.el.find('#nvd3chart_' + self.uid).width(width).height(height).html("").append(new recline.View.NoDataMsg().create());
                 self.trigger("chart:endDrawing")
                 return;
             }
-            
+            if ($("div.noData", this.el).length)
+				self.render(); // remove previous noData frame
+				
             var svgElem = this.el.find('#nvd3chart_' + self.uid+ ' svg') 
         	svgElem.css("display", "block")
         	// get computed dimensions
@@ -153,7 +155,7 @@ this.recline.View = this.recline.View || {};
         	{
             	// display noData message and exit
             	svgElem.css("display", "none")
-            	this.el.find('#nvd3chart_' + self.uid).width(width).height(height).append(new recline.View.NoDataMsg().create());
+            	this.el.find('#nvd3chart_' + self.uid).width(width).height(height).html("").append(new recline.View.NoDataMsg().create());
                 self.trigger("chart:endDrawing")
             	return null;
         	}
@@ -385,7 +387,8 @@ this.recline.View = this.recline.View || {};
                 chart.showLegend(value);
             },
             "showControls":function(chart, value) {
-                chart.showControls(value);
+                if (chart.showControls)
+					chart.showControls(value);
             },
             "showMaxMin":function(chart, value) {
                 chart.showMaxMin(value);
