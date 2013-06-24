@@ -47,8 +47,10 @@ this.recline.View = this.recline.View || {};
     	incLoaderCount : function() {
     		this.loaderCount++;
     		//console.log("Start task - loaderCount = "+this.loaderCount)
-    		this.divOver.show();
-    		$("#__loadingImage__").show();
+			setTimeout(function() {
+				this.divOver.show();
+				$("#__loadingImage__").show();
+			}, 0);
     	},
     	decLoaderCount : function() { 
     		var self = this;

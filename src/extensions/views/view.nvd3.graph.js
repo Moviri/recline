@@ -157,6 +157,7 @@ this.recline.View = this.recline.View || {};
                 self.trigger("chart:endDrawing")
             	return null;
         	}
+			self.series = seriesNVD3;
             var graphType = this.state.get("graphType");
 
             var viewId = this.uid;
