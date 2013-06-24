@@ -29,11 +29,7 @@ my.Dataset = Backbone.Model.extend({
     this.fields = new my.FieldList();
     this.records = new my.RecordList();
 
-      // When a new record is added to the collection it is automatically added to changes
-      var self=this;
-      self.records.bind('add', function(doc) {
-          self._changes.creates.push(doc.toJSON());
-      });
+
 
 
       this._changes = {
@@ -47,6 +43,14 @@ my.Dataset = Backbone.Model.extend({
     this.queryState.bind('change facet:add', function () {
       self.query(); // We want to call query() without any arguments.
     });
+
+      // When a new record is added to the collection it is automatically added to changes
+      var self=this;
+      self.records.bind('add', function(doc) {
+          self._changes.creates.push(doc.toJSON());
+          self.recordCount = self.records.models.length;
+      });
+
     // store is what we query and save against
     // store will either be the backend or be a memory store if Backend fetch
     // tells us to use memory store
