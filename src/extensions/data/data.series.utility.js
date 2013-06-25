@@ -319,7 +319,7 @@ this.recline.Data.SeriesUtility = this.recline.Data.SeriesUtility || {};
     
     my.createSerieAnnotations = function(model, dateFieldname, textFieldname, series, seriesFieldname, strictPositioning) {
         var annotations = []
-    	if (model && dateFieldname && textFieldname)
+    	if (model && dateFieldname && textFieldname && model.records.length)
     	{
         	var dateField = model.fields.get(dateFieldname)
         	if (typeof dateField == "undefined" || dateField == null)
