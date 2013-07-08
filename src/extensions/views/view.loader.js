@@ -39,7 +39,10 @@ this.recline.View = this.recline.View || {};
         render:function () {
         	var out = Mustache.render(this.htmlLoaderTemplate, this.options);
         	this.container.append(out);
-        	this.divOver.show();
+			if ((this.datasets && this.datasets.length) || (this.charts && this.charts.length))
+				this.divOver.show();
+			else $("#__loadingImage__").hide();
+			
         	this.bindDatasets(this.datasets);
         	this.bindCharts(this.charts);
         },
