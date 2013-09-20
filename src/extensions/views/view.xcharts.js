@@ -11,7 +11,7 @@ this.recline.View = this.recline.View || {};
         initialize:function (options) {
 
             this.el = $(this.el);
-            _.bindAll(this, 'render', 'redraw');
+            _.bindAll(this, 'render', 'redraw', 'displayNoDataMsg');
 
 
             this.model.bind('change', this.render);
@@ -229,25 +229,26 @@ this.recline.View = this.recline.View || {};
                     self.updateOptions();
 
                 }
-                else
-                {
-                	// display NO DATA MSG
-                    var graphid = "#" + this.uid;
-                    if (self.graph)
-                    {
-                    	// removes resize event or last chart will popup again!
-                    	d3.select(window).on('resize.for.' + graphid, null);
-                    	$(graphid).off()
-                        $(graphid).empty();
-                        delete self.graph;
-                    }
-                    this.el.find('figure').html("");
-                	this.el.find('figure').append(new recline.View.NoDataMsg().create());
-                	this.el.find('div.xCharts-title-x').html("")
-                }
+                else this.displayNoDataMsg();
             }
-            
+			else this.displayNoDataMsg();
         },
+		displayNoDataMsg: function() 
+		{
+			// display NO DATA MSG
+			var graphid = "#" + this.uid;
+			if (this.graph)
+			{
+				// removes resize event or last chart will popup again!
+				d3.select(window).on('resize.for.' + graphid, null);
+				$(graphid).off()
+				$(graphid).empty();
+				delete self.graph;
+			}
+			this.el.find('figure').html("");
+			this.el.find('figure').append(new recline.View.NoDataMsg().create());
+			this.el.find('div.xCharts-title-x').html("")
+		},
 
         createLegend: function() {
             var self=this;

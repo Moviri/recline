@@ -380,8 +380,15 @@ this.recline.View = this.recline.View || {};
                 	$target.parent().find("button.grouped-button[val='"+self.exclusiveButtonValue+"']").removeClass(self._selectedClassName)
             	}
         	}
+			
         	$target.toggleClass(self._selectedClassName);
-        	this.handleChangedSelections();
+			var listaValori = this.getAllSelections();
+			if (this.nullSelectionNotAllowed && !listaValori.length) {
+				$target.toggleClass(self._selectedClassName);
+			}
+        	else {
+				this.handleChangedSelections();
+			}
         },
         
         onDropdownSelectAll: function(e) {
