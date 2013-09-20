@@ -168,7 +168,8 @@ this.recline.View = this.recline.View || {};
 			var onChange = function(element, checked){
 				self.hasValueChanges =  true
         		var multiselect = element.parent();
-        		var multiselectContainer = multiselect.data('multiselect').container;
+        		var multiselectObj = multiselect.data('multiselect');
+        		var multiselectContainer = multiselectObj.container;
 				var totSelectedObjs = element.parent().find("[selected='selected']")
 				if (totSelectedObjs.length)
 					$('button', multiselectContainer).addClass(self._selectedClassName);
@@ -181,6 +182,9 @@ this.recline.View = this.recline.View || {};
 							var checkBoxObj = _.find($("input[type='checkbox']", multiselectContainer), function(obj) {return $(obj).attr("value") == element.val()});
 							if (checkBoxObj)
 								$(checkBoxObj).attr("checked", "checked");
+								
+							var buttonHtml = multiselectObj.options.buttonText($("option:selected", element.parent()))	
+							$('button.select-all-button', multiselectContainer).html(buttonHtml);
 								
 							return;
 						}
@@ -448,7 +452,7 @@ this.recline.View = this.recline.View || {};
         },
 		getAllSelections: function() {
             var listaValori = [];
-            this.el.find('div.btn-toolbar button.' + self._selectedClassName).not('.select-all-button').each(function () {
+            this.el.find('div.btn-toolbar button.' + this._selectedClassName).not('.select-all-button').each(function (obj) {
             	if (!$(this).hasClass("dropdown-toggle"))
             		listaValori.push($(this).attr('val').valueOf()); // in case there's a date, convert it with valueOf
             });
