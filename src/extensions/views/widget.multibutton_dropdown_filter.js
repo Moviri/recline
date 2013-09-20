@@ -32,13 +32,14 @@ this.recline.View = this.recline.View || {};
         documentClickAssigned: false,
         initialize:function (args) {
             this.el = $(this.el);
-            _.bindAll(this, 'render', 'update', 'onButtonsetClicked', 'getDropdownSelections', 'getRecordByValue', 'handleChangedSelections', 'onDropdownSelectAll');
+            _.bindAll(this, 'render', 'update', 'onButtonsetClicked', 'getDropdownSelections', 'getAllSelections', 'getRecordByValue', 'handleChangedSelections', 'onDropdownSelectAll');
 
             this._sourceDataset = args.sourceDataset;
             this.uid = args.id || Math.floor(Math.random() * 100000); // unique id of the view containing all filters
             this.numId = 0; // auto-increasing id used for a single filter
 
             this.sourceField = args.sourceField;
+			this.nullSelectionNotAllowed = args.nullSelectionNotAllowed;
             this._actions = args.actions;
             this.noAllButton = args.sourceField.noAllButton || false;
             this.exclusiveButtonValue = args.sourceField.exclusiveButtonValue || (!this.noAllButton ? "All" : undefined);
@@ -171,8 +172,21 @@ this.recline.View = this.recline.View || {};
 				var totSelectedObjs = element.parent().find("[selected='selected']")
 				if (totSelectedObjs.length)
 					$('button', multiselectContainer).addClass(self._selectedClassName);
-				else $('button', multiselectContainer).addClass(self._selectedClassName);
-				
+				else {
+					if (self.nullSelectionNotAllowed) {
+						var listaValori = self.getAllSelections();
+						if (!listaValori.length) {
+							// restore original selection
+							element.attr("selected", "selected");
+							var checkBoxObj = _.find($("input[type='checkbox']", multiselectContainer), function(obj) {return $(obj).attr("value") == element.val()});
+							if (checkBoxObj)
+								$(checkBoxObj).attr("checked", "checked");
+								
+							return;
+						}
+					}
+					$('button', multiselectContainer).removeClass(self._selectedClassName);
+				}
 				if (!self.documentClickAssigned)
 				{
 					$(document).on("click.dropdownbtn", function (e) {
@@ -384,6 +398,9 @@ this.recline.View = this.recline.View || {};
     		}
         	else
     		{
+				if (this.nullSelectionNotAllowed)
+					return;
+					
         		// deselect all
         		_.each(totObjs, function(opt) { 
         			$(opt).removeAttr("selected"); 
@@ -404,15 +421,8 @@ this.recline.View = this.recline.View || {};
             if (deselectExclusiveButton)
             	self.el.find("div.btn-toolbar button.grouped-button[val='"+self.exclusiveButtonValue+"']").removeClass(self._selectedClassName)
             			
-            var listaValori = [];
-            self.el.find('div.btn-toolbar button.' + self._selectedClassName).not('.select-all-button').each(function () {
-            	if (!$(this).hasClass("dropdown-toggle"))
-            		listaValori.push($(this).attr('val').valueOf()); // in case there's a date, convert it with valueOf
-            });
-            if (listaValori.length == 1 && listaValori[0] == "All")
-            	listaValori = self.allValues;
-    		else listaValori = listaValori.concat(self.getDropdownSelections())
-            
+            var listaValori = this.getAllSelections();
+			
             var res = [];
             _.each(listaValori, function(valore) {
             	res.push(self.getRecordByValue(valore));
@@ -436,6 +446,18 @@ this.recline.View = this.recline.View || {};
         	});
         	return listaValori;
         },
+		getAllSelections: function() {
+            var listaValori = [];
+            this.el.find('div.btn-toolbar button.' + self._selectedClassName).not('.select-all-button').each(function () {
+            	if (!$(this).hasClass("dropdown-toggle"))
+            		listaValori.push($(this).attr('val').valueOf()); // in case there's a date, convert it with valueOf
+            });
+            if (listaValori.length == 1 && listaValori[0] == "All")
+            	listaValori = this.allValues;
+    		else listaValori = listaValori.concat(this.getDropdownSelections());
+			
+			return listaValori;
+		},
         getRecordByValue:function(val) {
         	var self = this;
         	if (self.buttonsData[val])
