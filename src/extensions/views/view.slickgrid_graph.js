@@ -588,13 +588,14 @@ this.recline.View = this.recline.View || {};
             if (self.visible) {
                 self.grid.init();
                 self.rendered = true;
+				resizeSlickGrid();
             } else {
                 // Defer rendering until the view is visible
                 self.rendered = false;
             }
 
             function resizeSlickGrid() {
-                if (self.model.getRecords(self.resultType).length > 0) {
+                if (self.model.getRecords(self.resultType).length > 0 && self.el.is(":visible")) {
                     var container = self.el.parent();
                     if (typeof container != "undefined" && container != null &&
                         ((container[0].style && container[0].style.height && container[0].style.height.indexOf("%") > 0)
@@ -610,8 +611,7 @@ this.recline.View = this.recline.View || {};
                 }
             }
 
-            resizeSlickGrid();
-            //nv.utils.windowResize(resizeSlickGrid);
+            nv.utils.windowResize(resizeSlickGrid);
             this.handleRequestOfRowSelection();
 
             return this;

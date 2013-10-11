@@ -6,7 +6,6 @@ this.recline.Model.FilteredDataset = this.recline.Model.FilteredDataset || {};
 
 (function ($, my) {
 
-// ## <a id="dataset">VirtualDataset</a>
     my.FilteredDataset = Backbone.Model.extend({
         constructor:function FilteredDataset() {
             Backbone.Model.prototype.constructor.apply(this, arguments);
@@ -171,7 +170,6 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
 
 (function ($, my) {
 
-// ## <a id="dataset">VirtualDataset</a>
     my.JoinedDataset = Backbone.Model.extend({
         constructor:function JoinedDataset() {
             Backbone.Model.prototype.constructor.apply(this, arguments);
@@ -1207,7 +1205,6 @@ this.recline.Model.UnionDataset = this.recline.Model.UnionDataset || {};
 
 (function ($, my) {
 
-// ## <a id="dataset">VirtualDataset</a>
     my.UnionDataset = Backbone.Model.extend({
         constructor:function UnionDataset() {
             Backbone.Model.prototype.constructor.apply(this, arguments);
@@ -1416,7 +1413,6 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
 
 (function ($, my) {
 
-// ## <a id="dataset">VirtualDataset</a>
     my.VirtualDataset = Backbone.Model.extend({
         constructor:function VirtualDataset() {
             Backbone.Model.prototype.constructor.apply(this, arguments);
@@ -1596,7 +1592,7 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
 
                     // for each aggregation function evaluate results
                     for (j = 0; j < aggregationFunctions.length; j++) {
-                        var currentAggregationFunction = this.recline.Data.Aggregations.aggregationFunctions[aggregationFunctions[j]];
+                        var currentAggregationFunction = recline.Data.Aggregations.aggregationFunctions[aggregationFunctions[j]];
 
                         p[aggregationFunctions[j]][aggregatedFields[i]] =
                             currentAggregationFunction(
@@ -1620,7 +1616,7 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
                                 if (partitionFields[aggregationFunctions[j]] == null)
                                     partitionFields[aggregationFunctions[j]] = {};
 
-                                var currentAggregationFunction = this.recline.Data.Aggregations.aggregationFunctions[aggregationFunctions[j]];
+                                var currentAggregationFunction = recline.Data.Aggregations.aggregationFunctions[aggregationFunctions[j]];
 
                                 if (p.partitions[aggregationFunctions[j]][fieldName] == null) {
                                     p.partitions[aggregationFunctions[j]][fieldName] = {
@@ -1675,7 +1671,7 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
                 for (j = 0; j < aggregationFunctions.length; j++) {
                     tmp[aggregationFunctions[j]] = {};
 
-                        this.recline.Data.Aggregations.initFunctions[aggregationFunctions[j]](tmp, aggregatedFields, partitions);
+                    recline.Data.Aggregations.initFunctions[aggregationFunctions[j]](tmp, aggregatedFields, partitions);
                 }
 
                 if (partitioning) {
@@ -6543,12 +6539,17 @@ this.recline.View = this.recline.View || {};
 (function ($, my) {
 
     my.GoogleMaps = Backbone.View.extend({
-        iconaMarker: 'http://chart.googleapis.com/chart?chst=d_simple_text_icon_above&chld={TEXT}|14|{TEXTCOLOR}|{MARKERICON}|{ICONSIZE}|{ICONCOLOR}|404040',
+		iconaMarkerSimple: 'https://chart.googleapis.com/chart?chst=d_map_spin&chld=1|0|{ICONCOLOR}|14|_|{TEXT}',
+        iconaMarker: 'https://chart.googleapis.com/chart?chst=d_simple_text_icon_above&chld={TEXT}|14|{TEXTCOLOR}|{MARKERICON}|{ICONSIZE}|{ICONCOLOR}|404040',
         initialize:function (options) {
             _.bindAll(this, 'render', 'redraw', 'clearAllMarkers', 'getMarkerColor', 'openInfoWindow');
             this.model.bind('query:done', this.redraw);
             this.mapEl = document.getElementById(this.options.el);
             this.render();
+			if (options.state.markerIcon == "simple")
+				this.iconaMarker = this.iconaMarkerSimple;
+			else if (options.state.markerIconLongName)
+				this.iconaMarker = options.state.markerIconLongName;
         },
 	    clearAllMarkers: function() {
 	        _.each(this.markers, function (marker) {
@@ -7451,9 +7452,17 @@ this.recline.View = this.recline.View || {};
             this.model.fields.bind('reset', this.render);
             this.model.fields.bind('add', this.render);
 
+            this.model.records.bind('add', this.redraw);
+            this.model.records.bind('reset', this.redraw);
+            this.model.records.bind('remove', this.redraw);
             this.model.bind('query:done', this.redraw);
             this.model.queryState.bind('selection:done', this.redraw);
             this.model.bind('dimensions:change', this.changeDimensions);
+			
+			if (this.model.recordCount) { 
+				this.render(); 
+				this.redraw(); 
+			}			
 
             if (this.options.state && this.options.state.loader)
             	this.options.state.loader.bindChart(this);
@@ -7689,6 +7698,9 @@ this.recline.View = this.recline.View || {};
         graphResize:function () {
             var self = this;
             var viewId = this.uid;
+
+			if (!self.$el.is(":visible"))
+				return;			
 
             // this only works by previously setting the body height to a numeric pixel size (percentage size don't work)
             // so we assign the window height to the body height with the command below
@@ -9388,13 +9400,14 @@ this.recline.View = this.recline.View || {};
             if (self.visible) {
                 self.grid.init();
                 self.rendered = true;
+				resizeSlickGrid();
             } else {
                 // Defer rendering until the view is visible
                 self.rendered = false;
             }
 
             function resizeSlickGrid() {
-                if (self.model.getRecords(self.resultType).length > 0) {
+                if (self.model.getRecords(self.resultType).length > 0 && self.el.is(":visible")) {
                     var container = self.el.parent();
                     if (typeof container != "undefined" && container != null &&
                         ((container[0].style && container[0].style.height && container[0].style.height.indexOf("%") > 0)
@@ -9410,8 +9423,7 @@ this.recline.View = this.recline.View || {};
                 }
             }
 
-            resizeSlickGrid();
-            //nv.utils.windowResize(resizeSlickGrid);
+            nv.utils.windowResize(resizeSlickGrid);
             this.handleRequestOfRowSelection();
 
             return this;

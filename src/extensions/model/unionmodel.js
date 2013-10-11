@@ -6,7 +6,6 @@ this.recline.Model.UnionDataset = this.recline.Model.UnionDataset || {};
 
 (function ($, my) {
 
-// ## <a id="dataset">VirtualDataset</a>
     my.UnionDataset = Backbone.Model.extend({
         constructor:function UnionDataset() {
             Backbone.Model.prototype.constructor.apply(this, arguments);

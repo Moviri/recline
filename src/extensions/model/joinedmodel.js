@@ -6,7 +6,6 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
 
 (function ($, my) {
 
-// ## <a id="dataset">VirtualDataset</a>
     my.JoinedDataset = Backbone.Model.extend({
         constructor:function JoinedDataset() {
             Backbone.Model.prototype.constructor.apply(this, arguments);

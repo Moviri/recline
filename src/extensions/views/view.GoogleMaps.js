@@ -6,12 +6,17 @@ this.recline.View = this.recline.View || {};
 (function ($, my) {
 
     my.GoogleMaps = Backbone.View.extend({
-        iconaMarker: 'http://chart.googleapis.com/chart?chst=d_simple_text_icon_above&chld={TEXT}|14|{TEXTCOLOR}|{MARKERICON}|{ICONSIZE}|{ICONCOLOR}|404040',
+		iconaMarkerSimple: 'https://chart.googleapis.com/chart?chst=d_map_spin&chld=1|0|{ICONCOLOR}|14|_|{TEXT}',
+        iconaMarker: 'https://chart.googleapis.com/chart?chst=d_simple_text_icon_above&chld={TEXT}|14|{TEXTCOLOR}|{MARKERICON}|{ICONSIZE}|{ICONCOLOR}|404040',
         initialize:function (options) {
             _.bindAll(this, 'render', 'redraw', 'clearAllMarkers', 'getMarkerColor', 'openInfoWindow');
             this.model.bind('query:done', this.redraw);
             this.mapEl = document.getElementById(this.options.el);
             this.render();
+			if (options.state.markerIcon == "simple")
+				this.iconaMarker = this.iconaMarkerSimple;
+			else if (options.state.markerIconLongName)
+				this.iconaMarker = options.state.markerIconLongName;
         },
 	    clearAllMarkers: function() {
 	        _.each(this.markers, function (marker) {

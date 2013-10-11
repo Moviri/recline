@@ -46,9 +46,17 @@ this.recline.View = this.recline.View || {};
             this.model.fields.bind('reset', this.render);
             this.model.fields.bind('add', this.render);
 
+            this.model.records.bind('add', this.redraw);
+            this.model.records.bind('reset', this.redraw);
+            this.model.records.bind('remove', this.redraw);
             this.model.bind('query:done', this.redraw);
             this.model.queryState.bind('selection:done', this.redraw);
             this.model.bind('dimensions:change', this.changeDimensions);
+			
+			if (this.model.recordCount) { 
+				this.render(); 
+				this.redraw(); 
+			}			
 
             if (this.options.state && this.options.state.loader)
             	this.options.state.loader.bindChart(this);
@@ -284,6 +292,9 @@ this.recline.View = this.recline.View || {};
         graphResize:function () {
             var self = this;
             var viewId = this.uid;
+
+			if (!self.$el.is(":visible"))
+				return;			
 
             // this only works by previously setting the body height to a numeric pixel size (percentage size don't work)
             // so we assign the window height to the body height with the command below

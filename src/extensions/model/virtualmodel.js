@@ -6,7 +6,6 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
 
 (function ($, my) {
 
-// ## <a id="dataset">VirtualDataset</a>
     my.VirtualDataset = Backbone.Model.extend({
         constructor:function VirtualDataset() {
             Backbone.Model.prototype.constructor.apply(this, arguments);
@@ -186,7 +185,7 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
 
                     // for each aggregation function evaluate results
                     for (j = 0; j < aggregationFunctions.length; j++) {
-                        var currentAggregationFunction = this.recline.Data.Aggregations.aggregationFunctions[aggregationFunctions[j]];
+                        var currentAggregationFunction = recline.Data.Aggregations.aggregationFunctions[aggregationFunctions[j]];
 
                         p[aggregationFunctions[j]][aggregatedFields[i]] =
                             currentAggregationFunction(
@@ -210,7 +209,7 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
                                 if (partitionFields[aggregationFunctions[j]] == null)
                                     partitionFields[aggregationFunctions[j]] = {};
 
-                                var currentAggregationFunction = this.recline.Data.Aggregations.aggregationFunctions[aggregationFunctions[j]];
+                                var currentAggregationFunction = recline.Data.Aggregations.aggregationFunctions[aggregationFunctions[j]];
 
                                 if (p.partitions[aggregationFunctions[j]][fieldName] == null) {
                                     p.partitions[aggregationFunctions[j]][fieldName] = {
@@ -265,7 +264,7 @@ this.recline.Model.VirtualDataset = this.recline.Model.VirtualDataset || {};
                 for (j = 0; j < aggregationFunctions.length; j++) {
                     tmp[aggregationFunctions[j]] = {};
 
-                        this.recline.Data.Aggregations.initFunctions[aggregationFunctions[j]](tmp, aggregatedFields, partitions);
+                    recline.Data.Aggregations.initFunctions[aggregationFunctions[j]](tmp, aggregatedFields, partitions);
                 }
 
                 if (partitioning) {

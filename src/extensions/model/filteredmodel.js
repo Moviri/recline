@@ -6,7 +6,6 @@ this.recline.Model.FilteredDataset = this.recline.Model.FilteredDataset || {};
 
 (function ($, my) {
 
-// ## <a id="dataset">VirtualDataset</a>
     my.FilteredDataset = Backbone.Model.extend({
         constructor:function FilteredDataset() {
             Backbone.Model.prototype.constructor.apply(this, arguments);
