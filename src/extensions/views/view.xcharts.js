@@ -256,7 +256,8 @@ this.recline.View = this.recline.View || {};
             var i =0;
             
             
-    		$("<script>" +
+    		$("<style>.noFillLegendBullet { background: transparent !important; }</style>" +
+				"<script>" +
 				"function changeSeriesVisibility(i){"+
 	            	"var isVisible = $('g .color'+i).attr('display');"+
 	            	" if (isVisible === 'none') {isVisible = false;} else {isVisible = true;}"+
