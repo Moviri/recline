@@ -339,10 +339,14 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
                         // retrieve records from secondary model
                         _.each(p.joinon, function (f) {
                             var field = p.model.fields.get(f);
-                            if(!field)
-                                throw "joinedmodel.js: unable to find field [" + f + "] on secondary model";
-
-                            filters.push({field:field.id, type:"term", term: r.getFieldValueUnrendered(field), fieldType:field.attributes.type });
+                            if(field)
+								filters.push({field:field.id, type:"term", term: r.getFieldValueUnrendered(field), fieldType:field.attributes.type });
+							else {
+								field = model.fields.get(f);
+								if (field && r.get(f) && typeof p.model.records.models[0].get(f) != "undefined") // fallback to check if join model has the desired field, even if fields array hasn't been recreated
+									filters.push({field:field.id, type:"term", term: r.get(f), fieldType:field.attributes.type });
+                                else throw "joinedmodel.js: unable to find field [" + f + "] on secondary model";
+							}
                         })
 
                         var resultsFromDataset2 = recline.Data.Filters.applyFiltersOnData(filters, p.model.toFullJSON(), p.model.fields.toJSON());
@@ -6941,42 +6945,48 @@ this.recline.View = this.recline.View || {};
                     else
                         compareWithField = self.modelCompare.getFields(self.options.state.compareWith.type).get(self.options.state.compareWith.field);
 
-                    if (!compareWithField) {
-                    	if (self.modelCompare.attributes && self.modelCompare.attributes.dataset && self.modelCompare.attributes.dataset.recordCount)
-                    	   throw "View.Indicator: unable to find field [" + self.options.state.compareWith.field + "] on model"
-                    	else return; // parent model is empty. skip the rendering
-                    } 
-                	 tmplData["compareWithValue"] = compareWithRecord[0].getFieldValue(compareWithField);
-                     var compareWithValue = compareWithRecord[0].getFieldValueUnrendered(compareWithField);
-                     if (compareWithValue) {
-                         // if value is actually undefined/missing, no comparison should be shown
+                    // if (!compareWithField) {
+                    	// if (self.modelCompare.attributes && self.modelCompare.attributes.dataset && self.modelCompare.attributes.dataset.recordCount)
+                    	   // throw "View.Indicator: unable to find field [" + self.options.state.compareWith.field + "] on model"
+                    	// else return; // parent model is empty. skip the rendering
+                    // }
+					 var mustDisplayNA = false;
+					 if (compareWithField) {
+						tmplData["compareWithValue"] = compareWithRecord[0].getFieldValue(compareWithField);
+						 var compareWithValue = compareWithRecord[0].getFieldValueUnrendered(compareWithField);
+						 if (compareWithValue) {
+							 // if value is actually undefined/missing, no comparison should be shown
 
-                         var compareValue = self.compareType[self.options.state.compareWith.compareType](kpiValue, compareWithValue, self.templates, self.options.state.condensed, self.options.state.shapeAfter);
-                         if(!compareValue){
-                        	   throw "View.Indicator: unable to find compareType [" + self.options.state.compareWith.compareType + "]";	 
-                         }
-                    	 tmplData["compareValue"] = compareValue.data;
+							 var compareValue = self.compareType[self.options.state.compareWith.compareType](kpiValue, compareWithValue, self.templates, self.options.state.condensed, self.options.state.shapeAfter);
+							 if(!compareValue){
+								   throw "View.Indicator: unable to find compareType [" + self.options.state.compareWith.compareType + "]";	 
+							 }
+							 tmplData["compareValue"] = compareValue.data;
 
-                         if(self.options.state.compareWith.shapes) {
-                             if(compareValue.unrenderedValue == 0)
-                                 tmplData["compareShape"] = self.options.state.compareWith.shapes.constant;
-                             else if(compareValue.unrenderedValue > 0)
-                                 tmplData["compareShape"] = self.options.state.compareWith.shapes.increase;
-                             else if(compareValue.unrenderedValue < 0)
-                                 tmplData["compareShape"] = self.options.state.compareWith.shapes.decrease;
-                         }
+							 if(self.options.state.compareWith.shapes) {
+								 if(compareValue.unrenderedValue == 0)
+									 tmplData["compareShape"] = self.options.state.compareWith.shapes.constant;
+								 else if(compareValue.unrenderedValue > 0)
+									 tmplData["compareShape"] = self.options.state.compareWith.shapes.increase;
+								 else if(compareValue.unrenderedValue < 0)
+									 tmplData["compareShape"] = self.options.state.compareWith.shapes.decrease;
+							 }
 
-                         if(compareValue.template)
-                             template = compareValue.template;	 
-                     }
-                     else {
-                        tmplData["compareValue"] = "N/A";
-                        tmplData["compareWithValue"] = "N/A";
-                         var compareValue = self.compareType[self.options.state.compareWith.compareType](kpiValue, compareWithValue, self.templates, self.options.state.condensed, self.options.state.shapeAfter);
-                         if(compareValue && compareValue.template)
-                             template = compareValue.template;   
-                     }
-                
+							 if(compareValue.template)
+								 template = compareValue.template;	 
+						 }
+						 else mustDisplayNA = true;
+					 }
+					 else mustDisplayNA = true;
+					 
+					 if (mustDisplayNA)
+					 {
+						 tmplData["compareValue"] = "N/A";
+						 tmplData["compareWithValue"] = "N/A";
+						 var compareValue = self.compareType[self.options.state.compareWith.compareType](kpiValue, compareWithValue, self.templates, self.options.state.condensed, self.options.state.shapeAfter);
+						 if(compareValue && compareValue.template)
+							 template = compareValue.template;   
+					 }
                 }
             } else if (self.options.state.fillCompareSpace){
             	template = this.templates.templatePercentage;
