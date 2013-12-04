@@ -162,11 +162,12 @@ this.recline.Model.FilteredDataset = this.recline.Model.FilteredDataset || {};
 
 }(jQuery, this.recline.Model));
 
-define(['jquery', 'REM/recline-extensions/recline-amd'], function ($, recline) {
-    recline.Model = recline.Model || {};
-    recline.Model.JoinedDataset = recline.Model.JoinedDataset || {};
+// # Recline Backbone Models
+this.recline = this.recline || {};
+this.recline.Model = this.recline.Model || {};
+this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
 
-    var my = recline.Model;
+(function ($, my) {
 
     my.JoinedDataset = Backbone.Model.extend({
         constructor:function JoinedDataset() {
@@ -423,8 +424,7 @@ define(['jquery', 'REM/recline-extensions/recline-amd'], function ($, recline) {
 
     })
 
-    return my.JoinedDataset;
-});
+}(jQuery, this.recline.Model));
 recline.Model.Query.prototype = $.extend(recline.Model.Query.prototype, {
     defaults: function() {
         return {
@@ -6702,11 +6702,11 @@ this.recline.View = this.recline.View || {};
 
 
 })(jQuery, recline.View);
-define(['jquery', 'REM/recline-extensions/recline-extensions-amd', 'd3', 'mustache'], function ($, recline, d3, Mustache) {
+/*jshint multistr:true */
+this.recline = this.recline || {};
+this.recline.View = this.recline.View || {};
 
-    recline.View = recline.View || {};
-
-    var my = recline.View;
+(function ($, my) {
 
 // ## Indicator view for a Dataset 
 //
@@ -7009,9 +7009,7 @@ define(['jquery', 'REM/recline-extensions/recline-extensions-amd', 'd3', 'mustac
 
     });
     
-    return my.Indicator;
-
-});
+})(jQuery, recline.View);
 /*jshint multistr:true */
 
 this.recline = this.recline || {};

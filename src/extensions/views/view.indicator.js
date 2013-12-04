@@ -1,8 +1,8 @@
-define(['jquery', 'REM/recline-extensions/recline-extensions-amd', 'd3', 'mustache'], function ($, recline, d3, Mustache) {
+/*jshint multistr:true */
+this.recline = this.recline || {};
+this.recline.View = this.recline.View || {};
 
-    recline.View = recline.View || {};
-
-    var my = recline.View;
+(function ($, my) {
 
 // ## Indicator view for a Dataset 
 //
@@ -305,6 +305,4 @@ define(['jquery', 'REM/recline-extensions/recline-extensions-amd', 'd3', 'mustac
 
     });
     
-    return my.Indicator;
-
-});
+})(jQuery, recline.View);

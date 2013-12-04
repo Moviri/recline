@@ -1,8 +1,9 @@
-define(['jquery', 'REM/recline-extensions/recline-amd'], function ($, recline) {
-    recline.Model = recline.Model || {};
-    recline.Model.JoinedDataset = recline.Model.JoinedDataset || {};
+// # Recline Backbone Models
+this.recline = this.recline || {};
+this.recline.Model = this.recline.Model || {};
+this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
 
-    var my = recline.Model;
+(function ($, my) {
 
     my.JoinedDataset = Backbone.Model.extend({
         constructor:function JoinedDataset() {
@@ -259,5 +260,4 @@ define(['jquery', 'REM/recline-extensions/recline-amd'], function ($, recline) {
 
     })
 
-    return my.JoinedDataset;
-});
+}(jQuery, this.recline.Model));
