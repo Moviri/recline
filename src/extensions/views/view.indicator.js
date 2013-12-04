@@ -1,9 +1,8 @@
-/*jshint multistr:true */
+define(['jquery', 'REM/recline-extensions/recline-extensions-amd', 'd3', 'mustache'], function ($, recline, d3, Mustache) {
 
-this.recline = this.recline || {};
-this.recline.View = this.recline.View || {};
+    recline.View = recline.View || {};
 
-(function ($, my) {
+    var my = recline.View;
 
 // ## Indicator view for a Dataset 
 //
@@ -245,26 +244,34 @@ this.recline.View = this.recline.View || {};
                     } 
                 	 tmplData["compareWithValue"] = compareWithRecord[0].getFieldValue(compareWithField);
                      var compareWithValue = compareWithRecord[0].getFieldValueUnrendered(compareWithField);
+                     if (compareWithValue) {
+                         // if value is actually undefined/missing, no comparison should be shown
 
-                     var compareValue;
+                         var compareValue = self.compareType[self.options.state.compareWith.compareType](kpiValue, compareWithValue, self.templates, self.options.state.condensed, self.options.state.shapeAfter);
+                         if(!compareValue){
+                        	   throw "View.Indicator: unable to find compareType [" + self.options.state.compareWith.compareType + "]";	 
+                         }
+                    	 tmplData["compareValue"] = compareValue.data;
 
-                     var compareValue = self.compareType[self.options.state.compareWith.compareType](kpiValue, compareWithValue, self.templates, self.options.state.condensed, self.options.state.shapeAfter);
-                     if(!compareValue){
-                    	   throw "View.Indicator: unable to find compareType [" + self.options.state.compareWith.compareType + "]";	 
+                         if(self.options.state.compareWith.shapes) {
+                             if(compareValue.unrenderedValue == 0)
+                                 tmplData["compareShape"] = self.options.state.compareWith.shapes.constant;
+                             else if(compareValue.unrenderedValue > 0)
+                                 tmplData["compareShape"] = self.options.state.compareWith.shapes.increase;
+                             else if(compareValue.unrenderedValue < 0)
+                                 tmplData["compareShape"] = self.options.state.compareWith.shapes.decrease;
+                         }
+
+                         if(compareValue.template)
+                             template = compareValue.template;	 
                      }
-                	 tmplData["compareValue"] = compareValue.data;
-
-                     if(self.options.state.compareWith.shapes) {
-                         if(compareValue.unrenderedValue == 0)
-                             tmplData["compareShape"] = self.options.state.compareWith.shapes.constant;
-                         else if(compareValue.unrenderedValue > 0)
-                             tmplData["compareShape"] = self.options.state.compareWith.shapes.increase;
-                         else if(compareValue.unrenderedValue < 0)
-                             tmplData["compareShape"] = self.options.state.compareWith.shapes.decrease;
+                     else {
+                        tmplData["compareValue"] = "N/A";
+                        tmplData["compareWithValue"] = "N/A";
+                         var compareValue = self.compareType[self.options.state.compareWith.compareType](kpiValue, compareWithValue, self.templates, self.options.state.condensed, self.options.state.shapeAfter);
+                         if(compareValue && compareValue.template)
+                             template = compareValue.template;   
                      }
-
-                     if(compareValue.template)
-                         template = compareValue.template;	 
                 
                 }
             } else if (self.options.state.fillCompareSpace){
@@ -296,11 +303,8 @@ this.recline.View = this.recline.View || {};
         }
 
 
-
-
-
-
     });
+    
+    return my.Indicator;
 
-
-})(jQuery, recline.View);
+});
