@@ -162,13 +162,11 @@ this.recline.Model.FilteredDataset = this.recline.Model.FilteredDataset || {};
 
 }(jQuery, this.recline.Model));
 
-// # Recline Backbone Models
-this.recline = this.recline || {};
-this.recline.Model = this.recline.Model || {};
-this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
+define(['jquery', 'REM/recline-extensions/recline-amd'], function ($, recline) {
+    recline.Model = recline.Model || {};
+    recline.Model.JoinedDataset = recline.Model.JoinedDataset || {};
 
-
-(function ($, my) {
+    var my = recline.Model;
 
     my.JoinedDataset = Backbone.Model.extend({
         constructor:function JoinedDataset() {
@@ -231,6 +229,7 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
                     if(!p.id)
                         throw "joinedmodel: a model without id has been used in join. Unable to apply joined model";
 
+                    //if (this.recordCount)
                     self.ds_fetched.push(p.id);
 
                     if (self.allDsFetched(self.ds_fetched))
@@ -330,25 +329,33 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
 
 
                 _.each(joinModel, function(p) {
-                    // retrieve records from secondary model
-                    _.each(p.joinon, function (f) {
-                        var field = p.model.fields.get(f);
-                        if(!field)
-                            throw "joinedmodel.js: unable to find field [" + f + "] on secondary model";
 
-                        filters.push({field:field.id, type:"term", term: r.getFieldValueUnrendered(field), fieldType:field.attributes.type });
-                    })
+                    if (!p.model.records.length) {
+                        //do not process empty compare models. Leave reference record as is
+                        recordMustBeAdded = true;
+                    }
+                    else {
+                        // retrieve records from secondary model
+                        _.each(p.joinon, function (f) {
+                            var field = p.model.fields.get(f);
+                            if(!field)
+                                throw "joinedmodel.js: unable to find field [" + f + "] on secondary model";
 
-                    var resultsFromDataset2 = recline.Data.Filters.applyFiltersOnData(filters, p.model.toFullJSON(), p.model.fields.toJSON());
-
-                    if(resultsFromDataset2.length == 0)
-                        recordMustBeAdded = false;
-
-                    _.each(resultsFromDataset2, function (res) {
-                        _.each(res, function (field_value, index) {
-                            record[p.id + "_" + index] = field_value;
+                            filters.push({field:field.id, type:"term", term: r.getFieldValueUnrendered(field), fieldType:field.attributes.type });
                         })
-                    })
+
+                        var resultsFromDataset2 = recline.Data.Filters.applyFiltersOnData(filters, p.model.toFullJSON(), p.model.fields.toJSON());
+
+                        if(resultsFromDataset2.length == 0)
+                            recordMustBeAdded = false;
+
+                        _.each(resultsFromDataset2, function (res) {
+                            _.each(res, function (field_value, index) {
+                                record[p.id + "_" + index] = field_value;
+                            })
+                        })
+
+                    }
 
                 });
 
@@ -416,9 +423,8 @@ this.recline.Model.JoinedDataset = this.recline.Model.JoinedDataset || {};
 
     })
 
-
-}(jQuery, this.recline.Model));
-
+    return my.JoinedDataset;
+});
 recline.Model.Query.prototype = $.extend(recline.Model.Query.prototype, {
     defaults: function() {
         return {
@@ -6696,12 +6702,11 @@ this.recline.View = this.recline.View || {};
 
 
 })(jQuery, recline.View);
-/*jshint multistr:true */
+define(['jquery', 'REM/recline-extensions/recline-extensions-amd', 'd3', 'mustache'], function ($, recline, d3, Mustache) {
 
-this.recline = this.recline || {};
-this.recline.View = this.recline.View || {};
+    recline.View = recline.View || {};
 
-(function ($, my) {
+    var my = recline.View;
 
 // ## Indicator view for a Dataset 
 //
@@ -6943,26 +6948,34 @@ this.recline.View = this.recline.View || {};
                     } 
                 	 tmplData["compareWithValue"] = compareWithRecord[0].getFieldValue(compareWithField);
                      var compareWithValue = compareWithRecord[0].getFieldValueUnrendered(compareWithField);
+                     if (compareWithValue) {
+                         // if value is actually undefined/missing, no comparison should be shown
 
-                     var compareValue;
+                         var compareValue = self.compareType[self.options.state.compareWith.compareType](kpiValue, compareWithValue, self.templates, self.options.state.condensed, self.options.state.shapeAfter);
+                         if(!compareValue){
+                        	   throw "View.Indicator: unable to find compareType [" + self.options.state.compareWith.compareType + "]";	 
+                         }
+                    	 tmplData["compareValue"] = compareValue.data;
 
-                     var compareValue = self.compareType[self.options.state.compareWith.compareType](kpiValue, compareWithValue, self.templates, self.options.state.condensed, self.options.state.shapeAfter);
-                     if(!compareValue){
-                    	   throw "View.Indicator: unable to find compareType [" + self.options.state.compareWith.compareType + "]";	 
+                         if(self.options.state.compareWith.shapes) {
+                             if(compareValue.unrenderedValue == 0)
+                                 tmplData["compareShape"] = self.options.state.compareWith.shapes.constant;
+                             else if(compareValue.unrenderedValue > 0)
+                                 tmplData["compareShape"] = self.options.state.compareWith.shapes.increase;
+                             else if(compareValue.unrenderedValue < 0)
+                                 tmplData["compareShape"] = self.options.state.compareWith.shapes.decrease;
+                         }
+
+                         if(compareValue.template)
+                             template = compareValue.template;	 
                      }
-                	 tmplData["compareValue"] = compareValue.data;
-
-                     if(self.options.state.compareWith.shapes) {
-                         if(compareValue.unrenderedValue == 0)
-                             tmplData["compareShape"] = self.options.state.compareWith.shapes.constant;
-                         else if(compareValue.unrenderedValue > 0)
-                             tmplData["compareShape"] = self.options.state.compareWith.shapes.increase;
-                         else if(compareValue.unrenderedValue < 0)
-                             tmplData["compareShape"] = self.options.state.compareWith.shapes.decrease;
+                     else {
+                        tmplData["compareValue"] = "N/A";
+                        tmplData["compareWithValue"] = "N/A";
+                         var compareValue = self.compareType[self.options.state.compareWith.compareType](kpiValue, compareWithValue, self.templates, self.options.state.condensed, self.options.state.shapeAfter);
+                         if(compareValue && compareValue.template)
+                             template = compareValue.template;   
                      }
-
-                     if(compareValue.template)
-                         template = compareValue.template;	 
                 
                 }
             } else if (self.options.state.fillCompareSpace){
@@ -6994,14 +7007,11 @@ this.recline.View = this.recline.View || {};
         }
 
 
-
-
-
-
     });
+    
+    return my.Indicator;
 
-
-})(jQuery, recline.View);
+});
 /*jshint multistr:true */
 
 this.recline = this.recline || {};
